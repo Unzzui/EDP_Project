@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "edp-control-system",
+  "private_key_id": "083d19f8cf64bd5786f10d736a3e898f4e308389",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQClmzafj2TE2Fyj\nUQzCTsEJr6SzXhGnttHjQXNqi5wiaHP6xtrrmzc17F21pLudVWrcASWQvDg3d4Jw\nViBkNc3dnY9j57X5cx81bHulHGbWEMfUhtdYlLpfliJXbnM0w0ViGXQddwtlGzIL\n3hsJ+8sFisrDs5x5cGad8NWw1Wwk0U5ebybb3AdPUqGIfSBAUyVKCoVm4IaJydCC\nhtkMCZAQ0UvGHetP1NzYa32u+KV1/FIqxRZIdvWWSvPEuzMG41udCb8b/Vicds2X\nT4CQhVrl2ERjH91eWf4f/njycnsWAOdcY1rAHulbeMUsOx1amX6964nDN8PQgk7j\naMIWGWcjAgMBAAECggEADA6+A7tpXIUIUa0gCbG5j7P7K5geHvZKV9/hwGXZK2Qs\nNZvEQBf1WswSkpwjkN6xlhfQnWDRkwWfjgBSAW8tcFpSy1+z5IKuSLHVBX4zj+3O\n2Y7WdRD3H5M10uSBfNukMfKlJ/636gJN5YakCgO253i7L1Pk1llfD1bZUt5nLlL0\nznBDZwbmFCw7COkx8JYxbXKeNSeG7004jrXjk7BIDL2sEbIB6x8YPaTgAsbcVCTy\nns9aTfVX5PsLOTQg/mdK2TUquuYDZyudFUNAc2X3a0M5OJBKfl/NiZZFc7IRjBy/\nquGbnAcAiWy5Yz/coVWpJ+nk4CK+6i8VHoR4mjTWYQKBgQDnzxcg1XQ4+jCg4wcX\nvTQk9znss+7YtuvJUlGkVpRksJCHdclGbNl7QohHDrxo+r6vfSQAnkucqkJDQFVR\nImPLzNlN+0sHjk+LRwWEnpgqV22y5kYTS3sD8knIoFD89QNQ3B1H7X4axnvs0DVt\neBWKKvtlwtbhxgWbWasr625bMQKBgQC243sw0nlYB8nl5zStetV//nl8wnH8t19L\n4cP0Av1UT0vvrdaopzJ+/+32PydOnWanksmsdU6jmnQV/eoMLQ2z8k9P1+OtJQZ3\nHKRPdgtMEQUExm5cblikcVnSSHa6wvZEfXOGR3+stLdzMeAsnE7HnsYuA7meDWJl\nhEEl29UqkwKBgQCa/pEMVyz62+6f5KzdZpjzDosghb7yEHzfg7crFujp2lUI/eyy\nth1EmVvdhzDbUK0nUZk9AJq2CfF8Xgut0DzCDBpQVfH4/2KYUciSwCgmR4cF04qP\nZCzAmsRS7T65pGmvKz441cc3x/cchKr0oxJj7BFkHT7ofytIkFAvcZ+8QQKBgQCt\nyGbMs5K+RVhh71qs5aVt5B8In7O0kYIqFrMecKDLtjXP3/2zcHyZFRPHA6eUGhjr\nbp3YE/fPmfpo00fMnhsBPGSE1/3uDtqf4EV5hA+kDiAYs302s1vjlhnlqRm4yX09\nA3/8vn/hWi9fdKsxeK2bHZHvM3bzaoBvOka1dLiPpQKBgDB1DDHR71Qa2jrNxyub\n86REz/iU25udjt2qgl64PuqwhSYAJQvX9q7xb0a5fL8KLgD0EHmrZPg/NmmcZ635\nu6a8YWmp+qcYJuJ+ZnmtzVT7cYMYcJ7b3GLjeQDHpKl/9XsVmoU0e854WkkQ71o+\n2LF2MEDQDuLCvgP6tsBsGvx/\n-----END PRIVATE KEY-----\n",
+  "client_email": "edp-api-access@edp-control-system.iam.gserviceaccount.com",
+  "client_id": "114623933635102061529",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/edp-api-access%40edp-control-system.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

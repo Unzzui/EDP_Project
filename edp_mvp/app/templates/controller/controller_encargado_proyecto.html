@@ -1,0 +1,480 @@
+{% extends "base.html" %} {% block title %}{{ proyecto }} - {{ nombre }}{%
+endblock %} {% block content %}
+
+<!-- Panel principal con encabezado mejorado -->
+<div
+  class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn">
+  <div
+    class="flex flex-col md:flex-row justify-between items-start mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
+    <div class="flex items-center mb-4 md:mb-0">
+      <div class="mr-3 p-2 bg-[color:var(--bg-card)] rounded-lg">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 text-[color:var(--accent-blue)]"
+          viewBox="0 0 20 20"
+          fill="currentColor">
+          <path
+            fill-rule="evenodd"
+            d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"
+            clip-rule="evenodd" />
+          <path
+            d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">{{ proyecto }}</h1>
+        <p class="text-[color:var(--text-secondary)] text-sm flex items-center">
+          <span class="mr-2">Encargado: {{ nombre }}</span>
+          <span
+            class="inline-block h-1 w-1 rounded-full bg-[color:var(--text-secondary)]"></span>
+          <span class="ml-2">{{ total_edp }} EDPs asociados</span>
+        </p>
+      </div>
+    </div>
+
+    <a
+      href="{{ url_for('controller_bp.vista_encargado', nombre=nombre) }}"
+      class="flex items-center text-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-lg border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-4 w-4 mr-2"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Volver a proyectos de {{ nombre }}
+    </a>
+  </div>
+
+  <!-- KPIs Operacionales -->
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold">📊 KPIs Operacionales</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm mb-8">
+    <div class="metric-card p-4">
+      <p class="metric-label">Total EDP</p>
+      <p class="metric-value">{{ total_edp }}</p>
+    </div>
+
+    <div class="metric-card p-4">
+      <p class="metric-label">EDP Críticos</p>
+      <p class="metric-value text-[color:var(--accent-red)]">
+        {{ total_criticos }}
+      </p>
+    </div>
+
+    <div class="metric-card p-4">
+      <p class="metric-label">Validados</p>
+      <p class="metric-value text-[color:var(--accent-green)]">
+        {{ total_validados }}
+      </p>
+    </div>
+
+    <div class="metric-card p-4">
+      <p class="metric-label">Días Espera</p>
+      <p
+        class="metric-value {% if promedio_dias_espera|int > 10 %}text-[color:var(--accent-red)]{% elif promedio_dias_espera|int > 5 %}text-[color:var(--accent-amber)]{% endif %}">
+        {{ promedio_dias_espera }}
+      </p>
+    </div>
+
+    <div class="metric-card p-4">
+      <p class="metric-label">Días Hábiles</p>
+      <p class="metric-value">{{ promedio_dias_habiles }}</p>
+    </div>
+  </div>
+
+  <!-- Replace the KPIs Financieros section with this enhanced version -->
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold">💰 KPIs Financieros</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-5 text-sm mb-8">
+    <div class="metric-card p-5">
+      <p class="metric-label">Monto Propuesto</p>
+      <p class="metric-value text-[color:var(--accent-purple)]">
+        ${{ "{:,.0f}".format(monto_propuesto|float).replace(",", ".") }}
+      </p>
+    </div>
+
+    <div class="metric-card p-5">
+      <p class="metric-label">Monto Aprobado</p>
+      <p class="metric-value text-[color:var(--accent-amber)]">
+        ${{ "{:,.0f}".format(monto_aprobado|float).replace(",", ".") }}
+      </p>
+      {% if diferencia != 0 %}
+      <p
+        class="text-xs mt-1 {% if diferencia > 0 %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %}">
+        {{ "+" if diferencia > 0 else "" }}{{
+        "{:,.0f}".format(diferencia).replace(',', '.') }} ({{
+        porcentaje_diferencia }}%)
+      </p>
+      {% endif %}
+    </div>
+
+    <div class="metric-card p-5">
+      <p class="metric-label">Monto Pagado</p>
+      <p class="metric-value text-[color:var(--accent-green)]">
+        ${{ "{:,.0f}".format(monto_pagado|float).replace(",", ".") }}
+      </p>
+    </div>
+
+    <div class="metric-card p-5">
+      <p class="metric-label">Avance Financiero</p>
+      <div class="flex items-center">
+        <p class="metric-value text-[color:var(--accent-blue)] mr-3">
+          {{ avance_financiero }}%
+        </p>
+        <div class="flex-1">
+          <div
+            class="h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+            <div
+              class="h-full bg-gradient-to-r from-[color:var(--accent-blue-dark)] to-[color:var(--accent-blue)]"
+              style="width: {{ avance_financiero }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- Lista de EDPs con tabla mejorada -->
+<div class="section-title-modern mb-5 flex items-center justify-between">
+  <h2 class="text-xl font-semibold flex items-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+    </svg>
+    EDPs del Proyecto
+    <span class="text-sm text-[color:var(--text-secondary)] ml-2 font-normal">({{ total_edp }})</span>
+  </h2>
+  
+  <!-- Búsqueda y filtros -->
+  <div class="flex space-x-2">
+    <div class="relative">
+      <input type="text" id="searchEDP" placeholder="Buscar EDP..." 
+        class="pl-8 pr-3 py-1.5 text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)]">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--text-secondary)] absolute left-2.5 top-1/2 transform -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </div>
+    
+    <select id="filterEstado" class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
+      <option value="todos">Todos los estados</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="validado">Validado</option>
+      <option value="pagado">Pagado</option>
+      <option value="critico">Críticos</option>
+    </select>
+  </div>
+</div>
+
+<div class="overflow-hidden border border-[color:var(--border-color)] rounded-xl shadow-sm">
+  <div class="overflow-x-auto">
+    <table class="data-table w-full" id="tablaEDPs">
+      <thead class="bg-[color:var(--bg-card)]">
+        <tr class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">
+          <th class="px-4 py-3 text-left sortable">N° EDP</th>
+          <th class="px-4 py-3 text-left sortable">Cliente</th>
+          <th class="px-4 py-3 text-center sortable">Mes</th>
+          <th class="px-4 py-3 text-right sortable">Monto Propuesto</th>
+          <th class="px-4 py-3 text-right sortable">Monto Aprobado</th>
+          <th class="px-4 py-3 text-center sortable">Estado</th>
+          <th class="px-4 py-3 text-center sortable">Días</th>
+          <th class="px-4 py-3 text-center sortable">Crítico</th>
+          <th class="px-4 py-3 text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-[color:var(--border-color)]">
+        {% for r in registros %}
+        <tr class="bg-[color:var(--bg-primary)] hover:bg-[color:var(--bg-card)] transition-colors {% if r['Crítico'] %}data-table-row-critical{% elif r['Estado'] == 'validado' %}data-table-row-validated{% endif %}" 
+            data-estado="{{ r['Estado']|lower }}" 
+            data-critico="{{ r['Crítico']|lower }}">
+          
+          <td class="px-4 py-3 font-medium table-highlight">
+            EDP-{{ r["N° EDP"] }}
+          </td>
+          
+          <td class="px-4 py-3">
+            {{ r["Cliente"] }}
+          </td>
+          
+          <td class="px-4 py-3 text-center">
+            {{ r["Mes"] }}
+          </td>
+          
+          <td class="px-4 py-3 text-right font-mono text-[color:var(--accent-purple)]">
+            ${{ "{:,.0f}".format(r["Monto Propuesto"]|float).replace(",", ".") }}
+          </td>
+          
+          <td class="px-4 py-3 text-right font-mono relative">
+            ${{ "{:,.0f}".format(r["Monto Aprobado"]|float).replace(",", ".") }}
+            
+            {% if r["Monto Propuesto"] != r["Monto Aprobado"] %}
+              {% set diff_percent = ((r["Monto Aprobado"]|float - r["Monto Propuesto"]|float) / r["Monto Propuesto"]|float * 100)|round(1) %}
+              <span class="absolute right-0 top-0 transform translate-x-1/3 -translate-y-1/3 px-1.5 py-0.5 text-xs rounded-full 
+              {% if r["Monto Aprobado"]|float > r["Monto Propuesto"]|float %}
+                bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)]
+              {% else %}
+                bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)]
+              {% endif %}">
+                {{ "+" if r["Monto Aprobado"]|float > r["Monto Propuesto"]|float else "" }}{{ diff_percent }}%
+              </span>
+            {% endif %}
+          </td>
+          
+          <td class="px-4 py-3 text-center">
+            <span class="estado-pill estado-{{ r['Estado']|lower }}">
+              {{ r["Estado"]|capitalize }}
+            </span>
+          </td>
+          
+          <td class="px-4 py-3 text-center">
+            <span class="{% if r['Días Espera']|int > 10 %}text-[color:var(--accent-red)]{% elif r['Días Espera']|int > 5 %}text-[color:var(--accent-amber)]{% endif %} font-medium">
+              {{ r["Días Espera"] }}
+            </span>
+          </td>
+          
+          <td class="px-4 py-3 text-center">
+            {% if r["Crítico"] %}
+            <span class="px-2 py-1 rounded-full bg-[color:var(--state-error-bg)] text-[color:var(--accent-red)] text-xs font-bold inline-flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              Sí
+            </span>
+            {% else %}
+            <span class="text-[color:var(--text-secondary)]">—</span>
+            {% endif %}
+          </td>
+          
+          <td class="px-4 py-3 text-right">
+            <div class="flex justify-end space-x-2">
+              <a href="{{ url_for('controller_bp.detalle_edp', n_edp=r['N° EDP']) }}" class="action-link">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Ver
+              </a>
+              <a href="{{ url_for('controller_bp.detalle_edp', n_edp=r['N° EDP']) }}" class="action-link-edit">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Editar
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Resumen de datos al pie de tabla -->
+<div class="mt-4 text-sm text-[color:var(--text-secondary)] flex flex-col sm:flex-row sm:justify-between items-start sm:items-center">
+  <div class="mb-2 sm:mb-0">
+    Mostrando <span id="visibleCount" class="font-medium">{{ total_edp }}</span> de <span class="font-medium">{{ total_edp }}</span> EDPs
+  </div>
+  <div class="flex items-center space-x-4">
+    <div class="flex items-center">
+      <div class="h-2.5 w-2.5 bg-[color:var(--accent-purple)] rounded-full mr-1.5"></div>
+      <span>Propuesto</span>
+    </div>
+    <div class="flex items-center">
+      <div class="h-2.5 w-2.5 bg-[color:var(--accent-amber)] rounded-full mr-1.5"></div>
+      <span>Aprobado</span>
+    </div>
+    <div class="flex items-center">
+      <div class="h-2.5 w-2.5 bg-[color:var(--accent-green)] rounded-full mr-1.5"></div>
+      <span>Pagado</span>
+    </div>
+  </div>
+</div>
+
+<!-- Add this script at the end of the file, before the endblock -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const table = document.querySelector(".data-table");
+    const headers = table.querySelectorAll("th");
+    const tableBody = table.querySelector("tbody");
+    const rows = Array.from(tableBody.querySelectorAll("tr"));
+    const searchInput = document.getElementById("searchEDP");
+    const filterSelect = document.getElementById("filterEstado");
+    const visibleCountEl = document.getElementById("visibleCount");
+    
+    // Add visual indicator for sortable columns
+    headers.forEach((header) => {
+      if (header.classList.contains('sortable')) {
+        header.classList.add('cursor-pointer', 'relative');
+        header.innerHTML += '<span class="sort-indicator ml-1 opacity-50">⇅</span>';
+      }
+    });
+
+    // Function to filter table
+    function filterTable() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const filterValue = filterSelect.value;
+      let visibleCount = 0;
+      
+      rows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+        const estado = row.getAttribute('data-estado');
+        const critico = row.getAttribute('data-critico');
+        
+        const matchesSearch = rowText.includes(searchTerm);
+        let matchesFilter = true;
+        
+        if (filterValue === 'critico') {
+          matchesFilter = critico === 'true';
+        } else if (filterValue !== 'todos') {
+          matchesFilter = estado === filterValue;
+        }
+        
+        const visible = matchesSearch && matchesFilter;
+        row.style.display = visible ? '' : 'none';
+        
+        if (visible) visibleCount++;
+      });
+      
+      visibleCountEl.textContent = visibleCount;
+    }
+    
+    // Attach event listeners for filtering
+    searchInput.addEventListener('input', filterTable);
+    filterSelect.addEventListener('change', filterTable);
+
+    // Sorting functionality
+    headers.forEach((header, index) => {
+      if (!header.classList.contains('sortable')) return;
+      
+      header.setAttribute("data-sort-index", index);
+      
+      header.addEventListener("click", () => {
+        const currentDirection = header.classList.contains("sort-asc") ? "asc" : "desc";
+        const newDirection = currentDirection === "asc" ? "desc" : "asc";
+        
+        // Update sorting indicators
+        headers.forEach(h => {
+          h.classList.remove("sort-asc", "sort-desc");
+          const indicator = h.querySelector('.sort-indicator');
+          if (indicator) indicator.textContent = '⇅';
+          indicator.classList.add('opacity-50');
+        });
+        
+        // Update current header
+        header.classList.add(`sort-${newDirection}`);
+        const indicator = header.querySelector('.sort-indicator');
+        indicator.textContent = newDirection === 'asc' ? '↑' : '↓';
+        indicator.classList.remove('opacity-50');
+        
+        // Sort rows
+        const sortedRows = Array.from(rows).sort((rowA, rowB) => {
+          // Skip hidden rows (filtered out)
+          if (rowA.style.display === 'none' || rowB.style.display === 'none') {
+            return 0;
+          }
+          
+          const cellA = rowA.querySelectorAll("td")[index].textContent.trim();
+          const cellB = rowB.querySelectorAll("td")[index].textContent.trim();
+          
+          // Handle special cases
+          if (cellA.includes("$")) {
+            const numA = parseFloat(cellA.replace(/[$.,\s]/g, ""));
+            const numB = parseFloat(cellB.replace(/[$.,\s]/g, ""));
+            return newDirection === "asc" ? numA - numB : numB - numA;
+          } else if (!isNaN(parseFloat(cellA)) && !isNaN(parseFloat(cellB))) {
+            return newDirection === "asc" 
+              ? parseFloat(cellA) - parseFloat(cellB) 
+              : parseFloat(cellB) - parseFloat(cellA);
+          }
+          
+          // Default case - string comparison
+          return newDirection === "asc" 
+            ? cellA.localeCompare(cellB) 
+            : cellB.localeCompare(cellA);
+        });
+        
+        // Reorder DOM
+        sortedRows.forEach(row => tableBody.appendChild(row));
+      });
+    });
+  });
+</script>
+
+<style>
+  /* Styling for sortable columns */
+  .sortable {
+    position: relative;
+    cursor: pointer;
+  }
+  
+  .sortable:hover {
+    background-color: var(--bg-card-hover);
+  }
+  
+  .sort-asc .sort-indicator, 
+  .sort-desc .sort-indicator {
+    color: var(--accent-blue);
+    font-weight: bold;
+    opacity: 1 !important;
+  }
+  
+  /* Enhanced style for status pills */
+  .estado-pill {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-block;
+  }
+  
+  .estado-pendiente {
+    background-color: var(--state-warning-bg);
+    color: var(--accent-amber);
+  }
+  
+  .estado-validado {
+    background-color: var(--state-success-bg);
+    color: var(--accent-green);
+  }
+  
+  .estado-pagado {
+    background-color: var(--accent-blue-dark);
+    color: white;
+    opacity: 0.9;
+  }
+  
+  /* Action links */
+  .action-link, .action-link-edit {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease;
+  }
+  
+  .action-link {
+    background-color: var(--accent-blue-dark);
+    background-opacity: 0.15;
+    color: var(--accent-blue);
+  }
+  
+  .action-link-edit {
+    background-color: var(--accent-amber-dark);
+    background-opacity: 0.15;
+    color: var(--accent-amber);
+  }
+  
+  .action-link:hover, .action-link-edit:hover {
+    opacity: 0.9;
+  }
+</style>
+{% endblock %}

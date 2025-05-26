@@ -1,0 +1,837 @@
+{% extends "base.html" %} {% block title %}Gestión de {{ nombre }} | Panel de
+Control{% endblock %} {% block content %}
+<div
+  class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn animate__faster">
+  <!-- Encabezado con datos del encargado -->
+  <div
+    class="flex flex-col md:flex-row justify-between items-start mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
+    <div class="flex items-center mb-4 md:mb-0">
+      <div
+        class="mr-3 p-2 bg-[color:var(--bg-card)] rounded-lg relative overflow-hidden">
+        <div
+          class="absolute inset-0 bg-[color:var(--accent-blue)] opacity-10 rounded-lg"></div>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 text-[color:var(--accent-blue)] relative z-10"
+          viewBox="0 0 20 20"
+          fill="currentColor">
+          <path
+            fill-rule="evenodd"
+            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+            clip-rule="evenodd" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">{{ nombre }}</h1>
+        <div
+          class="flex items-center mt-1 text-sm text-[color:var(--text-secondary)]">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-3.5 w-3.5 mr-1"
+            viewBox="0 0 20 20"
+            fill="currentColor">
+            <path
+              d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+          </svg>
+          <span>Gestión de proyectos</span>
+          <span
+            class="mx-2 inline-flex h-1 w-1 rounded-full bg-[color:var(--text-secondary)] opacity-60"></span>
+          <span class="font-medium">{{ proyectos|length }} proyectos</span>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-3">
+      <a
+        href="{{ url_for('controller_bp.dashboard_controller') }}"
+        class="flex items-center justify-center text-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-lg border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-all shadow-sm hover:shadow">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Volver al Dashboard
+      </a>
+      <button
+        id="exportarDatos"
+        class="flex items-center justify-center text-sm bg-[color:var(--accent-blue-dark)] bg-opacity-15 text-[color:var(--accent-blue)] px-4 py-2 rounded-lg hover:bg-opacity-25 transition-all border border-transparent hover:border-[color:var(--accent-blue-dark)] hover:border-opacity-20 shadow-sm">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2"
+          viewBox="0 0 20 20"
+          fill="currentColor">
+          <path
+            fill-rule="evenodd"
+            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+            clip-rule="evenodd" />
+        </svg>
+        Exportar Datos
+      </button>
+    </div>
+  </div>
+  <!-- KPI Financieros con dashboard actualizado -->
+  <div class="section-title-modern mb-5 flex items-center justify-between">
+    <h2 class="text-xl font-semibold flex items-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 mr-2 text-[color:var(--accent-amber)]"
+        viewBox="0 0 20 20"
+        fill="currentColor">
+        <path
+          d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+        <path
+          fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
+          clip-rule="evenodd" />
+      </svg>
+      KPIs Financieros
+    </h2>
+    <div class="text-xs text-[color:var(--text-secondary)]">
+      Actualizado:
+      <span class="font-medium">{{ now.strftime('%d/%m/%Y') }}</span>
+    </div>
+  </div>
+
+  <!-- Grid principal de KPIs - 2 filas-->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm mb-8">
+    <!-- Primera fila: Meta y Avance -->
+    <div
+      class="metric-card p-5 rounded-xl border border-[color:var(--border-color)] bg-[color:var(--bg-card)] hover:border-[color:var(--border-color-hover)] transition-all shadow-sm hover:shadow">
+      <div class="flex items-center justify-between mb-3">
+        <p class="metric-label text-[color:var(--text-secondary)] font-medium">
+          Meta Total
+        </p>
+        <div
+          class="h-8 w-8 flex items-center justify-center rounded-full bg-[color:var(--accent-amber)] bg-opacity-15">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--accent-amber)]"
+            viewBox="0 0 20 20"
+            fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M5.05 3.636a1 1 0 010 1.414 7 7 0 000 9.9 1 1 0 11-1.414 1.414 9 9 0 010-12.728 1 1 0 011.414 0zm9.9 0a1 1 0 011.414 0 9 9 0 010 12.728 1 1 0 11-1.414-1.414 7 7 0 000-9.9 1 1 0 010-1.414zM7.879 6.464a1 1 0 010 1.414 3 3 0 000 4.243 1 1 0 11-1.415 1.414 5 5 0 010-7.07 1 1 0 011.415 0zm4.242 0a1 1 0 011.415 0 5 5 0 010 7.072 1 1 0 01-1.415-1.415 3 3 0 000-4.242 1 1 0 010-1.415z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+      </div>
+      <div class="flex justify-between items-end">
+        <p
+          class="metric-value text-[color:var(--accent-amber)] text-2xl font-bold font-mono">
+          ${{ "{:,.0f}".format(meta_por_encargado|int).replace(",",".") }}
+        </p>
+        <div class="text-right">
+          <div class="text-xs text-[color:var(--text-secondary)] mb-1">
+            Avance
+          </div>
+          <div class="flex items-center">
+            <span class="text-sm font-semibold text-[color:var(--accent-blue)]"
+              >{{ avance_global }}%</span
+            >
+            <div
+              class="ml-2 w-16 h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+              <div
+                class="h-full bg-[color:var(--accent-blue)]"
+                style="width: {{ avance_global }}%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Montos Propuesto y Aprobado -->
+    <div
+      class="metric-card p-5 rounded-xl border border-[color:var(--border-color)] bg-[color:var(--bg-card)] hover:border-[color:var(--border-color-hover)] transition-all shadow-sm hover:shadow">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <p
+            class="metric-label text-[color:var(--text-secondary)] font-medium">
+            Montos Totales
+          </p>
+          <div class="flex gap-2 mt-1">
+            <div class="flex items-center">
+              <div
+                class="h-2 w-2 bg-[color:var(--accent-purple)] rounded-full mr-1"></div>
+              <span class="text-xs">Propuesto</span>
+            </div>
+            <div class="flex items-center">
+              <div
+                class="h-2 w-2 bg-[color:var(--accent-blue)] rounded-full mr-1"></div>
+              <span class="text-xs">Aprobado</span>
+            </div>
+          </div>
+        </div>
+        <div
+          class="h-8 w-8 flex items-center justify-center rounded-full bg-[color:var(--accent-blue)] bg-opacity-15">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--accent-blue)]"
+            viewBox="0 0 20 20"
+            fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p
+            class="text-[color:var(--accent-purple)] text-2xl font-bold font-mono">
+            ${{ "{:,.0f}".format(monto_propuesto_global|int).replace(",",".") }}
+          </p>
+        </div>
+        <div>
+          <p
+            class="text-[color:var(--accent-blue)] text-2xl font-bold font-mono">
+            ${{ "{:,.0f}".format(monto_aprobado_global|int).replace(",",".") }}
+          </p>
+          {% if monto_propuesto_global != monto_aprobado_global %}
+          <p
+            class="text-xs mt-1 {% if monto_aprobado_global > monto_propuesto_global %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %}">
+            {{ "+" if monto_aprobado_global > monto_propuesto_global else "-"
+            }}{{ "{:,.0f}".format((monto_aprobado_global -
+            monto_propuesto_global)|abs).replace(",", ".") }} ({{
+            ((monto_aprobado_global - monto_propuesto_global) /
+            monto_propuesto_global * 100)|abs|round(1) }}%)
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Segunda fila: Pagado y Pendiente -->
+    <div
+      class="metric-card p-5 rounded-xl border border-[color:var(--border-color)] bg-[color:var(--bg-card)] hover:border-[color:var(--border-color-hover)] transition-all shadow-sm hover:shadow">
+      <div class="flex items-center justify-between mb-3">
+        <p class="metric-label text-[color:var(--text-secondary)] font-medium">
+          Pagado
+          <span class="text-xs font-normal opacity-80">(de aprobados)</span>
+        </p>
+        <div
+          class="h-8 w-8 flex items-center justify-center rounded-full bg-[color:var(--accent-green)] bg-opacity-15">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--accent-green)]"
+            viewBox="0 0 20 20"
+            fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+      </div>
+      <div class="flex items-end justify-between">
+        <p
+          class="metric-value text-[color:var(--accent-green)] text-2xl font-bold font-mono">
+          ${{ "{:,.0f}".format(monto_pagado_global|int).replace(",",".") }}
+        </p>
+        <div class="text-right text-xs">
+          <span class="text-[color:var(--text-secondary)]">
+            {{ ((monto_pagado_global / monto_aprobado_global) * 100)|round(1)
+            }}% del total aprobado
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="metric-card p-5 rounded-xl border border-[color:var(--border-color)] bg-[color:var(--bg-card)] hover:border-[color:var(--border-color-hover)] transition-all shadow-sm hover:shadow">
+      <div class="flex items-center justify-between mb-3">
+        <p class="metric-label text-[color:var(--text-secondary)] font-medium">
+          Pendiente
+          <span class="text-xs font-normal opacity-80">(de aprobados)</span>
+        </p>
+        <div
+          class="h-8 w-8 flex items-center justify-center rounded-full bg-[color:var(--accent-orange)] bg-opacity-15">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--accent-orange)]"
+            viewBox="0 0 20 20"
+            fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+      </div>
+      <div class="flex items-end justify-between">
+        <p
+          class="metric-value text-[color:var(--accent-orange)] text-2xl font-bold font-mono">
+          ${{ "{:,.0f}".format(monto_pendiente_global|int).replace(",",".") }}
+        </p>
+        <div class="text-right text-xs">
+          <span class="text-[color:var(--text-secondary)]">
+            {{ ((monto_pendiente_global / monto_aprobado_global) * 100)|round(1)
+            }}% del total aprobado
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Tabla de proyectos mejorada -->
+  <div class="section-title-modern mb-5 flex items-center justify-between">
+    <h2 class="text-xl font-semibold flex items-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]"
+        viewBox="0 0 20 20"
+        fill="currentColor">
+        <path
+          d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+      </svg>
+      Proyectos
+      <span class="text-sm text-[color:var(--text-secondary)] ml-2 font-normal"
+        >({{ proyectos|length }})</span
+      >
+    </h2>
+    <div class="flex items-center">
+      <div class="relative max-w-xs mr-3">
+        <input
+          type="text"
+          id="buscarProyecto"
+          placeholder="Buscar proyecto..."
+          class="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)]" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 text-[color:var(--text-secondary)] absolute left-2.5 top-1/2 transform -translate-y-1/2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      <select
+        id="filtroProyectos"
+        class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
+        <option value="todos">Todos</option>
+        <option value="criticos">Con críticos</option>
+        <option value="validados">Con validados</option>
+      </select>
+    </div>
+  </div>
+
+  <div
+    class="overflow-hidden border border-[color:var(--border-color)] rounded-xl shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="data-table w-full" id="tablaProyectos">
+        <thead class="bg-[color:var(--bg-card)]">
+          <tr
+            class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">
+            <th class="px-4 py-3 text-left">Proyecto (OT)</th>
+            <th class="px-4 py-3 text-center sortable" data-sort="total">
+              Total EDP
+            </th>
+            <th class="px-4 py-3 text-center sortable" data-sort="criticos">
+              Críticos
+            </th>
+            <th class="px-4 py-3 text-center sortable" data-sort="validados">
+              Validados
+            </th>
+            <th class="px-4 py-3 text-center sortable" data-sort="dias">
+              Días Espera
+            </th>
+            <th class="px-4 py-3 text-right sortable" data-sort="monto-prop">
+              Monto Propuesto
+            </th>
+            <th class="px-4 py-3 text-right sortable" data-sort="monto">
+              Monto Aprobado
+            </th>
+            <th class="px-4 py-3 text-right sortable" data-sort="pagado">
+              Pagado
+            </th>
+            <th class="px-4 py-3 text-right sortable" data-sort="pendiente">
+              Pendiente
+            </th>
+            <th class="px-4 py-3 text-center sortable" data-sort="avance">
+              Avance
+            </th>
+            <th class="px-4 py-3 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[color:var(--border-color)]">
+          {% for p in proyectos %}
+          <tr
+            class="bg-[color:var(--bg-primary)] hover:bg-[color:var(--bg-card)] transition-colors"
+            data-proyecto="{{ p['Proyecto'] }}">
+            <td class="px-4 py-3 font-medium">
+              <div class="flex items-center">
+                <div
+                  class="w-1.5 h-1.5 rounded-full mr-2 {% if p['Críticos']|int > 0 %}bg-[color:var(--accent-amber)] {% elif p['%_Avance']|int > 95 %}bg-[color:var(--accent-green)] {% elif p['%_Avance']|int > 70 %}bg-[color:var(--accent-blue)] {% else %}bg-[color:var(--text-secondary)]{% endif %}"></div>
+                {{ p['Proyecto'] }}
+              </div>
+            </td>
+            <td class="px-4 py-3 text-center font-mono">
+              {{ p['Total_EDP'] }}
+            </td>
+            <td class="px-4 py-3 text-center">
+              {% if p['Críticos']|int > 0 %}
+              <span
+                class="inline-flex items-center justify-center px-2 py-1 rounded-full bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)] text-xs font-bold">
+                {{ p['Críticos'] }}
+              </span>
+              {% else %}
+              <span class="text-[color:var(--text-secondary)]">-</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-center">
+              {% if p['Validados']|int > 0 %}
+              <span
+                class="inline-flex items-center justify-center px-2 py-1 rounded-full bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] text-xs font-bold">
+                {{ p['Validados'] }}
+              </span>
+              {% else %}
+              <span class="text-[color:var(--text-secondary)]">-</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span
+                class="font-mono {% if p['Prom_Días_Espera']|int > 10 %}text-[color:var(--accent-red)]{% elif p['Prom_Días_Espera']|int > 5 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--text-primary)]{% endif %} font-medium">
+                {{ p['Prom_Días_Espera'] }}
+              </span>
+            </td>
+            <!-- Añadir columna de Monto Propuesto -->
+            <td
+              class="px-4 py-3 text-right font-mono text-[color:var(--accent-purple)] opacity-90">
+              ${{
+              "{:,.0f}".format(p['Monto_Propuesto_Total']|float).replace(",",
+              ".") }}
+            </td>
+            <td class="px-4 py-3 text-right font-mono">
+              ${{ "{:,.0f}".format(p['Monto_Aprobado_Total']|float).replace(",",
+              ".") }}
+            </td>
+            <td
+              class="px-4 py-3 text-right text-[color:var(--accent-green-dark)] font-mono">
+              ${{ "{:,.0f}".format(p['Monto_Pagado']|float).replace(",", ".") }}
+            </td>
+            <td
+              class="px-4 py-3 text-right text-[color:var(--accent-orange)] font-mono">
+              ${{ "{:,.0f}".format(p['Monto_Pendiente']|float).replace(",", ".")
+              }}
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center">
+                <span
+                  class="text-xs font-medium font-mono text-[color:var(--accent-blue)] mr-2">
+                  {{ p['%_Avance'] }}%
+                </span>
+                <div
+                  class="flex-grow h-1.5 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-[color:var(--accent-blue)]"
+                    style="width: {{ p['%_Avance'] }}%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <a
+                href="{{ url_for('controller_bp.vista_proyecto_de_encargado', nombre=nombre, proyecto=p['Proyecto']) }}"
+                class="inline-flex items-center justify-center text-xs bg-[color:var(--accent-blue-dark)] bg-opacity-15 text-[color:var(--accent-blue)] px-2 py-1 rounded hover:bg-opacity-25 transition-all">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3.5 w-3.5 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Ver OT
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <!-- Añadir después del cierre de la tabla -->
+      <div
+        class="flex justify-end mt-5 text-sm text-[color:var(--text-secondary)]">
+        <div
+          class="bg-[color:var(--bg-card)] px-4 py-2 rounded-lg border border-[color:var(--border-color)] flex items-center">
+          <div class="flex items-center mr-4">
+            <div
+              class="h-3 w-3 bg-[color:var(--accent-purple)] bg-opacity-60 rounded-full mr-2"></div>
+            <span>Monto Propuesto</span>
+          </div>
+          <div class="flex items-center">
+            <div
+              class="h-3 w-3 bg-[color:var(--accent-blue)] rounded-full mr-2"></div>
+            <span>Monto Aprobado</span>
+          </div>
+          {% if monto_propuesto_global != monto_aprobado_global %}
+          <div
+            class="ml-4 text-xs px-2 py-1 {% if monto_aprobado_global > monto_propuesto_global %}bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)]{% else %}bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)]{% endif %} rounded-full">
+            <strong>Diferencia:</strong> ${{
+            "{:,.0f}".format((monto_aprobado_global -
+            monto_propuesto_global)|abs).replace(",", ".") }} ({{
+            ((monto_aprobado_global - monto_propuesto_global) /
+            monto_propuesto_global * 100)|abs|round(1) }}%)
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if proyectos|length > 10 %}
+  <div class="flex justify-between items-center mt-4 text-sm">
+    <div class="text-[color:var(--text-secondary)]">
+      Mostrando
+      <span id="countResults" class="font-medium">{{ proyectos|length }}</span>
+      proyectos
+    </div>
+    <div class="flex space-x-1">
+      <button
+        class="paginationBtn px-3 py-1 rounded border border-[color:var(--border-color)] bg-[color:var(--bg-card)]"
+        id="prevPage"
+        disabled>
+        Anterior
+      </button>
+      <span class="px-3 py-1 text-[color:var(--text-secondary)]">
+        Página <span id="currentPage">1</span> de <span id="totalPages">1</span>
+      </span>
+      <button
+        class="paginationBtn px-3 py-1 rounded border border-[color:var(--border-color)] bg-[color:var(--bg-card)]"
+        id="nextPage">
+        Siguiente
+      </button>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Script para ordenamiento y filtrado -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Función para ordenar tabla
+    const sortableHeaders = document.querySelectorAll(".sortable");
+    sortableHeaders.forEach((header) => {
+      header.addEventListener("click", function () {
+        const sortBy = this.getAttribute("data-sort");
+        const isAsc = this.classList.contains("sort-asc");
+
+        // Limpiar todas las clases de ordenamiento
+        sortableHeaders.forEach((h) => {
+          h.classList.remove("sort-asc", "sort-desc");
+        });
+
+        // Establecer nueva clase de ordenamiento
+        this.classList.add(isAsc ? "sort-desc" : "sort-asc");
+
+        sortTable(sortBy, !isAsc);
+      });
+    });
+
+    // Filtro de búsqueda
+    const buscarInput = document.getElementById("buscarProyecto");
+    buscarInput.addEventListener("input", filterTable);
+
+    // Filtro por tipo
+    const filtroSelect = document.getElementById("filtroProyectos");
+    filtroSelect.addEventListener("change", filterTable);
+
+    function filterTable() {
+      const searchTerm = buscarInput.value.toLowerCase();
+      const filterType = filtroSelect.value;
+      const rows = document.querySelectorAll("#tablaProyectos tbody tr");
+
+      let visibleCount = 0;
+
+      rows.forEach((row) => {
+        const proyecto = row.getAttribute("data-proyecto").toLowerCase();
+        const criticos = row
+          .querySelector("td:nth-child(3)")
+          .textContent.trim();
+        const validados = row
+          .querySelector("td:nth-child(4)")
+          .textContent.trim();
+
+        let shouldShow = proyecto.includes(searchTerm);
+
+        if (filterType === "criticos") {
+          shouldShow = shouldShow && criticos !== "-";
+        } else if (filterType === "validados") {
+          shouldShow = shouldShow && validados !== "-";
+        }
+
+        if (shouldShow) {
+          row.style.display = "";
+          visibleCount++;
+        } else {
+          row.style.display = "none";
+        }
+      });
+
+      // Actualizar contador de resultados
+      if (document.getElementById("countResults")) {
+        document.getElementById("countResults").textContent = visibleCount;
+      }
+
+      // Reiniciar paginación si existe
+      updatePagination();
+    }
+
+    function sortTable(sortBy, ascending) {
+      const tbody = document.querySelector("#tablaProyectos tbody");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+
+      rows.sort((a, b) => {
+        let valueA, valueB;
+
+        // Obtener valores según la columna a ordenar
+        switch (sortBy) {
+          case "monto-prop":
+            valueA = parseFloat(
+              a
+                .querySelector("td:nth-child(6)")
+                .textContent.replace(/[$,\.]/g, "")
+            );
+            valueB = parseFloat(
+              b
+                .querySelector("td:nth-child(6)")
+                .textContent.replace(/[$,\.]/g, "")
+            );
+            break;
+          case "monto":
+            valueA = parseFloat(
+              a
+                .querySelector("td:nth-child(7)")
+                .textContent.replace(/[$,\.]/g, "")
+            );
+            valueB = parseFloat(
+              b
+                .querySelector("td:nth-child(7)")
+                .textContent.replace(/[$,\.]/g, "")
+            );
+            break;
+          case "total":
+            valueA = parseInt(a.querySelector("td:nth-child(2)").textContent);
+            valueB = parseInt(b.querySelector("td:nth-child(2)").textContent);
+            break;
+          case "criticos":
+            valueA =
+              a.querySelector("td:nth-child(3)").textContent.trim() === "-"
+                ? 0
+                : parseInt(a.querySelector("td:nth-child(3)").textContent);
+            valueB =
+              b.querySelector("td:nth-child(3)").textContent.trim() === "-"
+                ? 0
+                : parseInt(b.querySelector("td:nth-child(3)").textContent);
+            break;
+          case "validados":
+            valueA =
+              a.querySelector("td:nth-child(4)").textContent.trim() === "-"
+                ? 0
+                : parseInt(a.querySelector("td:nth-child(4)").textContent);
+            valueB =
+              b.querySelector("td:nth-child(4)").textContent.trim() === "-"
+                ? 0
+                : parseInt(b.querySelector("td:nth-child(4)").textContent);
+            break;
+          case "dias":
+            valueA = parseInt(a.querySelector("td:nth-child(5)").textContent);
+            valueB = parseInt(b.querySelector("td:nth-child(5)").textContent);
+            break;
+          case "monto":
+            valueA = parseFloat(
+              a
+                .querySelector("td:nth-child(6)")
+                .textContent.replace(/[$,\.]/g, "")
+            );
+            valueB = parseFloat(
+              b
+                .querySelector("td:nth-child(6)")
+                .textContent.replace(/[$,\.]/g, "")
+            );
+            break;
+          case "pagado":
+            valueA = parseFloat(
+              a
+                .querySelector("td:nth-child(7)")
+                .textContent.replace(/[$,\.]/g, "")
+            );
+            valueB = parseFloat(
+              b
+                .querySelector("td:nth-child(7)")
+                .textContent.replace(/[$,\.]/g, "")
+            );
+            break;
+          case "pendiente":
+            valueA = parseFloat(
+              a
+                .querySelector("td:nth-child(8)")
+                .textContent.replace(/[$,\.]/g, "")
+            );
+            valueB = parseFloat(
+              b
+                .querySelector("td:nth-child(8)")
+                .textContent.replace(/[$,\.]/g, "")
+            );
+            break;
+          case "avance":
+            valueA = parseInt(a.querySelector("td:nth-child(9)").textContent);
+            valueB = parseInt(b.querySelector("td:nth-child(9)").textContent);
+            break;
+          default:
+            valueA = a
+              .querySelector("td:first-child")
+              .textContent.toLowerCase();
+            valueB = b
+              .querySelector("td:first-child")
+              .textContent.toLowerCase();
+        }
+
+        if (valueA < valueB) {
+          return ascending ? -1 : 1;
+        }
+        if (valueA > valueB) {
+          return ascending ? 1 : -1;
+        }
+        return 0;
+      });
+
+      // Reordenar filas
+      rows.forEach((row) => {
+        tbody.appendChild(row);
+      });
+    }
+
+    // Implementar paginación básica si hay muchas filas
+    function updatePagination() {
+      // Implementación de la paginación si se necesita
+      if (document.getElementById("prevPage")) {
+        // Código de paginación aquí
+      }
+    }
+
+    // Exportar a CSV
+    document
+      .getElementById("exportarDatos")
+      .addEventListener("click", function () {
+        let csvContent = "data:text/csv;charset=utf-8,";
+
+        // Cabeceras
+        const headers = Array.from(
+          document.querySelectorAll("#tablaProyectos thead th")
+        )
+          .map((th) => th.textContent.trim())
+          .join(",");
+        csvContent += headers + "\r\n";
+
+        // Datos
+        const rows = document.querySelectorAll("#tablaProyectos tbody tr");
+        rows.forEach((row) => {
+          if (row.style.display !== "none") {
+            const rowData = Array.from(row.querySelectorAll("td"))
+              .map((td) => {
+                return `"${td.textContent.trim().replace(/"/g, '""')}"`;
+              })
+              .join(",");
+            csvContent += rowData + "\r\n";
+          }
+        });
+
+        // Crear enlace de descarga
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute(
+          "download",
+          `proyectos_${encodeURIComponent("{{ nombre }}")}_${new Date()
+            .toISOString()
+            .slice(0, 10)}.csv`
+        );
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+  });
+</script>
+
+<style>
+  /* Estilos para ordenamiento */
+  .sortable {
+    cursor: pointer;
+    position: relative;
+  }
+
+  .sortable:hover {
+    background-color: var(--bg-card-hover);
+  }
+
+  .sortable::after {
+    content: "↕";
+    opacity: 0.3;
+    margin-left: 5px;
+    font-size: 0.75rem;
+  }
+
+  .sortable.sort-asc::after {
+    content: "↑";
+    opacity: 1;
+  }
+
+  .sortable.sort-desc::after {
+    content: "↓";
+    opacity: 1;
+  }
+
+  /* Estilos para métricas */
+  .metric-value {
+    letter-spacing: -0.02em;
+  }
+
+  /* Mejora para carga progresiva */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .metric-card {
+    animation: fadeInUp 0.4s ease-out forwards;
+    animation-delay: calc(var(--index) * 0.1s);
+    opacity: 0;
+  }
+
+  .metric-card:nth-child(1) {
+    --index: 0;
+  }
+  .metric-card:nth-child(2) {
+    --index: 1;
+  }
+  .metric-card:nth-child(3) {
+    --index: 2;
+  }
+  .metric-card:nth-child(4) {
+    --index: 3;
+  }
+</style>
+{% endblock %}

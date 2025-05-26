@@ -1,0 +1,1882 @@
+{% extends "base.html" %}
+{% block title %}Vista Kanban - EDP{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+<style>
+  /* ===== ESTILOS BÁSICOS DEL TABLERO KANBAN ===== */
+  .kanban-column {
+    display: flex;
+    flex-direction: column;
+    overflow: visible !important; /* Importante para elementos arrastrados */
+  }
+
+
+  .kanban-list {
+    max-height: 70vh; /* Altura máxima con scroll */
+    overflow-y: auto;
+    scrollbar-width: thin; /* Para Firefox */
+    padding: 0.25rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow-x: visible !important; /* Permite ver elementos arrastrados fuera */
+  }
+  
+/* Simplificar el estilo de las tarjetas para evitar conflictos */
+.kanban-item {
+  position: static !important;
+  width: 100% !important;
+  transform: none !important;
+  transition: box-shadow 0.3s ease, opacity 0.3s ease;
+  margin-bottom: 0.75rem !important;
+}
+.kanban-item {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08);
+  border-left: 3px solid transparent;
+}
+
+.kanban-item:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12);
+}
+
+/* Mejorar los encabezados de columna */
+.kanban-column h2 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+  /* ===== ESTILOS PARA DRAG & DROP ===== */
+  .sortable-ghost {
+    background-color: var(--bg-highlight) !important;
+    opacity: 0.7;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  .sortable-chosen {
+    background-color: var(--bg-highlight);
+    transform: none !important;
+  }
+  
+  .sortable-drag {
+    box-shadow: 0 15px 25px rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.1) !important;
+    opacity: 0.95 !important;
+    z-index: 9999 !important;
+    background-color: var(--bg-card) !important;
+    border-color: var(--accent-blue) !important;
+    transform: none !important; /* Prevenir rotaciones que causan desalineación */
+     border-left: 3px solid var(--accent-blue) !important;
+ 
+  }
+
+
+  /* Mejorar el contraste de las tarjetas según su estado */
+.kanban-column[data-estado="Pendiente"] .kanban-item {
+  border-left-color: var(--state-pending-bg);
+}
+
+.kanban-column[data-estado="Revision"] .kanban-item {
+  border-left-color: var(--state-warning-bg);  
+}
+
+.kanban-column[data-estado="Validado"] .kanban-item {
+  border-left-color: var(--state-success-bg);
+}
+
+.kanban-column[data-estado="Pagado"] .kanban-item {
+  border-left-color: var(--state-info-bg);
+}
+
+.sortable-fallback {
+  position: fixed !important; 
+  margin: 0 !important;
+  z-index: 9999 !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+  transform: none !important;
+}
+
+
+.disable-scroll {
+  overflow: hidden !important;
+}
+
+/* Añade esta clase para corregir el tamaño durante el arrastre */
+.sorting .kanban-item {
+  max-width: 300px;
+}
+  
+  body.sorting {
+    cursor: grabbing !important;
+  }
+  
+  /* ===== SCROLLBAR PERSONALIZADA ===== */
+  .kanban-list::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .kanban-list::-webkit-scrollbar-track {
+    background: var(--bg-highlight);
+    border-radius: 10px;
+  }
+  
+  .kanban-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+  }
+  
+  .kanban-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+  }
+  
+  /* ===== TOOLTIPS ===== */
+  [data-tooltip] {
+    position: relative;
+    cursor: help;
+  }
+  
+  [data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--bg-tooltip, #333);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 10;
+  }
+  
+  [data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  /* ===== INDICADORES DE ESTADO ===== */
+  .estado-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-left: 0.5rem;
+  }
+
+.estado-pill {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+}
+
+  
+  .estado-pendiente {
+    background-color: var(--state-pending-bg, #fef9c3);
+    color: var(--state-pending-text, #854d0e);
+  }
+  
+  .estado-revision {
+    background-color: var(--state-warning-bg, #fef3c7);
+    color: var(--state-warning-text, #b45309);
+  }
+  
+  .estado-validado {
+    background-color: var(--state-success-bg, #d1fae5);
+    color: var(--text-primary);
+  }
+  
+  .estado-pagado {
+    background-color: var(--state-info-bg, #dbeafe);
+    color: var(--text-primary);
+  }
+  
+  .estado-default {
+    background-color: var(--bg-card, #f3f4f6);
+    color: var(--text-secondary, #4b5563);
+  }
+  
+  /* ===== ANIMACIONES Y TRANSICIONES ===== */
+  .animate-columna {
+    animation-duration: 0.6s;
+    animation-fill-mode: both;
+    animation-delay: calc(var(--column-index) * 0.15s);
+  }
+  
+  .column-toggle-transition {
+    transition: all 0.5s ease;
+    max-height: 2000px;
+    opacity: 1;
+    margin-right: 1.25rem;
+  }
+  
+  .column-hidden {
+    display: none !important;
+    width: 0;
+    height: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+    overflow: hidden;
+  }
+  
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+@keyframes ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+    border-width: 2px;
+    border-color: var(--accent-blue);
+  }
+  50% {
+    opacity: 0.5;
+    border-color: var(--accent-green);
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+    border-width: 0px;
+  }
+}
+
+  /* Animación de llegada para nuevas tarjetas */
+@keyframes card-arrive {
+  0% { opacity: 0; transform: translateY(-10px); }
+  60% { opacity: 1; transform: translateY(5px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Clase para aplicar la animación */
+.card-arriving {
+  animation: card-arrive 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+  @keyframes glow {
+    0% {
+      opacity: 0.5;
+      box-shadow: 0 0 5px 2px rgba(59, 130, 246, 0.3);
+    }
+    100% {
+      opacity: 0.8;
+      box-shadow: 0 0 15px 5px rgba(59, 130, 246, 0.6);
+    }
+  }
+  
+  /* ===== BÚSQUEDA Y RESALTADO ===== */
+  .active-search {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5) !important;
+  }
+  
+  .resaltado-busqueda {
+    background-color: rgba(245, 158, 11, 0.2);
+    border-radius: 2px;
+    padding: 0 2px;
+    font-weight: 500;
+  }
+  
+  #buscar-edp:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  }
+  
+  #resultados-busqueda {
+    animation: fadeInDown 0.3s;
+  }
+  
+  /* ===== MÉTRICAS Y ESTADÍSTICAS ===== */
+  .metric-value {
+    transition: all 0.3s ease;
+      font-size: 1.5rem;
+  font-weight: 700;
+  }
+  
+  .metric-value.highlight {
+    color: var(--accent-blue);
+    transform: scale(1.1);
+  }
+  
+  /* ===== MODO OSCURO Y CLARIDAD VISUAL ===== */
+  .kanban-item, .kanban-column {
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+  
+  /* Indicador de scroll cuando hay muchas tarjetas */
+  .scroll-indicator {
+    text-align: center;
+    font-size: 0.75rem;
+    padding: 0.25rem;
+    color: var(--text-secondary);
+    background-color: var(--bg-highlight);
+    border-radius: 0.25rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Animación más elegante para cambios de estado */
+@keyframes highlight-update {
+  0% { 
+    box-shadow: 0 0 0 2px var(--accent-blue);
+    transform: translateY(0);
+  }
+  50% { 
+    box-shadow: 0 0 15px 5px rgba(59, 130, 246, 0.5);
+    transform: translateY(-5px);
+  }
+  100% { 
+    box-shadow: 0 0 0 2px var(--accent-blue);
+    transform: translateY(0);
+  }
+}
+
+.highlight-update {
+  animation: highlight-update 1.5s ease;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Panel principal -->
+<div class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn">
+
+  <!-- Encabezado con stats y navegación -->
+  <div class="flex flex-col md:flex-row justify-between items-start mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
+    <div class="flex items-center mb-4 md:mb-0">
+      <div class="mr-3 p-2 bg-[color:var(--bg-card)] rounded-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Vista Kanban</h1>
+        <p class="text-[color:var(--text-secondary)] max-w-2xl">
+          Arrastra las tarjetas entre columnas para actualizar su estado.
+        </p>
+      </div>
+    </div>
+    
+    <div class="flex space-x-3">
+      <button id="toggleEmptyColumns" class="flex items-center bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-xl text-sm border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+        Ocultar columnas vacías
+      </button>
+      
+      <a href="{{ url_for('controller_bp.dashboard_controller') }}" 
+         class="flex items-center bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-xl text-sm border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Filtros mejorados -->
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold">🔍 Filtros de Búsqueda</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <form method="GET" class="bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-5 mb-6 shadow-sm">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="form-group">
+        <label for="mes" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Mes</label>
+        <div class="relative">
+          <select name="mes" id="mes" class="form-select w-full pl-9">
+            <option value="">Todos</option>
+            {% for m in meses %}
+              <option value="{{ m }}" {% if filtros.mes == m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+          </select>
+          <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="encargado" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Encargado de Proyecto</label>
+        <div class="relative">
+          <select name="encargado" id="encargado" class="form-select w-full pl-9">
+            <option value="">Todos</option>
+            {% for e in encargados %}
+              <option value="{{ e }}" {% if filtros.encargado == e %}selected{% endif %}>{{ e }}</option>
+            {% endfor %}
+          </select>
+          <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="cliente" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Cliente</label>
+        <div class="relative">
+          <select name="cliente" id="cliente" class="form-select w-full pl-9">
+            <option value="">Todos</option>
+            {% for c in clientes %}
+              <option value="{{ c }}" {% if filtros.cliente == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+          <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1.581.814l-4.419-3.996-4.419 3.996A1 1 0 014 16V4z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 flex items-center justify-end">
+      <a href="{{ url_for('controller_bp.vista_kanban') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] mr-4 transition-colors">
+        Limpiar filtros
+      </a>
+      <button type="submit" class="btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        </svg>
+        Aplicar filtros
+      </button>
+    </div>
+  </form>
+<!-- Después de la sección de filtros y antes del panel de resumen -->
+<div class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)] mb-6">
+  <div class="flex flex-col space-y-3">
+    <div class="flex items-center">
+      <div class="relative flex-grow max-w-md">
+        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-[color:var(--accent-blue)]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input type="search" id="buscar-edp" class="form-input ps-10" 
+               placeholder="Buscar por N° EDP, Cliente, Proyecto, Jefe..." 
+               autocomplete="off">
+        <div class="absolute inset-y-0 end-0 flex items-center pe-3 text-[color:var(--text-secondary)]">
+          <kbd class="px-2 py-1 text-xs font-semibold text-[color:var(--text-secondary)] bg-[color:var(--bg-highlight)] rounded">Ctrl+F</kbd>
+        </div>
+      </div>
+      <div class="ml-4">
+        <button id="limpiar-busqueda" class="btn-secondary text-sm">Limpiar</button>
+      </div>
+    </div>
+    
+    <!-- Contador de resultados -->
+    <div id="resultados-busqueda" class="text-sm text-[color:var(--text-secondary)] hidden bg-[color:var(--bg-highlight)] px-3 py-1 rounded-md"></div>
+    
+    <!-- Tips de búsqueda -->
+    <div class="text-xs text-[color:var(--text-secondary)] flex flex-wrap gap-2">
+      <span class="px-2 py-1 bg-[color:var(--bg-highlight)] rounded">Tip: También busca en Observaciones</span>
+      <span class="px-2 py-1 bg-[color:var(--bg-highlight)] rounded">Enter = Navegar resultados</span>
+      <span class="px-2 py-1 bg-[color:var(--bg-highlight)] rounded">Esc = Limpiar búsqueda</span>
+    </div>
+  </div>
+</div>
+  <!-- Panel de resumen mejorado -->
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold">📊 Resumen del Tablero</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="flex flex-wrap items-center gap-2 mb-5">
+  <span class="text-sm font-medium text-[color:var(--text-secondary)]">Mostrar columnas:</span>
+  {% for estado in columnas.keys() %}
+  <label class="inline-flex items-center px-3 py-1.5 bg-[color:var(--bg-card)] text-sm rounded-lg border border-[color:var(--border-color)] cursor-pointer hover:bg-[color:var(--bg-card-hover)]">
+    <input type="checkbox" class="form-checkbox mr-2 toggle-column" data-estado="{{ estado }}" checked>
+    <span>{{ estado }}</span>
+  </label>
+  {% endfor %}
+</div>
+  <div id="summary-panel" class="mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-5 text-sm">
+      <!-- Los contenidos se llenarán con JavaScript usando la estructura metric-card -->
+    </div>
+  </div>
+
+  <!-- Tablero Kanban -->
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold">📋 Tablero Kanban</h2>
+    <div class="section-line"></div>
+  </div>
+  
+  <div id="kanban-board" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+    {% for estado, edps in columnas.items() %}
+    <div class="kanban-column column-toggle-transition bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)]"
+         data-estado="{{ estado }}"
+         data-empty="{{ edps|length == 0 }}"
+         id="columna-{{ estado }}">
+      <!-- Cabecera de columna -->
+   <!-- Cabecera de columna -->
+<div class="flex flex-col mb-3 pb-2 border-b border-[color:var(--border-color-subtle)]">
+  <div class="flex items-center justify-between">
+    <h2 class="text-lg font-semibold capitalize flex items-center">
+      {{ estado }}
+      <span class="estado-pill estado-{{ estado|lower }} ml-2">{{ edps|length }}</span>
+    </h2>
+  </div>
+  <div class="flex flex-wrap mt-2 gap-2">
+    <span class="text-s font-semibold text-[color:var(--text-primary)] bg-[color:var(--bg-highlight)] px-2 py-0.5 rounded" data-columna-total="{{ estado }}">
+      $0
+    </span>
+    <span class="text-s text-[color:var(--text-primary)] bg-[color:var(--bg-highlight)] px-2 py-0.5 rounded" data-columna-dias="{{ estado }}">
+      0 días prom.
+    </span>
+  </div>
+</div>
+            <!-- Lista de tarjetas -->
+      <div class="kanban-list space-y-3 min-h-[150px]" id="list-{{ estado }}">
+        {% for edp in edps %}
+        <div class="kanban-item bg-[color:var(--bg-secondary)] p-4 rounded-lg shadow-sm border border-[color:var(--border-color)] hover:shadow-md hover:ring-1 hover:ring-[color:var(--accent-blue)] hover:scale-[1.01] transition-all"
+             draggable="true"
+             data-id="{{ edp['N° EDP'] }}">
+          <!-- Cabecera de tarjeta -->
+          <div class="flex justify-between items-start mb-2">
+            <p class="font-bold text-sm">
+              EDP-{{ edp["N° EDP"] }}
+              {% if edp["Fecha Emisión"] %}
+              <span class="text-xs text-[color:var(--text-secondary)] ml-1">
+                {{ edp["Fecha Emisión"].strftime('%d-%m-%Y') if edp["Fecha Emisión"] is not none }}
+              </span>
+              {% endif %}
+            </p>
+            <span class="text-xs px-2 py-1 rounded-full bg-[color:var(--bg-accent-subtle)] text-[color:var(--text-secondary)]"
+                  data-tooltip='Obs: {{ edp["Observaciones"] }}'>
+              ${{ "{:,.0f}".format(edp["Monto Aprobado"]|float).replace(",", ".") }}
+            </span>
+          </div>
+          
+          <!-- Contenido de tarjeta -->
+          <h3 class="font-medium text-sm mb-2 text-[color:var(--text-primary)]">{{ edp["Proyecto"] }}</h3>
+          
+          <div class="space-y-1 mb-3">
+            <p class="text-xs flex items-center text-[color:var(--text-secondary)]">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              {{ edp["Cliente"] }}
+            </p>
+            <p class="text-xs flex items-center text-[color:var(--text-secondary)]">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              {{ edp["Jefe de Proyecto"] }}
+            </p>
+            <p class="text-xs flex items-center text-[color:var(--text-secondary)]">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+   {% if edp.get('Fecha Envío al Cliente') is not none %}
+    {% if edp.get('Conformidad Enviada') == 'Sí' and edp.get('Fecha Conformidad') is not none %}
+      <!-- Días hasta la conformidad -->
+      <span class="{% if edp['Días Espera']|int > 5 %}text-[color:var(--accent-amber)] font-bold{% endif %} {% if edp['Días Espera']|int > 10 %}text-[color:var(--accent-red)] font-bold{% endif %}">
+        {{ edp["Días Espera"] }} días (conf.)
+        {% if edp['Días Espera']|int > 10 %}⚠️{% endif %}
+      </span>
+    {% else %}
+      <!-- Días hasta hoy (sin conformidad) -->
+      <span class="{% if edp['Días Espera']|int > 5 %}text-[color:var(--accent-amber)] font-bold{% endif %} {% if edp['Días Espera']|int > 10 %}text-[color:var(--accent-red)] font-bold{% endif %}">
+        {{ edp["Días Espera"] }} días
+        {% if edp['Días Espera']|int > 10 %}⚠️{% endif %}
+      </span>
+    {% endif %}
+  {% else %}
+    <span>—</span>
+  {% endif %}
+</p>
+
+          </div>
+          
+          <!-- Información financiera -->
+          {% if edp.get('Monto Propuesto') is not none and edp['Monto Propuesto']|float > 0 %}
+          <div class="border-t border-[color:var(--border-color-subtle)] pt-2 mb-2">
+            <div class="flex justify-between items-center">
+              <div class="text-xs">
+                <span class="font-medium text-[color:var(--text-secondary)]">Propuesto:</span>
+                <span>${{ "{:,.0f}".format(edp['Monto Propuesto']|float).replace(",", ".") }}</span>
+              </div>
+              
+              {% if edp['Monto Propuesto']|float != edp['Monto Aprobado']|float %}
+                {% set diferencia = (edp['Monto Aprobado']|float - edp['Monto Propuesto']|float) %}
+                {% set porcentaje = (diferencia / edp['Monto Propuesto']|float * 100)|round %}
+                <div class="text-xs px-1.5 py-0.5 rounded {{ 'bg-green-100 text-green-700' if diferencia > 0 else 'bg-red-100 text-red-700' }}">
+                  {{ "+" if diferencia > 0 else "" }}{{ porcentaje }}%
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+          
+   <!-- Fechas importantes con información más detallada -->
+<div class="space-y-1 mb-2 text-xs">
+  {% if edp.get('Fecha Estimada de Pago') %}
+    {% set dias_para_pago = ((edp['Fecha Estimada de Pago'] - now).days if edp['Fecha Estimada de Pago'] is not none else 0) %}
+    <div class="flex items-center justify-between">
+      <span class="text-[color:var(--text-secondary)]">Pago estimado:</span>
+      <span class="{{ 'text-green-600' if dias_para_pago > 0 else 'text-red-600 font-medium' }}">
+        {{ edp['Fecha Estimada de Pago'].strftime('%d-%m-%Y') }}
+        {% if edp.get('Conformidad Enviada') == 'Sí' %}
+          <!-- Si tiene conformidad, mostrar días faltantes -->
+          <span class="ml-1 text-[0.65rem]">({{ "en " + dias_para_pago|string + " días" if dias_para_pago > 0 else "atrasado " + (-dias_para_pago)|string + " días" }})</span>
+        {% else %}
+          <!-- Si no tiene conformidad, mostrar advertencia -->
+          <span class="ml-1 text-[0.65rem] text-[color:var(--accent-amber)]">(pendiente conf.)</span>
+        {% endif %}
+      </span>
+    </div>
+  {% endif %}
+            
+      <!-- Mostrar información de conformidad -->
+  {% if edp.get('Conformidad Enviada') == 'Sí' %}
+    <div class="flex items-center">
+      <svg class="h-3 w-3 text-green-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      <span class="text-green-600">Conformidad enviada</span>
+      {% if edp.get('Fecha Conformidad') %}
+        <span class="ml-1 text-[color:var(--text-secondary)]">({{ edp['Fecha Conformidad'].strftime('%d-%m-%Y') }})</span>
+      {% endif %}
+    </div>
+  {% elif edp.get('Fecha Envío al Cliente') %}
+    <!-- Si hay fecha de envío pero no conformidad -->
+    <div class="flex items-center">
+      <svg class="h-3 w-3 text-[color:var(--accent-amber)] mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span class="text-[color:var(--accent-amber)]">Esperando conformidad</span>
+    </div>
+  {% endif %}
+  
+  <!-- Información del número de conformidad si existe -->
+  {% if edp.get('N° Conformidad') %}
+    <div class="flex items-center">
+      <span class="text-[color:var(--text-secondary)]">N° Conf:</span>
+      <span class="ml-1 px-1.5 bg-[color:var(--bg-highlight)] rounded">{{ edp['N° Conformidad'] }}</span>
+    </div>
+  {% endif %}
+</div>
+          
+          <!-- Footer de tarjeta -->
+          <div class="flex justify-end pt-2 border-t border-[color:var(--border-color-subtle)]">
+            <a href="{{ url_for('controller_bp.detalle_edp', n_edp=edp['N° EDP']) }}"
+               class="action-link text-xs">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              Editar
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+        
+        {% if not edps %}
+        <div class="empty-placeholder text-center py-6 text-sm text-[color:var(--text-secondary)] italic">
+          Sin elementos
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Toast de notificación mejorado -->
+<div id="toast-notification" class="fixed bottom-4 right-4 hidden animate__animated z-50">
+  <div class="max-w-xs bg-[color:var(--bg-card)] text-sm text-[color:var(--text-primary)] rounded-lg shadow-lg border border-[color:var(--border-color)]" role="alert">
+    <div class="flex p-4">
+      <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg" id="toast-icon">
+        <!-- Icono insertado por JS -->
+      </div>
+      <div class="ms-3 text-sm font-normal" id="toast-text">
+        <!-- Mensaje insertado por JS -->
+      </div>
+      <button type="button" class="ms-auto -mx-1.5 -my-1.5 bg-[color:var(--bg-card)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] rounded-lg p-1.5 hover:bg-[color:var(--bg-card-hover)] inline-flex items-center justify-center h-8 w-8 transition-colors" onclick="hideToast()">
+        <span class="sr-only">Cerrar</span>
+        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+/**
+ * UTILIDADES Y AYUDANTES
+ * Funciones básicas utilizadas por otras funciones
+ */
+function slugify(estado) {
+  return estado.toLowerCase()
+               .normalize('NFD')                 // separa tildes
+               .replace(/[\u0300-\u036f]/g, '')  // elimina diacríticos
+               .replace(/\s+/g, '-');            // espacios → guión
+}
+
+/**
+ * Actualiza el contador de columnas ocultas
+ */
+function actualizarIndicadorColumnasOcultas() {
+  const toggles = document.querySelectorAll('.toggle-column:not(:checked)');
+  const columnasOcultas = toggles.length;
+  
+  // Buscar o crear el indicador de columnas ocultas
+  let indicador = document.getElementById('columnas-ocultas-indicador');
+  if (!indicador) {
+    indicador = document.createElement('div');
+    indicador.id = 'columnas-ocultas-indicador';
+    indicador.className = 'fixed bottom-4 left-4 bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-lg shadow-lg border border-[color:var(--border-color)] z-50 animate__animated';
+    document.body.appendChild(indicador);
+  }
+  
+  // Actualizar contenido
+  if (columnasOcultas > 0) {
+    indicador.innerHTML = `
+      <div class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[color:var(--accent-amber)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>${columnasOcultas} columna${columnasOcultas !== 1 ? 's' : ''} oculta${columnasOcultas !== 1 ? 's' : ''}</span>
+      </div>
+    `;
+    indicador.classList.remove('hidden', 'animate__fadeOut');
+    indicador.classList.add('animate__fadeIn');
+  } else {
+    indicador.classList.remove('animate__fadeIn');
+    indicador.classList.add('animate__fadeOut');
+    setTimeout(() => {
+      indicador.classList.add('hidden');
+    }, 300);
+  }
+}
+function refrescarCabecerasColumnas() {
+  document.querySelectorAll('.kanban-column').forEach(col => {
+    const total = col.querySelectorAll('.kanban-item').length;
+    const pill  = col.querySelector('.estado-pill');     // el span de la cabecera
+    if (pill) pill.textContent = total;
+  });
+}
+
+/**
+ * ANIMACIONES Y EFECTOS VISUALES
+ * Funciones para animar elementos de la interfaz
+ */
+
+/**
+ * Anima la entrada de columnas y tarjetas al cargar la página
+ */
+function animateColumns() {
+  const columns = document.querySelectorAll('.kanban-column');
+  
+  columns.forEach((col, index) => {
+    // Asignar índice para animación escalonada
+    col.style.setProperty('--column-index', index);
+    
+    // Añadir clases de animación
+    col.classList.add('animate__animated', 'animate__fadeInRight', 'animate-columna');
+    
+    // Animar las tarjetas dentro de cada columna con retraso
+    const cards = col.querySelectorAll('.kanban-item');
+    cards.forEach((card, cardIndex) => {
+      card.style.opacity = '0';
+      setTimeout(() => {
+        card.style.opacity = '1';
+        card.classList.add('animate__animated', 'animate__fadeInUp');
+        setTimeout(() => {
+          card.classList.remove('animate__animated', 'animate__fadeInUp');
+        }, 500);
+      }, 300 + (index * 100) + (cardIndex * 50));
+    });
+  });
+}
+
+/**
+ * Ordena las tarjetas de una lista por días transcurridos (mayor a menor)
+ */
+function ordenarTarjetasPorDias(lista) {
+  // Obtener todas las tarjetas
+  const tarjetas = Array.from(lista.querySelectorAll('.kanban-item'));
+  
+  // Si no hay tarjetas o solo hay una, no es necesario ordenar
+  if (tarjetas.length <= 1) return;
+  
+  // Ordenar tarjetas por días (mayor a menor)
+  tarjetas.sort((a, b) => {
+    // Encontrar el elemento que contiene los días
+    const diasTextoA = a.querySelector('svg[stroke="currentColor"] + span')?.textContent || '';
+    const diasTextoB = b.querySelector('svg[stroke="currentColor"] + span')?.textContent || '';
+    
+    // Extraer número de días
+    const diasA = parseInt(diasTextoA) || 0;
+    const diasB = parseInt(diasTextoB) || 0;
+    
+    // Ordenar de mayor a menor
+    return diasB - diasA;
+  });
+  
+  // Aplicar animación suave a las tarjetas que cambiarán de posición
+  tarjetas.forEach(tarjeta => {
+    tarjeta.style.transition = "transform 0.5s ease";
+  });
+  
+  // Reordenar en el DOM con animación
+  tarjetas.forEach(tarjeta => {
+    // Añadimos un pequeño retraso para permitir que las transiciones funcionen
+    setTimeout(() => {
+      lista.appendChild(tarjeta);
+    }, 50);
+  });
+}
+
+/**
+ * GESTIÓN DE DATOS Y ESTADOS
+ * Funciones para actualizar datos y métricas
+ */
+
+/**
+ * Calcula y muestra totales financieros y días promedio por columna
+ */
+function calcularTotalesColumna() {
+  const columns = document.querySelectorAll('.kanban-column');
+  
+  columns.forEach(col => {
+    const estado = col.dataset.estado;
+    const tarjetas = col.querySelectorAll('.kanban-item');
+    
+    // Calcular total financiero
+    let totalMonto = 0;
+    let totalDias = 0;
+    let tarjetasConDias = 0;
+      tarjetas.forEach(tarjeta => {
+      // Sumar montos
+      const montoText = tarjeta.querySelector('span[data-tooltip]').textContent.trim();
+      const monto = parseFloat(montoText.replace('$', '').replace(/\./g, '').replace(',', '.'));
+      if (!isNaN(monto)) {
+        totalMonto += monto;
+      }
+      
+      // Calcular días promedio según las reglas actualizadas
+      const diasTextoCompleto = tarjeta.querySelector('svg[stroke="currentColor"] + span')?.textContent;
+      if (diasTextoCompleto) {
+        // Extraer solo el número de días (ignorando el texto adicional como "(conf.)")
+        const diasMatch = diasTextoCompleto.match(/(\d+)/);
+        if (diasMatch && diasMatch[1]) {
+          const dias = parseInt(diasMatch[1]);
+          if (!isNaN(dias)) {
+            totalDias += dias;
+            tarjetasConDias++;
+          }
+        }
+      }
+    });
+    
+    // Actualizar totales en la columna
+    const totalElement = col.querySelector(`[data-columna-total="${estado}"]`);
+    if (totalElement) {
+      totalElement.textContent = `$${totalMonto.toLocaleString('es-CL')}`;
+    }
+    
+    // Actualizar días promedio
+    const diasElement = col.querySelector(`[data-columna-dias="${estado}"]`);
+    if (diasElement) {
+      const promedioDias = tarjetasConDias > 0 ? Math.round(totalDias / tarjetasConDias) : 0;
+      diasElement.textContent = `${promedioDias} días prom.`;
+    }
+  });
+}
+
+/**
+ * Actualiza el panel de resumen con estadísticas generales
+ */
+function updateSummaryPanel() {
+  const summaryPanel = document.getElementById('summary-panel').querySelector('.grid');
+  const columns = document.querySelectorAll('.kanban-column');
+
+  let totalTarjetas = 0;
+  let tarjetasCriticas = 0;
+  let diasPromedio = 0;
+  let totalDias = 0;
+  let tarjetasConDias = 0;
+  
+  // Recopilar datos
+  columns.forEach(col => {
+    const estado = col.dataset.estado;
+    const tarjetas = col.querySelectorAll('.kanban-item');
+    
+    // Contar tarjetas por estado
+    totalTarjetas += tarjetas.length;
+    // Contar días espera y críticos
+    tarjetas.forEach(tarjeta => {
+      const diasElem = tarjeta.querySelector('span[class*="text-[color:var(--accent-amber)]"], span[class*="text-[color:var(--accent-red)]"]');
+      if (diasElem) {
+        const diasTexto = diasElem.textContent.trim();
+        const dias = parseInt(diasTexto);
+        if (!isNaN(dias)) {
+          totalDias += dias;
+          tarjetasConDias++;
+          
+          if (dias > 10) {
+            tarjetasCriticas++;
+          }
+        }
+      }
+    });
+  });
+  
+  // Calcular promedio
+  diasPromedio = tarjetasConDias > 0 ? Math.round(totalDias / tarjetasConDias) : 0;
+  
+  // Construir HTML para el resumen
+  let summaryHTML = `
+    <div class="metric-card p-5">
+      <p class="metric-label">Total EDPs</p>
+      <p class="metric-value">${totalTarjetas}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Días promedio</p>
+      <p class="metric-value">${diasPromedio}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Críticos</p>
+      <p class="metric-value text-[color:var(--accent-red)]">${tarjetasCriticas}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Distribución</p>
+      <div class="flex justify-around w-full mt-2">
+  `;
+  
+  // Añadir contadores por estado
+  columns.forEach(col => {
+    const estado = col.dataset.estado;
+    const count = col.querySelectorAll('.kanban-item').length;
+    const estadoClass = `estado-${estado.toLowerCase()}`;
+    
+    summaryHTML += `
+      <div class="text-center">
+        <span class="estado-pill ${estadoClass} mx-auto mb-1">${count}</span>
+        <span class="text-xs block">${estado}</span>
+      </div>
+    `;
+  });
+  
+  summaryHTML += `
+      </div>
+    </div>
+  `;
+  
+  // Insertar en el DOM
+  summaryPanel.innerHTML = summaryHTML;
+
+}
+
+/**
+ * Mejora el Panel de KPIs con métricas estratégicas
+ */
+function setupKPIPanel() {
+  // Recopilamos datos
+  const columns = document.querySelectorAll('.kanban-column');
+  let totalEDPs = 0;
+  let totalMontoGeneral = 0;
+  let totalMontoPagado = 0;
+  
+  columns.forEach(col => {
+    const estado = col.dataset.estado;
+    const tarjetas = col.querySelectorAll('.kanban-item');
+    
+    totalEDPs += tarjetas.length;
+    tarjetas.forEach(tarjeta => {
+      const montoText = tarjeta.querySelector('span[data-tooltip]').textContent.trim();
+      const monto = parseFloat(montoText.replace('$', '').replace(/\./g, '').replace(',', '.'));
+      
+      if (!isNaN(monto)) {
+        totalMontoGeneral += monto;
+        
+        if (estado.toLowerCase() === 'pagado' || estado.toLowerCase() === 'validado') {
+          totalMontoPagado += monto;
+        }
+      }
+    });
+  });
+  
+  // Calcular porcentaje de avance financiero
+  const porcentajeAvance = totalMontoGeneral > 0 
+    ? Math.round((totalMontoPagado / totalMontoGeneral) * 100) 
+    : 0;
+
+  // Actualizar HTML del panel de KPIs
+  const summaryPanel = document.getElementById('summary-panel').querySelector('.grid');
+  
+  summaryPanel.innerHTML = `
+    <div class="metric-card p-5">
+      <p class="metric-label">Total EDPs</p>
+      <p class="metric-value">${totalEDPs}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Total por cobrar</p>
+      <p class="metric-value">$${totalMontoGeneral.toLocaleString('es-CL')}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Avance</p>
+      <div class="mt-1">
+        <div class="w-full bg-[color:var(--bg-highlight)] rounded-full h-2.5">
+          <div class="bg-[color:var(--accent-green)] h-2.5 rounded-full" style="width: ${porcentajeAvance}%"></div>
+        </div>
+        <p class="text-lg mt-1 font-medium">${porcentajeAvance}%</p>
+      </div>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Total pagado</p>
+      <p class="metric-value text-[color:var(--accent-green)]">$${totalMontoPagado.toLocaleString('es-CL')}</p>
+    </div>
+  `;
+}
+
+function observeColumnChanges() {
+  const columns = document.querySelectorAll('.kanban-column');
+
+  const observer = new MutationObserver(() => {
+    updateSummaryPanel(); // actualiza todo
+    setupKPIPanel(); // si también quieres actualizar los KPIs financieros
+  });
+
+  const config = { childList: true, subtree: true };
+
+  columns.forEach(column => {
+    observer.observe(column, config);
+  });
+}
+
+/**
+ * Actualiza todos los contadores y métricas de manera centralizada
+ * Esta función será nuestro punto único para actualizar todas las estadísticas
+ */
+function actualizarContadoresTablero() {
+  // Aplicar animación para indicar actualización
+  const metricas = document.querySelectorAll('.metric-value');
+  metricas.forEach(metrica => {
+    metrica.classList.add('highlight');
+    setTimeout(() => {
+      metrica.classList.remove('highlight');
+    }, 800);
+  });
+    refrescarCabecerasColumnas();   // ← NUEVO
+  // Actualizar todos los contadores y métricas
+  updateSummaryPanel();
+  calcularTotalesColumna();
+  setupKPIPanel();
+  
+  // Verificar estado de columnas vacías
+  document.querySelectorAll('.kanban-column').forEach(col => {
+    const estaVacia = col.querySelectorAll('.kanban-item').length === 0;
+    col.setAttribute('data-empty', estaVacia);
+  });
+}
+
+/**
+ * Versión mejorada del observador de cambios
+ */
+function observarCambiosTablero() {
+  // Crear un observador más potente que detecte cualquier cambio en el tablero
+  const observer = new MutationObserver((mutations) => {
+    // Flag para evitar múltiples actualizaciones en rápida sucesión
+    let debeTriggerActualizacion = false;
+    
+    mutations.forEach((mutation) => {
+      // Detectar cambios en contenido DOM que afecten a las tarjetas
+      if (mutation.type === 'childList' && 
+          (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
+            
+        // Verificar si es un cambio relevante (afecta a tarjetas kanban)
+        const esItemKanban = Array.from(mutation.addedNodes).some(node => 
+          node.nodeType === 1 && (node.classList?.contains('kanban-item') || 
+          node.querySelector?.('.kanban-item')));
+          
+        const eliminoItemKanban = Array.from(mutation.removedNodes).some(node => 
+          node.nodeType === 1 && (node.classList?.contains('kanban-item') || 
+          node.querySelector?.('.kanban-item')));
+          
+        if (esItemKanban || eliminoItemKanban) {
+          debeTriggerActualizacion = true;
+        }
+      }
+      
+      // Detectar cambios de atributos (como data-empty)
+      if (mutation.type === 'attributes' && 
+          (mutation.attributeName === 'data-empty' || 
+           mutation.attributeName === 'class' && 
+           mutation.target.classList.contains('column-hidden'))) {
+        debeTriggerActualizacion = true;
+      }
+    });
+    
+    // Si se detectaron cambios relevantes, actualizar después de un breve retraso
+    // para asegurar que el DOM esté completamente actualizado
+    if (debeTriggerActualizacion) {
+      clearTimeout(window.contadoresTimeout);
+      window.contadoresTimeout = setTimeout(() => {
+        actualizarContadoresTablero();
+      }, 250);
+    }
+  });
+  
+  // Configurar el observador para monitorear todo el tablero Kanban con opciones extendidas
+  const kanbanBoard = document.getElementById('kanban-board');
+  
+  // Configuración más completa para el observer
+  const config = { 
+    childList: true,      // Observar adiciones/eliminaciones directas de hijos
+    attributes: true,     // Observar cambios de atributos
+    subtree: true,        // Observar todos los descendientes
+    attributeFilter: ['class', 'data-empty', 'style'] // Filtrar solo estos atributos
+  };
+  
+  observer.observe(kanbanBoard, config);
+  
+  // También observar el panel de resumen para detectar cambios allí
+  const summaryPanel = document.getElementById('summary-panel');
+  observer.observe(summaryPanel, config);
+}
+/**
+ * INTERACCIÓN DE USUARIO
+ * Funciones para controlar la interacción del usuario con la interfaz
+ */
+
+/**
+ * Configura la visibilidad de columnas mediante checkboxes y ajusta el grid
+ */
+function setupColumnVisibility() {
+  const toggles = document.querySelectorAll('.toggle-column');
+  const kanbanBoard = document.getElementById('kanban-board');
+  
+  // Función para actualizar el diseño del grid
+  const updateGridLayout = () => {
+    const visibleColumns = document.querySelectorAll('.kanban-column:not(.column-hidden)').length;
+    
+    // Eliminar todas las clases de grid existentes
+    kanbanBoard.className = kanbanBoard.className.replace(/grid-cols-\d+/g, '');
+    kanbanBoard.className = kanbanBoard.className.replace(/md:grid-cols-\d+/g, '');
+    kanbanBoard.className = kanbanBoard.className.replace(/lg:grid-cols-\d+/g, '');
+    
+    // Aplicar nueva clase de grid según columnas visibles
+    if (visibleColumns === 1) {
+      kanbanBoard.classList.add('grid-cols-1');
+    } else if (visibleColumns === 2) {
+      kanbanBoard.classList.add('grid-cols-2');
+    } else if (visibleColumns === 3) {
+      kanbanBoard.classList.add('md:grid-cols-3');
+    } else {
+      kanbanBoard.classList.add('md:grid-cols-2', 'lg:grid-cols-4');
+    }
+  };
+  
+  toggles.forEach(toggle => {
+    toggle.addEventListener('change', function() {
+      const estado = this.dataset.estado;
+      const columna = document.querySelector(`.kanban-column[data-estado="${estado}"]`);
+      
+      // Aplicar clase con animación
+      if (this.checked) {
+        // Primero quitar display:none para permitir la animación
+        columna.style.display = '';
+        // Pequeño retraso para permitir que el navegador actualice el DOM
+        setTimeout(() => {
+          columna.classList.remove('column-hidden');
+          columna.classList.add('animate__animated', 'animate__fadeIn');
+          setTimeout(() => {
+            columna.classList.remove('animate__animated', 'animate__fadeIn');
+          }, 500);
+          updateGridLayout();
+        }, 10);
+      } else {
+        columna.classList.add('animate__animated', 'animate__fadeOut');
+        setTimeout(() => {
+          columna.classList.add('column-hidden');
+          columna.classList.remove('animate__animated', 'animate__fadeOut');
+          updateGridLayout();
+        }, 500);
+      }
+      
+      // Actualizar el indicador de columnas ocultas
+      actualizarIndicadorColumnasOcultas();
+      
+      // Actualizar totales después de cambiar visibilidad
+      setTimeout(() => {
+        calcularTotalesColumna();
+        setupKPIPanel();
+      }, 400);
+    });
+  });
+  
+  // Inicializar layout al cargar
+  updateGridLayout();
+  
+  // También llamarlo al inicializarse
+  actualizarIndicadorColumnasOcultas();
+}
+
+/**
+ * Configura el botón toggle para ocultar/mostrar columnas vacías
+ */
+function setupColumnToggle() {
+  const toggleBtn = document.getElementById('toggleEmptyColumns');
+  let columnsHidden = false;
+  
+  toggleBtn.addEventListener('click', function() {
+    const emptyColumns = document.querySelectorAll('.kanban-column[data-empty="True"]');
+    
+    if (columnsHidden) {
+      // Mostrar columnas
+      emptyColumns.forEach(col => {
+        col.classList.remove('column-hidden');
+      });
+      toggleBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+        Ocultar columnas vacías
+      `;
+      columnsHidden = false;
+    } else {
+      // Ocultar columnas
+      emptyColumns.forEach(col => {
+        col.classList.add('column-hidden');
+      });
+      toggleBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+        Mostrar todas las columnas
+      `;
+      columnsHidden = true;
+    }
+  });
+}
+
+/**
+ * Implementa la búsqueda de EDPs en el kanban
+ */
+/**
+ * Implementa la búsqueda avanzada de EDPs en el kanban con resaltado inteligente
+ */
+function setupBuscador() {
+  const inputBuscar = document.getElementById('buscar-edp');
+  const botonLimpiar = document.getElementById('limpiar-busqueda');
+  const resultadosContainer = document.getElementById('resultados-busqueda');
+  let timeoutId = null;
+  
+  // Función debounced para evitar búsquedas excesivas mientras se escribe
+  const buscarDebounced = (query) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => realizarBusqueda(query), 300);
+  };
+  
+  // Función principal de búsqueda
+    /**
+   * Modificación de la función realizarBusqueda() en setupBuscador()
+   * para eliminar el scroll automático pero mantener el resaltado
+   */
+  const realizarBusqueda = (query) => {
+    query = query.toLowerCase().trim();
+    const items = document.querySelectorAll('.kanban-item');
+    let coincidencias = 0;
+    
+    // Remover destacados previos
+    items.forEach(item => {
+      item.classList.remove('ring-2', 'ring-[color:var(--accent-amber)]', 'animate__animated', 'animate__pulse');
+      item.style.opacity = '1';
+      
+      // Restaurar texto resaltado a normal
+      const textos = item.querySelectorAll('.resaltado-busqueda');
+      textos.forEach(t => {
+        const padre = t.parentNode;
+        padre.textContent = padre.textContent;  // Truco para eliminar el span
+      });
+    });
+    
+    if (query.length < 2) {
+      actualizarContadorResultados(0);
+      return;
+    }
+    
+    items.forEach(item => {
+      // Buscar en múltiples campos
+      const edpNum = item.querySelector('.font-bold')?.textContent || '';
+      const proyecto = item.querySelector('.font-medium')?.textContent || '';
+      const cliente = item.querySelectorAll('p.text-xs')[0]?.textContent || '';
+      const jefeProyecto = item.querySelectorAll('p.text-xs')[1]?.textContent || '';
+      const observaciones = item.querySelector('span[data-tooltip]')?.getAttribute('data-tooltip')?.replace('Obs: ', '') || '';
+      
+      // Búsqueda en todos los campos
+      if (edpNum.toLowerCase().includes(query) || 
+          proyecto.toLowerCase().includes(query) || 
+          cliente.toLowerCase().includes(query) ||
+          jefeProyecto.toLowerCase().includes(query) ||
+          observaciones.toLowerCase().includes(query)) {
+        
+        // Destacar el item sin hacer scroll
+        item.classList.add('ring-2', 'ring-[color:var(--accent-amber)]');
+        item.style.opacity = '1';
+        coincidencias++;
+        
+        // Resaltar el texto específico que coincide
+        resaltarCoincidencia(item, '.font-bold', query);
+        resaltarCoincidencia(item, '.font-medium', query);
+        resaltarCoincidencia(item, 'p.text-xs', query);
+        
+        // ELIMINADO: el código que causaba el scroll automático
+      } else {
+        // Reducir opacidad de los que no coinciden
+        item.style.opacity = '0.5';
+      }
+    });
+    
+    actualizarContadorResultados(coincidencias);
+    
+    // Opcional: Mostrar botón "Ir al primer resultado" si hay resultados
+    if (coincidencias > 0 && !document.getElementById('ir-primer-resultado')) {
+      const boton = document.createElement('button');
+      boton.id = 'ir-primer-resultado';
+      boton.className = 'px-3 py-1 bg-[color:var(--bg-highlight)] text-xs rounded-md hover:bg-[color:var(--bg-card-hover)] transition-colors';
+      boton.textContent = 'Ir al primer resultado';
+      boton.onclick = () => {
+        const primerResultado = document.querySelector('.kanban-item.ring-2');
+        if (primerResultado) {
+          primerResultado.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      };
+      resultadosContainer.appendChild(boton);
+    } else if (coincidencias === 0) {
+      const boton = document.getElementById('ir-primer-resultado');
+      if (boton) boton.remove();
+    }
+  };
+  // Función para resaltar coincidencias en el texto
+  const resaltarCoincidencia = (item, selector, query) => {
+    const elementos = item.querySelectorAll(selector);
+    elementos.forEach(el => {
+      const texto = el.textContent;
+      const indice = texto.toLowerCase().indexOf(query);
+      
+      if (indice >= 0) {
+        const antes = texto.substring(0, indice);
+        const coincidencia = texto.substring(indice, indice + query.length);
+        const despues = texto.substring(indice + query.length);
+        
+        el.innerHTML = `${antes}<span class="resaltado-busqueda bg-yellow-100 text-yellow-800 px-0.5 rounded">${coincidencia}</span>${despues}`;
+      }
+    });
+  };
+  
+  // Actualizar contador de resultados
+  const actualizarContadorResultados = (cantidad) => {
+    if (!resultadosContainer) return;
+    
+    if (cantidad > 0) {
+      resultadosContainer.textContent = `${cantidad} resultado${cantidad > 1 ? 's' : ''} encontrado${cantidad > 1 ? 's' : ''}`;
+      resultadosContainer.classList.remove('hidden');
+    } else {
+      resultadosContainer.textContent = inputBuscar.value.length >= 2 ? 'No se encontraron resultados' : '';
+      resultadosContainer.classList.toggle('hidden', inputBuscar.value.length < 2);
+    }
+  };
+  
+  // Evento de entrada en el buscador
+  inputBuscar.addEventListener('input', function() {
+    buscarDebounced(this.value);
+  });
+  
+  // Eventos de teclado para navegación
+  inputBuscar.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      const items = document.querySelectorAll('.kanban-item.ring-2');
+      if (items.length === 0) return;
+      
+      // Si hay un item activo, ir al siguiente
+      const activeItem = document.querySelector('.kanban-item.ring-2.active-search');
+      let nextItem;
+      
+      if (activeItem) {
+        activeItem.classList.remove('active-search', 'animate__pulse');
+        const index = Array.from(items).indexOf(activeItem);
+        nextItem = items[(index + 1) % items.length];
+      } else {
+        nextItem = items[0];
+      }
+      
+      nextItem.classList.add('active-search', 'animate__animated', 'animate__pulse');
+      nextItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Atajo Escape para limpiar
+    if (e.key === 'Escape') {
+      this.value = '';
+      realizarBusqueda('');
+      this.blur();
+    }
+  });
+  
+  // Evento de limpieza
+  botonLimpiar.addEventListener('click', function() {
+    inputBuscar.value = '';
+    realizarBusqueda('');
+    inputBuscar.focus();
+  });
+  
+  // Teclas de acceso rápido globales
+  document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + F para enfocar el buscador
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault();
+      inputBuscar.focus();
+      inputBuscar.select();
+    }
+  });
+}
+/**
+ * INICIALIZACIÓN DEL KANBAN
+ * Función principal para inicializar el tablero Kanban
+ */
+
+/**
+ * Inicializa el tablero Kanban con funcionalidades de drag & drop
+ */
+
+ // Añadir después de tu función onEnd
+function resetCardPositions() {
+  document.querySelectorAll('.kanban-item').forEach(item => {
+    // Resetear completamente todas las propiedades de posicionamiento
+    item.style.cssText = "position: relative !important; left: 0 !important; margin: 0 !important; width: 100% !important;";
+  });
+}
+
+function initKanbanBoard() {
+  const columns = document.querySelectorAll('.kanban-column');
+  
+  // Ordenar inicialmente todas las columnas
+  columns.forEach(col => {
+    ordenarTarjetasPorDias(col.querySelector('.kanban-list'));
+  });
+  
+  columns.forEach((col) => {
+    const estadoDestino = col.dataset.estado;
+    const list = col.querySelector('.kanban-list');
+    
+    Sortable.create(list, {
+      group: "edp-kanban",
+      animation: 150,
+      ghostClass: "sortable-ghost",
+      chosenClass: "sortable-chosen",
+      dragClass: "sortable-drag",
+
+      fallbackClass: "sortable-fallback",
+      fallbackOnBody: true,        // Permitir arrastrar sobre todo el documento
+      // Agregar estas nuevas opciones
+      scrollSensitivity: 80,
+      scrollSpeed: 10,
+        
+
+    
+        
+      // Agregar efectos visuales cuando comienza el arrastre
+      onStart: function(evt) {
+        document.body.classList.add('sorting');
+         // Guardar posición de scroll y deshabilitar
+        const lists = document.querySelectorAll('.kanban-list');
+        lists.forEach(list => {
+          list._scrollTop = list.scrollTop; // Guardar posición
+          list.classList.add('disable-scroll'); // Agregar clase para deshabilitar
+        });
+       // Crear un clon del elemento para mejor control
+        const item = evt.item;
+        const dragContainer = document.createElement('div');
+        dragContainer.className = 'drag-container';
+        dragContainer.appendChild(item.cloneNode(true));
+        document.body.appendChild(dragContainer);
+         // Ajustar el ancho del elemento arrastrado para que coincida con el original
+        const width = item.getBoundingClientRect().width;
+        
+        const fallback = document.querySelector('.sortable-fallback');
+        if (fallback) {
+          fallback.style.width = `${width}px`;
+        }
+        // Crear un efecto de "despegue" con destello
+        item.classList.add('animate__animated', 'animate__pulse');
+        
+        // Añadir un efecto de brillo alrededor de la tarjeta
+        const glowEffect = document.createElement('div');
+        glowEffect.className = 'absolute inset-0 rounded-lg';
+        glowEffect.style.boxShadow = '0 0 15px 5px rgba(59, 130, 246, 0.5)';
+        glowEffect.style.animation = 'glow 1s infinite alternate';
+        glowEffect.style.pointerEvents = 'none';
+        glowEffect.style.zIndex = '-1';
+        item.style.position = 'relative';
+        item.appendChild(glowEffect);
+        
+        // Aplicar un estilo CSS para destacar la tarjeta seleccionada
+        item.style.zIndex = '10';
+        item.style.transform = 'scale(1.03) rotate(1deg)';
+        item.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.2)';
+        item.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+      },
+      
+      // Cuando termina el arrastre pero no hay cambio de columna
+      onEnd: function(evt) {
+          const dragContainer = document.querySelector('.drag-container');
+  if (dragContainer) {
+    document.body.removeChild(dragContainer);
+  }
+        document.body.classList.remove('sorting');
+  // Restaurar scroll
+        const lists = document.querySelectorAll('.kanban-list');
+        lists.forEach(list => {
+          list.classList.remove('disable-scroll');
+          if (list._scrollTop) {
+            list.scrollTop = list._scrollTop; // Restaurar posición
+          }
+        });
+        const item = evt.item;
+        // Remover clase de animación
+        item.classList.remove('animate__animated', 'animate__pulse');
+        
+        // Eliminar efecto de brillo
+        const glowEffect = item.querySelector('.absolute');
+        if (glowEffect) {
+          item.removeChild(glowEffect);
+        }
+        
+        // Restaurar estilos originales con animación suave
+        item.style.zIndex = '';
+        item.style.transform = '';
+        item.style.boxShadow = '';
+        
+        // Efecto de "aterrizaje" suave
+        item.animate([
+          { transform: 'scale(1.05) translateY(-2px)' },
+          { transform: 'scale(1) translateY(0)' }
+        ], {
+          duration: 300,
+          easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+        });
+    setTimeout(() => {
+      item.style.position = 'static';
+      item.style.left = 'auto';
+      item.style.top = 'auto';
+      item.style.transform = 'none';
+    }, 10);
+
+},
+
+      // Verificar si es permitido el movimiento
+      onMove: function(evt) {
+        // Código existente para onMove
+        const estadoOrigen = evt.from.closest('.kanban-column').dataset.estado;
+        const estadoDestino = evt.to.closest('.kanban-column').dataset.estado;
+        
+        // Regla de negocio: Restricción de Revisión a Validado
+        if (estadoOrigen.toLowerCase() === 'revision' && estadoDestino.toLowerCase() === 'validado') {
+          if (!confirm('¿Estás seguro? Normalmente debes pasar por otro estado intermedio.')) {
+            return false;
+          }
+        }
+        
+        return true;
+      },
+      
+      // Al agregar un elemento a esta columna
+      onAdd: function(evt) {
+        const edpId = evt.item.dataset.id;
+        const estadoOrigen = evt.from.closest('.kanban-column').dataset.estado;
+        const item = evt.item;
+        
+        // Limpiar efectos del arrastre
+        item.classList.remove('animate__animated', 'animate__pulse');
+        const glowEffect = item.querySelector('.absolute');
+        if (glowEffect) {
+          item.removeChild(glowEffect);
+        }
+        
+        // Aplicar estilo para la transición de entrada
+        item.style.transition = "all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+        item.style.transform = "scale(1.08) translateY(-5px)";
+        item.style.boxShadow = "0 15px 30px -10px rgba(0, 0, 0, 0.2)";
+        item.style.zIndex = "5";
+        
+        // ACTUALIZACIÓN INMEDIATA: Actualizar el estado vacío/no-vacío y resumen
+        const col = evt.to.closest('.kanban-column');
+        const fromCol = evt.from.closest('.kanban-column');
+        
+        // Actualizar indicadores de columna origen y destino de inmediato
+        col.setAttribute('data-empty', col.querySelectorAll('.kanban-item').length === 0);
+        fromCol.setAttribute('data-empty', fromCol.querySelectorAll('.kanban-item').length === 0);
+        
+        // Actualizar contador de tarjetas inmediatamente
+      actualizarContadoresTablero();
+        
+        // Variables para reglas de negocio
+        let conformidadEnviada = false;
+        
+        // Aplicar reglas de negocio
+        if (estadoDestino.toLowerCase() === 'pagado') {
+          conformidadEnviada = true;
+          showToast("Conformidad marcada como enviada automáticamente", 'info');
+        }
+        
+        // Enviar solicitud al servidor con datos adicionales
+        fetch("/controller/kanban/update_estado", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+          },
+          body: JSON.stringify({
+            edp_id: edpId,
+            nuevo_estado: estadoDestino,
+            conformidad_enviada: conformidadEnviada
+          })
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Error en la respuesta del servidor');
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Éxito - animación de transición con ondas
+          item.style.backgroundColor = "var(--accent-green)";
+          item.style.color = "white";
+          
+          // Crear efecto de onda concéntrica
+          const rippleEffect = document.createElement('div');
+          rippleEffect.className = 'absolute inset-0 rounded-lg';
+          rippleEffect.style.border = '2px solid var(--accent-green)';
+          rippleEffect.style.animation = 'ripple 1s ease-out forwards';
+          rippleEffect.style.pointerEvents = 'none';
+          item.appendChild(rippleEffect);
+          
+
+          item.animate([
+          { backgroundColor: 'var(--bg-card)', boxShadow: '0 0 0 1px var(--accent-green)' },
+          { backgroundColor: 'var(--state-success-bg)', boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)' },
+          { backgroundColor: 'var(--bg-card)', boxShadow: '0 0 0 1px var(--border-color)' }
+        ], {
+          duration: 2500,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+        });
+          // Después restaurar y normalizar con una animación más elegante
+          setTimeout(() => {
+            // Eliminar el efecto de onda
+            if (item.contains(rippleEffect)) {
+              item.removeChild(rippleEffect);
+            }
+            
+            // Transición de vuelta a normal
+            item.animate([
+              { backgroundColor: 'var(--accent-green)', color: 'white', transform: 'scale(1.08) translateY(-5px)' },
+              { backgroundColor: '', color: '', transform: 'scale(1) translateY(0)' }
+            ], {
+              duration: 1500,
+              easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+            });
+            
+            item.style.backgroundColor = "";
+            item.style.color = "";
+            item.style.transform = "scale(1)";
+            item.style.boxShadow = "";
+            item.style.zIndex = "";
+            
+            // Ordenar las tarjetas después de insertar
+            setTimeout(() => {
+              ordenarTarjetasPorDias(list);
+              
+              // Actualizar columna vacía/no-vacía
+              col.setAttribute('data-empty', list.querySelectorAll('.kanban-item').length === 0);
+              
+              // Actualizar resumen y totales de columnas
+              updateSummaryPanel();
+              calcularTotalesColumna();
+              setupKPIPanel();
+            }, 300);
+            
+          }, 600);
+          
+          showToast(`EDP-${edpId} movido a ${estadoDestino}`, 'success');
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          
+          // Error - hacer destello rojo y agitar
+          item.style.backgroundColor = "var(--accent-red)"; // Color rojo
+          item.style.color = "white";
+          
+          // Efecto de agitación
+          const shakeAnimation = [
+            { transform: 'translateX(-5px)' },
+            { transform: 'translateX(5px)' },
+            { transform: 'translateX(-5px)' },
+            { transform: 'translateX(5px)' },
+            { transform: 'translateX(0)' }
+          ];
+          
+          item.animate(shakeAnimation, {
+            duration: 500,
+            iterations: 1
+          });
+          
+          // Restaurar
+          setTimeout(() => {
+            item.style.backgroundColor = "";
+            item.style.color = "";
+            item.style.boxShadow = "";
+          }, 800);
+          
+          showToast(`Error al actualizar el estado`, 'error');
+          
+          // Recargar para restaurar el estado
+          setTimeout(() => location.reload(), 1500);
+        });
+      }
+    });
+  });
+}
+
+/**
+ * INICIALIZACIÓN GLOBAL
+ * Evento DOMContentLoaded único para inicializar todas las funcionalidades
+ */
+document.addEventListener('DOMContentLoaded', function() {
+
+      const summaryPanel = document.getElementById('summary-panel')?.querySelector('.grid');
+    if (summaryPanel) {
+        // Manipula el summaryPanel aquí
+        console.log('Summary panel encontrado:', summaryPanel);
+    } else {
+        console.error('El summary-panel o su hijo .grid no se encontraron.');
+    }
+  // Primero, configurar visibilidad de columnas
+  setupColumnVisibility();
+  
+  // Animaciones y efectos visuales iniciales
+  animateColumns();
+  
+  // Inicialización del tablero Kanban
+  initKanbanBoard();
+  
+   // Inicializar contadores y métricas con nuestra función unificada
+  actualizarContadoresTablero();
+  // Inicializar contadores y métricas
+  setupKPIPanel();
+  calcularTotalesColumna();
+  
+  // Configurar controles de usuario
+  setupColumnToggle();
+  setupBuscador();
+  
+  // Configurar observador de cambios
+  observarCambiosTablero();
+  
+  // Sistema de notificaciones
+  window.showToast = function(message, type = 'success') {
+    const toast = document.getElementById('toast-notification');
+    const toastText = document.getElementById('toast-text');
+    const toastIcon = document.getElementById('toast-icon');
+    
+    // Configurar contenido
+    toastText.textContent = message;
+    
+    // Configurar icono y colores según tipo
+    if (type === 'success') {
+      toastIcon.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-[color:var(--accent-green)] bg-[color:var(--state-success-bg)] rounded-lg';
+      toastIcon.innerHTML = '<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/></svg>';
+    } else if (type === 'error') {
+      toastIcon.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-[color:var(--accent-red)] bg-[color:var(--state-error-bg)] rounded-lg';
+      toastIcon.innerHTML = '<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.5 11.793-2.293 2.293a1 1 0 0 1-1.414 0L7.5 12.293a1 1 0 1 1 1.414-1.414L10 11.965l1.086-1.086a1 1 0 0 1 1.414 1.414Z"/></svg>';
+    } else if (type === 'info') {
+      toastIcon.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-[color:var(--accent-blue)] bg-[color:var(--state-info-bg)] rounded-lg';
+      toastIcon.innerHTML = '<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm1 13.5a1 1 0 0 1-2 0V7.5a1 1 0 0 1 2 0v6.5Zm-1-8.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>';
+    }
+    
+    // Mostrar notificación
+    toast.classList.remove('hidden');
+    toast.classList.add('animate__fadeInUp');
+    
+    // Ocultar después de 3 segundos
+    setTimeout(() => {
+      hideToast();
+    }, 3000);
+  };
+  
+  window.hideToast = function() {
+    const toast = document.getElementById('toast-notification');
+    toast.classList.remove('animate__fadeInUp');
+    toast.classList.add('animate__fadeOutDown');
+    setTimeout(() => {
+      toast.classList.add('hidden');
+      toast.classList.remove('animate__fadeOutDown');
+    }, 500);
+  };
+});
+</script>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  // Crear conexión
+  const socket = io();
+  
+  // Gestionar estados de conexión
+  socket.on('connect', () => {
+    console.log('Conectado al servidor de actualizaciones en tiempo real');
+    showToast('Conexión en tiempo real establecida', 'info');
+  });
+  
+  socket.on('disconnect', () => {
+    console.log('Desconectado del servidor');
+    showToast('Se perdió la conexión en tiempo real', 'error');
+  });
+  
+  // Escuchar actualizaciones
+  socket.on("estado_actualizado", (data) => {
+    console.log("Cambio en tiempo real:", data);
+    
+    // Destacar visualmente el cambio si se puede identificar la tarjeta
+    if (data.edp_id) {
+      const tarjeta = document.querySelector(`.kanban-item[data-id="${data.edp_id}"]`);
+      if (tarjeta) {
+        tarjeta.classList.add('highlight-update');
+        setTimeout(() => tarjeta.classList.remove('highlight-update'), 2000);
+      }
+    }
+    
+    // Actualizar todos los contadores
+    actualizarContadoresTablero();
+    
+    // Mostrar notificación
+    showToast(`EDP actualizado: ${data.edp_id || 'desconocido'}`, 'info');
+  });
+</script>
+
+
+{% endblock %}

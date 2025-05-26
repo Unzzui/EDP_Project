@@ -1,0 +1,483 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Controller{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+  /* Estilos para cabeceras ordenables */
+  .sortable {
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+  }
+  .sortable:hover {
+    background-color: var(--bg-highlight);
+  }
+  .sortable::after {
+    content: '↕';
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+    opacity: 0.5;
+  }
+  .sortable.sort-asc::after {
+    content: '↑';
+    opacity: 1;
+  }
+  .sortable.sort-desc::after {
+    content: '↓';
+    opacity: 1;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Panel principal con encabezado mejorado -->
+<div class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn">
+  <!-- Encabezado con acciones principales -->
+  <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
+    <div class="mb-4 md:mb-0">
+      <div class="flex items-center">
+        <div class="mr-3 p-2 bg-[color:var(--bg-card)] rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+            <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Dashboard Controller</h1>
+          <p class="text-[color:var(--text-secondary)] max-w-2xl">
+            Gestión y seguimiento de EDPs, con métricas y estado actualizado de proyectos.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="flex space-x-3">
+      <a href="{{ url_for('controller_bp.vista_kanban') }}"
+         class="flex items-center bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-xl text-sm border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg>
+        Vista Kanban
+      </a>
+      <button type="button" class="btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+        </svg>
+        Nuevo EDP
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros mejorados -->
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold">🔍 Filtros de Búsqueda</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <form method="GET" class="bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-5 mb-6 shadow-sm">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="form-group">
+        <label for="mes" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Mes</label>
+        <div class="relative">
+          <select name="mes" id="mes" class="form-select w-full pl-9">
+            <option value="">Todos</option>
+            {% for m in meses %}
+              <option value="{{ m }}" {% if filtros.mes == m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+          </select>
+          <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="encargado" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Encargado de Proyecto</label>
+        <div class="relative">
+          <select name="encargado" id="encargado" class="form-select w-full pl-9">
+            <option value="">Todos</option>
+            {% for j in encargados %}
+              <option value="{{ j }}" {% if filtros.encargado == j %}selected{% endif %}>{{ j }}</option>
+            {% endfor %}
+          </select>
+          <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="cliente" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Cliente</label>
+        <div class="relative">
+          <select name="cliente" id="cliente" class="form-select w-full pl-9">
+            <option value="">Todos</option>
+            {% for c in clientes %}
+              <option value="{{ c }}" {% if filtros.cliente == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+          <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1.581.814l-4.419-3.996-4.419 3.996A1 1 0 014 16V4z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="estado" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Estado</label>
+        <div class="relative">
+          <select name="estado" id="estado" class="form-select w-full pl-9">
+            <option value="">Pendientes</option>
+            {% for estado in ["revisión", "enviado", "pagado", "validado"] %}
+              <option value="{{ estado }}" {% if filtros.estado == estado %}selected{% endif %}>{{ estado }}</option>
+            {% endfor %}
+          </select>
+          <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 flex items-center justify-end">
+      <a href="{{ url_for('controller_bp.dashboard_controller') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] mr-4 transition-colors">
+        Limpiar filtros
+      </a>
+      <button type="submit" class="btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        </svg>
+        Aplicar filtros
+      </button>
+    </div>
+  </form>
+
+  <!-- Botón de acceso rápido a gestión por encargado -->
+  {% if filtros.encargado %}
+    <div class="mb-6">
+      <a href="{{ url_for('controller_bp.vista_encargado', nombre=filtros.encargado) }}"
+         class="inline-flex items-center px-4 py-2 bg-[color:var(--accent-blue-dark)] bg-opacity-15 text-[color:var(--text-primary)] hover:bg-opacity-25 transition-all">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+        </svg>
+        Ver gestión detallada de {{ filtros.encargado }}
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- KPIs GLOBALES -->
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold">📊 KPIs Globales</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-5 text-sm mb-8">
+    <div class="metric-card p-5">
+      <p class="metric-label">Total EDP</p>
+      <p class="metric-value">{{ total_edp_global }}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Validados</p>
+      <p class="metric-value">{{ total_validados_global }}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">% validados ≤30 días</p>
+      <p class="metric-value text-[color:var(--accent-green)]">{{ porcentaje_validacion_rapida_global }}%</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Prom. días espera (global)</p>
+      <p class="metric-value">{{ dias_espera_promedio_global }}</p>
+    </div>
+  </div>
+
+  <!-- Meta Financiera Global -->
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold">🎯 Meta Financiera Global</h2>
+    <div class="section-line"></div>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-sm mb-8">
+    <div class="metric-card p-5">
+      <p class="metric-label">Meta Total</p>
+      <p class="metric-value text-[color:var(--accent-amber)]">${{ "{:,.0f}".format(meta_global).replace(",",".") }}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Pagado</p>
+      <p class="metric-value text-[color:var(--accent-green)]">${{ "{:,.0f}".format(total_pagado_global).replace(",",".")  }}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Avance</p>
+      <div class="flex items-center">
+        <p class="metric-value text-[color:var(--accent-blue)] mr-3">{{ avance_global }}%</p>
+        <div class="flex-1">
+          <div class="h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-[color:var(--accent-blue-dark)] to-[color:var(--accent-blue)]" 
+                 style="width: {{ avance_global }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+ <!-- Meta por Encargado -->
+{% if filtros.encargado %}
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold">📌 Meta de {{ filtros.encargado }}</h2>
+    <div class="section-line"></div>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-5 text-sm mb-8">
+    <div class="metric-card p-5">
+      <p class="metric-label">Meta Individual</p>
+      <p class="metric-value text-[color:var(--accent-amber)]">${{ "{:,.0f}".format(meta_por_encargado).replace(",", ".") }}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Pagado</p>
+      <p class="metric-value text-[color:var(--accent-green)]">${{ "{:,.0f}".format(monto_pagado_encargado).replace(",", ".") }}</p>
+    </div>
+
+    <div class="metric-card p-5">
+      <p class="metric-label">Pendiente</p>
+      <p class="metric-value text-[color:var(--accent-orange)]">
+    ${{ "{:,.0f}".format(monto_pendiente_encargado | float).replace(",", ".") }}      </p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Avance</p>
+      <div class="flex items-center">
+        <p class="metric-value text-[color:var(--accent-blue)] mr-3">{{ avance_encargado }}%</p>
+        <div class="flex-1">
+          <div class="h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-[color:var(--accent-blue-dark)] to-[color:var(--accent-blue)]" 
+                 style="width: {{ avance_encargado }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+  <!-- KPIs DEL FILTRO -->
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold">🔎 KPIs del Filtro Actual</h2>
+    <div class="section-line"></div>
+  </div>
+  
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-5 text-sm mb-8">
+    <div class="metric-card p-5">
+      <p class="metric-label">EDP en vista</p>
+      <p class="metric-value">{{ total_filtrados }}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">EDP críticos</p>
+      <p class="metric-value text-[color:var(--accent-red)]">{{ total_criticos_filtrados }}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Prom. días espera (filtro)</p>
+      <p class="metric-value">{{ dias_espera_promedio_filtrado }}</p>
+    </div>
+    
+    <div class="metric-card p-5">
+      <p class="metric-label">Prom. días hábiles</p>
+      <p class="metric-value">{{ dias_habiles_promedio_filtrado }}</p>
+    </div>
+  </div>
+
+  <!-- Tabla de EDPs -->
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold">📋 Listado de EDPs</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <!-- Tabla con ordenamiento -->
+  <div class="table-container">
+    <table id="edp-table" class="data-table">
+      <thead>
+     <tr>
+    <th class="sortable" data-sort="proyecto">Proyecto</th>
+    <th class="sortable" data-sort="jefe">Jefe de Proyecto</th>
+    <th class="sortable" data-sort="cliente">Cliente</th>
+    <th class="sortable" data-sort="mes">Mes</th>
+    <th class="sortable" data-sort="edp">N° EDP</th>
+    <th class="sortable" data-sort="n-conformidad">N° Conf.</th>   {# NUEVO #}
+    <th class="sortable" data-sort="estado">Estado</th>
+    <th class="sortable sort-desc text-center" data-sort="dias">Días</th>
+    <th class="sortable text-center" data-sort="dias-habiles">Días Hábiles</th>
+    <th class="sortable text-right" data-sort="monto-propuesto">M. Propuesto</th>  {# NUEVO #}
+    <th class="sortable text-right" data-sort="monto-aprobado">M. Aprobado</th>    {# RENOMBRADO #}
+    <th class="sortable text-center" data-sort="critico">Crítico</th>
+    <th>Observaciones</th>
+    <th></th>
+  </tr>
+      </thead>
+      <tbody>
+        {% for r in registros %}
+        <tr  class="{% if r['Crítico'] %}data-table-row-critical{% elif r['Estado'] == 'validado' %}data-table-row-validated{% endif %}"
+     data-dias="{{ r['Días Espera'] }}"
+     data-dias-habiles="{{ r['Días Hábiles'] }}"
+     data-monto-propuesto="{{ r['Monto Propuesto'] }}"      {# NUEVO #}
+     data-monto-aprobado="{{ r['Monto Aprobado'] }}"        {# NUEVO #}
+     data-critico="{{ 1 if r['Crítico'] else 0 }}"
+     data-estado="{{ r['Estado'] }}"
+     data-proyecto="{{ r['Proyecto'] }}"
+     data-jefe="{{ r['Jefe de Proyecto'] }}"
+     data-cliente="{{ r['Cliente'] }}"
+     data-mes="{{ r['Mes'] }}"
+     data-edp="{{ r['N° EDP'] }}"
+     data-n-conformidad="{{ r['N° Conformidad'] }}">        {# NUEVO #}
+
+  <td class="table-highlight">{{ r['Proyecto'] }}</td>
+  <td>{{ r['Jefe de Proyecto'] }}</td>
+  <td>{{ r['Cliente'] }}</td>
+  <td>{{ r['Mes'] }}</td>
+  <td><span class="text-[color:var(--accent-blue)]">EDP-{{ r['N° EDP'] }}</span></td>
+
+  <td>{{ r['N° Conformidad'] or '—' }}</td>                 {# NUEVO #}
+
+  <td>
+    <span class="estado-pill estado-{{ r['Estado']|lower }}">
+      {{ r['Estado'] }}
+    </span>
+  </td>
+
+  <td class="text-center">
+    <span class="{% if r['Días Espera']|int > 30 %}text-[color:var(--accent-red)]
+                 {% elif r['Días Espera']|int < 30 %}text-[color:var(--text-primary)]{% endif %} font-medium">
+      {{ r['Días Espera'] }}
+    </span>
+  </td>
+
+  <td class="text-center">{{ r['Días Hábiles'] }}</td>
+
+  <td class="text-right table-amount">
+    ${{ "{:,.0f}".format(r["Monto Propuesto"]|float).replace(",",".") }}
+  </td>                                                      {# NUEVO #}
+
+  <td class="text-right table-amount">
+    ${{ "{:,.0f}".format(r["Monto Aprobado"]|float).replace(",",".") }}
+  </td>
+
+  <td class="text-center">
+    {% if r['Crítico'] %}
+      <span class="px-2 py-1 rounded-full bg-[color:var(--state-error-bg)] text-[color:var(--accent-red)] text-xs font-bold flex items-center justify-center">
+        <!-- icono -->
+        Sí
+      </span>
+    {% else %}
+      <span class="text-[color:var(--text-secondary)]">—</span>
+    {% endif %}
+  </td>
+
+  <td title="{{ r['Observaciones'] }}">
+    {{ r['Observaciones'][:40] }}{% if r['Observaciones']|length > 40 %}...{% endif %}
+  </td>
+
+  <td>
+    <a href="{{ url_for('controller_bp.detalle_edp', n_edp=r['N° EDP']) }}" class="action-link">
+      Editar
+    </a>
+  </td>
+</tr>
+
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Script para ordenar la tabla -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const table = document.getElementById('edp-table');
+      const headers = table.querySelectorAll('th.sortable');
+      const tableBody = table.querySelector('tbody');
+      const rows = Array.from(tableBody.querySelectorAll('tr'));
+      
+      // Por defecto, ordenar por días en orden descendente
+      sortTable('dias', 'desc');
+      
+      // Agregar eventos de clic a los encabezados para ordenar
+      headers.forEach(header => {
+        header.addEventListener('click', () => {
+          const sortKey = header.getAttribute('data-sort');
+          const currentDirection = header.classList.contains('sort-asc') ? 'asc' : 
+                                  header.classList.contains('sort-desc') ? 'desc' : 'none';
+          
+          // Eliminar las clases de ordenamiento de todos los encabezados
+          headers.forEach(h => {
+            h.classList.remove('sort-asc', 'sort-desc');
+          });
+          
+          // Establecer dirección de ordenamiento
+          let newDirection = 'asc';
+          if (currentDirection === 'asc') {
+            newDirection = 'desc';
+          } else if (currentDirection === 'desc') {
+            newDirection = 'asc';
+          }
+          
+          // Aplicar clase de ordenamiento al encabezado actual
+          header.classList.add(`sort-${newDirection}`);
+          
+          // Ordenar la tabla
+          sortTable(sortKey, newDirection);
+        });
+      });
+      
+      // Función para ordenar la tabla
+      function sortTable(sortKey, direction) {
+        rows.sort((rowA, rowB) => {
+          let valueA = rowA.getAttribute(`data-${sortKey}`);
+          let valueB = rowB.getAttribute(`data-${sortKey}`);
+          
+          // Convertir valores a números si es necesario
+    // Convertir valores a números si es necesario
+          if (['dias', 'dias-habiles', 'monto-propuesto', 'monto-aprobado', 'edp', 'critico'].includes(sortKey)) {
+            valueA = parseFloat(valueA) || 0;
+            valueB = parseFloat(valueB) || 0;
+          }
+
+          
+          // Comparar valores
+          if (valueA < valueB) {
+            return direction === 'asc' ? -1 : 1;
+          }
+          if (valueA > valueB) {
+            return direction === 'asc' ? 1 : -1;
+          }
+          return 0;
+        });
+        
+        // Reordenar el DOM
+        rows.forEach(row => {
+          tableBody.appendChild(row);
+        });
+        
+        // Aplicar efectos visuales para mostrar el cambio
+        rows.forEach((row, index) => {
+          row.style.opacity = '0';
+          setTimeout(() => {
+            row.style.opacity = '1';
+            row.style.transition = 'opacity 0.15s ease-in';
+          }, index * 20);
+        });
+      }
+    });
+  </script>
+</div>
+{% endblock %}

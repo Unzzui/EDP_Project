@@ -1,0 +1,21 @@
+{% extends "base.html" %} {% block title %}Nuevo EDP{% endblock %} {% block
+content %}
+<h1 class="text-xl font-bold mb-4">Nuevo EDP</h1>
+
+<form method="POST">
+  {{ form.hidden_tag() }}
+  <div class="grid grid-cols-2 gap-4 text-sm">
+    {% for field in form if field.name != 'submit' %}
+    <div>
+      {{ field.label }}<br />
+      {{ field(class="w-full p-1 border rounded") }} {% if field.errors %}
+      <p class="text-red-500">{{ field.errors[0] }}</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="mt-4">
+    {{ form.submit(class="bg-blue-600 text-white px-4 py-2 rounded") }}
+  </div>
+</form>
+{% endblock %}
