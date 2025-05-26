@@ -6,3 +6,4 @@ venv/
 edp_mvp/app/keys/*.json
 edp_mvp/app/keys/*.json
 .env
+.env
