@@ -4,3 +4,4 @@ app/config.py
 venv/
 .env
 edp_mvp/app/keys/*.json
+edp_mvp/app/keys/*.json
