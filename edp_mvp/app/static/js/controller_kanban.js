@@ -145,9 +145,11 @@ function setupBatchLoading() {
   // Aplicar a cada columna
   document.querySelectorAll('.kanban-column').forEach(column => {
     const list = column.querySelector('.kanban-list');
+    if (!list) return; // Validar que existe la lista
+    
     const allItems = Array.from(list.querySelectorAll('.kanban-item'));
     
-    // Si hay suficientes elementos para justificar batch loading
+    // Si hay suficientes elementos para justificar carga por lotes
     if (allItems.length > INITIAL_BATCH_SIZE) {
       // Ocultar elementos adicionales
       allItems.forEach((item, index) => {
@@ -160,16 +162,23 @@ function setupBatchLoading() {
       // Crear botón "Cargar más"
       const loadMoreBtn = document.createElement('button');
       loadMoreBtn.className = 'w-full py-2 mt-3 text-xs text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] rounded-md transition-colors flex items-center justify-center gap-2';
+      
+      // Guardar el número total de elementos restantes
+      const remainingCount = allItems.length - INITIAL_BATCH_SIZE;
+      
       loadMoreBtn.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
-        Mostrar más (${allItems.length - INITIAL_BATCH_SIZE})
+        <span class="load-more-count">Mostrar más (${remainingCount})</span>
       `;
       
       // Añadir evento para cargar más
       loadMoreBtn.addEventListener('click', function() {
-        const hiddenItems = list.querySelectorAll('.kanban-item[data-batch-hidden="true"]');
+        const parentList = this.closest('.kanban-list');
+        if (!parentList) return; // Validar que encontramos la lista padre
+        
+        const hiddenItems = parentList.querySelectorAll('.kanban-item[data-batch-hidden="true"]');
         
         // Mostrar el siguiente lote
         Array.from(hiddenItems).slice(0, BATCH_SIZE).forEach((item, index) => {
@@ -182,11 +191,25 @@ function setupBatchLoading() {
         });
         
         // Actualizar o quitar botón
-        const remainingHidden = list.querySelectorAll('.kanban-item[data-batch-hidden="true"]').length;
-        if (remainingHidden > 0) {
-          this.querySelector('span').textContent = `Mostrar más (${remainingHidden})`;
-        } else {
+        const remainingHidden = parentList.querySelectorAll('.kanban-item[data-batch-hidden="true"]').length;
+        
+        // Importante: Usamos una clase específica para el elemento del contador
+        const countElement = this.querySelector('.load-more-count');
+        
+        if (remainingHidden > 0 && countElement) {
+          // Actualizar texto con contador
+          countElement.textContent = `Mostrar más (${remainingHidden})`;
+        } else if (remainingHidden === 0) {
+          // No hay más elementos para mostrar, eliminar el botón
           this.remove();
+        } else {
+          // Si no encontramos el elemento del contador, actualizar todo el HTML
+          this.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+            <span class="load-more-count">Mostrar más (${remainingHidden})</span>
+          `;
         }
       });
       
@@ -195,7 +218,6 @@ function setupBatchLoading() {
     }
   });
 }
-
 
 
 // Sistema de notificaciones mejorado
