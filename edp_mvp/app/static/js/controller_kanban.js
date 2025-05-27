@@ -5,6 +5,7 @@
 
 // Esperar a que el DOM esté completamente cargado
 document.addEventListener('DOMContentLoaded', function() {
+
   // Inicializar todas las funcionalidades
 
     initSocketIO(); 
@@ -19,7 +20,305 @@ document.addEventListener('DOMContentLoaded', function() {
   observarCambiosTablero();
   setupSocketConnection();
   actualizarContenidoTarjeta();
+setupEnhancedToast();
+setupProgressIndicator();
+initLazyLoading();
+setupValidadosToggle();
+setupBatchLoading();
+// Función para inicializar el lazy loading
+function initLazyLoading() {
+  console.log("Inicializando lazy loading para tarjetas Kanban");
   
+  // Asegurarse de que las clases necesarias estén definidas en CSS
+  const style = document.createElement('style');
+  style.textContent = `
+    .lazy-hidden {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    
+    .lazy-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Crear el observer con configuración optimizada
+  const lazyObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const card = entry.target;
+        console.log("Revelando tarjeta:", card.dataset.id);
+        
+        // Aplicar animación más suave
+        setTimeout(() => {
+          card.classList.remove('lazy-hidden');
+          card.classList.add('lazy-visible');
+        }, 50 * (parseInt(card.dataset.lazyIndex) || 0)); // Escalonamiento sutil
+        
+        // Dejar de observar
+        lazyObserver.unobserve(card);
+      }
+    });
+  }, {
+    root: null,
+    rootMargin: '200px', // Cargar con más anticipación
+    threshold: 0.1
+  });
+  
+  // Aplicar lazy loading a todas las columnas secuencialmente
+  document.querySelectorAll('.kanban-column').forEach((column, columnIndex) => {
+    // Obtener todas las tarjetas de esta columna
+    const cards = column.querySelectorAll('.kanban-item');
+    
+    // Aplicar lazy loading a tarjetas después de un cierto número en cada columna
+    const visibleThreshold = 3; // Primeras 3 tarjetas visibles por columna
+    
+    cards.forEach((card, cardIndex) => {
+      if (cardIndex >= visibleThreshold) {
+        // Guardar índice para animación escalonada
+        card.dataset.lazyIndex = cardIndex - visibleThreshold;
+        
+        // Aplicar clase para ocultar inicialmente
+        card.classList.add('lazy-hidden');
+        
+        // Registrar para observación
+        lazyObserver.observe(card);
+      }
+    });
+  });
+}
+
+// Llamar a la función cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+  // Dar tiempo para que se renderice la UI inicial
+  setTimeout(initLazyLoading, 300);
+});
+
+
+function setupValidadosToggle() {
+  const toggleBtn = document.getElementById('toggle-validados-antiguos');
+  
+  if (toggleBtn) {
+    // Agregar tooltip más descriptivo
+    toggleBtn.setAttribute('title', 'Los EDPs validados hace más de 10 días son ocultados automáticamente para mejorar el rendimiento');
+    
+    // Mejorar visualmente el contador
+    const totalOcultos = parseInt(document.getElementById('total-validados-ocultos')?.textContent || '0');
+    
+    if (totalOcultos > 0) {
+      // Crear indicador más visible
+      const indicador = document.createElement('div');
+      indicador.className = 'fixed bottom-16 left-4 bg-[color:var(--bg-card)] shadow-lg rounded-lg p-3 border border-[color:var(--border-color)] z-40';
+      indicador.innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="flex flex-col">
+            <span class="text-xs text-[color:var(--text-secondary)]">EDPs antiguos ocultos</span>
+            <span class="font-bold text-lg">${totalOcultos}</span>
+          </div>
+          <button id="quick-show-validados" class="btn-outline text-xs py-1">
+            Mostrar
+          </button>
+        </div>
+      `;
+      
+      document.body.appendChild(indicador);
+      
+      // Configurar botón rápido
+      document.getElementById('quick-show-validados').addEventListener('click', () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('mostrar_validados_antiguos', 'true');
+        window.location.href = url.toString();
+      });
+    }
+  }
+}
+
+// Configuración para cargar tarjetas Kanban por lotes
+function setupBatchLoading() {
+  // Definir constantes
+  const INITIAL_BATCH_SIZE = 10; // Tarjetas iniciales por columna
+  const BATCH_SIZE = 15;         // Tarjetas por carga adicional
+  
+  // Aplicar a cada columna
+  document.querySelectorAll('.kanban-column').forEach(column => {
+    const list = column.querySelector('.kanban-list');
+    const allItems = Array.from(list.querySelectorAll('.kanban-item'));
+    
+    // Si hay suficientes elementos para justificar batch loading
+    if (allItems.length > INITIAL_BATCH_SIZE) {
+      // Ocultar elementos adicionales
+      allItems.forEach((item, index) => {
+        if (index >= INITIAL_BATCH_SIZE) {
+          item.classList.add('hidden');
+          item.setAttribute('data-batch-hidden', 'true');
+        }
+      });
+      
+      // Crear botón "Cargar más"
+      const loadMoreBtn = document.createElement('button');
+      loadMoreBtn.className = 'w-full py-2 mt-3 text-xs text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] rounded-md transition-colors flex items-center justify-center gap-2';
+      loadMoreBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+        Mostrar más (${allItems.length - INITIAL_BATCH_SIZE})
+      `;
+      
+      // Añadir evento para cargar más
+      loadMoreBtn.addEventListener('click', function() {
+        const hiddenItems = list.querySelectorAll('.kanban-item[data-batch-hidden="true"]');
+        
+        // Mostrar el siguiente lote
+        Array.from(hiddenItems).slice(0, BATCH_SIZE).forEach((item, index) => {
+          setTimeout(() => {
+            item.classList.remove('hidden');
+            item.removeAttribute('data-batch-hidden');
+            item.classList.add('animate__animated', 'animate__fadeInUp');
+            setTimeout(() => item.classList.remove('animate__animated', 'animate__fadeInUp'), 500);
+          }, index * 50); // Añadir pequeño retraso entre elementos para efecto cascada
+        });
+        
+        // Actualizar o quitar botón
+        const remainingHidden = list.querySelectorAll('.kanban-item[data-batch-hidden="true"]').length;
+        if (remainingHidden > 0) {
+          this.querySelector('span').textContent = `Mostrar más (${remainingHidden})`;
+        } else {
+          this.remove();
+        }
+      });
+      
+      // Añadir botón al final de la lista
+      list.appendChild(loadMoreBtn);
+    }
+  });
+}
+
+
+
+// Sistema de notificaciones mejorado
+function setupEnhancedToast() {
+  // Verificar si ya existe
+  if (window.showToast) return;
+
+  // Crear el contenedor de notificaciones si no existe
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.className = 'fixed bottom-4 right-4 flex flex-col gap-3 z-50';
+    document.body.appendChild(toastContainer);
+  }
+
+  // Implementar función mejorada
+  window.showToast = function(message, type = 'success', duration = 3000) {
+    const toast = document.createElement('div');
+    toast.className = `flex items-center p-4 mb-1 animate__animated animate__fadeInUp shadow-lg rounded-lg max-w-xs`;
+
+    // Configurar estilo según tipo
+    switch (type) {
+      case 'success':
+        toast.classList.add('bg-green-100', 'border-l-4', 'border-green-500', 'text-green-700');
+        break;
+      case 'error':
+        toast.classList.add('bg-red-100', 'border-l-4', 'border-red-500', 'text-red-700');
+        break;
+      case 'info':
+        toast.classList.add('bg-blue-100', 'border-l-4', 'border-blue-500', 'text-blue-700');
+        break;
+      case 'warning':
+        toast.classList.add('bg-yellow-100', 'border-l-4', 'border-yellow-500', 'text-yellow-700');
+        break;
+    }
+
+    // Contenido
+    toast.innerHTML = `
+      <div class="flex-shrink-0 mr-3">
+        ${type === 'success' ? '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>' : ''}
+        ${type === 'error' ? '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>' : ''}
+        ${type === 'info' ? '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-1 9a1 1 0 100-2 1 1 0 000 2zm0 0V8a1 1 0 011-1h1a1 1 0 110 2h-1v4a1 1 0 01-1 1z" clip-rule="evenodd"></path></svg>' : ''}
+        ${type === 'warning' ? '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>' : ''}
+      </div>
+      <div>${message}</div>
+      <button class="ml-auto text-gray-400 hover:text-gray-900" onclick="this.parentElement.remove()">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    `;
+
+    // Agregar al contenedor
+    toastContainer.appendChild(toast);
+
+    // Remover después del tiempo especificado
+    setTimeout(() => {
+      toast.classList.replace('animate__fadeInUp', 'animate__fadeOutDown');
+      setTimeout(() => toast.remove(), 500);
+    }, duration);
+  };
+}
+
+function setupProgressIndicator() {
+  // Crear elemento para la barra de progreso
+  const progressContainer = document.createElement('div');
+  progressContainer.className = 'fixed top-0 left-0 w-full z-50';
+  progressContainer.innerHTML = `<div id="loading-progress-bar" class="h-1 bg-[color:var(--accent-blue)] transform scale-x-0 origin-left transition-transform duration-300"></div>`;
+  document.body.appendChild(progressContainer);
+
+  // Funciones para controlar el progreso
+  window.showProgress = function() {
+    const bar = document.getElementById('loading-progress-bar');
+    bar.style.transform = 'scaleX(0.3)';
+    setTimeout(() => { bar.style.transform = 'scaleX(0.65)'; }, 500);
+    setTimeout(() => { bar.style.transform = 'scaleX(0.8)'; }, 1200);
+  };
+  
+  window.completeProgress = function() {
+    const bar = document.getElementById('loading-progress-bar');
+    bar.style.transform = 'scaleX(1)';
+    setTimeout(() => { bar.style.transform = 'scaleX(0)'; }, 700);
+  };
+}
+      const lazyLoadObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const item = entry.target;
+        // Quitar la clase de oculto y animar la entrada
+        item.classList.remove('opacity-0', 'translate-y-4');
+        item.classList.add('animate__fadeIn');
+        observer.unobserve(item);
+      }
+    });
+  }, {
+    root: null,
+    rootMargin: '100px',
+    threshold: 0.1
+  });
+  
+  // Aplicar lazy loading a todos los kanban items
+  document.querySelectorAll('.kanban-item').forEach((item, index) => {
+    // Solo aplicar lazy loading después de los primeros 12 items (los más visibles)
+    if (index > 11) {
+      item.classList.add('opacity-0', 'translate-y-4', 'transition-all', 'duration-300');
+      lazyLoadObserver.observe(item);
+    }
+  });
+  
+  // Botón para mostrar/ocultar validados antiguos
+  const toggleBtn = document.getElementById('toggle-validados-antiguos');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+      // Obtener URL actual y parámetros
+      const url = new URL(window.location.href);
+      const mostrarActual = url.searchParams.get('mostrar_validados_antiguos') === 'true';
+      
+      // Invertir valor
+      url.searchParams.set('mostrar_validados_antiguos', !mostrarActual);
+      
+      // Redirigir manteniendo todos los filtros
+      window.location.href = url.toString();
+    });
+  }
   // Sistema de notificaciones globales
   window.showToast = function(message, type = 'success') {
     const toast = document.getElementById('toast-notification');

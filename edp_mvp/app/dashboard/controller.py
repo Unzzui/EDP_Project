@@ -621,99 +621,174 @@ def ver_log_edp(n_edp):
     
 @controller_bp.route("/controller/kanban")
 def vista_kanban():
-    # Read more columns (A-T) to match other routes
-    df = read_sheet("edp!A1:T")
-    df = calcular_dias_espera(df)
-    
-    # Obtener parámetros de filtro
-    mes = request.args.get("mes")
-    encargado = request.args.get("encargado")
-    cliente = request.args.get("cliente")
-    estado_detallado = request.args.get("estado_detallado")
+    """
+    Vista del tablero Kanban con optimizaciones para grandes conjuntos de datos:
+    - Filtrado inteligente de registros antiguos
+    - Soporte para lazy loading
+    - Métricas de eficiencia de datos
+    - Procesamiento optimizado en un solo bucle
+    """
+    try:
+        # Leer datos completos
+        df = read_sheet("edp!A1:T")
+        df = calcular_dias_espera(df)
+        
+        # Convertir fechas explícitamente para evitar problemas de formato
+        date_columns = ["Fecha Emisión", "Fecha Envío al Cliente", "Fecha Conformidad", "Fecha Estimada de Pago"]
+        for col in date_columns:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors='coerce')
+        
+        # Obtener parámetros de filtro
+        mes = request.args.get("mes")
+        encargado = request.args.get("encargado")
+        cliente = request.args.get("cliente")
+        estado_detallado = request.args.get("estado_detallado")
+        mostrar_validados_antiguos = request.args.get("mostrar_validados_antiguos", "false").lower() == "true"
 
-    # Aplicar filtros si existen
-    if mes:
-        df = df[df["Mes"] == mes]
-    if encargado:
-        df = df[df["Jefe de Proyecto"] == encargado]
-    if cliente:
-        df = df[df["Cliente"] == cliente]
-    if estado_detallado:
-        df = df[df["Estado Detallado"] == estado_detallado]
+        # Capturar tamaño original para métricas
+        total_registros_original = len(df)
+        
+        # Aplicar filtros si existen
+        if mes:
+            df = df[df["Mes"] == mes]
+        if encargado:
+            df = df[df["Jefe de Proyecto"] == encargado]
+        if cliente:
+            df = df[df["Cliente"] == cliente]
+        if estado_detallado:
+            df = df[df["Estado Detallado"] == estado_detallado]
 
-    # Convert numeric columns for consistent calculations
-    for col in ["Monto Propuesto", "Monto Aprobado"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
-    
-    # Agrupar por estado (SOLO UN BUCLE)
-    estados = ["revisión", "enviado", "pagado", "validado"]
-    columnas = {estado: [] for estado in estados}
-    
-    # Un solo bucle que procesa todas las tarjetas con sus campos adicionales
-    for _, row in df.iterrows():
-        estado = row["Estado"]
-        if estado in columnas:
-            # Crear el diccionario base
-            item = row.to_dict()
-            
-            # Procesar fechas para formato adecuado
-            try:
-                if not pd.isna(row.get("Fecha Estimada de Pago")):
-                    item["dias_para_pago"] = (row["Fecha Estimada de Pago"] - datetime.today()).days
-                else:
-                    item["dias_para_pago"] = None
-            except Exception as e:
-                item["dias_para_pago"] = None
-                print(f"Error calculando dias_para_pago: {e}")
+        # Filtrar EDPs validados antiguos (más de 10 días desde conformidad)
+        fecha_limite = datetime.now() - pd.Timedelta(days=10)
+        
+        # Contar cuántos validados antiguos hay antes de filtrar
+        validados_antiguos = df[
+            (df["Estado"] == "validado") & 
+            (pd.notna(df["Fecha Conformidad"])) & 
+            (df["Fecha Conformidad"] < fecha_limite)
+        ]
+        total_validados_antiguos = len(validados_antiguos)
+        
+        # Filtrar solo si no se solicitó mostrar todos
+        if not mostrar_validados_antiguos:
+            df = df[~(
+                (df["Estado"] == "validado") & 
+                (pd.notna(df["Fecha Conformidad"])) & 
+                (df["Fecha Conformidad"] < fecha_limite)
+            )]
+        
+        # Métricas para optimización
+        total_registros_filtrados = len(df)
+        porcentaje_reduccion = ((total_registros_original - total_registros_filtrados) / total_registros_original * 100) if total_registros_original > 0 else 0
+        
+        # Convert numeric columns for consistent calculations
+        for col in ["Monto Propuesto", "Monto Aprobado"]:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+        
+        # Agrupar por estado (SOLO UN BUCLE)
+        estados = ["revisión", "enviado", "pagado", "validado"]
+        columnas = {estado: [] for estado in estados}
+        
+        # Variables para análisis de carga de datos
+        total_items = 0
+        items_por_estado = {}
+        
+        # Un solo bucle que procesa todas las tarjetas con sus campos adicionales
+        for _, row in df.iterrows():
+            estado = row["Estado"]
+            if estado in columnas:
+                # Crear el diccionario base con los campos necesarios
+                item = row.to_dict()
+                total_items += 1
+                items_por_estado[estado] = items_por_estado.get(estado, 0) + 1
                 
-            # Añadir diferencia entre monto propuesto y aprobado
-            try:
-                if not pd.isna(row.get("Monto Propuesto")) and not pd.isna(row.get("Monto Aprobado")):
-                    item["diferencia_montos"] = row["Monto Aprobado"] - row["Monto Propuesto"]
-                    item["porcentaje_diferencia"] = (item["diferencia_montos"] / row["Monto Propuesto"] * 100) if row["Monto Propuesto"] > 0 else 0
-                else:
+                # Añadir campo para optimización de lazy loading
+                item["lazy_index"] = items_por_estado[estado]
+                
+                # Procesar fechas para formato adecuado
+                try:
+                    if not pd.isna(row.get("Fecha Estimada de Pago")):
+                        item["dias_para_pago"] = (row["Fecha Estimada de Pago"] - datetime.today()).days
+                    else:
+                        item["dias_para_pago"] = None
+                except Exception as e:
+                    item["dias_para_pago"] = None
+                    print(f"Error calculando dias_para_pago: {e}")
+                    
+                # Añadir diferencia entre monto propuesto y aprobado
+                try:
+                    if not pd.isna(row.get("Monto Propuesto")) and not pd.isna(row.get("Monto Aprobado")):
+                        item["diferencia_montos"] = row["Monto Aprobado"] - row["Monto Propuesto"]
+                        item["porcentaje_diferencia"] = (item["diferencia_montos"] / row["Monto Propuesto"] * 100) if row["Monto Propuesto"] > 0 else 0
+                    else:
+                        item["diferencia_montos"] = 0
+                        item["porcentaje_diferencia"] = 0
+                except Exception as e:
                     item["diferencia_montos"] = 0
                     item["porcentaje_diferencia"] = 0
-            except Exception as e:
-                item["diferencia_montos"] = 0
-                item["porcentaje_diferencia"] = 0
-                print(f"Error calculando diferencia_montos: {e}")
-            
-            # Verificar si es crítico para destacarlo visualmente
-            if "Crítico" in row and row["Crítico"]:
-                item["es_critico"] = True
-            else:
-                item["es_critico"] = False
+                    print(f"Error calculando diferencia_montos: {e}")
                 
-            # Agregar una sola vez a la columna correspondiente
-            columnas[estado].append(item)
+                # Clasificación de validados antiguos vs nuevos (para destacar visualmente)
+                if estado == "validado" and not pd.isna(row.get("Fecha Conformidad")):
+                    dias_desde_conformidad = (datetime.now() - row["Fecha Conformidad"]).days
+                    item["antiguedad_validado"] = "antiguo" if dias_desde_conformidad > 10 else "reciente"
+                
+                # Verificar si es crítico para destacarlo visualmente
+                item["es_critico"] = bool(row.get("Crítico", False))
+                    
+                # Agregar una sola vez a la columna correspondiente
+                columnas[estado].append(item)
 
-    # Listas únicas para los dropdowns de filtros
-    meses_disponibles = sorted(df["Mes"].dropna().unique())
-    encargados_disponibles = sorted(df["Jefe de Proyecto"].dropna().unique())
-    clientes_disponibles = sorted(df["Cliente"].dropna().unique())
-    estados_detallados = sorted(df["Estado Detallado"].dropna().unique()) if "Estado Detallado" in df.columns else []
+        # Listas únicas para los dropdowns de filtros
+        meses_disponibles = sorted(df["Mes"].dropna().unique())
+        encargados_disponibles = sorted(df["Jefe de Proyecto"].dropna().unique())
+        clientes_disponibles = sorted(df["Cliente"].dropna().unique())
+        estados_detallados = sorted(df["Estado Detallado"].dropna().unique()) if "Estado Detallado" in df.columns else []
+        
+        # Clean NaT values before sending to template - use helper function
+        for estado, edps in columnas.items():
+            for edp in edps:
+                clean_nat_values(edp)
+        
+        # Análisis de distribución de datos para optimización
+        distribucion_cards = {estado: len(items) for estado, items in columnas.items()}
+        
+        # Estadísticas globales para toma de decisiones
+        estadisticas = {
+            "total_registros": total_registros_original,
+            "registros_filtrados": total_registros_filtrados,
+            "porcentaje_reduccion": round(porcentaje_reduccion, 1),
+            "distribucion_cards": distribucion_cards,
+            "total_validados_antiguos": total_validados_antiguos
+        }
+                
+        return render_template(
+            "controller/controller_kanban.html",
+            columnas=columnas,
+            filtros={
+                "mes": mes, 
+                "encargado": encargado, 
+                "cliente": cliente,
+                "estado_detallado": estado_detallado,
+                "mostrar_validados_antiguos": mostrar_validados_antiguos
+            },
+            meses=meses_disponibles,
+            encargados=encargados_disponibles,
+            clientes=clientes_disponibles,
+            estados_detallados=estados_detallados,
+            now=datetime.now(),
+            total_validados_antiguos=total_validados_antiguos,
+            estadisticas=estadisticas
+        )
     
-    # Clean NaT values before sending to template - use helper function
-    for estado, edps in columnas.items():
-        for edp in edps:
-            clean_nat_values(edp)
-            
-    return render_template(
-        "controller/controller_kanban.html",
-        columnas=columnas,
-        filtros={
-            "mes": mes, 
-            "encargado": encargado, 
-            "cliente": cliente,
-            "estado_detallado": estado_detallado
-        },
-        meses=meses_disponibles,
-        encargados=encargados_disponibles,
-        clientes=clientes_disponibles,
-        estados_detallados=estados_detallados,
-        now=datetime.now()
-    )
+    except Exception as e:
+        import traceback
+        print(f"Error en vista_kanban: {str(e)}")
+        print(traceback.format_exc())
+        flash(f"Error al cargar tablero Kanban: {str(e)}", "error")
+        return redirect(url_for("controller_bp.dashboard_controller"))
 
 
 @controller_bp.route("/controller/kanban/update_estado", methods=["POST"])
