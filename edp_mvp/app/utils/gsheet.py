@@ -70,6 +70,8 @@ def son_diferentes(v1, v2):
     
     # Para otros tipos, comparación insensible a mayúsculas/minúsculas
     return str_v1.lower() != str_v2.lower()
+
+
 def validar_transicion(estado_actual, nuevo_estado):
     if nuevo_estado not in ALLOWED.get(estado_actual, []):
         raise ValueError(f"Transición {estado_actual} → {nuevo_estado} no permitida")
@@ -221,7 +223,7 @@ def append_row(row_values, sheet_name="edp"):
 
 
 
-def update_row(row_number, updates, sheet_name="edp", usuario="Sistema"):
+def update_row(row_number, updates, sheet_name="edp", usuario="Sistema", force_update=False):
     """
     Actualiza columnas específicas en la fila `row_number` (base-1, incluye encabezado)
     y deja un registro en la hoja `log`.
@@ -236,6 +238,8 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema"):
         Nombre de la pestaña con los datos EDP (sin !A1).
     usuario : str
         Quien ejecuta el cambio (para el log).
+    force_update : bool
+        Si es True, ignora la comparación y fuerza la actualización.
     """
     service = get_service()
     sheet  = service.spreadsheets()
@@ -266,12 +270,14 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema"):
             idx = headers.index(key)
             valor_anterior = row_values[idx]
             
-            # --- 3a. Verificar si el valor realmente cambió usando son_diferentes() ---
-            if son_diferentes(valor_anterior, value):
+            # --- 3a. Verificar si el valor realmente cambió O si force_update está activado ---
+            if force_update or son_diferentes(valor_anterior, value):
                 # Registrar el cambio real
                 cambios_reales.append((key, valor_anterior, value))
                 # Actualizar el valor en la fila
                 row_values[idx] = value
+                # Log para debugging
+                print(f"Cambio detectado en {key}: '{valor_anterior}' -> '{value}'")
 
     # --- 4. Enviar la fila actualizada a Sheets (solo si hay cambios) ---
     if cambios_reales:
@@ -282,6 +288,7 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema"):
             valueInputOption = "USER_ENTERED",
             body = body
         ).execute()
+        print(f"Actualización enviada a Sheets: {len(cambios_reales)} cambios")
         
         # --- 5. Registrar solo los cambios reales en el log ---
         n_edp = before.get("N° EDP", "—")
@@ -293,6 +300,8 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema"):
                 despues = despues,
                 usuario = usuario
             )
+    else:
+        print("No se detectaron cambios para actualizar")
 
 def normalizar_valor_log(valor):
     """
@@ -322,6 +331,14 @@ def normalizar_valor_log(valor):
     
     return str_valor
 
+
+
+
+
+
+# Caché para evitar entradas duplicadas en el log
+_recent_log_entries = {}
+
 def log_cambio_edp(n_edp: str,
                    campo: str,
                    antes: str,
@@ -329,15 +346,16 @@ def log_cambio_edp(n_edp: str,
                    usuario: str = "Sistema"):
     """
     Registra un cambio en la pestaña `log` del mismo Spreadsheet.
+    Incluye deduplicación para evitar entradas repetidas.
 
     Columnas:
     A) Fecha y Hora (UTC-3) · B) N° EDP · C) Campo · D) Antes · E) Después · F) Usuario
     """
-    # 1.  Hora en Chile (UTC-3) ─ evita confusiones al mirar el log
+    # 1. Hora en Chile (UTC-3)
     chile_tz = timezone(timedelta(hours=-3))
-    timestamp = datetime.now(chile_tz).strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    # Normalizar valores para el log (especialmente fechas)
+    # Normalizar valores para el log
     antes_normalizado = normalizar_valor_log(antes)
     despues_normalizado = normalizar_valor_log(despues)
     
@@ -345,19 +363,37 @@ def log_cambio_edp(n_edp: str,
     if antes_normalizado == despues_normalizado:
         return
         
-    # 2.  Preparar fila
+    # DEDUPLICACIÓN: Creamos una clave única para este cambio específico
+    entry_key = f"{n_edp}:{campo}:{antes_normalizado}:{despues_normalizado}"
+    
+    # Verificar si hemos registrado este cambio recientemente (últimos 30 segundos)
+    current_time = datetime.now()
+    if entry_key in _recent_log_entries:
+        last_time = _recent_log_entries[entry_key]
+        if (current_time - last_time).total_seconds() < 30:
+            # Ya registramos este mismo cambio hace menos de 30 segundos, no duplicar
+            return
+    
+    # Actualizar el caché de entradas recientes
+    _recent_log_entries[entry_key] = current_time
+    
+    # Limpiar entradas antiguas del caché (más de 5 minutos)
+    for k in list(_recent_log_entries.keys()):
+        if (current_time - _recent_log_entries[k]).total_seconds() > 300:
+            del _recent_log_entries[k]
+    
+    # 2. Preparar fila
     valores = [timestamp, str(n_edp), campo, antes_normalizado, despues_normalizado, usuario]
 
-    # 3.  Escribir
+    # 3. Escribir
     service = get_service()
     service.spreadsheets().values().append(
         spreadsheetId   = Config.SHEET_ID,
-        range           = "log!A:F",           # Basta con indicar el bloque de columnas
+        range           = "log!A:F",
         valueInputOption= "USER_ENTERED",
         insertDataOption= "INSERT_ROWS",
         body            = {"values": [valores]}
     ).execute()
-    
 def read_log(n_edp=None, usuario=None, range_name="log!A1:F"):
     """
     Devuelve el DataFrame del historial de cambios.

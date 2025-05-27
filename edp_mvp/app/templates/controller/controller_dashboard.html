@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Dashboard Controller{% endblock %}
 
+<!-- Add these styles to your head block -->
+
 {% block head %}
 {{ super() }}
 <style>
@@ -27,11 +29,140 @@
     content: '↓';
     opacity: 1;
   }
+  
+  /* Estilos para tarjetas de métricas */
+  .metric-card {
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color-subtle);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+  }
+  
+  .metric-card:hover {
+    border-color: var(--border-color);
+    transform: translateY(-2px);
+  }
+  
+  .metric-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+  
+  .metric-value {
+    font-weight: bold;
+    font-size: 1.5rem;
+  }
+  
+  /* Estilos para tabla mejorada */
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  
+  .data-table th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  .data-table td {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border-color-subtle);
+  }
+  
+  .data-table tr:hover td {
+    background-color: var(--bg-highlight);
+  }
+  
+  .data-table-row-critical td {
+    background-color: var(--state-error-bg);
+  }
+  
+  .data-table-row-validated td {
+    background-color: var(--state-success-bg);
+  }
+  
+  /* Efecto de transición para filas */
+  .data-table tbody tr {
+    transition: background-color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;
+  }
+   
+  .data-table tbody tr:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  
+  /* Visual indication that EDP number is clickable */
+  .data-table td.edp-number {
+    color: var(--accent-blue);
+    font-weight: 500;
+    text-decoration: none;
+  }
+  
+  .data-table tr:hover td.edp-number {
+    text-decoration: underline;
+  }
+  /* Estilos para estados */
+  .estado-pill {
+    display: inline-flex;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+  
+  .estado-pendiente {
+    background-color: var(--state-warning-bg);
+    color: var(--accent-amber);
+  }
+  
+  .estado-revisión {
+    background-color: var(--state-info-bg);
+    color: var(--accent-blue);
+  }
+  
+  .estado-enviado {
+    background-color: var(--state-progress-bg);
+    color: var(--accent-purple);
+  }
+  
+  .estado-pagado {
+    background-color: var(--state-success-bg);
+    color: var(--accent-green);
+  }
+  
+  .estado-validado {
+    background-color: var(--state-success-bg);
+    color: var(--accent-green);
+  }
+  
+  /* Estilos para tabla responsive */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Animaciones para elementos */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Panel principal con encabezado mejorado -->
+ 
 <div class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn">
   <!-- Encabezado con acciones principales -->
   <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
@@ -172,312 +303,1035 @@
     </div>
   {% endif %}
 
-  <!-- KPIs GLOBALES -->
-  <div class="section-title-modern mb-5">
-    <h2 class="text-xl font-semibold">📊 KPIs Globales</h2>
-    <div class="section-line"></div>
-  </div>
+<!-- Replace the existing KPIs Global section with this improved version -->
 
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-5 text-sm mb-8">
-    <div class="metric-card p-5">
-      <p class="metric-label">Total EDP</p>
-      <p class="metric-value">{{ total_edp_global }}</p>
-    </div>
-    
-    <div class="metric-card p-5">
-      <p class="metric-label">Validados</p>
-      <p class="metric-value">{{ total_validados_global }}</p>
-    </div>
-    
-    <div class="metric-card p-5">
-      <p class="metric-label">% validados ≤30 días</p>
-      <p class="metric-value text-[color:var(--accent-green)]">{{ porcentaje_validacion_rapida_global }}%</p>
-    </div>
-    
-    <div class="metric-card p-5">
-      <p class="metric-label">Prom. días espera (global)</p>
-      <p class="metric-value">{{ dias_espera_promedio_global }}</p>
-    </div>
-  </div>
+<!-- KPIs GLOBALES MEJORADOS -->
+<div class="section-title-modern mb-5">
+  <h2 class="text-xl font-semibold">📊 KPIs Globales</h2>
+  <div class="section-line"></div>
+</div>
 
-  <!-- Meta Financiera Global -->
-  <div class="section-title-modern mb-5">
-    <h2 class="text-xl font-semibold">🎯 Meta Financiera Global</h2>
-    <div class="section-line"></div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
+  <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+    <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+        <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+      </svg>
+    </div>
+    <p class="metric-label font-medium text-[color:var(--text-secondary)]">Total EDP</p>
+    <p class="metric-value text-2xl font-bold mt-1">{{ total_edp_global }}</p>
+    <div class="mt-3 h-1 w-full bg-[color:var(--bg-input)] rounded-full">
+      <div class="h-full bg-[color:var(--accent-blue)] rounded-full" style="width: 100%"></div>
+    </div>
   </div>
   
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-sm mb-8">
-    <div class="metric-card p-5">
-      <p class="metric-label">Meta Total</p>
-      <p class="metric-value text-[color:var(--accent-amber)]">${{ "{:,.0f}".format(meta_global).replace(",",".") }}</p>
+  <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+    <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-green)]" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+      </svg>
+    </div>
+    <p class="metric-label font-medium text-[color:var(--text-secondary)]">Validados</p>
+    <p class="metric-value text-2xl font-bold mt-1">{{ total_validados_global }}</p>
+    <div class="mt-3 h-1 w-full bg-[color:var(--bg-input)] rounded-full">
+      <div class="h-full bg-[color:var(--accent-green)] rounded-full" style="width: {{ (total_validados_global / total_edp_global * 100) if total_edp_global > 0 else 0 }}%"></div>
+    </div>
+  </div>
+  
+  <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+    <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-green)]" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+      </svg>
+    </div>
+    <p class="metric-label font-medium text-[color:var(--text-secondary)]">% validados ≤30 días</p>
+    <div class="flex items-end mt-1">
+      <p class="metric-value text-2xl font-bold text-[color:var(--accent-green)]">{{ porcentaje_validacion_rapida_global }}%</p>
+      <span class="text-xs text-[color:var(--text-secondary)] mb-1 ml-1">de validaciones</span>
+    </div>
+    <div class="flex items-center mt-3">
+      <div class="h-1 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+        <div class="h-full bg-[color:var(--accent-green)] rounded-full" style="width: {{ porcentaje_validacion_rapida_global }}%"></div>
+      </div>
+      <span class="text-xs font-medium ml-2 text-[color:var(--text-secondary)]">Meta: 80%</span>
+    </div>
+  </div>
+  
+  <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+    <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-amber)]" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+      </svg>
+    </div>
+    <p class="metric-label font-medium text-[color:var(--text-secondary)]">Prom. días espera (global)</p>
+    <div class="flex items-end mt-1">
+      <p class="metric-value text-2xl font-bold {% if dias_espera_promedio_global > 30 %}text-[color:var(--accent-red)]{% elif dias_espera_promedio_global <= 20 %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %}">
+        {{ dias_espera_promedio_global }}
+      </p>
+      <span class="text-xs text-[color:var(--text-secondary)] mb-1 ml-1">días</span>
+    </div>
+    <div class="flex items-center mt-3">
+      <div class="h-1 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+        <div class="h-full {% if dias_espera_promedio_global > 30 %}bg-[color:var(--accent-red)]{% elif dias_espera_promedio_global <= 20 %}bg-[color:var(--accent-green)]{% else %}bg-[color:var(--accent-amber)]{% endif %}" 
+             style="width: {{ (dias_espera_promedio_global / 45 * 100) if dias_espera_promedio_global < 45 else 100 }}%"></div>
+      </div>
+      <span class="text-xs font-medium ml-2 text-[color:var(--text-secondary)]">Meta: ≤20</span>
+    </div>
+  </div>
+</div>
+
+<!-- Meta Financiera Global Mejorada -->
+<div class="section-title-modern mb-5">
+  <h2 class="text-xl font-semibold">🎯 Meta Financiera Global</h2>
+  <div class="section-line"></div>
+</div>
+
+<div class="bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-5 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-4">
+    <div class="flex flex-col">
+      <p class="text-sm font-medium text-[color:var(--text-secondary)] mb-1">Meta Total</p>
+      <p class="text-2xl font-bold text-[color:var(--accent-amber)]">${{ "{:,.0f}".format(meta_global).replace(",",".") }}</p>
     </div>
     
-    <div class="metric-card p-5">
-      <p class="metric-label">Pagado</p>
-      <p class="metric-value text-[color:var(--accent-green)]">${{ "{:,.0f}".format(total_pagado_global).replace(",",".")  }}</p>
+    <div class="flex flex-col">
+      <p class="text-sm font-medium text-[color:var(--text-secondary)] mb-1">Pagado</p>
+      <p class="text-2xl font-bold text-[color:var(--accent-green)]">${{ "{:,.0f}".format(total_pagado_global).replace(",",".")  }}</p>
     </div>
     
-    <div class="metric-card p-5">
-      <p class="metric-label">Avance</p>
-      <div class="flex items-center">
-        <p class="metric-value text-[color:var(--accent-blue)] mr-3">{{ avance_global }}%</p>
-        <div class="flex-1">
-          <div class="h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
-            <div class="h-full bg-gradient-to-r from-[color:var(--accent-blue-dark)] to-[color:var(--accent-blue)]" 
-                 style="width: {{ avance_global }}%"></div>
-          </div>
+    <div class="flex flex-col">
+      <div class="flex items-center justify-between mb-1">
+        <p class="text-sm font-medium text-[color:var(--text-secondary)]">Avance</p>
+        <p class="text-sm font-bold text-[color:var(--accent-blue)]">{{ avance_global }}%</p>
+      </div>
+      <div class="h-8 bg-[color:var(--bg-input)] rounded-lg overflow-hidden relative">
+        <div class="h-full bg-gradient-to-r from-[color:var(--accent-blue-dark)] to-[color:var(--accent-blue)]" 
+             style="width: {{ avance_global }}%"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span class="text-sm font-bold {% if avance_global > 50 %}text-white{% else %}text-[color:var(--text-primary)]{% endif %} drop-shadow-sm">
+            {{ avance_global }}% completado
+          </span>
         </div>
       </div>
     </div>
   </div>
-
-
- <!-- Meta por Encargado -->
-{% if filtros.encargado %}
-  <div class="section-title-modern mb-5">
-    <h2 class="text-xl font-semibold">📌 Meta de {{ filtros.encargado }}</h2>
-    <div class="section-line"></div>
-  </div>
   
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-5 text-sm mb-8">
-    <div class="metric-card p-5">
-      <p class="metric-label">Meta Individual</p>
-      <p class="metric-value text-[color:var(--accent-amber)]">${{ "{:,.0f}".format(meta_por_encargado).replace(",", ".") }}</p>
+  <div class="pt-4 border-t border-[color:var(--border-color-subtle)]">
+    <div class="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
+      <span>0%</span>
+      <span>25%</span>
+      <span>50%</span>
+      <span>75%</span>
+      <span>100%</span>
     </div>
-    
-    <div class="metric-card p-5">
-      <p class="metric-label">Pagado</p>
-      <p class="metric-value text-[color:var(--accent-green)]">${{ "{:,.0f}".format(monto_pagado_encargado).replace(",", ".") }}</p>
-    </div>
-
-    <div class="metric-card p-5">
-      <p class="metric-label">Pendiente</p>
-      <p class="metric-value text-[color:var(--accent-orange)]">
-    ${{ "{:,.0f}".format(monto_pendiente_encargado | float).replace(",", ".") }}      </p>
-    </div>
-    
-    <div class="metric-card p-5">
-      <p class="metric-label">Avance</p>
-      <div class="flex items-center">
-        <p class="metric-value text-[color:var(--accent-blue)] mr-3">{{ avance_encargado }}%</p>
-        <div class="flex-1">
-          <div class="h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
-            <div class="h-full bg-gradient-to-r from-[color:var(--accent-blue-dark)] to-[color:var(--accent-blue)]" 
-                 style="width: {{ avance_encargado }}%"></div>
-          </div>
-        </div>
-      </div>
+    <div class="h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden grid grid-cols-4">
+      <div class="h-full border-r border-[color:var(--bg-input-darker)]"></div>
+      <div class="h-full border-r border-[color:var(--bg-input-darker)]"></div>
+      <div class="h-full border-r border-[color:var(--bg-input-darker)]"></div>
+      <div class="h-full"></div>
+      <div class="h-full bg-gradient-to-r from-[color:var(--accent-blue-dark)] to-[color:var(--accent-blue)] col-start-1 col-end-5 row-start-1 row-end-1" style="width: {{ avance_global }}%"></div>
     </div>
   </div>
-{% endif %}
+</div>
 
-  <!-- KPIs DEL FILTRO -->
+   <!-- KPIs DEL FILTRO MEJORADOS -->
   <div class="section-title-modern mb-5">
     <h2 class="text-xl font-semibold">🔎 KPIs del Filtro Actual</h2>
     <div class="section-line"></div>
   </div>
   
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-5 text-sm mb-8">
-    <div class="metric-card p-5">
-      <p class="metric-label">EDP en vista</p>
-      <p class="metric-value">{{ total_filtrados }}</p>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
+    <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+      <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 00-4.5 9.975V13h9v-1.025A6 6 0 0010 4zm0 1a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm-5 7.5a5.002 5.002 0 015-5 5 5 0 015 5v1.5H5v-1.5z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <p class="metric-label font-medium text-[color:var(--text-secondary)]">EDP en vista</p>
+      <p class="metric-value text-2xl font-bold mt-1">{{ total_filtrados }}</p>
+      <div class="mt-3 h-1 w-full bg-[color:var(--bg-input)] rounded-full">
+        <div class="h-full bg-[color:var(--accent-blue)] rounded-full" style="width: {{ (total_filtrados / total_edp_global * 100) if total_edp_global > 0 else 100 }}%"></div>
+      </div>
+      <p class="text-xs text-[color:var(--text-secondary)] mt-1">{{ (total_filtrados / total_edp_global * 100)|round(1) if total_edp_global > 0 else 100 }}% del total</p>
     </div>
     
-    <div class="metric-card p-5">
-      <p class="metric-label">EDP críticos</p>
-      <p class="metric-value text-[color:var(--accent-red)]">{{ total_criticos_filtrados }}</p>
+    <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+      <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-red)]" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <p class="metric-label font-medium text-[color:var(--text-secondary)]">EDP críticos</p>
+      <p class="metric-value text-2xl font-bold text-[color:var(--accent-red)] mt-1">{{ total_criticos_filtrados }}</p>
+      <div class="mt-3 h-1 w-full bg-[color:var(--bg-input)] rounded-full">
+        <div class="h-full bg-[color:var(--accent-red)] rounded-full" style="width: {{ (total_criticos_filtrados / total_filtrados * 100) if total_filtrados > 0 else 0 }}%"></div>
+      </div>
+      <p class="text-xs text-[color:var(--text-secondary)] mt-1">{{ (total_criticos_filtrados / total_filtrados * 100)|round(1) if total_filtrados > 0 else 0 }}% de los EDPs filtrados</p>
     </div>
     
-    <div class="metric-card p-5">
-      <p class="metric-label">Prom. días espera (filtro)</p>
-      <p class="metric-value">{{ dias_espera_promedio_filtrado }}</p>
+    <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+      <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-amber)]" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <p class="metric-label font-medium text-[color:var(--text-secondary)]">Prom. días espera</p>
+      <div class="flex items-end mt-1">
+        <p class="metric-value text-2xl font-bold {% if dias_espera_promedio_filtrado > 30 %}text-[color:var(--accent-red)]{% elif dias_espera_promedio_filtrado <= 20 %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %}">
+          {{ dias_espera_promedio_filtrado }}
+        </p>
+        <span class="text-xs text-[color:var(--text-secondary)] mb-1 ml-1">días</span>
+      </div>
+      <div class="flex items-center mt-3">
+        <div class="h-1 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+          <div class="h-full {% if dias_espera_promedio_filtrado > 30 %}bg-[color:var(--accent-red)]{% elif dias_espera_promedio_filtrado <= 20 %}bg-[color:var(--accent-green)]{% else %}bg-[color:var(--accent-amber)]{% endif %}" 
+               style="width: {{ (dias_espera_promedio_filtrado / 45 * 100) if dias_espera_promedio_filtrado < 45 else 100 }}%"></div>
+        </div>
+        <span class="text-xs font-medium ml-2 text-[color:var(--text-secondary)]">Meta: ≤20</span>
+      </div>
     </div>
     
-    <div class="metric-card p-5">
-      <p class="metric-label">Prom. días hábiles</p>
-      <p class="metric-value">{{ dias_habiles_promedio_filtrado }}</p>
+    <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+      <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <p class="metric-label font-medium text-[color:var(--text-secondary)]">Prom. días hábiles</p>
+      <div class="flex items-end mt-1">
+        <p class="metric-value text-2xl font-bold {% if dias_habiles_promedio_filtrado > 22 %}text-[color:var(--accent-red)]{% elif dias_habiles_promedio_filtrado <= 15 %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %}">
+          {{ dias_habiles_promedio_filtrado }}
+        </p>
+        <span class="text-xs text-[color:var(--text-secondary)] mb-1 ml-1">días</span>
+      </div>
+      <div class="flex items-center mt-3">
+        <div class="h-1 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+          <div class="h-full {% if dias_habiles_promedio_filtrado > 22 %}bg-[color:var(--accent-red)]{% elif dias_habiles_promedio_filtrado <= 15 %}bg-[color:var(--accent-green)]{% else %}bg-[color:var(--accent-amber)]{% endif %}" 
+               style="width: {{ (dias_habiles_promedio_filtrado / 30 * 100) if dias_habiles_promedio_filtrado < 30 else 100 }}%"></div>
+        </div>
+        <span class="text-xs font-medium ml-2 text-[color:var(--text-secondary)]">Meta: ≤15</span>
+      </div>
     </div>
-  </div>
-
-  <!-- Tabla de EDPs -->
-  <div class="section-title-modern mb-5">
-    <h2 class="text-xl font-semibold">📋 Listado de EDPs</h2>
-    <div class="section-line"></div>
   </div>
 
   <!-- Tabla con ordenamiento -->
-  <div class="table-container">
-    <table id="edp-table" class="data-table">
+    <!-- Replace the existing table section with this improved version -->
+  
+  <!-- Tabla de EDPs Mejorada -->
+  <div class="section-title-modern mb-5">
+    <h2 class="text-xl font-semibold flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9v-1h5v2H5a1 1 0 01-1-1zm7 1h4a1 1 0 001-1v-1h-5v2zm0-4h5V8h-5v2zM9 8H4v2h5V8z" clip-rule="evenodd" />
+      </svg>
+      Listado de EDPs
+    </h2>
+    <div class="section-line"></div>
+  </div>
+  
+  <!-- Opciones de tabla y Quick Filters -->
+  <div class="flex flex-col md:flex-row justify-between mb-4 bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-3">
+    <div class="flex flex-wrap gap-2 mb-3 md:mb-0">
+      <button id="filter-all" class="px-3 py-1 text-sm rounded-full bg-[color:var(--accent-blue)] text-white hover:bg-[color:var(--accent-blue-dark)] transition-colors">
+        Todos
+      </button>
+      <button id="filter-criticos" class="px-3 py-1 text-sm rounded-full bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] transition-colors">
+        Críticos
+      </button>
+      <button id="filter-recientes" class="px-3 py-1 text-sm rounded-full bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] transition-colors">
+        Últimos 30 días
+      </button>
+      <button id="filter-pendientes" class="px-3 py-1 text-sm rounded-full bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] transition-colors">
+        Pendientes
+      </button>
+    </div>
+    
+    <div class="flex gap-2">
+      <div class="relative">
+        <input id="table-search" type="text" placeholder="Buscar en tabla" class="form-input pl-8 py-1 text-sm" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--text-secondary)] absolute left-2.5 top-1/2 transform -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      
+      <button id="toggle-columns" class="px-3 py-1 text-sm bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)] rounded hover:bg-[color:var(--bg-highlight)] transition-colors flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+        </svg>
+        Columnas
+      </button>
+    </div>
+  </div>
+  
+  <!-- Dropdown menu para selección de columnas (oculto por defecto) -->
+  <div id="columns-dropdown" class="hidden bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-3 shadow-lg mb-4">
+    <div class="grid grid-cols-3 gap-3">
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="proyecto" class="mr-2">
+        Proyecto
+      </label>
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="jefe" class="mr-2">
+        Jefe Proyecto
+      </label>
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="cliente" class="mr-2">
+        Cliente
+      </label>
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="mes" class="mr-2">
+        Mes
+      </label>
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="edp" class="mr-2">
+        N° EDP
+      </label>
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="conformidad" class="mr-2">
+        N° Conf.
+      </label>
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="estado" class="mr-2">
+        Estado
+      </label>
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="dias" class="mr-2">
+        Días
+      </label>
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="diashabiles" class="mr-2">
+        Días Hábiles
+      </label>
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="montopropuesto" class="mr-2">
+        M. Propuesto
+      </label>
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="montoaprobado" class="mr-2">
+        M. Aprobado
+      </label>
+      <label class="flex items-center">
+        <input type="checkbox" checked data-column="critico" class="mr-2">
+        Crítico
+      </label>
+    </div>
+  </div>
+  
+  <!-- Tabla con mejor interactividad -->
+  <div class="table-responsive shadow-md rounded-xl overflow-hidden border border-[color:var(--border-color)]">
+    <table id="edp-table" class="data-table w-full">
       <thead>
-     <tr>
-    <th class="sortable" data-sort="proyecto">Proyecto</th>
-    <th class="sortable" data-sort="jefe">Jefe de Proyecto</th>
-    <th class="sortable" data-sort="cliente">Cliente</th>
-    <th class="sortable" data-sort="mes">Mes</th>
-    <th class="sortable" data-sort="edp">N° EDP</th>
-    <th class="sortable" data-sort="n-conformidad">N° Conf.</th>   {# NUEVO #}
-    <th class="sortable" data-sort="estado">Estado</th>
-    <th class="sortable sort-desc text-center" data-sort="dias">Días</th>
-    <th class="sortable text-center" data-sort="dias-habiles">Días Hábiles</th>
-    <th class="sortable text-right" data-sort="monto-propuesto">M. Propuesto</th>  {# NUEVO #}
-    <th class="sortable text-right" data-sort="monto-aprobado">M. Aprobado</th>    {# RENOMBRADO #}
-    <th class="sortable text-center" data-sort="critico">Crítico</th>
-    <th>Observaciones</th>
-    <th></th>
-  </tr>
+        <tr class="bg-[color:var(--bg-secondary)]">
+          <th class="sortable p-3" data-sort="proyecto">Proyecto</th>
+          <th class="sortable" data-sort="jefe">Jefe de Proyecto</th>
+          <th class="sortable" data-sort="cliente">Cliente</th>
+          <th class="sortable" data-sort="mes">Mes</th>
+          <th class="sortable" data-sort="edp">N° EDP</th>
+          <th class="sortable" data-sort="n-conformidad">N° Conf.</th>
+          <th class="sortable" data-sort="estado">Estado</th>
+          <th class="sortable sort-desc text-center" data-sort="dias">Días</th>
+          <th class="sortable text-center" data-sort="dias-habiles">Días Hábiles</th>
+          <th class="sortable text-right" data-sort="monto-propuesto">M. Propuesto</th>
+          <th class="sortable text-right" data-sort="monto-aprobado">M. Aprobado</th>
+          <th class="sortable text-center" data-sort="critico">Crítico</th>
+          <th>Observaciones</th>
+          <th></th>
+        </tr>
       </thead>
-      <tbody>
-        {% for r in registros %}
-        <tr  class="{% if r['Crítico'] %}data-table-row-critical{% elif r['Estado'] == 'validado' %}data-table-row-validated{% endif %}"
-     data-dias="{{ r['Días Espera'] }}"
-     data-dias-habiles="{{ r['Días Hábiles'] }}"
-     data-monto-propuesto="{{ r['Monto Propuesto'] }}"      {# NUEVO #}
-     data-monto-aprobado="{{ r['Monto Aprobado'] }}"        {# NUEVO #}
-     data-critico="{{ 1 if r['Crítico'] else 0 }}"
-     data-estado="{{ r['Estado'] }}"
-     data-proyecto="{{ r['Proyecto'] }}"
-     data-jefe="{{ r['Jefe de Proyecto'] }}"
-     data-cliente="{{ r['Cliente'] }}"
-     data-mes="{{ r['Mes'] }}"
-     data-edp="{{ r['N° EDP'] }}"
-     data-n-conformidad="{{ r['N° Conformidad'] }}">        {# NUEVO #}
+         <!-- Replace the table row content with this fixed version -->
+    
+     
+     <tbody>
+  {% for registro in registros %}
+    <tr 
+      data-proyecto="{{ registro.get('Proyecto', '') }}"
+      data-jefe="{{ registro.get('Jefe de Proyecto', '') }}"
+      data-cliente="{{ registro.get('Cliente', '') }}"
+      data-mes="{{ registro.get('Mes', '') }}"
+      data-edp="{{ registro.get('N° EDP', '') }}"
+      data-n-conformidad="{{ registro.get('N° Conformidad', '') }}"
+      data-estado="{{ registro.get('Estado', '') }}"
+      data-dias="{{ registro.get('Días Espera', 0) }}"
+      data-dias-habiles="{{ registro.get('Días Hábiles', 0) }}"
+      data-monto-propuesto="{{ registro.get('Monto Propuesto', 0)|default(0) }}"
+      data-monto-aprobado="{{ registro.get('Monto Aprobado', 0)|default(0) }}"
+      data-critico="{{ 1 if registro.get('Crítico', False) else 0 }}"
+      class="{% if registro.get('Crítico', False) %}data-table-row-critical{% endif %}{% if registro.get('Estado', '') == 'validado' %}data-table-row-validated{% endif %}"
+    >
+      <td class="font-medium">{{ registro.get('Proyecto', '-') }}</td>
+      <td>{{ registro.get('Jefe de Proyecto', '-') }}</td>
+      <td>{{ registro.get('Cliente', '-') }}</td>
+      <td>{{ registro.get('Mes', '-') }}</td>
+      <td>{{ registro.get('N° EDP', '-') }}</td>      
+      <td>{{ registro.get('N° Conformidad', '-') }}</td>
+      <td>
+        <span class="estado-pill estado-{{ registro.get('Estado', 'pendiente') }}">
+          {{ registro.get('Estado', 'pendiente') }}
+        </span>
+      </td>
+      
+      {% set dias = registro.get('Días Espera', 0)|int %}
+      <td class="text-center {% if dias > 30 %}text-[color:var(--accent-red)] font-medium{% elif dias > 20 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-green)]{% endif %}">
+        {{ dias }}
+      </td>
+      
+      <td class="text-center">{{ registro.get('Días Hábiles', 0) }}</td>
+      <td class="text-right">${{ "{:,.0f}".format(registro.get('Monto Propuesto', 0)|default(0)).replace(",",".") }}</td>
+      <td class="text-right">${{ "{:,.0f}".format(registro.get('Monto Aprobado', 0)|default(0)).replace(",",".") }}</td>
+      <td class="text-center">
+        {% if registro.get('Crítico', False) %}
+          <span class="text-[color:var(--accent-red)]">●</span>
+        {% else %}
+          <span class="text-[color:var(--text-secondary)]">○</span>
+        {% endif %}
+ <td class="max-w-xs truncate" title="{{ registro.get('Observaciones', '') }}">
+  {{ registro.get('Observaciones', '-')[:15] ~ ('...' if registro.get('Observaciones') and registro.get('Observaciones')|length > 50 else '') }}
+</td>
 
-  <td class="table-highlight">{{ r['Proyecto'] }}</td>
-  <td>{{ r['Jefe de Proyecto'] }}</td>
-  <td>{{ r['Cliente'] }}</td>
-  <td>{{ r['Mes'] }}</td>
-  <td><span class="text-[color:var(--accent-blue)]">EDP-{{ r['N° EDP'] }}</span></td>
-
-  <td>{{ r['N° Conformidad'] or '—' }}</td>                 {# NUEVO #}
-
-  <td>
-    <span class="estado-pill estado-{{ r['Estado']|lower }}">
-      {{ r['Estado'] }}
-    </span>
-  </td>
-
-  <td class="text-center">
-    <span class="{% if r['Días Espera']|int > 30 %}text-[color:var(--accent-red)]
-                 {% elif r['Días Espera']|int < 30 %}text-[color:var(--text-primary)]{% endif %} font-medium">
-      {{ r['Días Espera'] }}
-    </span>
-  </td>
-
-  <td class="text-center">{{ r['Días Hábiles'] }}</td>
-
-  <td class="text-right table-amount">
-    ${{ "{:,.0f}".format(r["Monto Propuesto"]|float).replace(",",".") }}
-  </td>                                                      {# NUEVO #}
-
-  <td class="text-right table-amount">
-    ${{ "{:,.0f}".format(r["Monto Aprobado"]|float).replace(",",".") }}
-  </td>
-
-  <td class="text-center">
-    {% if r['Crítico'] %}
-      <span class="px-2 py-1 rounded-full bg-[color:var(--state-error-bg)] text-[color:var(--accent-red)] text-xs font-bold flex items-center justify-center">
-        <!-- icono -->
-        Sí
-      </span>
-    {% else %}
-      <span class="text-[color:var(--text-secondary)]">—</span>
-    {% endif %}
-  </td>
-
-  <td title="{{ r['Observaciones'] }}">
-    {{ r['Observaciones'][:40] }}{% if r['Observaciones']|length > 40 %}...{% endif %}
-  </td>
-
-  <td>
-    <a href="{{ url_for('controller_bp.detalle_edp', n_edp=r['N° EDP']) }}" class="action-link">
-      Editar
-    </a>
-  </td>
-</tr>
-
-        {% endfor %}
-      </tbody>
+    <td>
+  <a href="{{ url_for('controller_bp.detalle_edp', n_edp=registro.get('N° EDP', '')) }}" 
+     class="flex items-center justify-center text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] bg-[color:var(--bg-card-hover)] hover:bg-[color:var(--bg-highlight)] p-1.5 rounded-full transition-colors"
+     title="Ver detalles del EDP">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+      <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+    </svg>
+  </a>
+</td>
+    </tr>
+  {% endfor %}
+  
+  {% if not registros %}
+    <tr>
+      <td colspan="14" class="py-8 text-center text-[color:var(--text-secondary)]">
+        <div class="flex flex-col items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-[color:var(--text-secondary)] opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="text-base font-medium">No se encontraron registros</p>
+          <p class="text-sm mt-1">Prueba con diferentes criterios de búsqueda</p>
+        </div>
+      </td>
+    </tr>
+  {% endif %}
+</tbody>
     </table>
   </div>
+  
+  <!-- Información de la tabla -->
+  <div class="flex justify-between items-center mt-4 text-sm text-[color:var(--text-secondary)]">
+    <div>
+      Mostrando <span id="showing-count">{{ registros|length }}</span> de {{ registros|length }} EDPs
+    </div>
+    <div>
+      <button id="exportar-excel" class="flex items-center text-[color:var(--accent-green)] hover:text-[color:var(--accent-green-dark)] transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Exportar a CSV
+      </button>
+    </div>
+  </div>
+  
+  <!-- Incluir el modal -->
+<!-- Incluir el modal -->
+{% include "controller/modal_edp_template.html" %}
+<script src="{{ url_for('static', filename='js/modal_edp_scripts.js') }}"></script>
+  
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Función para mostrar notificaciones toast
+function showToast(message, type = 'info') {
+  // Crear elemento toast
+  const toast = document.createElement('div');
+  toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 animate__animated animate__fadeInUp`;
+  
+  // Estilos según el tipo
+  if (type === 'success') {
+    toast.classList.add('bg-green-600');
+    message = `✅ ${message}`;
+  } else if (type === 'error') {
+    toast.classList.add('bg-red-600');
+    message = `❌ ${message}`;
+  } else if (type === 'warning') {
+    toast.classList.add('bg-amber-500');
+    message = `⚠️ ${message}`;
+  } else {
+    toast.classList.add('bg-blue-600');
+    message = `ℹ️ ${message}`;
+  }
+  
+  // Contenido y estructura
+  toast.innerHTML = `
+    <div class="flex items-center">
+      <span class="flex-grow">${message}</span>
+      <button class="ml-4 hover:text-gray-300 focus:outline-none" onclick="this.parentElement.parentElement.remove()">
+        &times;
+      </button>
+    </div>
+  `;
+  
+  // Añadir al DOM
+  document.body.appendChild(toast);
+  
+  // Auto-eliminar después de 5 segundos
+  setTimeout(() => {
+    toast.classList.replace('animate__fadeInUp', 'animate__fadeOutDown');
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 500);
+  }, 5000);
+}
+    // Define essential variables first
+    const detailPagePrefix = '/controller/detalle/';
+    const table        = document.getElementById('edp-table');
+    const tableBody    = table.querySelector('tbody');          // <– USARÉ ESTA
+    const headers      = table.querySelectorAll('th.sortable');
+    const rows         = Array.from(tableBody.querySelectorAll('tr'));   // copia fij
+    const searchInput = document.getElementById('table-search');
+    const toggleColumnsBtn = document.getElementById('toggle-columns');
+    const columnsDropdown = document.getElementById('columns-dropdown');
+    const columnCheckboxes = columnsDropdown.querySelectorAll('input[type="checkbox"]');
+    const quickFilterButtons = document.querySelectorAll('#filter-all, #filter-criticos, #filter-recientes, #filter-pendientes');
+    const showingCount = document.getElementById('showing-count');
+    const exportBtn = document.getElementById('exportar-excel');
+      // Add these console logs for debugging
 
-  <!-- Script para ordenar la tabla -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const table = document.getElementById('edp-table');
-      const headers = table.querySelectorAll('th.sortable');
-      const tableBody = table.querySelector('tbody');
-      const rows = Array.from(tableBody.querySelectorAll('tr'));
-      
-      // Por defecto, ordenar por días en orden descendente
-      sortTable('dias', 'desc');
-      
-      // Agregar eventos de clic a los encabezados para ordenar
-      headers.forEach(header => {
-        header.addEventListener('click', () => {
-          const sortKey = header.getAttribute('data-sort');
-          const currentDirection = header.classList.contains('sort-asc') ? 'asc' : 
-                                  header.classList.contains('sort-desc') ? 'desc' : 'none';
-          
-          // Eliminar las clases de ordenamiento de todos los encabezados
-          headers.forEach(h => {
-            h.classList.remove('sort-asc', 'sort-desc');
-          });
-          
-          // Establecer dirección de ordenamiento
-          let newDirection = 'asc';
-          if (currentDirection === 'asc') {
-            newDirection = 'desc';
-          } else if (currentDirection === 'desc') {
-            newDirection = 'asc';
-          }
-          
-          // Aplicar clase de ordenamiento al encabezado actual
-          header.classList.add(`sort-${newDirection}`);
-          
-          // Ordenar la tabla
-          sortTable(sortKey, newDirection);
-        });
-      });
-      
-      // Función para ordenar la tabla
-      function sortTable(sortKey, direction) {
-        rows.sort((rowA, rowB) => {
-          let valueA = rowA.getAttribute(`data-${sortKey}`);
-          let valueB = rowB.getAttribute(`data-${sortKey}`);
-          
-          // Convertir valores a números si es necesario
-    // Convertir valores a números si es necesario
-          if (['dias', 'dias-habiles', 'monto-propuesto', 'monto-aprobado', 'edp', 'critico'].includes(sortKey)) {
-            valueA = parseFloat(valueA) || 0;
-            valueB = parseFloat(valueB) || 0;
-          }
-
-          
-          // Comparar valores
-          if (valueA < valueB) {
-            return direction === 'asc' ? -1 : 1;
-          }
-          if (valueA > valueB) {
-            return direction === 'asc' ? 1 : -1;
-          }
-          return 0;
-        });
-        
-        // Reordenar el DOM
-        rows.forEach(row => {
-          tableBody.appendChild(row);
-        });
-        
-        // Aplicar efectos visuales para mostrar el cambio
-        rows.forEach((row, index) => {
-          row.style.opacity = '0';
-          setTimeout(() => {
-            row.style.opacity = '1';
-            row.style.transition = 'opacity 0.15s ease-in';
-          }, index * 20);
-        });
+    // Toggle dropdown de columnas
+    toggleColumnsBtn.addEventListener('click', () => {
+      columnsDropdown.classList.toggle('hidden');
+    });
+    
+    // Ocultar dropdown al hacer clic fuera de él
+    document.addEventListener('click', (event) => {
+      if (!toggleColumnsBtn.contains(event.target) && !columnsDropdown.contains(event.target)) {
+        columnsDropdown.classList.add('hidden');
       }
     });
-  </script>
+    
+    // Manejo de visibilidad de columnas
+    columnCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        const columnName = checkbox.getAttribute('data-column');
+        const columnIndex = getColumnIndexByName(columnName);
+        
+        if (columnIndex > -1) {
+          const cells = table.querySelectorAll(`tr > :nth-child(${columnIndex + 1})`);
+          cells.forEach(cell => {
+            cell.style.display = checkbox.checked ? '' : 'none';
+          });
+        }
+      });
+    });
+    
+    // Helper para obtener índice de columna por nombre
+    function getColumnIndexByName(name) {
+      const headers = Array.from(table.querySelectorAll('thead th'));
+      return headers.findIndex(header => {
+        const sortAttr = header.getAttribute('data-sort');
+        return sortAttr && sortAttr.includes(name);
+      });
+    }
+    
+    // Función de búsqueda en tabla
+    searchInput.addEventListener('input', filterTable);
+    
+    // Filtros rápidos
+    quickFilterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        // Reiniciar estado de botones
+        quickFilterButtons.forEach(btn => {
+          btn.classList.remove('bg-[color:var(--accent-blue)]', 'text-white');
+          btn.classList.add('bg-[color:var(--bg-card-hover)]', 'text-[color:var(--text-primary)]');
+        });
+        
+        // Aplicar estilo al botón seleccionado
+        button.classList.remove('bg-[color:var(--bg-card-hover)]', 'text-[color:var(--text-primary)]');
+        button.classList.add('bg-[color:var(--accent-blue)]', 'text-white');
+        
+        // Aplicar filtro según el botón
+        if (button.id === 'filter-all') {
+          rows.forEach(row => { row.classList.remove('hidden'); });
+        } else if (button.id === 'filter-criticos') {
+          rows.forEach(row => {
+            const isCritical = row.getAttribute('data-critico') === '1';
+            row.classList.toggle('hidden', !isCritical);
+          });
+        } else if (button.id === 'filter-recientes') {
+          rows.forEach(row => {
+            const dias = parseInt(row.getAttribute('data-dias')) || 0;
+            row.classList.toggle('hidden', dias > 30);
+          });
+        } else if (button.id === 'filter-pendientes') {
+          rows.forEach(row => {
+            const estado = row.getAttribute('data-estado') || '';
+            row.classList.toggle('hidden', estado === 'validado' || estado === 'pagado');
+          });
+        }
+        
+        updateShowingCount();
+      });
+    });
+    
+    function filterTable() {
+      const searchTerm = searchInput.value.toLowerCase();
+      
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const isMatch = text.includes(searchTerm);
+        
+        row.classList.toggle('hidden', !isMatch);
+      });
+      
+      updateShowingCount();
+    }
+    
+    function updateShowingCount() {
+      const visibleRows = rows.filter(row => !row.classList.contains('hidden')).length;
+      showingCount.textContent = visibleRows;
+      
+      // Efecto visual si hay pocos resultados
+      if (visibleRows < 5) {
+        showingCount.classList.add('font-bold', 'text-[color:var(--accent-blue)]');
+      } else {
+        showingCount.classList.remove('font-bold', 'text-[color:var(--accent-blue)]');
+      }
+    }
+    
+    // Agregar eventos de clic a los encabezados para ordenar
+  headers.forEach(header => {
+    header.addEventListener('click', function () {
+      const sortBy = this.dataset.sort;               // data-sort
+      const asc    = !this.classList.contains('sort-asc');
+
+      // reset clases
+      headers.forEach(h => h.classList.remove('sort-asc','sort-desc'));
+      this.classList.add(asc ? 'sort-asc' : 'sort-desc');
+
+      sortTable(sortBy, asc);
+    });
+  });
+    
+    // Función mejorada para ordenar la tabla
+ // Función mejorada para ordenar la tabla
+function sortTable(sortBy, ascending) {
+  console.log(`Sorting by ${sortBy}, ascending: ${ascending}`); // Debug line
+  
+  const rowsToSort = Array.from(tableBody.querySelectorAll('tr'));
+  console.log(`Found ${rowsToSort.length} rows to sort`); // Debug line
+  
+  try {
+    rowsToSort.sort((a, b) => {
+      let valueA, valueB;
+      
+      // Correct indices for your table structure
+      switch (sortBy) {
+        case "proyecto":
+          valueA = a.querySelector("td:nth-child(1)").textContent.toLowerCase().trim();
+          valueB = b.querySelector("td:nth-child(1)").textContent.toLowerCase().trim();
+          break;
+          
+        case "jefe":
+          valueA = a.querySelector("td:nth-child(2)").textContent.toLowerCase().trim();
+          valueB = b.querySelector("td:nth-child(2)").textContent.toLowerCase().trim();
+          break;
+          
+        case "cliente":
+          valueA = a.querySelector("td:nth-child(3)").textContent.toLowerCase().trim();
+          valueB = b.querySelector("td:nth-child(3)").textContent.toLowerCase().trim();
+          break;
+          
+        case "mes":
+          valueA = a.querySelector("td:nth-child(4)").textContent.toLowerCase().trim();
+          valueB = b.querySelector("td:nth-child(4)").textContent.toLowerCase().trim();
+          break;
+          
+        case "edp":
+          valueA = a.querySelector("td:nth-child(5)").textContent.trim();
+          valueB = b.querySelector("td:nth-child(5)").textContent.trim();
+          break;
+          
+        case "n-conformidad":
+          valueA = a.querySelector("td:nth-child(6)").textContent.trim();
+          valueB = b.querySelector("td:nth-child(6)").textContent.trim();
+          break;
+          
+        case "estado":
+          valueA = a.querySelector("td:nth-child(7)").textContent.toLowerCase().trim();
+          valueB = b.querySelector("td:nth-child(7)").textContent.toLowerCase().trim();
+          break;
+          
+        case "dias":
+          valueA = parseInt(a.querySelector("td:nth-child(8)").textContent) || 0;
+          valueB = parseInt(b.querySelector("td:nth-child(8)").textContent) || 0;
+          break;
+          
+        case "dias-habiles":
+          valueA = parseInt(a.querySelector("td:nth-child(9)").textContent) || 0;
+          valueB = parseInt(b.querySelector("td:nth-child(9)").textContent) || 0;
+          break;
+          
+        case "monto-propuesto":
+          valueA = parseFloat(a.querySelector("td:nth-child(10)").textContent.replace(/[$,\.]/g, "")) || 0;
+          valueB = parseFloat(b.querySelector("td:nth-child(10)").textContent.replace(/[$,\.]/g, "")) || 0;
+          break;
+          
+        case "monto-aprobado":
+          valueA = parseFloat(a.querySelector("td:nth-child(11)").textContent.replace(/[$,\.]/g, "")) || 0;
+          valueB = parseFloat(b.querySelector("td:nth-child(11)").textContent.replace(/[$,\.]/g, "")) || 0;
+          break;
+          
+        case "critico":
+          // Look for the indicator in the Critical column
+          valueA = a.querySelector("td:nth-child(12)").textContent.includes("●") ? 1 : 0;
+          valueB = b.querySelector("td:nth-child(12)").textContent.includes("●") ? 1 : 0;
+          break;
+          
+        default:
+          valueA = a.querySelector("td:first-child").textContent.toLowerCase().trim();
+          valueB = b.querySelector("td:first-child").textContent.toLowerCase().trim();
+      }
+
+      // Compare values
+      if (valueA < valueB) {
+        return ascending ? -1 : 1;
+      }
+      if (valueA > valueB) {
+        return ascending ? 1 : -1;
+      }
+      return 0;
+    });
+
+    // Clear table body first
+    while (tableBody.firstChild) {
+      tableBody.removeChild(tableBody.firstChild);
+    }
+    
+    // Append sorted rows with animation
+    rowsToSort.forEach((row, index) => {
+      tableBody.appendChild(row);
+      
+      // Animation for visual feedback
+      row.style.opacity = '0';
+      setTimeout(() => {
+        row.style.opacity = '1';
+      }, index * 10);
+    });
+    
+    console.log("Sorting completed successfully");
+  } catch (error) {
+    console.error("Error during sorting:", error);
+  }
+}
+    // Make rows clickable for detail view
+    rows.forEach(row => {
+      // Add visual indication that rows are clickable
+      row.classList.add('cursor-pointer', 'hover:shadow-md', 'transition-all');
+      
+      // Get the EDP number for this row
+      const edpNumber = row.getAttribute('data-edp');
+      
+      // Make the entire row clickable except for elements that already have click handlers
+      // Make the entire row clickable except for elements that already have click handlers
+row.addEventListener('click', function (e) {
+  // Don't trigger if clicking on an element that's already a link or button
+  if (e.target.closest('a, button')) {
+    return;
+  }
+
+  // Show modal with loading state
+  document.getElementById('edpModalOverlay').classList.remove('hidden');
+  document.getElementById('edpModalContent').innerHTML = `
+    <div class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[color:var(--accent-blue)]"></div>
+    </div>
+  `;
+
+  // Load EDP details via AJAX
+  fetch(`/controller/api/edp-details/${edpNumber}`)
+    .then(response => response.json())
+    .then(data => {
+      renderEdpModalContent(data);
+    })
+    .catch(error => {
+      document.getElementById('edpModalContent').innerHTML = `
+        <div class="text-center p-8">
+          <div class="text-[color:var(--accent-red)] text-5xl mb-4">⚠️</div>
+          <h3 class="text-xl font-bold mb-2">Error al cargar datos</h3>
+          <p class="mb-4">${error.message || 'No se pudieron cargar los detalles del EDP'}</p>
+          <button class="btn-primary" onclick="document.getElementById('edpModalOverlay').classList.add('hidden')">
+            Cerrar
+          </button>
+        </div>
+      `;
+    });
+});
+
+// Tooltip para indicar que la fila es clickeable
+row.setAttribute('title', 'Haz clic para ver detalles del EDP');
+
+// Efecto visual en hover
+row.addEventListener('mouseenter', function () {
+  this.classList.add('bg-[color:var(--bg-highlight)]');
+});
+row.addEventListener('mouseleave', function () {
+  if (
+    !this.classList.contains('data-table-row-critical') &&
+    !this.classList.contains('data-table-row-validated')
+  ) {
+    this.classList.remove('bg-[color:var(--bg-highlight)]');
+  }
+});
+
+// Exportar a CSV - Solución definitiva con modal de selección
+const exportBtn = document.getElementById('exportar-excel');
+
+// Usamos una técnica más robusta: eliminamos el listener y lo añadimos como atributo
+if (exportBtn) {
+  // Eliminar todos los event listeners existentes
+  exportBtn.replaceWith(exportBtn.cloneNode(true));
+  
+  // Obtener la nueva referencia después del clonado
+  const newExportBtn = document.getElementById('exportar-excel');
+  
+  // Aplicar un solo event listener
+  newExportBtn.addEventListener('click', function() {
+    // Prevenir múltiples clics rápidos
+    if (this.getAttribute('data-processing') === 'true') {
+      return;
+    }
+    
+    // Crear el modal de selección
+    const modalHTML = `
+      <div id="export-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center animate__animated animate__fadeIn">
+        <div class="bg-[color:var(--bg-card)] rounded-xl shadow-lg p-6 w-full max-w-md animate__animated animate__zoomIn">
+          <h3 class="text-lg font-bold mb-4">Exportar datos a CSV</h3>
+          <p class="text-[color:var(--text-secondary)] mb-5">Seleccione qué datos desea exportar:</p>
+          
+          <div class="grid grid-cols-1 gap-3 mb-6">
+            <button id="export-all" class="btn-outline flex items-center justify-between p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-highlight)] transition-colors">
+              <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+                </svg>
+                <div class="text-left">
+                  <div class="font-medium">Todos los datos</div>
+                  <div class="text-xs text-[color:var(--text-secondary)]">Exportar todos los registros</div>
+                </div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[color:var(--text-secondary)]" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            
+            <button id="export-filtered" class="btn-outline flex items-center justify-between p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-highlight)] transition-colors">
+              <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-[color:var(--accent-green)]" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+                </svg>
+                <div class="text-left">
+                  <div class="font-medium">Datos filtrados</div>
+                  <div class="text-xs text-[color:var(--text-secondary)]">Exportar registros visibles (${document.querySelectorAll('#edp-table tbody tr:not(.hidden)').length})</div>
+                </div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[color:var(--text-secondary)]" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+          
+          <div class="flex justify-end border-t border-[color:var(--border-color-subtle)] pt-4">
+            <button id="cancel-export" class="px-4 py-2 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Insertar el modal en el DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Obtener referencias a los elementos del modal
+    const modalOverlay = document.getElementById('export-modal-overlay');
+    const exportAllBtn = document.getElementById('export-all');
+    const exportFilteredBtn = document.getElementById('export-filtered');
+    const cancelExportBtn = document.getElementById('cancel-export');
+    
+    // Función para cerrar el modal
+    function closeModal() {
+      modalOverlay.classList.remove('animate__fadeIn');
+      modalOverlay.classList.add('animate__fadeOut');
+      modalOverlay.querySelector('div').classList.remove('animate__zoomIn');
+      modalOverlay.querySelector('div').classList.add('animate__zoomOut');
+      
+      setTimeout(() => {
+        modalOverlay.remove();
+      }, 300);
+    }
+    
+    // Manejar clic en Cancelar
+    cancelExportBtn.addEventListener('click', closeModal);
+    
+    // Manejar clic fuera del modal
+    modalOverlay.addEventListener('click', function(e) {
+      if (e.target === modalOverlay) {
+        closeModal();
+      }
+    });
+    
+// Función para iniciar la exportación
+function startExport(exportAll = false) {
+  // Cerrar el modal
+  closeModal();
+  
+  // Marcar como en proceso
+  newExportBtn.setAttribute('data-processing', 'true');
+  newExportBtn.disabled = true;
+  newExportBtn.innerHTML = `
+    <svg class="animate-spin h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    Exportando...
+  `;
+    // Función para restaurar el botón a su estado original
+  function restoreButton() {
+    console.log("Restaurando botón de exportación");
+    setTimeout(() => {
+      newExportBtn.disabled = false;
+      newExportBtn.setAttribute('data-processing', 'false');
+      newExportBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Exportar a CSV
+      `;
+    }, 500);
+  }
+  
+    // Si exportamos todos los datos, hacemos una petición al servidor
+  if (exportAll) {
+    fetch('/controller/api/export-all-csv')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Error en la respuesta del servidor: ' + response.status);
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        try {
+          // Crear y descargar archivo
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          
+          // Nombre del archivo con timestamp
+          const today = new Date().toISOString().slice(0, 10);
+          link.download = `edp_export_completo_${today}.csv`;
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          // Mostrar notificación de éxito
+          showToast('Archivo CSV completo exportado correctamente', 'success');
+        } catch (err) {
+          console.error("Error procesando blob:", err);
+          showToast('Error al procesar el archivo', 'error');
+        } finally {
+          // Siempre restaurar el botón
+          restoreButton();
+        }
+      })
+      .catch(error => {
+        console.error('Error al exportar datos completos:', error);
+        showToast('Error al exportar los datos: ' + error.message, 'error');
+        restoreButton();
+      });
+  } else {
+    // Exportar solo los datos filtrados (desde la interfaz)
+    setTimeout(() => {
+      try {
+        // Generar contenido CSV
+        let csvContent = "data:text/csv;charset=utf-8,";
+        
+        // Obtener cabeceras visibles
+        const visibleHeaders = Array.from(table.querySelectorAll('thead th'))
+          .filter(th => th.style.display !== 'none')
+          .map(th => `"${th.textContent.trim().replace(/"/g, '""')}"`);
+        
+        csvContent += visibleHeaders.join(',') + '\r\n';
+        
+        // Exportar solo filas visibles (filtradas)
+        const rowsToExport = Array.from(tableBody.querySelectorAll('tr:not(.hidden)'));
+        
+        // Agregar datos de filas
+        rowsToExport.forEach(row => {
+          const rowData = Array.from(row.querySelectorAll('td'))
+            .filter((cell, index) => {
+              const header = table.querySelector(`thead th:nth-child(${index + 1})`);
+              return header && header.style.display !== 'none';
+            })
+            .map(cell => `"${cell.textContent.trim().replace(/"/g, '""')}"`);
+          
+          csvContent += rowData.join(',') + '\r\n';
+        });
+        
+        // Usar Blob para mejor manejo de archivos grandes
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        // Crear enlace de descarga
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        
+        // Nombre del archivo con fecha actual
+        const today = new Date().toISOString().slice(0, 10);
+        link.setAttribute('download', `edp_export_filtrado_${today}.csv`);
+        
+        // Descargar el archivo
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Liberar URL
+        URL.revokeObjectURL(url);
+        
+        // Mostrar notificación de éxito
+        showToast('Archivo CSV filtrado exportado correctamente', 'success');
+      } catch (error) {
+        console.error('Error al exportar datos filtrados:', error);
+        showToast('Hubo un error al exportar los datos: ' + error.message, 'error');
+      } finally {
+        // Siempre restaurar el botón, incluso si hay un error
+        restoreButton();
+      }
+    }, 300);
+  }
+}
+    
+    // Manejar clic en Exportar Todo
+    exportAllBtn.addEventListener('click', () => startExport(true));
+    
+    // Manejar clic en Exportar Filtrado
+    exportFilteredBtn.addEventListener('click', () => startExport(false));
+  });
+}
+    
+    // Initialize the table with sorting by days in descending order
+  // Initialize the table with sorting by days in descending order
+  const diasHeader = table.querySelector('th[data-sort="dias"]');
+  if (diasHeader) {
+    diasHeader.classList.add('sort-desc');
+    sortTable('dias', false);          // false → descendente
+  }
+})
+});
+ // Cierre del addEventListener - NO MOVER ESTA LÍNEA
+
+</script>
 </div>
 {% endblock %}

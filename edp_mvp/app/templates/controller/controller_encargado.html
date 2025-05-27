@@ -527,6 +527,7 @@ Control{% endblock %} {% block content %}
   document.addEventListener("DOMContentLoaded", function () {
     // Función para ordenar tabla
     const sortableHeaders = document.querySelectorAll(".sortable");
+
     sortableHeaders.forEach((header) => {
       header.addEventListener("click", function () {
         const sortBy = this.getAttribute("data-sort");
@@ -554,8 +555,6 @@ Control{% endblock %} {% block content %}
 
     function filterTable() {
       const searchTerm = buscarInput.value.toLowerCase();
-      const filterType = filtroSelect.value;
-      const rows = document.querySelectorAll("#tablaProyectos tbody tr");
 
       let visibleCount = 0;
 
