@@ -2,311 +2,468 @@
 {% block title %}Detalle EDP #{{ edp['N° EDP'] }}{% endblock %}
 
 {% block content %}
-<!-- Panel principal -->
-<div class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn">
-  <!-- Encabezado mejorado -->
-  <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
+<!-- ===================== PANEL PRINCIPAL ===================== -->
+<div class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn" aria-label="Detalles de EDP">
+  {# ----------------------------------------------------------- #}
+  {# Header                                                      #}
+  {# ----------------------------------------------------------- #}
+  <header class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
     <div class="flex items-center">
       <div class="mr-3 p-2 bg-[color:var(--bg-highlight)] rounded-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       </div>
       <div>
         <h1 class="text-2xl font-bold tracking-tight">EDP-{{ edp['N° EDP'] }}</h1>
-        <div class="flex items-center mt-1">
-          <span class="text-[color:var(--text-secondary)] text-sm">{{ edp['Proyecto'] }}</span>
-          <span class="mx-2 text-[color:var(--text-secondary)]">•</span>
-          <span class="text-[color:var(--text-secondary)] text-sm">{{ edp['Cliente'] }}</span>
+        <div class="flex items-center mt-1 text-[color:var(--text-secondary)] text-sm">
+          <span>{{ edp['Proyecto'] }}</span><span class="mx-2" aria-hidden="true">•</span><span>{{ edp['Cliente'] }}</span>
         </div>
       </div>
     </div>
-    
     <div class="flex flex-col items-end mt-4 md:mt-0">
-      <div class="estado-pill estado-{{ edp['Estado']|lower }} text-sm mb-2">{{ edp['Estado']|title }}</div>
-      <p class="text-[color:var(--text-secondary)] text-xs">Última modificación: {{ edp.get('Fecha Modificación', 'No registrada') }}</p>
+      <div class="estado-pill estado-{{ edp['Estado']|lower }} text-sm mb-1" role="status">{{ edp['Estado']|title }}</div>
+      <p class="text-[color:var(--text-secondary)] text-xs">Última modificación: {{ edp.get('Fecha Modificación','No registrada') }}</p>
     </div>
-  </div>
+  </header>
 
-  <!-- Información financiera destacada -->
+  {# ----------------------------------------------------------- #}
+  {# Tarjetas Financieras + Tiempo                               #}
+  {# ----------------------------------------------------------- #}
   <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-    <div class="bg-[color:var(--bg-card)] rounded-lg p-4 border border-[color:var(--border-color-subtle)]">
-      <p class="text-xs text-[color:var(--text-secondary)]">Monto Propuesto</p>
-      <p class="text-xl font-bold">${{ "{:,.0f}".format(edp['Monto Propuesto']|float).replace(',', '.') }}</p>
+    {% set prop = edp['Monto Propuesto']|float %}
+    {% set appr = edp['Monto Aprobado']|float %}
+    {% set diff = appr - prop %}
+    
+    <div class="metric-card p-4" role="region" aria-label="Monto Propuesto">
+      <p class="metric-label">Monto Propuesto</p>
+      <p class="metric-value">${{ '{:,.0f}'.format(prop).replace(',', '.') }}</p>
     </div>
     
-    <div class="bg-[color:var(--bg-card)] rounded-lg p-4 border border-[color:var(--border-color-subtle)]">
-      <p class="text-xs text-[color:var(--text-secondary)]">Monto Aprobado</p>
-      <p class="text-xl font-bold">${{ "{:,.0f}".format(edp['Monto Aprobado']|float).replace(',', '.') }}</p>
-      {% set diff = edp['Monto Aprobado']|float - edp['Monto Propuesto']|float %}
+    <div class="metric-card p-4" role="region" aria-label="Monto Aprobado">
+      <p class="metric-label">Monto Aprobado</p>
+      <p class="metric-value">${{ '{:,.0f}'.format(appr).replace(',', '.') }}</p>
       {% if diff != 0 %}
-        <p class="text-xs {{ 'text-[color:var(--accent-green)]' if diff > 0 else 'text-[color:var(--accent-red)]' }} font-medium">
-          {{ "+" if diff > 0 else "" }}{{ "{:,.0f}".format(diff).replace(',', '.') }} 
-          ({{ ((diff/(edp['Monto Propuesto']|float)|default(1))*100) | round(1) }}%)
+        <p class="text-xs {{ 'text-[color:var(--accent-red)]' if diff < 0 else 'text-[color:var(--accent-green)]' }} font-medium" aria-live="polite">
+          {{ '+' if diff>0 else '' }}{{ '{:,.0f}'.format(diff).replace(',', '.') }} ({{ (diff/prop*100)|round(1) }}%)
         </p>
       {% endif %}
     </div>
     
-    <div class="bg-[color:var(--bg-card)] rounded-lg p-4 border border-[color:var(--border-color-subtle)]">
-      <p class="text-xs text-[color:var(--text-secondary)]">Tiempo Transcurrido</p>
+    <div class="metric-card p-4" role="region" aria-label="Tiempo Transcurrido">
+      {% set dias = edp['dias_espera']|int %}
+      <p class="metric-label">Tiempo Transcurrido</p>
       <div class="flex items-center justify-between">
-        <p class="text-xl font-bold">{{ edp['dias_espera'] }} días</p>
-        {% if edp['dias_espera']|int > 10 %}
-          <span class="px-2 py-1 rounded-full bg-[color:var(--state-error-bg)] text-[color:var(--accent-red)] text-xs font-bold">Crítico</span>
-        {% elif edp['dias_espera']|int > 5 %}
-          <span class="px-2 py-1 rounded-full bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)] text-xs font-bold">Atención</span>
-        {% else %}
-          <span class="px-2 py-1 rounded-full bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] text-xs font-bold">Normal</span>
-        {% endif %}
+        <p class="metric-value">{{ dias }} días</p>
+        <span class="px-2 py-1 rounded-full text-xs font-bold {{ 
+          'bg-[color:var(--state-error-bg)] text-[color:var(--accent-red)]' if dias>10 else 
+          ('bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)]' if dias>5 else 
+          'bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)]') }}"
+          role="status">
+          {{ 'Crítico' if dias>10 else ('Atención' if dias>5 else 'Normal') }}
+        </span>
       </div>
       <p class="text-xs text-[color:var(--text-secondary)] mt-1">{{ edp['dias_habiles'] }} días hábiles</p>
     </div>
   </div>
 
-  <!-- Formulario con pestañas -->
-  <form method="POST" class="space-y-6">
-    <!-- Sección de estado con diseño mejorado -->
-    <div class="bg-[color:var(--bg-card)] rounded-xl p-5 border border-[color:var(--border-color-subtle)]">
+  {# ----------------------------------------------------------- #}
+  {# FORMULARIO EDP                                              #}
+  {# ----------------------------------------------------------- #}
+  <form method="POST" class="space-y-6" novalidate id="edpForm">
+    <!-- ===== BLOQUE: ACTUALIZAR ESTADO ===== -->
+    <section class="bg-[color:var(--bg-card)] rounded-xl p-5 border border-[color:var(--border-color-subtle)]">
       <div class="section-title-modern mb-4">
-        <h2 class="text-lg font-semibold">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 inline text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-          </svg>
+        <h2 class="text-lg font-semibold flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
           Actualizar Estado
         </h2>
         <div class="section-line"></div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <!-- Estado con colores indicativos -->
+        <!-- Macro Estado -->
         <div class="form-group">
-          <label class="text-xs font-medium text-[color:var(--text-secondary)]">Estado</label>
-          <select name="estado" class="form-select mt-1 border-l-4" style="border-left-color: var(--accent-{{ {'revisión': 'amber', 'enviado': 'blue', 'pagado': 'blue-light', 'validado': 'green'}[edp['Estado']] }});">
+          <label for="estado" class="label-small">Estado</label>
+          <select name="estado" id="estado" class="form-select mt-1" required>
             {% for e in ['revisión','enviado','pagado','validado'] %}
-              <option value="{{ e }}" {% if edp['Estado']==e %}selected{% endif %}>{{ e|title }}</option>
+              <option value="{{ e }}" {{ 'selected' if edp['Estado']==e else '' }}>{{ e|title }}</option>
             {% endfor %}
           </select>
         </div>
 
-        <!-- Fecha Conformidad con icono -->
+        <!-- Estado Detallado -->
         <div class="form-group">
-          <label class="text-xs font-medium text-[color:var(--text-secondary)] flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            Fecha Conformidad
-          </label>
-          <input type="date" name="fecha_conformidad" value="{{ edp['fecha_conf_str'] }}" class="form-input mt-1" />
-        </div>
-
-        <!-- Conformidad Enviada con toggle visual -->
-        <div class="form-group">
-          <label class="text-xs font-medium text-[color:var(--text-secondary)]">Conformidad Enviada</label>
-          <select name="conformidad_enviada" class="form-select mt-1" style="border-left: 4px solid {{ 'var(--accent-green)' if edp['Conformidad Enviada']=='Sí' else 'var(--accent-amber)' }}">
-            <option value="">Seleccionar</option>
-            <option value="Sí" {% if edp['Conformidad Enviada']=='Sí' %}selected{% endif %}>Sí</option>
-            <option value="No" {% if edp['Conformidad Enviada']=='No' %}selected{% endif %}>No</option>
+          <label for="estado_detallado" class="label-small">Estado Detallado</label>
+          <select name="estado_detallado" id="estado_detallado" class="form-select mt-1" required>
+            {% set estados_det = ['creado','revisión interna','enviado cliente','revisión cliente','aprobado','re-trabajo solicitado','conformidad emitida'] %}
+            {% for e in estados_det %}
+              <option value="{{ e }}" {{ 'selected' if edp['Estado Detallado']==e else '' }}>{{ e|title }}</option>
+            {% endfor %}
           </select>
         </div>
 
-        <!-- Observaciones mejoradas -->
+        <!-- Motivo No-aprobado (solo visible en re-trabajo) -->
+  <div class="form-group hidden transition-all duration-200 ease-in-out" id="wrap_motivo">
+  <label for="motivo_no" class="label-small">Motivo No-aprobado</label>
+  <select name="motivo_no_aprobado" id="motivo_no" class="form-select mt-1">
+    {% for m in ['falta documentación','error de monto','alcance no claro','otros'] %}
+      <option value="{{ m }}" {{ 'selected' if edp['Motivo No-aprobado']==m else '' }}>{{ m|title }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+        <!-- Tipo_falla -->
+<div class="form-group hidden transition-all duration-200 ease-in-out" id="wrap_falla">
+  <label for="tipo_falla" class="label-small">Tipo de Falla</label>
+  <select name="tipo_falla" id="tipo_falla" class="form-select mt-1">
+    {% for f in ['retraso doc','error interno','error cliente','otros'] %}
+      <option value="{{ f }}" {{ 'selected' if edp['Tipo_falla']==f else '' }}>{{ f|title }}</option>
+    {% endfor %}
+  </select>
+</div>
+        <!-- Conformidad Enviada -->
+        <div class="form-group">
+          <label for="conformidad_enviada" class="label-small">Conformidad Enviada</label>
+          <select name="conformidad_enviada" id="conformidad_enviada" class="form-select mt-1">
+            <option value="">Seleccionar</option>
+            <option value="Sí" {{ 'selected' if edp['Conformidad Enviada']=='Sí' else '' }}>Sí</option>
+            <option value="No" {{ 'selected' if edp['Conformidad Enviada']=='No' else '' }}>No</option>
+          </select>
+        </div>
+
+        <!-- Fecha Conformidad -->
+        <div class="form-group">
+          <label for="fecha_conformidad" class="label-small">Fecha Conformidad</label>
+          <input type="date" name="fecha_conformidad" id="fecha_conformidad" value="{{ edp['fecha_conf_str'] }}" class="form-input mt-1" />
+        </div>
+
+        <!-- Observaciones -->
         <div class="form-group md:col-span-2">
-          <label class="text-xs font-medium text-[color:var(--text-secondary)] flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-            </svg>
-            Observaciones
-          </label>
-          <textarea name="observaciones" rows="3" class="form-input mt-1 w-full" placeholder="Notas del EDP">{{ edp['Observaciones'] }}</textarea>
+          <label for="observaciones" class="label-small">Observaciones</label>
+          <textarea name="observaciones" id="observaciones" rows="3" class="form-input mt-1 w-full">{{ edp['Observaciones'] }}</textarea>
         </div>
       </div>
-    </div>
+    </section>
 
-<!-- En la sección de Datos Financieros -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-  <!-- Propuesto con formato numérico -->
-  <div class="form-group">
-    <label class="text-xs font-medium text-[color:var(--text-secondary)] flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      Monto Propuesto
-    </label>
-    <div class="relative mt-1">
-      <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[color:var(--text-secondary)]">$</span>
-      <!-- Campo visible formateado -->
-      <input type="text" id="monto_propuesto_formatted" class="form-input pl-8 mt-1 w-full" 
-             value="{{ '{:,.0f}'.format(edp['Monto Propuesto']|float).replace(',', '.') }}"/>
-      <!-- Campo oculto con el valor real que se envía -->
-      <input type="hidden" name="monto_propuesto" id="monto_propuesto_real" value="{{ edp['Monto Propuesto']|int }}"/>
-    </div>
-  </div>
+    <!-- ===== BLOQUE: DATOS FINANCIEROS ===== -->
+    <section class="bg-[color:var(--bg-card)] rounded-xl p-5 border border-[color:var(--border-color-subtle)]">
+      <div class="section-title-modern mb-4">
+        <h2 class="text-lg font-semibold flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" clip-rule="evenodd"/></svg>
+          Montos y Fechas
+        </h2>
+        <div class="section-line"></div>
+      </div>
 
-  <!-- Aprobado con visualización de diferencia -->
-  <div class="form-group">
-    <label class="text-xs font-medium text-[color:var(--text-secondary)] flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      Monto Aprobado
-    </label>
-    <div class="relative mt-1">
-      <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[color:var(--text-secondary)]">$</span>
-      <!-- Campo visible formateado -->
-      <input type="text" id="monto_aprobado_formatted" class="form-input pl-8 mt-1 w-full" 
-             value="{{ '{:,.0f}'.format(edp['Monto Aprobado']|float).replace(',', '.') }}"/>
-      <!-- Campo oculto con el valor real que se envía -->
-      <input type="hidden" name="monto_aprobado" id="monto_aprobado_real" value="{{ edp['Monto Aprobado']|int }}"/>
-    </div>
-    {% set diff = edp['Monto Aprobado']|float - edp['Monto Propuesto']|float %}
-    {% if diff != 0 %}
-      <p class="flex items-center text-xs mt-1 {{ 'text-[color:var(--accent-green)]' if diff > 0 else 'text-[color:var(--accent-red)]' }} font-medium">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M{{ '3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z' if diff < 0 else '10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z' }}" clip-rule="evenodd" />
-        </svg>
-        <span>
-          {{ "+" if diff > 0 else "" }}{{ "{:,.0f}".format(diff).replace(',', '.') }} 
-          ({{ ((diff/(edp['Monto Propuesto']|float)|default(1))*100) | round(1) }}%)
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Monto Propuesto -->
+        <div class="form-group">
+          <label for="monto_prop_fmt" class="label-small">Monto Propuesto</label>
+          <div class="relative mt-1">
+            <span class="prefix" aria-hidden="true">$</span>
+            <input type="text" id="monto_prop_fmt" class="form-input pl-8 w-full" value="{{ '{:,.0f}'.format(prop).replace(',', '.') }}" aria-describedby="prop-format-hint"/>
+            <input type="hidden" name="monto_propuesto" id="monto_prop_val" value="{{ prop|int }}"/>
+            <p id="prop-format-hint" class="text-xs text-[color:var(--text-secondary)] mt-1 hidden">Formato: números sin decimales</p>
+          </div>
+        </div>
+        
+        <!-- Monto Aprobado -->
+        <div class="form-group">
+          <label for="monto_apr_fmt" class="label-small">Monto Aprobado</label>
+          <div class="relative mt-1">
+            <span class="prefix" aria-hidden="true">$</span>
+            <input type="text" id="monto_apr_fmt" class="form-input pl-8 w-full" value="{{ '{:,.0f}'.format(appr).replace(',', '.') }}" aria-describedby="apr-format-hint"/>
+            <input type="hidden" name="monto_aprobado" id="monto_apr_val" value="{{ appr|int }}"/>
+            <p id="apr-format-hint" class="text-xs text-[color:var(--text-secondary)] mt-1 hidden">Formato: números sin decimales</p>
+          </div>
+        </div>
+        
+        <!-- Nº Conformidad -->
+        <div class="form-group">
+          <label for="n_conformidad" class="label-small">N° Conformidad</label>
+          <input type="text" name="n_conformidad" id="n_conformidad" value="{{ edp['N° Conformidad'] }}" class="form-input mt-1"/>
+        </div>
+        
+        <!-- Fecha Estimada Pago -->
+        <div class="form-group">
+          <label for="fecha_estimada_pago" class="label-small">Fecha Estimada de Pago</label>
+          <input type="date" name="fecha_estimada_pago" id="fecha_estimada_pago" value="{{ edp['fecha_estimada_pago'] }}" class="form-input mt-1"/>
+        </div>
+        
+        <!-- Fecha Emision -->
+        <div class="form-group">
+          <label for="fecha_emision" class="label-small">Fecha Emisión</label>
+          <input type="date" name="fecha_emision" id="fecha_emision" value="{{ edp['fecha_emision_str'] }}" class="form-input mt-1"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ACCIONES ===== -->
+    <div class="flex flex-wrap justify-end gap-3 pt-4">
+      <a href="{{ url_for('controller_bp.dashboard_controller') }}" class="btn-secondary">Volver</a>
+      <button type="submit" class="btn-primary flex items-center" id="submitButton">
+        <span>Guardar Cambios</span>
+        <span id="loadingIndicator" class="ml-2 hidden">
+          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
         </span>
-      </p>
-    {% endif %}
-  </div>
-
-        <!-- Nº Conformidad con validación visual -->
-        <div class="form-group">
-          <label class="text-xs font-medium text-[color:var(--text-secondary)]">N° Conformidad</label>
-          <input type="text" name="n_conformidad" value="{{ edp['N° Conformidad'] }}" class="form-input mt-1" />
-        </div>
-        
-        <!-- Fechas con mejor formato -->
-        <div class="form-group">
-          <label class="text-xs font-medium text-[color:var(--text-secondary)] flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            Fecha Estimada de Pago
-          </label>
-          <input type="date" name="fecha_estimada_pago" value="{{ edp['fecha_estimada_pago'] }}" class="form-input mt-1" />
-        </div>
-        
-        <div class="form-group">
-          <label class="text-xs font-medium text-[color:var(--text-secondary)] flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            Fecha Emisión
-          </label>
-          <input type="date" name="fecha_emision" value="{{ edp['fecha_emision_str'] }}" class="form-input mt-1" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Acciones con botones mejorados -->
-    <div class="flex flex-wrap items-center justify-end space-x-0 space-y-2 md:space-y-0 md:space-x-4 pt-4">
-      <a href="{{ url_for('controller_bp.dashboard_controller') }}" class="w-full md:w-auto px-4 py-2 bg-[color:var(--bg-card)] rounded-lg border border-[color:var(--border-color)] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-card-hover)] transition-colors flex items-center justify-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Volver
-      </a>
-      <button type="submit" class="w-full md:w-auto btn-primary flex items-center justify-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-        </svg>
-        Guardar Cambios
       </button>
     </div>
   </form>
 </div>
 
-<!-- Historial con mejor presentación -->
+<!-- ===== HISTORIAL ===== -->
 <div class="mb-4 bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow">
-  <a href="{{ url_for('controller_bp.ver_log_edp', n_edp=edp['N° EDP']) }}" class="flex items-center text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] transition-colors">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+  <a href="{{ url_for('controller_bp.ver_log_edp', n_edp=edp['N° EDP']) }}" class="flex items-center text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)]">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 001.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
     </svg>
     Ver historial completo de cambios
   </a>
 </div>
 
+<!-- ===== JS PARA FORMATEO Y VISIBILIDAD ===== -->
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Configurar formateo para monto propuesto
-    setupCurrencyInput('monto_propuesto_formatted', 'monto_propuesto_real');
-    
-    // Configurar formateo para monto aprobado
-    setupCurrencyInput('monto_aprobado_formatted', 'monto_aprobado_real');
-    
-    function setupCurrencyInput(formattedId, realId) {
-      const formattedInput = document.getElementById(formattedId);
-      const realInput = document.getElementById(realId);
-      
-      // Formatear valor inicial
-      if (formattedInput.value === '') {
-        formattedInput.value = formatNumber(realInput.value);
-      }
-      
-      // Listener para cuando el usuario escribe
-      formattedInput.addEventListener('input', function(e) {
-        // Eliminar caracteres no numéricos excepto el punto
-        let value = e.target.value.replace(/[^\d]/g, '');
-        
-        // Guardar el valor numérico en el campo oculto
-        realInput.value = value;
-        
-        // Formatear y mostrar en el campo visible
-        formattedInput.value = formatNumber(value);
-        
-        // Actualizar el porcentaje de diferencia
-        updateDifference();
-      });
-      
-      // Asegurarse de que el cursor se posicione correctamente
-      formattedInput.addEventListener('click', function(e) {
-        // Si el usuario hace clic al inicio del campo, mover el cursor después del signo $
-        if (e.target.selectionStart === 0) {
-          e.target.selectionStart = e.target.value.length;
-        }
-      });
-    }
-    
-    // Función para formatear números con separador de miles
-    function formatNumber(num) {
-      if (!num) return '$0';
-      
-      // Convertir a número y formatear con separadores de miles
-      return '$' + parseInt(num).toLocaleString('es-CL');
-    }
-    
-    // Función para actualizar dinámicamente la diferencia y el porcentaje
-    function updateDifference() {
-      const montoAprobado = parseInt(document.getElementById('monto_aprobado_real').value) || 0;
-      const montoPropuesto = parseInt(document.getElementById('monto_propuesto_real').value) || 1;
-      
-      const diff = montoAprobado - montoPropuesto;
-      if (diff === 0) return;
-      
-      const diffPercent = ((diff / montoPropuesto) * 100).toFixed(1);
-      const diffDisplay = document.querySelector('.flex.items-center.text-xs.mt-1');
-      
-      if (!diffDisplay) return;
-      
-      const prefix = diff > 0 ? "+" : "";
-      diffDisplay.classList.remove('text-[color:var(--accent-green)]', 'text-[color:var(--accent-red)]');
-      diffDisplay.classList.add(diff > 0 ? 'text-[color:var(--accent-green)]' : 'text-[color:var(--accent-red)]');
-      
-      // Actualizar el ícono
-      const svgPath = diffDisplay.querySelector('svg path');
-      if (svgPath) {
-        svgPath.setAttribute('d', `M${diff < 0 ? '3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z' : '10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z'}`);
-      }
-      
-      // Actualizar el texto
-      const spanText = diffDisplay.querySelector('span');
-      if (spanText) {
-        spanText.textContent = `${prefix}${diff.toLocaleString('es-CL')} (${diffPercent}%)`;
-      }
-    }
+// Currency formatting utilities
+function formatCurrency(value) {
+  // Remove non-digits and convert to number
+  const number = parseInt(value.toString().replace(/[^\d]/g, '')) || 0;
+  // Format with locale settings
+  return number.toLocaleString('es-CL');
+}
+
+// Setup currency input with formatting
+function setupCurrencyInput(formattedInputId, hiddenValueId) {
+  const formattedInput = document.getElementById(formattedInputId);
+  const hiddenValue = document.getElementById(hiddenValueId);
+  
+  if (!formattedInput || !hiddenValue) return;
+  
+  // Format on input
+  formattedInput.addEventListener('input', (e) => {
+    // Extract raw numeric value
+    const rawValue = e.target.value.replace(/[^\d]/g, '');
+    // Update hidden field with raw value
+    hiddenValue.value = rawValue;
+    // Update display with formatted value
+    formattedInput.value = formatCurrency(rawValue);
   });
+  
+  // Format initial value
+  formattedInput.value = formatCurrency(hiddenValue.value);
+  
+  // Show hint on focus
+  const hintId = formattedInputId + '-format-hint';
+  const hint = document.getElementById(hintId);
+  if (hint) {
+    formattedInput.addEventListener('focus', () => {
+      hint.classList.remove('hidden');
+    });
+    formattedInput.addEventListener('blur', () => {
+      hint.classList.add('hidden');
+    });
+  }
+}
+
+// Setup dynamic field visibility based on estado_detallado
+function setupConditionalFields() {
+  const estadoDetallado = document.getElementById('estado_detallado');
+  const wrapMotivo = document.getElementById('wrap_motivo');
+  const wrapFalla = document.getElementById('wrap_falla');
+  
+  if (!estadoDetallado || !wrapMotivo || !wrapFalla) return;
+  
+  function updateFieldVisibility() {
+    const showReTrabajo = estadoDetallado.value === 're-trabajo solicitado';
+    
+    // Toggle both fields together with the same animation timing
+    if (showReTrabajo) {
+      // Primero mostramos los contenedores
+      wrapMotivo.style.display = 'block';
+      wrapFalla.style.display = 'block';
+      
+      // Luego, después de un pequeño delay, quitamos la clase hidden para la animación
+      setTimeout(() => {
+        wrapMotivo.classList.remove('hidden');
+        wrapFalla.classList.remove('hidden');
+      }, 10);
+    } else {
+      // Primero aplicamos la clase hidden para iniciar la transición
+      wrapMotivo.classList.add('hidden');
+      wrapFalla.classList.add('hidden');
+      
+      // Después de la transición, ocultamos completamente
+      setTimeout(() => {
+        wrapMotivo.style.display = 'none';
+        wrapFalla.style.display = 'none';
+      }, 200); // duración de la transición
+    }
+  }
+  
+  // Update on change
+  estadoDetallado.addEventListener('change', updateFieldVisibility);
+  
+  // Asegurar que el estado inicial sea correcto
+  updateFieldVisibility();
+  
+  // Re-verificar después de un momento para casos donde otras scripts
+  // podrían estar afectando la visibilidad
+  setTimeout(updateFieldVisibility, 100);
+}
+// Setup condiciones para el campo de Conformidad Enviada
+function setupConformidadFields() {
+  const conformidadSelect = document.getElementById('conformidad_enviada');
+  const fechaConformidad = document.getElementById('fecha_conformidad');
+  const numConformidad = document.getElementById('n_conformidad');
+  
+  // Mensaje de notificación que crearemos dinámicamente
+  let notificationDiv = null;
+  
+  if (!conformidadSelect || !fechaConformidad || !numConformidad) return;
+  
+  // Crear elemento de notificación
+  function createNotification() {
+    notificationDiv = document.createElement('div');
+    notificationDiv.id = 'conformidadNotification';
+    notificationDiv.className = 'mt-4 mb-2 p-3 rounded-md bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber-dark)] border border-[color:var(--accent-amber)] animate__animated animate__fadeIn';
+    notificationDiv.innerHTML = `
+      <div class="flex items-start">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <div>
+          <p class="font-medium">Campos obligatorios para conformidad</p>
+          <p class="text-sm mt-1">Al marcar "Conformidad Enviada" como "Sí", debes completar tanto el <strong>N° de Conformidad</strong> como la <strong>Fecha de Conformidad</strong>.</p>
+        </div>
+        <button type="button" id="closeConformidadNotification" class="ml-auto text-[color:var(--accent-amber-dark)] hover:text-[color:var(--accent-amber)]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    `;
+    
+    // Insertar después del selector de conformidad
+    const formGroup = conformidadSelect.closest('.form-group');
+    formGroup.parentNode.insertBefore(notificationDiv, formGroup.nextSibling);
+    
+    // Configurar botón cerrar
+    document.getElementById('closeConformidadNotification').addEventListener('click', removeNotification);
+  }
+  
+  // Remover notificación
+  function removeNotification() {
+    if (notificationDiv) {
+      notificationDiv.classList.add('animate__fadeOut');
+      setTimeout(() => {
+        if (notificationDiv && notificationDiv.parentNode) {
+          notificationDiv.parentNode.removeChild(notificationDiv);
+          notificationDiv = null;
+        }
+      }, 300);
+    }
+  }
+  
+  // Resaltar campos requeridos
+  function highlightRequiredFields(isRequired) {
+    const requiredClass = 'border-[color:var(--accent-amber)] bg-[color:var(--state-warning-bg-subtle)]';
+    const labelClass = 'text-[color:var(--accent-amber-dark)] font-medium';
+    
+    if (isRequired) {
+      // Resaltar campos
+      fechaConformidad.classList.add(...requiredClass.split(' '));
+      numConformidad.classList.add(...requiredClass.split(' '));
+      
+      // Resaltar etiquetas
+      fechaConformidad.previousElementSibling.classList.add(...labelClass.split(' '));
+      numConformidad.previousElementSibling.classList.add(...labelClass.split(' '));
+      
+      // Agregar indicador visual de requerido
+      addRequiredIndicator(fechaConformidad);
+      addRequiredIndicator(numConformidad);
+    } else {
+      // Quitar resaltado
+      fechaConformidad.classList.remove(...requiredClass.split(' '));
+      numConformidad.classList.remove(...requiredClass.split(' '));
+      
+      // Quitar resaltado de etiquetas
+      fechaConformidad.previousElementSibling.classList.remove(...labelClass.split(' '));
+      numConformidad.previousElementSibling.classList.remove(...labelClass.split(' '));
+      
+      // Quitar indicador visual
+      removeRequiredIndicator(fechaConformidad);
+      removeRequiredIndicator(numConformidad);
+    }
+  }
+  
+  // Agregar indicador de campo requerido
+  function addRequiredIndicator(field) {
+    if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('required-indicator')) {
+      const indicator = document.createElement('span');
+      indicator.className = 'required-indicator text-xs text-[color:var(--accent-amber-dark)] mt-1 block animate__animated animate__fadeIn';
+      indicator.textContent = 'Campo requerido';
+      field.parentNode.insertBefore(indicator, field.nextSibling);
+    }
+  }
+  
+  // Quitar indicador de campo requerido
+  function removeRequiredIndicator(field) {
+    const indicator = field.nextElementSibling;
+    if (indicator && indicator.classList.contains('required-indicator')) {
+      indicator.remove();
+    }
+  }
+  
+  // Función principal que actualiza la UI según la selección
+  function updateConformidadUI() {
+    const isConformidadSi = conformidadSelect.value === 'Sí';
+    
+    if (isConformidadSi) {
+      // Si no existe la notificación, crearla
+      if (!notificationDiv) {
+        createNotification();
+      }
+      highlightRequiredFields(true);
+    } else {
+      // Quitar notificación
+      removeNotification();
+      highlightRequiredFields(false);
+    }
+  }
+  
+  // Escuchar cambios en el selector
+  conformidadSelect.addEventListener('change', updateConformidadUI);
+  
+  // Establecer estado inicial
+  updateConformidadUI();
+}
+// Form submission handling
+function setupFormSubmission() {
+  const form = document.getElementById('edpForm');
+  const submitButton = document.getElementById('submitButton');
+  const loadingIndicator = document.getElementById('loadingIndicator');
+  
+  if (!form || !submitButton || !loadingIndicator) return;
+  
+  form.addEventListener('submit', () => {
+    // Disable button and show loading
+    submitButton.disabled = true;
+    loadingIndicator.classList.remove('hidden');
+    
+    // Could add form validation here
+    return true;
+  });
+}
+
+
+// Asegúrate de inicializar esta función con el resto
+document.addEventListener('DOMContentLoaded', () => {
+  setupCurrencyInput('monto_prop_fmt', 'monto_prop_val');
+  setupCurrencyInput('monto_apr_fmt', 'monto_apr_val');
+  setupConditionalFields();
+  setupConformidadFields(); // <- Nueva función
+  setupFormSubmission();
+});
 </script>
 {% endblock %}

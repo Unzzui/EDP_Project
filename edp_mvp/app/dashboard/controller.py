@@ -155,74 +155,114 @@ def dashboard_controller():
         monto_pendiente_encargado=monto_pendiente_encargado
     )
     
+# dashboard/controller.py
+# -----------------------
+
 @controller_bp.route("/controller/detalle/<n_edp>", methods=["GET", "POST"])
 def detalle_edp(n_edp):
-    df = read_sheet("edp!A1:Q")                           # 17 columnas
-
+    """
+    Vista detalle + edición de un EDP.
+    - Lee todas las 20 columnas (A-T) de la hoja.
+    - Calcula días corridos y hábiles.
+    - Aplica reglas de negocio al guardar:
+        • Si Estado = pagado ⇒ Conformidad Enviada = “Sí”.
+        • Si Estado Detallado pasa a 'aprobado' y aún no hay Conformidad,
+          se sugiere marcar Conformidad Enviada = “Sí”.
+        • Si Estado Detallado = 're-trabajo solicitado' se deben
+          informar Motivo No-aprobado y Tipo_falla.
+    - Registra cada cambio en la hoja log.
+    """
+    # ----------- LECTURA -----------
+    df = read_sheet("edp!A1:T")        # ahora 20 columnas
     edp = df[df["N° EDP"] == n_edp]
+
     if edp.empty:
         flash("EDP no encontrado", "error")
         return redirect(url_for("controller_bp.dashboard_controller"))
 
-    row_idx  = edp.index[0] + 2                           # +2 = encabezado + base-1
+    row_idx  = edp.index[0] + 2        # +1 por header, +1 porque Sheets arranca en 1
     edp_data = edp.iloc[0].to_dict()
 
-    # — días espera / hábiles —
-    fecha_envio        = edp_data.get("Fecha Envío al Cliente")
-    fecha_conformidad  = edp_data.get("Fecha Conformidad")
+    # ----------- KPI de tiempo -----------
+    fecha_envio       = edp_data.get("Fecha Envío al Cliente")
+    fecha_conformidad = edp_data.get("Fecha Conformidad")
+
     if not isna(fecha_envio):
-        fin        = fecha_conformidad if not isna(fecha_conformidad) else datetime.today()
+        fin = fecha_conformidad if not isna(fecha_conformidad) else datetime.today()
         edp_data["dias_espera"]  = (fin - fecha_envio).days
         edp_data["dias_habiles"] = calcular_dias_habiles(fecha_envio, fin)
     else:
         edp_data["dias_espera"] = edp_data["dias_habiles"] = "—"
 
-    # —— fechas para el input date ——
+    # ----------- Fechas a string para los <input type=date> -----------
     edp_data["fecha_conf_str"]      = fecha_conformidad.strftime("%Y-%m-%d") if not isna(fecha_conformidad) else ""
     edp_data["fecha_estimada_pago"] = (
         edp_data["Fecha Estimada de Pago"].strftime("%Y-%m-%d")
-        if not isna(edp_data.get("Fecha Estimada de Pago"))
-        else ""
+        if not isna(edp_data.get("Fecha Estimada de Pago")) else ""
     )
     edp_data["fecha_emision_str"] = (
         edp_data["Fecha Emisión"].strftime("%Y-%m-%d")
-        if not isna(edp_data.get("Fecha Emisión"))
-        else ""
+        if not isna(edp_data.get("Fecha Emisión")) else ""
     )
 
-    # ---------- POST ----------
+    # ==============================================================
+    # POST – guardar cambios
+    # ==============================================================
     if request.method == "POST":
-        form = request.form
+        f = request.form
 
         updates = {
-            "Estado"              : form.get("estado"),
-            "Fecha Conformidad"   : form.get("fecha_conformidad")              or "",
-            "Conformidad Enviada" : form.get("conformidad_enviada")            or "",
-            "Observaciones"       : form.get("observaciones")                  or "",
-            "Monto Propuesto"     : form.get("monto_propuesto")                or "",
-            "Monto Aprobado"      : form.get("monto_aprobado")                 or "",
-            "N° Conformidad"      : form.get("n_conformidad")                  or "",
-            "Fecha Estimada de Pago": form.get("fecha_estimada_pago")          or "",
-            "Fecha Emisión"       : form.get("fecha_emision")                  or "",
+            "Estado"                 : f.get("estado")                     or "",
+            "Estado Detallado"       : f.get("estado_detallado")           or "",
+            "Motivo No-aprobado"     : f.get("motivo_no_aprobado")         or "",
+            "Tipo_falla"             : f.get("tipo_falla")                 or "",
+            "Fecha Conformidad"      : f.get("fecha_conformidad")          or "",
+            "Conformidad Enviada"    : f.get("conformidad_enviada")        or "",
+            "N° Conformidad"         : f.get("n_conformidad")              or "",
+            "Monto Propuesto"        : f.get("monto_propuesto")            or "",
+            "Monto Aprobado"         : f.get("monto_aprobado")             or "",
+            "Fecha Estimada de Pago" : f.get("fecha_estimada_pago")        or "",
+            "Fecha Emisión"          : f.get("fecha_emision")              or "",
+            "Observaciones"          : f.get("observaciones")              or "",
         }
 
-        # Regla: si marca pagado -> Conformidad Enviada = "Sí"
+        # ---------- Reglas automáticas ----------
         if updates["Estado"] == "pagado":
             updates["Conformidad Enviada"] = "Sí"
-        usuario = session.get("usuario", "Sistema")  # o 'Diego Bravo' para pruebas
-        # — auditoría —
+            # Si no vino nº conformidad y el usuario marcó pagado, dejamos campo vacío pero registrado.
+
+        # Si el usuario marca re-trabajo: exige motivo + tipo de falla
+        if updates["Estado Detallado"] == "re-trabajo solicitado":
+            if not updates["Motivo No-aprobado"]:
+                flash("Debes indicar el motivo del no-aprobado.", "warning")
+                return render_template("controller/controller_edp_detalle.html",
+                                       edp=edp_data, row=row_idx)
+            if not updates["Tipo_falla"]:
+                flash("Debes indicar el tipo de falla asociado.", "warning")
+                return render_template("controller/controller_edp_detalle.html",
+                                       edp=edp_data, row=row_idx)
+
+        # ---------- Auditoría ----------
+        usuario = session.get("usuario", "Sistema")  # o correo/name si usas flask-login
         for campo, nuevo in updates.items():
             viejo = str(edp_data.get(campo, ""))
-            if nuevo and nuevo != viejo:
+            if nuevo != "" and nuevo != viejo:
                 log_cambio_edp(
-                    edp_data["N° EDP"], campo, viejo, nuevo, usuario  # o quien sea
+                    edp_data["N° EDP"], campo, viejo, nuevo, usuario
                 )
 
+        # ---------- Guardar en Google Sheets ----------
         update_row(row_idx, updates, usuario=usuario)
         flash("EDP actualizado correctamente", "success")
         return redirect(url_for("controller_bp.dashboard_controller"))
 
-    return render_template("controller/controller_edp_detalle.html", edp=edp_data, row=row_idx)
+    # GET → pintar plantilla
+    return render_template(
+        "controller/controller_edp_detalle.html",
+        edp=edp_data,
+        row=row_idx
+    )
+
 
 
 @controller_bp.route("/controller/encargado/<nombre>")
