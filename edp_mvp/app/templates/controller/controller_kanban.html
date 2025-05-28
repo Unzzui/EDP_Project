@@ -611,16 +611,15 @@ button.processing {
           <div class="flex justify-between items-start mb-2">
             <p class="font-bold text-sm">
               EDP-{{ edp["N° EDP"] }}
-              {% if edp["Fecha Emisión"] %}
-              <span class="text-xs text-[color:var(--text-secondary)] ml-1">
-                {{ edp["Fecha Emisión"].strftime('%d-%m-%Y') if edp["Fecha Emisión"] is not none }}
-              </span>
-              {% endif %}
+        
             </p>
+            <p>
             <span class="text-xs px-2 py-1 rounded-full bg-[color:var(--bg-accent-subtle)] text-[color:var(--text-secondary)]"
                   data-tooltip='Obs: {{ edp["Observaciones"] }}'>
               ${{ "{:,.0f}".format(edp["Monto Aprobado"]|float).replace(",", ".") }}
             </span>
+            </p>
+      
           </div>
           
           <!-- Contenido de tarjeta -->

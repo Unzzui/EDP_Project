@@ -478,3 +478,18 @@ body {
   .mobile-menu{ display:none }
   .mobile-open .mobile-menu{ display:block }
 }
+
+
+
+.form-textarea {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color-subtle);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  transition: all 0.2s;
+  width: 100%;
+  height: auto;
+  min-height: 100px;
+  margin-top: 10px;
+}
