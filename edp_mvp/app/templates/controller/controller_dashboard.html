@@ -303,9 +303,9 @@
     </div>
   {% endif %}
 
-<!-- Replace the existing KPIs Global section with this improved version -->
 
 <!-- KPIs GLOBALES MEJORADOS -->
+
 <div class="section-title-modern mb-5">
   <h2 class="text-xl font-semibold">📊 KPIs Globales</h2>
   <div class="section-line"></div>
@@ -381,42 +381,140 @@
   </div>
 </div>
 
-<!-- Meta Financiera Global Mejorada -->
+<!-- Meta Financiera Global con Indicadores de Variación -->
 <div class="section-title-modern mb-5">
   <h2 class="text-xl font-semibold">🎯 Meta Financiera Global</h2>
   <div class="section-line"></div>
 </div>
-
 <div class="bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-5 mb-8">
   <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-4">
+    <!-- Meta Total with variation indicator -->
     <div class="flex flex-col">
       <p class="text-sm font-medium text-[color:var(--text-secondary)] mb-1">Meta Total</p>
       <p class="text-2xl font-bold text-[color:var(--accent-amber)]">${{ "{:,.0f}".format(meta_global).replace(",",".") }}</p>
-    </div>
-    
-    <div class="flex flex-col">
-      <p class="text-sm font-medium text-[color:var(--text-secondary)] mb-1">Pagado</p>
-      <p class="text-2xl font-bold text-[color:var(--accent-green)]">${{ "{:,.0f}".format(total_pagado_global).replace(",",".")  }}</p>
-    </div>
-    
-    <div class="flex flex-col">
-      <div class="flex items-center justify-between mb-1">
-        <p class="text-sm font-medium text-[color:var(--text-secondary)]">Avance</p>
-        <p class="text-sm font-bold text-[color:var(--accent-blue)]">{{ avance_global }}%</p>
-      </div>
-      <div class="h-8 bg-[color:var(--bg-input)] rounded-lg overflow-hidden relative">
-        <div class="h-full bg-gradient-to-r from-[color:var(--accent-blue-dark)] to-[color:var(--accent-blue)]" 
-             style="width: {{ avance_global }}%"></div>
-        <div class="absolute inset-0 flex items-center justify-center">
-          <span class="text-sm font-bold {% if avance_global > 50 %}text-white{% else %}text-[color:var(--text-primary)]{% endif %} drop-shadow-sm">
-            {{ avance_global }}% completado
+      
+      <!-- Variation indicator -->
+      <div class="mt-2 flex items-center">
+        {% if meta_var_porcentaje > 0 %}
+          <span class="flex items-center text-[color:var(--accent-green)] font-medium text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+            </svg>
+            +{{ meta_var_porcentaje }}%
           </span>
+        {% elif meta_var_porcentaje < 0 %}
+          <span class="flex items-center text-[color:var(--accent-red)] font-medium text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1v-5a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd" />
+            </svg>
+            {{ meta_var_porcentaje }}%
+          </span>
+        {% else %}
+          <span class="flex items-center text-[color:var(--text-secondary)] font-medium text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+            </svg>
+            Sin cambios
+          </span>
+        {% endif %}
+        <span class="ml-2 text-xs text-[color:var(--text-secondary)]">vs. mes anterior</span>
+      </div>
+    </div>
+    
+       <!-- Pagado with better relation to goal -->
+    <div class="flex flex-col">
+      <div class="flex justify-between items-center mb-1">
+        <p class="text-sm font-medium text-[color:var(--text-secondary)]">Pagado</p>
+        <p class="text-xs text-[color:var(--text-secondary)]">Meta: ${{ "{:,.0f}".format(meta_global).replace(",",".") }}</p>
+      </div>
+      <p class="text-2xl font-bold text-[color:var(--accent-green)]">${{ "{:,.0f}".format(total_pagado_global).replace(",",".")  }}</p>
+      
+      <!-- Improved progress bar -->
+      <div class="h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden mt-2">
+        <div class="h-full bg-[color:var(--accent-green)]" 
+             style="width: {{ (total_pagado_global / meta_global * 100) if meta_global > 0 else 0 }}%"></div>
+      </div>
+      
+      <!-- Variation indicator -->
+      <div class="mt-2 flex items-center">
+        {% if pagado_var_porcentaje > 0 %}
+          <span class="flex items-center text-[color:var(--accent-green)] font-medium text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+            </svg>
+            +{{ pagado_var_porcentaje }}%
+          </span>
+        {% elif pagado_var_porcentaje < 0 %}
+          <span class="flex items-center text-[color:var(--accent-red)] font-medium text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1v-5a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd" />
+            </svg>
+            {{ pagado_var_porcentaje }}%
+          </span>
+        {% else %}
+          <span class="flex items-center text-[color:var(--text-secondary)] font-medium text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+            </svg>
+            Sin cambios
+          </span>
+        {% endif %}
+        <span class="ml-2 text-xs text-[color:var(--text-secondary)]">vs. mes anterior</span>
+      </div>
+      
+      <!-- Add Pendiente as a submetric with clearer relation -->
+      <div class="mt-3 pt-2 border-t border-[color:var(--border-color-subtle)]">
+        <div class="flex justify-between items-center">
+          <p class="text-sm font-medium text-[color:var(--text-secondary)]">Pendiente</p>
+          <p class="text-sm font-bold text-[color:var(--accent-blue)]">${{ "{:,.0f}".format(meta_global - total_pagado_global).replace(",",".") }}</p>
+        </div>
+        
+        <div class="flex justify-between items-center mt-1 text-xs">
+          <span class="text-[color:var(--text-secondary)]">{{ ((meta_global - total_pagado_global) / meta_global * 100)|round(1) if meta_global > 0 else 0 }}% restante</span>
+          
+          {% if pendiente_var_porcentaje < 0 %}
+            <span class="text-[color:var(--accent-green)]">
+              <svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1v-5a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd" />
+              </svg>
+              {{ pendiente_var_porcentaje }}%
+            </span>
+          {% elif pendiente_var_porcentaje > 0 %}
+            <span class="text-[color:var(--accent-red)]">
+              <svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+              </svg>
+              +{{ pendiente_var_porcentaje }}%
+            </span>
+          {% endif %}
         </div>
       </div>
     </div>
+
+    <!-- Aquiii puede ir otro kpi-->
+    <div class="flex flex-col">
+      <p class="text-sm font-medium text-[color:var(--text-secondary)] mb-1">KPI Futuro
+    </div>
+
+        </div>
+  
+<!-- Avance con la barra de porcentaje como elemento principal -->
+<div class="flex flex-col">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center">
+      <p class="text-m font-medium text-[color:var(--text-secondary)] mr-2">Barra de Progreso
+    </div>
+    
+    <!-- Proyección a la derecha -->
+    {% if avance_global < 100 and avance_global > 0 %}
+      <div class="text-xs text-[color:var(--accent-blue-dark)]">
+        Proyección: {{ "Completo" if avance_global >= 100 else "{} días restantes".format(((30 - ((avance_global/100)*30)))|round|int) }}
+      </div>
+    {% endif %}
   </div>
   
-  <div class="pt-4 border-t border-[color:var(--border-color-subtle)]">
+    <!-- Barra principal con porcentajes (versión simplificada) -->
+  <div class="pt-2">
     <div class="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
       <span>0%</span>
       <span>25%</span>
@@ -424,98 +522,228 @@
       <span>75%</span>
       <span>100%</span>
     </div>
-    <div class="h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden grid grid-cols-4">
-      <div class="h-full border-r border-[color:var(--bg-input-darker)]"></div>
-      <div class="h-full border-r border-[color:var(--bg-input-darker)]"></div>
-      <div class="h-full border-r border-[color:var(--bg-input-darker)]"></div>
-      <div class="h-full"></div>
-      <div class="h-full bg-gradient-to-r from-[color:var(--accent-blue-dark)] to-[color:var(--accent-blue)] col-start-1 col-end-5 row-start-1 row-end-1" style="width: {{ avance_global }}%"></div>
+  
+    <!-- Contenedor principal -->
+    <div class="h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden relative">
+      <!-- Líneas de marca -->
+      <div class="absolute inset-0 flex w-full pointer-events-none">
+        <div class="flex-1 border-r border-white border-opacity-30"></div>
+        <div class="flex-1 border-r border-white border-opacity-30"></div>
+        <div class="flex-1 border-r border-white border-opacity-30"></div>
+        <div class="flex-1"></div>
+      </div>
+      
+      <!-- Barra de progreso más simple -->
+      <div 
+        class="h-full bg-[color:var(--accent-green)] absolute top-0 left-0 z-10" 
+        style="width: {% if avance_global <= 100 %}{{avance_global}}{% else %}100{% endif %}%">
+      </div>
     </div>
+    
+
+    
+    <!-- Debug: Mostrar valor numérico -->
+    <div class="text-xs text-right mt-1 text-[color:var(--text-secondary)]">
+      Avance actual: {{ avance_global if avance_global else 0 }}%
+    </div>
+  </div>
+  
+  <!-- Variation indicator como elemento secundario -->
+  <div class="mt-3 flex items-center justify-end text-xs">
+    {% if avance_var_porcentaje > 0 %}
+      <span class="flex items-center text-[color:var(--accent-green)] font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+        </svg>
+        +{{ avance_var_porcentaje }}% vs. mes anterior
+      </span>
+    {% elif avance_var_porcentaje < 0 %}
+      <span class="flex items-center text-[color:var(--accent-red)] font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1v-5a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd" />
+        </svg>
+        {{ avance_var_porcentaje }}% vs. mes anterior
+      </span>
+    {% else %}
+      <span class="flex items-center text-[color:var(--text-secondary)] font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+        </svg>
+        Sin cambios vs. mes anterior
+      </span>
+    {% endif %}
   </div>
 </div>
 
-   <!-- KPIs DEL FILTRO MEJORADOS -->
-  <div class="section-title-modern mb-5">
-    <h2 class="text-xl font-semibold">🔎 KPIs del Filtro Actual</h2>
-    <div class="section-line"></div>
-  </div>
-  
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
-    <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+<!-- KPIs DEL FILTRO MEJORADOS -->
+<div class="section-title-modern mb-5">
+  <h2 class="text-xl font-semibold">🔎 KPIs del Filtro Actual</h2>
+  <div class="section-line"></div>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
+  <!-- EDP en vista -->
+  <div class="metric-card bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl overflow-hidden group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+    <div class="h-2 bg-[color:var(--accent-blue)]"></div>
+    <div class="p-5 relative">
       <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 00-4.5 9.975V13h9v-1.025A6 6 0 0010 4zm0 1a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm-5 7.5a5.002 5.002 0 015-5 5 5 0 015 5v1.5H5v-1.5z" clip-rule="evenodd" />
         </svg>
       </div>
-      <p class="metric-label font-medium text-[color:var(--text-secondary)]">EDP en vista</p>
-      <p class="metric-value text-2xl font-bold mt-1">{{ total_filtrados }}</p>
-      <div class="mt-3 h-1 w-full bg-[color:var(--bg-input)] rounded-full">
-        <div class="h-full bg-[color:var(--accent-blue)] rounded-full" style="width: {{ (total_filtrados / total_edp_global * 100) if total_edp_global > 0 else 100 }}%"></div>
+      <div class="flex items-center mb-3">
+        <div class="p-2 rounded-lg bg-[color:var(--accent-blue)] bg-opacity-10 mr-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 00-4.5 9.975V13h9v-1.025A6 6 0 0010 4zm0 1a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm-5 7.5a5.002 5.002 0 015-5 5 5 0 015 5v1.5H5v-1.5z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <p class="metric-label font-medium text-[color:var(--text-secondary)]">EDP en vista</p>
       </div>
-      <p class="text-xs text-[color:var(--text-secondary)] mt-1">{{ (total_filtrados / total_edp_global * 100)|round(1) if total_edp_global > 0 else 100 }}% del total</p>
+      <div class="flex items-end">
+        <p class="metric-value text-3xl font-bold text-[color:var(--accent-blue)] animate__animated animate__fadeIn">
+          {{ total_filtrados }}
+        </p>
+        <span class="text-xs text-[color:var(--text-secondary)] mb-1.5 ml-2">de {{ total_edp_global }} EDPs</span>
+      </div>
+      <div class="relative mt-3">
+        <div class="flex items-center">
+          <div class="h-2 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+            <div class="h-full bg-[color:var(--accent-blue)] animate__animated animate__slideInLeft" 
+                 style="width: {{ (total_filtrados / total_edp_global * 100) if total_edp_global > 0 else 100 }}%"></div>
+          </div>
+        </div>
+        <p class="text-xs text-[color:var(--text-secondary)] mt-2">{{ (total_filtrados / total_edp_global * 100)|round(1) if total_edp_global > 0 else 100 }}% del total</p>
+      </div>
     </div>
-    
-    <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+  </div>
+  
+  <!-- EDP críticos -->
+  <div class="metric-card bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl overflow-hidden group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+    <div class="h-2 bg-[color:var(--accent-red)]"></div>
+    <div class="p-5 relative">
       <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-red)]" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
         </svg>
       </div>
-      <p class="metric-label font-medium text-[color:var(--text-secondary)]">EDP críticos</p>
-      <p class="metric-value text-2xl font-bold text-[color:var(--accent-red)] mt-1">{{ total_criticos_filtrados }}</p>
-      <div class="mt-3 h-1 w-full bg-[color:var(--bg-input)] rounded-full">
-        <div class="h-full bg-[color:var(--accent-red)] rounded-full" style="width: {{ (total_criticos_filtrados / total_filtrados * 100) if total_filtrados > 0 else 0 }}%"></div>
+      <div class="flex items-center mb-3">
+        <div class="p-2 rounded-lg bg-[color:var(--accent-red)] bg-opacity-10 mr-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[color:var(--accent-red)]" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <p class="metric-label font-medium text-[color:var(--text-secondary)]">EDP críticos</p>
       </div>
-      <p class="text-xs text-[color:var(--text-secondary)] mt-1">{{ (total_criticos_filtrados / total_filtrados * 100)|round(1) if total_filtrados > 0 else 0 }}% de los EDPs filtrados</p>
+      <div class="flex items-end">
+        <p class="metric-value text-3xl font-bold text-[color:var(--accent-red)] animate__animated animate__fadeIn">
+          {{ total_criticos_filtrados }}
+        </p>
+        <span class="text-xs text-[color:var(--text-secondary)] mb-1.5 ml-2">requieren atención</span>
+      </div>
+      <div class="relative mt-3">
+        <div class="flex items-center">
+          <div class="h-2 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+            <div class="h-full bg-[color:var(--accent-red)] animate__animated animate__slideInLeft" 
+                 style="width: {{ (total_criticos_filtrados / total_filtrados * 100) if total_filtrados > 0 else 0 }}%"></div>
+          </div>
+        </div>
+        <p class="text-xs text-[color:var(--text-secondary)] mt-2">{{ (total_criticos_filtrados / total_filtrados * 100)|round(1) if total_filtrados > 0 else 0 }}% de los EDPs filtrados</p>
+      </div>
     </div>
-    
-    <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+  </div>
+  
+  <!-- Promedio Días Espera -->
+  <div class="metric-card bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl overflow-hidden group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+    <div class="h-2 bg-[color:{% if dias_espera_promedio_filtrado > 30 %}var(--accent-red){% elif dias_espera_promedio_filtrado <= 20 %}var(--accent-green){% else %}var(--accent-amber){% endif %}]"></div>
+    <div class="p-5 relative">
       <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-amber)]" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
         </svg>
       </div>
-      <p class="metric-label font-medium text-[color:var(--text-secondary)]">Prom. días espera</p>
-      <div class="flex items-end mt-1">
-        <p class="metric-value text-2xl font-bold {% if dias_espera_promedio_filtrado > 30 %}text-[color:var(--accent-red)]{% elif dias_espera_promedio_filtrado <= 20 %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %}">
+      <div class="flex items-center mb-3">
+        <div class="p-2 rounded-lg bg-[color:{% if dias_espera_promedio_filtrado > 30 %}var(--accent-red){% elif dias_espera_promedio_filtrado <= 20 %}var(--accent-green){% else %}var(--accent-amber){% endif %}] bg-opacity-10 mr-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[color:{% if dias_espera_promedio_filtrado > 30 %}var(--accent-red){% elif dias_espera_promedio_filtrado <= 20 %}var(--accent-green){% else %}var(--accent-amber){% endif %}]" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <p class="metric-label font-medium text-[color:var(--text-secondary)]">Prom. días espera</p>
+        <span class="ml-auto px-1.5 py-0.5 rounded text-xs font-medium bg-[color:{% if dias_espera_promedio_filtrado > 30 %}var(--accent-red){% elif dias_espera_promedio_filtrado <= 20 %}var(--accent-green){% else %}var(--accent-amber){% endif %}] bg-opacity-15 text-[color:{% if dias_espera_promedio_filtrado > 30 %}var(--accent-red){% elif dias_espera_promedio_filtrado <= 20 %}var(--accent-green){% else %}var(--accent-amber){% endif %}]">
+          {% if dias_espera_promedio_filtrado > 30 %}CRÍTICO
+          {% elif dias_espera_promedio_filtrado <= 20 %}ÓPTIMO
+          {% else %}ALERTA{% endif %}
+        </span>
+      </div>
+      <div class="flex items-end">
+        <p class="metric-value text-3xl font-bold {% if dias_espera_promedio_filtrado > 30 %}text-[color:var(--accent-red)]{% elif dias_espera_promedio_filtrado <= 20 %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %} animate__animated animate__fadeIn">
           {{ dias_espera_promedio_filtrado }}
         </p>
-        <span class="text-xs text-[color:var(--text-secondary)] mb-1 ml-1">días</span>
+        <span class="text-xs text-[color:var(--text-secondary)] mb-1.5 ml-2">días promedio</span>
       </div>
-      <div class="flex items-center mt-3">
-        <div class="h-1 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
-          <div class="h-full {% if dias_espera_promedio_filtrado > 30 %}bg-[color:var(--accent-red)]{% elif dias_espera_promedio_filtrado <= 20 %}bg-[color:var(--accent-green)]{% else %}bg-[color:var(--accent-amber)]{% endif %}" 
-               style="width: {{ (dias_espera_promedio_filtrado / 45 * 100) if dias_espera_promedio_filtrado < 45 else 100 }}%"></div>
+      <div class="relative mt-3">
+        <div class="flex items-center">
+          <div class="h-2 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+            <div class="h-full {% if dias_espera_promedio_filtrado > 30 %}bg-[color:var(--accent-red)]{% elif dias_espera_promedio_filtrado <= 20 %}bg-[color:var(--accent-green)]{% else %}bg-[color:var(--accent-amber)]{% endif %} animate__animated animate__slideInLeft" 
+                 style="width: {{ (dias_espera_promedio_filtrado / 45 * 100) if dias_espera_promedio_filtrado < 45 else 100 }}%"></div>
+          </div>
+  
         </div>
-        <span class="text-xs font-medium ml-2 text-[color:var(--text-secondary)]">Meta: ≤20</span>
+        <div class="flex justify-between text-xs text-[color:var(--text-secondary)] mt-1.5">
+          <span>Meta: ≤20 días</span>
+          <span class="{% if dias_espera_promedio_filtrado <= 20 %}text-[color:var(--accent-green)] font-medium{% endif %}">
+            {% if dias_espera_promedio_filtrado <= 20 %}Meta alcanzada{% endif %}
+          </span>
+        </div>
       </div>
     </div>
-    
-    <div class="metric-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-card-hover)] p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+  </div>
+  
+  <!-- Promedio Días Hábiles -->
+  <div class="metric-card bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl overflow-hidden group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+    <div class="h-2 bg-[color:{% if dias_habiles_promedio_filtrado > 22 %}var(--accent-red){% elif dias_habiles_promedio_filtrado <= 15 %}var(--accent-green){% else %}var(--accent-amber){% endif %}]"></div>
+    <div class="p-5 relative">
       <div class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
         </svg>
       </div>
-      <p class="metric-label font-medium text-[color:var(--text-secondary)]">Prom. días hábiles</p>
-      <div class="flex items-end mt-1">
-        <p class="metric-value text-2xl font-bold {% if dias_habiles_promedio_filtrado > 22 %}text-[color:var(--accent-red)]{% elif dias_habiles_promedio_filtrado <= 15 %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %}">
+      <div class="flex items-center mb-3">
+        <div class="p-2 rounded-lg bg-[color:{% if dias_habiles_promedio_filtrado > 22 %}var(--accent-red){% elif dias_habiles_promedio_filtrado <= 15 %}var(--accent-green){% else %}var(--accent-amber){% endif %}] bg-opacity-10 mr-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[color:{% if dias_habiles_promedio_filtrado > 22 %}var(--accent-red){% elif dias_habiles_promedio_filtrado <= 15 %}var(--accent-green){% else %}var(--accent-amber){% endif %}]" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <p class="metric-label font-medium text-[color:var(--text-secondary)]">Prom. días hábiles</p>
+        <span class="ml-auto px-1.5 py-0.5 rounded text-xs font-medium bg-[color:{% if dias_habiles_promedio_filtrado > 22 %}var(--accent-red){% elif dias_habiles_promedio_filtrado <= 15 %}var(--accent-green){% else %}var(--accent-amber){% endif %}] bg-opacity-15 text-[color:{% if dias_habiles_promedio_filtrado > 22 %}var(--accent-red){% elif dias_habiles_promedio_filtrado <= 15 %}var(--accent-green){% else %}var(--accent-amber){% endif %}]">
+          {% if dias_habiles_promedio_filtrado > 22 %}CRÍTICO
+          {% elif dias_habiles_promedio_filtrado <= 15 %}ÓPTIMO
+          {% else %}ALERTA{% endif %}
+        </span>
+      </div>
+      <div class="flex items-end">
+        <p class="metric-value text-3xl font-bold {% if dias_habiles_promedio_filtrado > 22 %}text-[color:var(--accent-red)]{% elif dias_habiles_promedio_filtrado <= 15 %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %} animate__animated animate__fadeIn">
           {{ dias_habiles_promedio_filtrado }}
         </p>
-        <span class="text-xs text-[color:var(--text-secondary)] mb-1 ml-1">días</span>
+        <span class="text-xs text-[color:var(--text-secondary)] mb-1.5 ml-2">días laborables</span>
       </div>
-      <div class="flex items-center mt-3">
-        <div class="h-1 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
-          <div class="h-full {% if dias_habiles_promedio_filtrado > 22 %}bg-[color:var(--accent-red)]{% elif dias_habiles_promedio_filtrado <= 15 %}bg-[color:var(--accent-green)]{% else %}bg-[color:var(--accent-amber)]{% endif %}" 
-               style="width: {{ (dias_habiles_promedio_filtrado / 30 * 100) if dias_habiles_promedio_filtrado < 30 else 100 }}%"></div>
+      <div class="relative mt-3">
+        <div class="flex items-center">
+          <div class="h-2 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+            <div class="h-full {% if dias_habiles_promedio_filtrado > 22 %}bg-[color:var(--accent-red)]{% elif dias_habiles_promedio_filtrado <= 15 %}bg-[color:var(--accent-green)]{% else %}bg-[color:var(--accent-amber)]{% endif %} animate__animated animate__slideInLeft" 
+                 style="width: {{ (dias_habiles_promedio_filtrado / 30 * 100) if dias_habiles_promedio_filtrado < 30 else 100 }}%"></div>
+          </div>
+       
         </div>
-        <span class="text-xs font-medium ml-2 text-[color:var(--text-secondary)]">Meta: ≤15</span>
+        <div class="flex justify-between text-xs text-[color:var(--text-secondary)] mt-1.5">
+          <span>Meta: ≤15 días</span>
+          <span class="{% if dias_habiles_promedio_filtrado <= 15 %}text-[color:var(--accent-green)] font-medium{% endif %}">
+            {% if dias_habiles_promedio_filtrado <= 15 %}Meta alcanzada{% endif %}
+          </span>
+        </div>
       </div>
     </div>
   </div>
-
-  <!-- Tabla con ordenamiento -->
-    <!-- Replace the existing table section with this improved version -->
+</div>
   
   <!-- Tabla de EDPs Mejorada -->
   <div class="section-title-modern mb-5">

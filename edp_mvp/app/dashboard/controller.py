@@ -69,11 +69,17 @@ def calcular_dias_habiles(fecha_inicio, fecha_fin):
 
 @controller_bp.route("/controller")
 def dashboard_controller():
-    # Leemos más columnas (A-T en lugar de A-Q) para incluir todos los campos disponibles
+    # Siemmpre revisar las columnas de la bd 
     df_full = read_sheet("edp!A1:T")
     df_full = calcular_dias_espera(df_full)
     df = df_full.copy()
-
+    
+    # === Para dropdowns y filtros ===
+    meses_disponibles = sorted(df_full["Mes"].dropna().unique())
+    clientes_disponibles = sorted(df_full["Cliente"].dropna().unique())
+    encargados_disponibles = sorted(df_full["Jefe de Proyecto"].dropna().unique())
+    estados_detallados = sorted(df_full["Estado Detallado"].dropna().unique()) if "Estado Detallado" in df_full.columns else []
+    
     # Filtros desde la URL
     mes = request.args.get("mes")
     encargado = request.args.get("encargado")
@@ -97,12 +103,54 @@ def dashboard_controller():
     # === MÉTRICAS FINANCIERAS GLOBALES ===
     total_pagado_global = df_full[df_full["Estado"] == "pagado"]["Monto Aprobado"].sum()
     avance_global = round(total_pagado_global / META_GLOBAL * 100, 1) if META_GLOBAL > 0 else 0
-    
+    print(avance_global)
     # Total montos propuestos y aprobados (para análisis de diferencias)
     total_propuesto_global = df_full["Monto Propuesto"].sum()
     total_aprobado_global = df_full["Monto Aprobado"].sum()
     diferencia_montos = total_aprobado_global - total_propuesto_global
     porcentaje_diferencia = round((diferencia_montos / total_propuesto_global * 100), 1) if total_propuesto_global > 0 else 0
+
+    # === Calcular variaciones mensuales
+    mes_actual = mes if mes else max(meses_disponibles)
+    if mes_actual and len(meses_disponibles) > 1:
+        try:
+            idx_mes_actual = meses_disponibles.index(mes_actual)
+            mes_anterior = meses_disponibles[idx_mes_actual -1] if idx_mes_actual > 0 else None
+        except ValueError:
+            mes_anterior = None
+    else:
+        mes_anterior = None
+        
+    # Calcular las metricas del mes anterior
+    if mes_anterior:
+        df_mes_anterior = df_full[df_full["Mes"] == mes_anterior]
+
+        # Previous month metrics
+        meta_mes_anterior = META_GLOBAL  # assuming META_GLOBAL is constant across months
+        pagado_mes_anterior = df_mes_anterior[df_mes_anterior["Estado"] == "pagado"]["Monto Aprobado"].sum()
+        avance_mes_anterior = round(pagado_mes_anterior / meta_mes_anterior * 100, 1) if meta_mes_anterior > 0 else 0
+
+        # Calculate variations
+        meta_var_porcentaje = 0  # META_GLOBAL is constant, so no variation
+        pagado_var_porcentaje = round(((total_pagado_global - pagado_mes_anterior) / pagado_mes_anterior * 100) if pagado_mes_anterior else 0, 1)
+
+        # Calculate pending amounts
+        pendiente_actual = META_GLOBAL - total_pagado_global
+        pendiente_anterior = meta_mes_anterior - pagado_mes_anterior
+        pendiente_var_porcentaje = round(((pendiente_actual - pendiente_anterior) / pendiente_anterior * 100) if pendiente_anterior else 0, 1)
+
+        # Progress percentage variation (percentage point difference, not percentage change)
+        avance_var_porcentaje = round(avance_global - avance_mes_anterior, 1)
+    else:
+    # Default values when no previous month data is available
+        meta_mes_anterior = 0
+        pagado_mes_anterior = 0
+        avance_mes_anterior = 0
+        meta_var_porcentaje = 0
+        pagado_var_porcentaje = 0
+        pendiente_var_porcentaje = 0
+        avance_var_porcentaje = 0
+
 
     # === Meta por Encargado (opcional) ===
     meta_por_encargado = METAS_ENCARGADOS.get(encargado, 0)
@@ -139,6 +187,8 @@ def dashboard_controller():
     total_con_conformidad = df_full[df_full["Conformidad Enviada"] == "Sí"].shape[0]
     porcentaje_conformidad = round((total_con_conformidad / total_edp_global * 100), 1) if total_edp_global > 0 else 0
     
+    
+    
     # Tiempo promedio hasta conformidad (días desde envío hasta conformidad)
     tiempos_hasta_conformidad = []
     for _, row in df_full.iterrows():
@@ -164,11 +214,7 @@ def dashboard_controller():
     else:
         tipos_falla = {}
 
-    # === Para dropdowns y filtros ===
-    meses_disponibles = sorted(df_full["Mes"].dropna().unique())
-    clientes_disponibles = sorted(df_full["Cliente"].dropna().unique())
-    encargados_disponibles = sorted(df_full["Jefe de Proyecto"].dropna().unique())
-    estados_detallados = sorted(df_full["Estado Detallado"].dropna().unique()) if "Estado Detallado" in df_full.columns else []
+
     
     registros = df.to_dict(orient="records")
     
@@ -211,6 +257,12 @@ def dashboard_controller():
         meta_global=META_GLOBAL,
         meta_por_encargado=meta_por_encargado,
         monto_pendiente_encargado=monto_pendiente_encargado,
+        
+        # Variaciones mensuales
+        meta_var_porcentaje=meta_var_porcentaje,
+        pagado_var_porcentaje=pagado_var_porcentaje,
+        pendiente_var_porcentaje=pendiente_var_porcentaje,
+        avance_var_porcentaje=avance_var_porcentaje,
         
         # KPIs de Conformidad
         total_con_conformidad=total_con_conformidad,
