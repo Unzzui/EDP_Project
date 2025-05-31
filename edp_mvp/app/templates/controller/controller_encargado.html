@@ -60,7 +60,7 @@ Control{% endblock %} {% block content %}
       </a>
       <button
         id="exportarDatos"
-        class="flex items-center justify-center text-sm bg-[color:var(--accent-blue-dark)] bg-opacity-15 text-[color:var(--accent-blue)] px-4 py-2 rounded-lg hover:bg-opacity-25 transition-all border border-transparent hover:border-[color:var(--accent-blue-dark)] hover:border-opacity-20 shadow-sm">
+        class="flex items-center justify-center text-sm bg-[color:var(--accent-blue-dark)] bg-opacity-15 text-[color:var(--primary-text)] px-4 py-2 rounded-lg hover:bg-opacity-10 transition-all border border-transparent hover:border-[color:var(--accent-blue-dark)] hover:border-opacity-20 shadow-sm">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="h-4 w-4 mr-2"
@@ -73,6 +73,117 @@ Control{% endblock %} {% block content %}
         </svg>
         Exportar Datos
       </button>
+    </div>
+  </div>
+
+  <!-- Insertar después del div con clase "flex flex-col md:flex-row justify-between items-start mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]" -->
+
+  <!-- Indicador de pagos realizados al encargado -->
+  <div
+    class="flex flex-col lg:flex-row gap-4 mb-6 animate__animated animate__fadeIn">
+    <div
+      class="bg-gradient-to-r from-[color:var(--accent-green)] to-[color:var(--accent-blue)] p-1 rounded-xl flex-grow">
+      <div
+        class="bg-[color:var(--bg-primary)] rounded-lg p-4 flex items-center justify-between backdrop-blur-sm">
+        <div>
+          <div class="flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-[color:var(--accent-green)]"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
+                clip-rule="evenodd" />
+            </svg>
+            <h2 class="text-lg font-semibold">Total Pagado</h2>
+          </div>
+          <p
+            class="text-3xl font-bold mt-2 font-mono text-[color:var(--accent-green)]">
+            ${{ "{:,.0f}".format(monto_pagado_global|int).replace(",",".") }}
+          </p>
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-[color:var(--text-secondary)]">
+            Avance de pagos
+          </div>
+          <div class="text-2xl font-bold">{{ avance_global }}%</div>
+          <div class="mt-2 text-xs">
+            <span
+              class="{% if avance_global > 70 %}text-[color:var(--accent-green)]{% elif avance_global > 50 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-orange)]{% endif %}">
+              {{ avance_global }}% del total
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 flex-grow">
+      <div
+        class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)] flex flex-col justify-between">
+        <div class="text-[color:var(--text-secondary)] text-sm font-medium">
+          Pendiente por cobrar
+        </div>
+        <div class="flex items-end justify-between">
+          <p
+            class="text-xl font-bold font-mono text-[color:var(--accent-orange)]">
+            ${{ "{:,.0f}".format(monto_pendiente_global|int).replace(",",".") }}
+          </p>
+          <div class="text-xs text-[color:var(--text-secondary)]">
+            {{ 100 - avance_global }}% del total
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)] flex flex-col justify-between">
+        <div class="text-[color:var(--text-secondary)] text-sm font-medium">
+          Meta propuesta
+        </div>
+        <div class="flex items-end justify-between">
+          <p class="text-xl font-bold font-mono">
+            ${{ "{:,.0f}".format(meta_por_encargado|int).replace(",",".") }}
+          </p>
+          <div
+            class="text-xs {% if monto_pagado_global >= meta_por_encargado %}text-[color:var(--accent-green)]{% else %}text-[color:var(--text-secondary)]{% endif %}">
+            {{ (monto_pagado_global / meta_por_encargado * 100)|round|int if
+            meta_por_encargado > 0 else 0 }}% alcanzado
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de progreso visual para pagos -->
+  <div class="mb-8 animate__animated animate__fadeIn">
+    <div
+      class="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
+      <span>Progreso de pagos</span>
+      <span>{{ avance_global }}% completado</span>
+    </div>
+    <div class="h-3 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+      <div
+        class="h-full bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-green)]"
+        style="width: {{ avance_global }}%"></div>
+    </div>
+    <div class="flex justify-between text-xs mt-2">
+      <div class="flex items-center">
+        <div
+          class="w-3 h-3 rounded-full bg-[color:var(--accent-green)] opacity-70 mr-1"></div>
+        <span
+          >Pagado: ${{
+          "{:,.0f}".format(monto_pagado_global|int).replace(",",".") }}</span
+        >
+      </div>
+      <div class="flex items-center">
+        <div
+          class="w-3 h-3 rounded-full bg-[color:var(--accent-orange)] opacity-70 mr-1"></div>
+        <span
+          >Pendiente: ${{
+          "{:,.0f}".format(monto_pendiente_global|int).replace(",",".") }}</span
+        >
+      </div>
     </div>
   </div>
   <!-- KPI Financieros con dashboard actualizado -->
@@ -100,73 +211,13 @@ Control{% endblock %} {% block content %}
 
   <!-- Grid principal de KPIs - 2 filas-->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm mb-8">
-    <!-- Primera fila: Meta y Avance -->
+    <!-- KPI 1: Tendencia de Cobro -->
     <div
       class="metric-card p-5 rounded-xl border border-[color:var(--border-color)] bg-[color:var(--bg-card)] hover:border-[color:var(--border-color-hover)] transition-all shadow-sm hover:shadow">
       <div class="flex items-center justify-between mb-3">
         <p class="metric-label text-[color:var(--text-secondary)] font-medium">
-          Meta Total
+          Tendencia de Cobro
         </p>
-        <div
-          class="h-8 w-8 flex items-center justify-center rounded-full bg-[color:var(--accent-amber)] bg-opacity-15">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 text-[color:var(--accent-amber)]"
-            viewBox="0 0 20 20"
-            fill="currentColor">
-            <path
-              fill-rule="evenodd"
-              d="M5.05 3.636a1 1 0 010 1.414 7 7 0 000 9.9 1 1 0 11-1.414 1.414 9 9 0 010-12.728 1 1 0 011.414 0zm9.9 0a1 1 0 011.414 0 9 9 0 010 12.728 1 1 0 11-1.414-1.414 7 7 0 000-9.9 1 1 0 010-1.414zM7.879 6.464a1 1 0 010 1.414 3 3 0 000 4.243 1 1 0 11-1.415 1.414 5 5 0 010-7.07 1 1 0 011.415 0zm4.242 0a1 1 0 011.415 0 5 5 0 010 7.072 1 1 0 01-1.415-1.415 3 3 0 000-4.242 1 1 0 010-1.415z"
-              clip-rule="evenodd" />
-          </svg>
-        </div>
-      </div>
-      <div class="flex justify-between items-end">
-        <p
-          class="metric-value text-[color:var(--accent-amber)] text-2xl font-bold font-mono">
-          ${{ "{:,.0f}".format(meta_por_encargado|int).replace(",",".") }}
-        </p>
-        <div class="text-right">
-          <div class="text-xs text-[color:var(--text-secondary)] mb-1">
-            Avance
-          </div>
-          <div class="flex items-center">
-            <span class="text-sm font-semibold text-[color:var(--accent-blue)]"
-              >{{ avance_global }}%</span
-            >
-            <div
-              class="ml-2 w-16 h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
-              <div
-                class="h-full bg-[color:var(--accent-blue)]"
-                style="width: {{ avance_global }}%"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Montos Propuesto y Aprobado -->
-    <div
-      class="metric-card p-5 rounded-xl border border-[color:var(--border-color)] bg-[color:var(--bg-card)] hover:border-[color:var(--border-color-hover)] transition-all shadow-sm hover:shadow">
-      <div class="flex items-center justify-between mb-3">
-        <div>
-          <p
-            class="metric-label text-[color:var(--text-secondary)] font-medium">
-            Montos Totales
-          </p>
-          <div class="flex gap-2 mt-1">
-            <div class="flex items-center">
-              <div
-                class="h-2 w-2 bg-[color:var(--accent-purple)] rounded-full mr-1"></div>
-              <span class="text-xs">Propuesto</span>
-            </div>
-            <div class="flex items-center">
-              <div
-                class="h-2 w-2 bg-[color:var(--accent-blue)] rounded-full mr-1"></div>
-              <span class="text-xs">Aprobado</span>
-            </div>
-          </div>
-        </div>
         <div
           class="h-8 w-8 flex items-center justify-center rounded-full bg-[color:var(--accent-blue)] bg-opacity-15">
           <svg
@@ -175,45 +226,62 @@ Control{% endblock %} {% block content %}
             viewBox="0 0 20 20"
             fill="currentColor">
             <path
-              fill-rule="evenodd"
-              d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-              clip-rule="evenodd" />
+              d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
           </svg>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-4">
+
+      <div class="flex justify-between items-center">
         <div>
           <p
-            class="text-[color:var(--accent-purple)] text-2xl font-bold font-mono">
-            ${{ "{:,.0f}".format(monto_propuesto_global|int).replace(",",".") }}
+            class="text-[color:var(--text-primary)] text-2xl font-bold font-mono">
+            ${{ "{:,.0f}".format(monto_cobrado_ultimo_mes|int).replace(",",".")
+            }}
+          </p>
+          <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+            último mes
           </p>
         </div>
+
+        <div class="h-16">
+          <!-- Mini gráfico de barras para últimos 3 meses -->
+          <div class="flex items-end h-full space-x-1">
+            {% for mes, valor in tendencia_cobro[-3:] %}
+            <div class="flex flex-col items-center">
+              <div
+                class="w-8 bg-[color:var(--accent-blue)] bg-opacity-{{ 50 + loop.index0 * 20 }}"
+                style="height: {{ valor / maximo_cobro_mensual * 100 }}%"></div>
+              <span class="text-[9px] mt-1 text-[color:var(--text-secondary)]"
+                >{{ mes }}</span
+              >
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-2 text-xs flex justify-between">
+        <div
+          class="{% if variacion_mensual_cobro > 0 %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-red)]{% endif %} font-medium">
+          {{ "+" if variacion_mensual_cobro > 0 else "" }}{{
+          variacion_mensual_cobro|round(1) }}% vs mes anterior
+        </div>
         <div>
-          <p
-            class="text-[color:var(--accent-blue)] text-2xl font-bold font-mono">
-            ${{ "{:,.0f}".format(monto_aprobado_global|int).replace(",",".") }}
-          </p>
-          {% if monto_propuesto_global != monto_aprobado_global %}
-          <p
-            class="text-xs mt-1 {% if monto_aprobado_global > monto_propuesto_global %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %}">
-            {{ "+" if monto_aprobado_global > monto_propuesto_global else "-"
-            }}{{ "{:,.0f}".format((monto_aprobado_global -
-            monto_propuesto_global)|abs).replace(",", ".") }} ({{
-            ((monto_aprobado_global - monto_propuesto_global) /
-            monto_propuesto_global * 100)|abs|round(1) }}%)
-          </p>
-          {% endif %}
+          <span class="text-[color:var(--text-secondary)]">Promedio: </span>
+          <span class="font-medium"
+            >${{ "{:,.0f}".format(promedio_cobro_mensual|int).replace(",",".")
+            }}</span
+          >
         </div>
       </div>
     </div>
 
-    <!-- Segunda fila: Pagado y Pendiente -->
+    <!-- KPI 2: Efectividad de Aprobación -->
     <div
       class="metric-card p-5 rounded-xl border border-[color:var(--border-color)] bg-[color:var(--bg-card)] hover:border-[color:var(--border-color-hover)] transition-all shadow-sm hover:shadow">
       <div class="flex items-center justify-between mb-3">
         <p class="metric-label text-[color:var(--text-secondary)] font-medium">
-          Pagado
-          <span class="text-xs font-normal opacity-80">(de aprobados)</span>
+          Efectividad de Aprobación
         </p>
         <div
           class="h-8 w-8 flex items-center justify-center rounded-full bg-[color:var(--accent-green)] bg-opacity-15">
@@ -224,37 +292,68 @@ Control{% endblock %} {% block content %}
             fill="currentColor">
             <path
               fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
               clip-rule="evenodd" />
           </svg>
         </div>
       </div>
+
       <div class="flex items-end justify-between">
-        <p
-          class="metric-value text-[color:var(--accent-green)] text-2xl font-bold font-mono">
-          ${{ "{:,.0f}".format(monto_pagado_global|int).replace(",",".") }}
-        </p>
-        <div class="text-right text-xs">
-          <span class="text-[color:var(--text-secondary)]">
-            {{ ((monto_pagado_global / monto_aprobado_global) * 100)|round(1)
-            }}% del total aprobado
-          </span>
+        <div>
+          <p class="text-[color:var(--text-primary)] text-2xl font-bold">
+            {{ tasa_aprobacion|round(1) }}%
+          </p>
+          <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+            tasa de aprobación
+          </p>
+        </div>
+
+        <div>
+          <p class="text-sm font-semibold text-right">
+            {{ dias_promedio_aprobacion|round(1) }} días
+          </p>
+          <p class="text-xs text-[color:var(--text-secondary)] text-right">
+            tiempo promedio
+          </p>
+        </div>
+      </div>
+
+      <!-- Círculo de progreso -->
+      <div
+        class="w-full h-4 bg-[color:var(--bg-input)] rounded-full mt-3 overflow-hidden">
+        <div
+          class="h-full bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-green)]"
+          style="width: {{ tasa_aprobacion }}%"></div>
+      </div>
+
+      <div class="flex justify-between text-xs mt-2">
+        <div
+          class="{% if tasa_aprobacion > tasa_aprobacion_global %}text-[color:var(--accent-green)]{% else %}text-[color:var(--text-secondary)]{% endif %}">
+          {{ "+" if tasa_aprobacion > tasa_aprobacion_global else "" }}{{
+          (tasa_aprobacion - tasa_aprobacion_global)|round(1) }}% vs promedio
+          global
+        </div>
+        <div
+          class="{% if monto_aprobado_global > monto_propuesto_global %}text-[color:var(--accent-green)]{% elif monto_aprobado_global < monto_propuesto_global %}text-[color:var(--accent-amber)]{% endif %}">
+          {{ "+" if monto_aprobado_global > monto_propuesto_global else "" }}${{
+          "{:,.0f}".format((monto_aprobado_global -
+          monto_propuesto_global)|abs).replace(",", ".") }}
         </div>
       </div>
     </div>
 
+    <!-- KPI 3: Próximos a Cobrar -->
     <div
       class="metric-card p-5 rounded-xl border border-[color:var(--border-color)] bg-[color:var(--bg-card)] hover:border-[color:var(--border-color-hover)] transition-all shadow-sm hover:shadow">
       <div class="flex items-center justify-between mb-3">
         <p class="metric-label text-[color:var(--text-secondary)] font-medium">
-          Pendiente
-          <span class="text-xs font-normal opacity-80">(de aprobados)</span>
+          Próximos a Cobrar <span class="text-xs opacity-70">(15 días)</span>
         </p>
         <div
-          class="h-8 w-8 flex items-center justify-center rounded-full bg-[color:var(--accent-orange)] bg-opacity-15">
+          class="h-8 w-8 flex items-center justify-center rounded-full bg-[color:var(--accent-amber)] bg-opacity-15">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 text-[color:var(--accent-orange)]"
+            class="h-4 w-4 text-[color:var(--accent-amber)]"
             viewBox="0 0 20 20"
             fill="currentColor">
             <path
@@ -264,16 +363,336 @@ Control{% endblock %} {% block content %}
           </svg>
         </div>
       </div>
+
       <div class="flex items-end justify-between">
-        <p
-          class="metric-value text-[color:var(--accent-orange)] text-2xl font-bold font-mono">
-          ${{ "{:,.0f}".format(monto_pendiente_global|int).replace(",",".") }}
+        <div>
+          <p
+            class="text-[color:var(--accent-amber)] text-2xl font-bold font-mono">
+            ${{ "{:,.0f}".format(monto_proximo_cobro|int).replace(",",".") }}
+          </p>
+          <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+            <span class="font-medium">{{ cantidad_edp_proximos }}</span> EDPs
+            conformados
+          </p>
+        </div>
+
+        <div class="flex flex-col items-end">
+          <div class="flex items-center">
+            <div
+              class="w-2 h-2 rounded-full bg-[color:var(--accent-orange)] mr-1.5"></div>
+            <span class="text-xs"
+              >Prioritarios: {{ cantidad_edp_prioritarios }}</span
+            >
+          </div>
+          <div class="flex items-center mt-1">
+            <div
+              class="w-2 h-2 rounded-full bg-[color:var(--accent-blue)] mr-1.5"></div>
+            <span class="text-xs"
+              >Con cliente: {{ cantidad_edp_con_cliente }}</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3 text-xs">
+        <div class="flex justify-between items-center mb-1.5">
+          <span>Proyección para este mes:</span>
+          <span class="font-medium"
+            >${{ "{:,.0f}".format(proyeccion_cobro_mes|int).replace(",",".")
+            }}</span
+          >
+        </div>
+        <div
+          class="w-full h-3 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+          <div
+            class="h-full bg-[color:var(--accent-amber)]"
+            style="width: {{ (proyeccion_cobro_mes / meta_mes_actual * 100) if meta_mes_actual > 0 else 0 }}%"></div>
+        </div>
+        <div class="flex justify-end mt-1 text-[color:var(--text-secondary)]">
+          {{ (proyeccion_cobro_mes / meta_mes_actual * 100)|round if
+          meta_mes_actual > 0 else 0 }}% de la meta mensual
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI 4: Pendientes Críticos -->
+    <div
+      class="metric-card p-5 rounded-xl border border-[color:var(--border-color)] bg-[color:var(--bg-card)] hover:border-[color:var(--border-color-hover)] transition-all shadow-sm hover:shadow">
+      <div class="flex items-center justify-between mb-3">
+        <p class="metric-label text-[color:var(--text-secondary)] font-medium">
+          Pendientes Críticos <span class="text-xs opacity-70">(+30 días)</span>
         </p>
-        <div class="text-right text-xs">
-          <span class="text-[color:var(--text-secondary)]">
-            {{ ((monto_pendiente_global / monto_aprobado_global) * 100)|round(1)
-            }}% del total aprobado
+        <div
+          class="h-8 w-8 flex items-center justify-center rounded-full bg-[color:var(--accent-red)] bg-opacity-15">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--accent-red)]"
+            viewBox="0 0 20 20"
+            fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="flex items-end justify-between">
+        <div>
+          <p
+            class="text-[color:var(--accent-red)] text-2xl font-bold font-mono">
+            ${{ "{:,.0f}".format(monto_pendiente_critico|int).replace(",",".")
+            }}
+          </p>
+          <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+            <span class="font-medium">{{ cantidad_edp_criticos }}</span> EDPs
+            críticos
+          </p>
+        </div>
+
+        <div class="text-right">
+          <p class="text-sm font-medium">
+            {{ porcentaje_pendientes_criticos }}%
+          </p>
+          <p class="text-xs text-[color:var(--text-secondary)]">
+            del total pendiente
+          </p>
+        </div>
+      </div>
+
+      <!-- Top proyectos críticos -->
+      <div class="mt-2">
+        <p class="text-xs font-medium mb-2">Top proyectos críticos:</p>
+        <div class="space-y-1.5">
+          {% for proyecto in top_proyectos_criticos[:2] %}
+          <div class="flex justify-between text-xs">
+            <span class="truncate max-w-[70%]" title="{{ proyecto.nombre }}"
+              >{{ proyecto.nombre }}</span
+            >
+            <span class="font-mono font-medium"
+              >${{ "{:,.0f}".format(proyecto.monto|int).replace(",",".")
+              }}</span
+            >
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Después del grid principal de KPIs -->
+  <div class="section-title-modern mb-5 mt-8">
+    <h2 class="text-xl font-semibold flex items-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]"
+        viewBox="0 0 20 20"
+        fill="currentColor">
+        <path
+          d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+        <path
+          fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
+          clip-rule="evenodd" />
+      </svg>
+      KPIs Financieros Adicionales
+    </h2>
+    <div class="section-line"></div>
+  </div>
+
+  <!-- Nueva fila de KPIs financieros modernos -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+    <!-- DSO (Days Sales Outstanding) -->
+    <div
+      class="metric-card bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl overflow-hidden group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+      <div
+        class="h-2 bg-[color:{% if dso_encargado > 60 %}var(--accent-red){% elif dso_encargado > 45 %}var(--accent-amber){% else %}var(--accent-green){% endif %}]"></div>
+      <div class="p-5 relative">
+        <div
+          class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-full w-full text-[color:var(--accent-amber)]"
+            viewBox="0 0 20 20"
+            fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="flex items-center mb-3">
+          <p
+            class="metric-label font-medium text-[color:var(--text-secondary)]">
+            DSO Encargado
+          </p>
+          <span
+            class="ml-auto px-1.5 py-0.5 rounded text-xs font-medium bg-[color:{% if dso_encargado > 60 %}var(--accent-red){% elif dso_encargado > 45 %}var(--accent-amber){% else %}var(--accent-green){% endif %}] bg-opacity-15 text-[color:var(--text-on-accent)]">
+            {% if dso_encargado > 60 %}CRÍTICO {% elif dso_encargado > 45
+            %}ALERTA {% else %}ÓPTIMO{% endif %}
           </span>
+        </div>
+        <div class="flex items-end">
+          <p
+            class="metric-value text-3xl font-bold {% if dso_encargado > 60 %}text-[color:var(--accent-red)]{% elif dso_encargado > 45 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-green)]{% endif %} animate__animated animate__fadeIn">
+            {{ dso_encargado|round(1) }}
+          </p>
+          <span class="text-xs text-[color:var(--text-secondary)] mb-1.5 ml-2"
+            >días promedio</span
+          >
+        </div>
+        <div class="relative mt-3">
+          <div class="flex items-center">
+            <div
+              class="h-2 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+              <div
+                class="h-full {% if dso_encargado > 60 %}bg-[color:var(--accent-red)]{% elif dso_encargado > 45 %}bg-[color:var(--accent-amber)]{% else %}bg-[color:var(--accent-green)]{% endif %} animate__animated animate__slideInLeft"
+                style="width: {{ (dso_encargado / 90 * 100) if dso_encargado < 90 else 100 }}%"></div>
+            </div>
+          </div>
+          <div
+            class="flex justify-between text-xs text-[color:var(--text-secondary)] mt-1.5">
+            <span>Meta: ≤45 días</span>
+            <span
+              class="{% if dso_encargado < dso_global %}text-[color:var(--accent-green)] font-medium{% endif %}">
+              {% if dso_encargado < dso_global %}{{ (dso_global -
+              dso_encargado)|round(1) }}d mejor que global{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Distribución por edades de montos pendientes -->
+    <div
+      class="metric-card bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl overflow-hidden group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+      <div class="h-2 bg-[color:var(--accent-amber)]"></div>
+      <div class="p-5 relative">
+        <div
+          class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-full w-full text-[color:var(--accent-amber)]"
+            viewBox="0 0 20 20"
+            fill="currentColor">
+            <path
+              d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
+            <path
+              d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
+            <path
+              d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
+          </svg>
+        </div>
+        <div class="flex items-center mb-3">
+          <p
+            class="metric-label font-medium text-[color:var(--text-secondary)]">
+            Distribución de Pendientes
+          </p>
+        </div>
+        <div class="flex items-end mb-2">
+          <p class="text-xl font-semibold">
+            <span class="text-[color:var(--text-primary)]"
+              >{{ (pendiente_reciente / monto_pendiente_global * 100)|round(1)
+              if monto_pendiente_global > 0 else 0 }}%</span
+            >
+          </p>
+          <span class="text-xs text-[color:var(--text-secondary)] mb-0.5 ml-2"
+            >≤30 días</span
+          >
+        </div>
+        <div class="grid grid-cols-3 gap-2 mt-3">
+          <div class="text-center">
+            <div
+              class="w-full h-1.5 bg-[color:var(--accent-green)] rounded mb-1"></div>
+            <p class="text-xs text-[color:var(--accent-green)]">≤30d</p>
+            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+              ${{ "{:,.1f}".format(pendiente_reciente/1000000).replace(",", ".")
+              }}M
+            </p>
+          </div>
+          <div class="text-center">
+            <div
+              class="w-full h-1.5 bg-[color:var(--accent-amber)] rounded mb-1"></div>
+            <p class="text-xs text-[color:var(--accent-amber)]">31-60d</p>
+            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+              ${{ "{:,.1f}".format(pendiente_medio/1000000).replace(",", ".")
+              }}M
+            </p>
+          </div>
+          <div class="text-center">
+            <div
+              class="w-full h-1.5 bg-[color:var(--accent-red)] rounded mb-1"></div>
+            <p class="text-xs text-[color:var(--accent-red)]">+60d</p>
+            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+              ${{ "{:,.1f}".format(pendiente_critico/1000000).replace(",", ".")
+              }}M
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Distribución por edades de montos pagados -->
+    <div
+      class="metric-card bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl overflow-hidden group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+      <div class="h-2 bg-[color:var(--accent-green)]"></div>
+      <div class="p-5 relative">
+        <div
+          class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-full w-full text-[color:var(--accent-green)]"
+            viewBox="0 0 20 20"
+            fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="flex items-center mb-3">
+          <p
+            class="metric-label font-medium text-[color:var(--text-secondary)]">
+            Distribución de Pagados
+          </p>
+        </div>
+        <div class="flex items-end mb-2">
+          <p class="text-xl font-semibold">
+            <span class="text-[color:var(--text-primary)]"
+              >{{ (pagado_reciente / monto_pagado_global * 100)|round(1) if
+              monto_pagado_global > 0 else 0 }}%</span
+            >
+          </p>
+          <span class="text-xs text-[color:var(--text-secondary)] mb-0.5 ml-2"
+            >≤30 días</span
+          >
+        </div>
+        <div class="grid grid-cols-3 gap-2 mt-3">
+          <div class="text-center">
+            <div
+              class="w-full h-1.5 bg-[color:var(--accent-green)] rounded mb-1"></div>
+            <p class="text-xs text-[color:var(--accent-green)]">≤30d</p>
+            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+              ${{ "{:,.1f}".format(pagado_reciente/1000000).replace(",", ".")
+              }}M
+            </p>
+          </div>
+          <div class="text-center">
+            <div
+              class="w-full h-1.5 bg-[color:var(--accent-amber)] rounded mb-1"></div>
+            <p class="text-xs text-[color:var(--accent-amber)]">31-60d</p>
+            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+              ${{ "{:,.1f}".format(pagado_medio/1000000).replace(",", ".") }}M
+            </p>
+          </div>
+          <div class="text-center">
+            <div
+              class="w-full h-1.5 bg-[color:var(--accent-red)] rounded mb-1"></div>
+            <p class="text-xs text-[color:var(--accent-red)]">+60d</p>
+            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+              ${{ "{:,.1f}".format(pagado_critico/1000000).replace(",", ".") }}M
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -294,34 +713,16 @@ Control{% endblock %} {% block content %}
         >({{ proyectos|length }})</span
       >
     </h2>
-    <div class="flex items-center">
-      <div class="relative max-w-xs mr-3">
-        <input
-          type="text"
-          id="buscarProyecto"
-          placeholder="Buscar proyecto..."
-          class="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)]" />
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 text-[color:var(--text-secondary)] absolute left-2.5 top-1/2 transform -translate-y-1/2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </div>
-      <select
-        id="filtroProyectos"
-        class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
-        <option value="todos">Todos</option>
-        <option value="criticos">Con críticos</option>
-        <option value="validados">Con validados</option>
-      </select>
-    </div>
+    <!-- Reemplazar la sección existente del selector de filtro por esto: -->
+    <select
+      id="filtroProyectos"
+      class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
+      <option value="todos">Todos</option>
+      <option value="criticos">Con críticos</option>
+      <option value="validados">Con validados</option>
+      <option value="pendientes">Pendientes</option>
+      <option value="pagados">Pagados</option>
+    </select>
   </div>
 
   <div
@@ -440,7 +841,7 @@ Control{% endblock %} {% block content %}
             <td class="px-4 py-3 text-right">
               <a
                 href="{{ url_for('controller_bp.vista_proyecto_de_encargado', nombre=nombre, proyecto=p['Proyecto']) }}"
-                class="inline-flex items-center justify-center text-xs bg-[color:var(--accent-blue-dark)] bg-opacity-15 text-[color:var(--accent-blue)] px-2 py-1 rounded hover:bg-opacity-25 transition-all">
+                class="inline-flex items-center justify-center text-xs bg-[color:var(--accent-blue-dark)] bg-opacity-15 text-[color:var(--text-primary)] px-2 py-1 rounded hover:bg-opacity-25 transition-all">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-3.5 w-3.5 mr-1"
@@ -553,10 +954,14 @@ Control{% endblock %} {% block content %}
     const filtroSelect = document.getElementById("filtroProyectos");
     filtroSelect.addEventListener("change", filterTable);
 
+    // Reemplazar la función filterTable existente
     function filterTable() {
       const searchTerm = buscarInput.value.toLowerCase();
+      const filterType = filtroSelect.value;
 
       let visibleCount = 0;
+
+      const rows = document.querySelectorAll("#tablaProyectos tbody tr");
 
       rows.forEach((row) => {
         const proyecto = row.getAttribute("data-proyecto").toLowerCase();
@@ -566,6 +971,16 @@ Control{% endblock %} {% block content %}
         const validados = row
           .querySelector("td:nth-child(4)")
           .textContent.trim();
+        const montoPendiente = parseFloat(
+          row
+            .querySelector("td:nth-child(9)")
+            .textContent.replace(/[$,\.]/g, "")
+        );
+        const montoPagado = parseFloat(
+          row
+            .querySelector("td:nth-child(8)")
+            .textContent.replace(/[$,\.]/g, "")
+        );
 
         let shouldShow = proyecto.includes(searchTerm);
 
@@ -573,6 +988,10 @@ Control{% endblock %} {% block content %}
           shouldShow = shouldShow && criticos !== "-";
         } else if (filterType === "validados") {
           shouldShow = shouldShow && validados !== "-";
+        } else if (filterType === "pendientes") {
+          shouldShow = shouldShow && montoPendiente > 0;
+        } else if (filterType === "pagados") {
+          shouldShow = shouldShow && montoPagado > 0;
         }
 
         if (shouldShow) {

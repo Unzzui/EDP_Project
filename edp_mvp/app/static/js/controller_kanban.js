@@ -5,6 +5,7 @@
 
 // Esperar a que el DOM esté completamente cargado
 document.addEventListener("DOMContentLoaded", function () {
+
 	// Inicializar todas las funcionalidades
 
 	initSocketIO();
@@ -967,79 +968,299 @@ function updateSummaryPanel() {
  * Mejora el Panel de KPIs con métricas estratégicas
  */
 function setupKPIPanel() {
-	// Recopilamos datos
-	const columns = document.querySelectorAll(".kanban-column");
-	let totalEDPs = 0;
-	let totalMontoGeneral = 0;
-	let totalMontoPagado = 0;
+    // Recopilamos datos
+    const columns = document.querySelectorAll(".kanban-column");
+    let totalEDPs = 0;
+    let totalMontoGeneral = 0;
+    let totalMontoPagado = 0;
+    let totalPendiente = 0;
+    let edpsCriticos = 0;
+    let diasTotales = 0;
+    let tarjetasConDias = 0;
 
-	columns.forEach((col) => {
-		const estado = col.dataset.estado;
-		const tarjetas = col.querySelectorAll(".kanban-item");
+    columns.forEach((col) => {
+        const estado = col.dataset.estado;
+        const tarjetas = col.querySelectorAll(".kanban-item");
 
-		totalEDPs += tarjetas.length;
-		tarjetas.forEach((tarjeta) => {
-			const montoText = tarjeta
-				.querySelector("span[data-tooltip]")
-				.textContent.trim();
-			const monto = parseFloat(
-				montoText.replace("$", "").replace(/\./g, "").replace(",", ".")
-			);
+        totalEDPs += tarjetas.length;
+        tarjetas.forEach((tarjeta) => {
+            // Obtener el monto
+            const montoElement = tarjeta.querySelector("span[data-tooltip]");
+            if (!montoElement) return;
+            
+            const montoText = montoElement.textContent.trim();
+            const monto = parseFloat(
+                montoText.replace("$", "").replace(/\./g, "").replace(",", ".")
+            );
 
-			if (!isNaN(monto)) {
-				totalMontoGeneral += monto;
+            if (!isNaN(monto)) {
+                totalMontoGeneral += monto;
 
-				if (
-					estado.toLowerCase() === "pagado" ||
-					estado.toLowerCase() === "validado"
-				) {
-					totalMontoPagado += monto;
-				}
-			}
-		});
-	});
-
-	// Calcular porcentaje de avance financiero
-	const porcentajeAvance =
-		totalMontoGeneral > 0
-			? Math.round((totalMontoPagado / totalMontoGeneral) * 100)
-			: 0;
-
-	// Actualizar HTML del panel de KPIs
-	const summaryPanel = document
-		.getElementById("summary-panel")
-		.querySelector(".grid");
-
-	summaryPanel.innerHTML = `
-    <div class="metric-card p-5">
-      <p class="metric-label">Total EDPs</p>
-      <p class="metric-value">${totalEDPs}</p>
-    </div>
+                if (estado.toLowerCase() === "pagado" || estado.toLowerCase() === "validado") {
+                    totalMontoPagado += monto;
+                }
+                if (estado.toLowerCase() === "revisión" || estado.toLowerCase() === "enviado") {
+                    totalPendiente += monto;
+                }
+            }
+            
+            // Contabilizar días y tarjetas críticas
+            const diasElement = tarjeta.querySelector('svg[stroke="currentColor"] + span');
+            if (diasElement) {
+                const diasMatch = diasElement.textContent.match(/(\d+)/);
+                if (diasMatch && diasMatch[1]) {
+                    const dias = parseInt(diasMatch[1]);
+                    if (!isNaN(dias)) {
+                        diasTotales += dias;
+                        tarjetasConDias++;
+                        
+                        if (dias > 10) {
+                            edpsCriticos++;
+                        }
+                    }
+                }
+            }
+        });
+    });
     
-    <div class="metric-card p-5">
-      <p class="metric-label">Total por cobrar</p>
-      <p class="metric-value">$${totalMontoGeneral.toLocaleString("es-CL")}</p>
-    </div>
+    // Calcular valores derivados
+    const porcentajeAvance = totalMontoGeneral > 0 
+        ? Math.round((totalMontoPagado / totalMontoGeneral) * 100) 
+        : 0;
     
-    <div class="metric-card p-5">
-      <p class="metric-label">Avance</p>
-      <div class="mt-1">
-        <div class="w-full bg-[color:var(--bg-highlight)] rounded-full h-2.5">
-          <div class="bg-[color:var(--accent-green)] h-2.5 rounded-full" style="width: ${porcentajeAvance}%"></div>
+    const diasPromedio = tarjetasConDias > 0 
+        ? Math.round(diasTotales / tarjetasConDias) 
+        : 0;
+    
+    // Calcular tendencia (simulada - en producción obtendría datos históricos)
+    const tendenciaMes = Math.random() > 0.5 ? '+5%' : '-3%'; 
+    const esTendenciaPositiva = tendenciaMes.startsWith('+');
+    
+    // Actualizar métricas adicionales
+    document.getElementById('edps-criticos').textContent = edpsCriticos;
+    document.getElementById('dias-promedio').textContent = diasPromedio;
+    document.getElementById('meta-mensual').textContent = formatCurrency_Kanban(1200000000); // Meta 20% superior
+    
+    const proyeccionElement = document.getElementById('proyeccion-tendencia');
+    proyeccionElement.textContent = tendenciaMes;
+    proyeccionElement.className = `text-lg font-bold ${esTendenciaPositiva ? 'text-[color:var(--accent-green)]' : 'text-[color:var(--accent-red)]'}`;
+    
+    // Actualizar icono de tendencia
+    const iconoTendencia = proyeccionElement.nextElementSibling;
+    if (esTendenciaPositiva) {
+        iconoTendencia.classList.replace('text-[color:var(--accent-red)]', 'text-[color:var(--accent-green)]');
+        iconoTendencia.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />';
+    } else {
+        iconoTendencia.classList.replace('text-[color:var(--accent-green)]', 'text-[color:var(--accent-red)]');
+        iconoTendencia.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" />';
+    }
+
+    // Actualizar HTML del panel de KPIs
+    const summaryPanel = document.getElementById("summary-panel").querySelector(".grid");
+    const lastUpdated = document.getElementById("last-updated-date");
+    if (lastUpdated) {
+        const now = new Date();
+        lastUpdated.textContent = `Actualizado: ${now.toLocaleTimeString()}`;
+    }
+    
+       summaryPanel.innerHTML = `
+        <!-- Tarjeta 1: Total EDPs -->
+        <div class="metric-card relative p-6 border-r border-b border-[color:var(--border-color-subtle)]">
+            <div class="absolute top-0 left-0 w-full h-1 bg-[color:var(--accent-blue)] opacity-70"></div>
+            <div class="flex flex-col">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-[color:var(--text-secondary)]">Total EDPs</span>
+                    <div class="p-1.5 rounded-full bg-[color:var(--bg-subtle)]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-end gap-2">
+                    <span class="text-3xl font-bold">${totalEDPs}</span>
+                    <span class="text-xs text-[color:var(--text-secondary)] mb-1">en seguimiento</span>
+                </div>
+                <div class="mt-auto pt-3 text-xs text-[color:var(--text-secondary)] flex items-center justify-between">
+                    <span>Distribución:</span>
+                    <div class="flex gap-1">
+                        ${generarDistribucionHTML(columns)}
+                    </div>
+                </div>
+            </div>
         </div>
-        <p class="text-lg mt-1 font-medium">${porcentajeAvance}%</p>
-      </div>
-    </div>
+
+        <!-- Tarjeta 2: Total por Cobrar -->
+        <div class="metric-card relative p-6 border-r border-b border-[color:var(--border-color-subtle)]">
+            <div class="absolute top-0 left-0 w-full h-1 bg-[color:var(--accent-blue)] opacity-70"></div>
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-[color:var(--text-secondary)]">Total por Cobrar</span>
+                    <div class="p-1.5 rounded-full bg-[color:var(--bg-subtle)]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="text-2xl font-bold">${formatCurrency_Kanban(totalMontoGeneral)}</span>
+                </div>
+                <div class="mt-2 text-xs flex items-center text-[color:var(--text-secondary)]">
+                    <span>Año fiscal en curso</span>
+                </div>
+                <div class="mt-auto pt-3 text-xs flex justify-between">
+                    <span class="text-[color:var(--accent-amber)]">Vencimientos:</span>
+                    <span class="font-medium">3 EDPs esta semana</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 3: Pendiente -->
+        <div class="metric-card relative p-6 border-r border-b border-[color:var(--border-color-subtle)]">
+            <div class="absolute top-0 left-0 w-full h-1 bg-[color:var(--accent-amber)] opacity-70"></div>
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-[color:var(--text-secondary)]">Pendiente</span>
+                    <div class="p-1.5 rounded-full bg-[color:var(--bg-subtle)]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-amber)]" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="text-2xl font-bold">${formatCurrency_Kanban(totalPendiente)}</span>
+                </div>
+                <div class="mt-2 text-xs flex items-center text-[color:var(--text-secondary)]">
+                    <span>En proceso de aprobación</span>
+                </div>
+                <div class="mt-auto pt-3">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-[color:var(--text-secondary)]">Progreso:</span>
+                        <span class="font-medium">${Math.round((totalPendiente / totalMontoGeneral) * 100)}%</span>
+                    </div>
+                    <div class="w-full bg-[color:var(--bg-subtle)] h-1.5 mt-1.5 rounded-full overflow-hidden">
+                        <div class="h-full bg-[color:var(--accent-amber)]" style="width: ${Math.round((totalPendiente / totalMontoGeneral) * 100)}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 4: Pagado -->
+        <div class="metric-card relative p-6 border-r border-b border-[color:var(--border-color-subtle)]">
+            <div class="absolute top-0 left-0 w-full h-1 bg-[color:var(--accent-green)] opacity-70"></div>
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-[color:var(--text-secondary)]">Pagado</span>
+                    <div class="p-1.5 rounded-full bg-[color:var(--bg-subtle)]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-green)]" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="text-2xl font-bold text-[color:var(--accent-green)]">${formatCurrency_Kanban(totalMontoPagado)}</span>
+                </div>
+                <div class="mt-2 text-xs flex items-center text-[color:var(--text-secondary)]">
+                    <span>Completados y procesados</span>
+                </div>
+                <div class="mt-auto pt-3">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-[color:var(--text-secondary)]">Último pagado:</span>
+                        <span class="font-medium">25-05-2025</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 5: Avance -->
+        <div class="metric-card relative p-6 border-b border-[color:var(--border-color-subtle)]">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-green)] opacity-70"></div>
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-[color:var(--text-secondary)]">Avance Financiero</span>
+                    <div class="p-1.5 rounded-full bg-[color:var(--bg-subtle)]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+                            <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col items-center justify-center mt-3">
+                    <!-- Gráfico circular -->
+                    <div class="relative w-24 h-24">
+                        <svg class="w-full h-full" viewBox="0 0 36 36">
+                            <!-- Fondo del gráfico -->
+                            <path 
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                                fill="none" 
+                                stroke="var(--bg-subtle)" 
+                                stroke-width="3" 
+                            />
+                            <!-- Progreso del gráfico -->
+                            <path 
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                                fill="none" 
+                                stroke="var(--accent-green)" 
+                                stroke-width="3" 
+                                stroke-dasharray="${porcentajeAvance}, 100" 
+                                stroke-linecap="round"
+                            />
+                            <!-- Texto central -->
+                            <text x="18" y="20.35" class="percentage" text-anchor="middle" fill="var(--text-primary)" font-size="8.5" font-weight="bold">${porcentajeAvance}%</text>
+                        </svg>
+                    </div>
+                    
+                    <!-- Leyenda -->
+                    <div class="w-full flex justify-between text-xs text-[color:var(--text-secondary)] mt-4">
+                        <span>Cobrado</span>
+                        <span>Por cobrar</span>
+                    </div>
+                    <div class="w-full bg-[color:var(--bg-subtle)] h-1.5 mt-1.5 rounded-full overflow-hidden">
+                        <div class="h-full bg-[color:var(--accent-green)]" style="width: ${porcentajeAvance}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
     
-    <div class="metric-card p-5">
-      <p class="metric-label">Total pagado</p>
-      <p class="metric-value text-[color:var(--accent-green)]">$${totalMontoPagado.toLocaleString(
-				"es-CL"
-			)}</p>
-    </div>
-  `;
+    
+    // Configurar el botón de refresh
+    document.getElementById('refresh-metrics')?.addEventListener('click', function() {
+        this.classList.add('animate-spin');
+        setTimeout(() => {
+            actualizarContadoresTablero();
+            this.classList.remove('animate-spin');
+        }, 700);
+    });
 }
 
+// Función auxiliar para generar la distribución visual
+function generarDistribucionHTML(columns) {
+    let html = '';
+    const estados = {
+        'revisión': 'bg-[color:var(--accent-blue)]',
+        'enviado': 'bg-[color:var(--accent-amber)]',
+        'pagado': 'bg-[color:var(--accent-amber-dark)]',
+        'validado': 'bg-[color:var(--accent-green)]'
+    };
+    
+    columns.forEach(col => {
+        const estado = col.dataset.estado.toLowerCase();
+        const count = col.querySelectorAll('.kanban-item').length;
+        const bgColor = estados[estado] || 'bg-gray-400';
+        
+        html += `<span class="inline-flex items-center" title="${estado}: ${count}">
+            <span class="w-2 h-2 rounded-full ${bgColor} mr-0.5"></span>${count}
+        </span>`;
+    });
+    
+    return html;
+}
+
+function formatCurrency_Kanban(amount) {
+    return `$${amount.toLocaleString("es-CL")}`;
+}
 /**
  * Actualiza todos los contadores y métricas de manera centralizada
  */
@@ -1782,6 +2003,66 @@ function initKanbanBoard() {
 	});
 }
 
+// Reemplazar cualquier implementación existente con esta (igual a la del dashboard)
+function openEdpModal(edpId) {
+  console.log(`Abriendo modal para EDP ID: ${edpId}`);
+
+  // Mostrar overlay y estado de carga
+  const modalOverlay = document.getElementById('edpModalOverlay');
+  const modalContent = document.getElementById('edpModalContent');
+  
+  if (!modalOverlay || !modalContent) {
+    console.error('Error: Elementos del modal no encontrados');
+    return;
+  }
+  
+  modalOverlay.classList.remove('hidden');
+  modalContent.innerHTML = `
+    <div class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[color:var(--accent-blue)]"></div>
+    </div>
+  `;
+
+  // URL actualizada para usar ID único
+  fetch(`/controller/api/edp-details/${edpId}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Datos recibidos correctamente:', data);
+      // Renderizar contenido usando la función del otro archivo
+      renderEdpModalContent(data);
+    })
+    .catch(error => {
+      console.error('Error al cargar datos del EDP:', error);
+      
+      // Mostrar mensaje de error en el modal
+      modalContent.innerHTML = `
+        <div class="p-6 text-center">
+          <div class="text-red-500 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold mb-2">Error al cargar datos</h3>
+          <p>${error.message}</p>
+          <div class="text-sm text-gray-500 mt-2 mb-4">
+            Detalles técnicos: ${error}
+          </div>
+          <button type="button" id="closeModalError" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            Cerrar
+          </button>
+        </div>
+      `;
+      
+      document.getElementById('closeModalError').addEventListener('click', function() {
+        modalOverlay.classList.add('hidden');
+      });
+    });
+}
 /**
  * Función para actualizar estado en la API
  */
@@ -1955,6 +2236,7 @@ function actualizarEstadoEDP(
 			setTimeout(() => location.reload(), 1500);
 		});
 }
+
 
 /**
  * Muestra un modal contextual según el tipo de cambio de estado
@@ -2260,3 +2542,6 @@ function setupSocketConnection() {
 		showToast(`EDP actualizado: ${data.edp_id || "desconocido"}`, "info");
 	});
 }
+
+
+

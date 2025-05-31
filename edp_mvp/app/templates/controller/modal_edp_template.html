@@ -1,664 +1,586 @@
 <!-- Modal para detalles de EDP -->
 <div
-	id="edpModalOverlay"
-	class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center hidden animate__animated animate__fadeIn"
->
-	<div
-		id="edpModalContainer"
-		class="bg-[color:var(--bg-card)] rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col animate__animated animate__zoomIn animate__faster"
-	>
-		<!-- Cabecera del modal mejorada -->
-		<div
-			class="bg-gradient-to-r from-[color:var(--accent-blue-light)] to-[color:var(--accent-blue)] px-6 py-5 flex justify-between items-center border-b border-[color:var(--border-color)] shadow-sm"
-		>
-			<h3 class="text-xl font-bold flex items-center text-white">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-6 w-6 mr-2"
-					viewBox="0 0 20 20"
-					fill="currentColor"
-				>
-					<path
-						d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"
-					/>
-					<path
-						d="M3 8a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"
-					/>
-				</svg>
-				<span id="modalTitle">Detalle de EDP</span>
-			</h3>
-			<button
-				id="closeEdpModal"
-				class="text-white hover:bg-white/20 p-1.5 rounded-full transition-all"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M6 18L18 6M6 6l12 12"
-					/>
-				</svg>
-			</button>
-		</div>
+  id="edpModalOverlay"
+  class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center hidden animate__animated animate__fadeIn">
+  <div
+    id="edpModalContainer"
+    class="bg-[color:var(--bg-card)] rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col animate__animated animate__zoomIn animate__faster">
+    <!-- Cabecera del modal mejorada -->
+    <div
+      class="bg-gradient-to-r from-[color:var(--accent-blue-light)] to-[color:var(--accent-blue)] px-6 py-5 flex justify-between items-center border-b border-[color:var(--border-color)] shadow-sm">
+      <h3 class="text-xl font-bold flex items-center text-white">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 mr-2"
+          viewBox="0 0 20 20"
+          fill="currentColor">
+          <path
+            d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
+          <path
+            d="M3 8a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+        </svg>
+        <span id="modalTitle">Detalle de EDP</span>
+      </h3>
+      <button
+        id="closeEdpModal"
+        class="text-white hover:bg-white/20 p-1.5 rounded-full transition-all">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
 
-		<!-- Contenido dinámico del modal -->
-		<div id="edpModalContent" class="overflow-y-auto p-0">
-			<!-- Aquí se cargará dinámicamente el contenido -->
-		</div>
-	</div>
+    <!-- Contenido dinámico del modal -->
+    <div id="edpModalContent" class="overflow-y-auto p-0">
+      <!-- Aquí se cargará dinámicamente el contenido -->
+    </div>
+  </div>
 </div>
 
 <!-- Template para el contenido del modal (se usará con JavaScript) -->
 <template id="edpModalTemplate">
-	<form id="edpModalForm" class="edp-form">
-		<div
-			class="p-6 bg-[color:var(--bg-secondary)] border-b border-[color:var(--border-color-subtle)]"
-		>
-			<!-- Información resumen en la parte superior -->
-			<div class="flex flex-col md:flex-row md:justify-between mb-4 gap-4">
-				<div class="flex-1">
-					<div class="text-sm text-[color:var(--text-secondary)]">N° EDP</div>
-					<div class="text-xl font-semibold" data-display-field="N° EDP">
-						EDP-1234
-					</div>
-				</div>
-				<div class="flex-1">
-					<div class="text-sm text-[color:var(--text-secondary)]">Proyecto</div>
-					<div class="text-xl font-semibold" data-display-field="Proyecto">
-						Nombre del Proyecto
-					</div>
-				</div>
-				<div class="flex-1">
-					<div class="text-sm text-[color:var(--text-secondary)]">Cliente</div>
-					<div class="text-xl font-semibold" data-display-field="Cliente">
-						Nombre del Cliente
-					</div>
-				</div>
-				<div>
-					<div class="text-sm text-[color:var(--text-secondary)]">Estado</div>
-					<div
-						class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium"
-						data-status-badge
-					>
-						<span class="w-2 h-2 rounded-full"></span>
-						<span data-display-field="Estado">Pendiente</span>
-					</div>
-				</div>
-			</div>
-		</div>
+  <form id="edpModalForm" class="edp-form">
+    <div
+      class="p-6 bg-[color:var(--bg-secondary)] border-b border-[color:var(--border-color-subtle)]">
+      <!-- Información resumen en la parte superior -->
+      <div class="flex flex-col md:flex-row md:justify-between mb-4 gap-4">
+        <div class="flex-1">
+          <div class="text-sm text-[color:var(--text-secondary)]">N° EDP</div>
+          <div class="text-xl font-semibold" data-display-field="N° EDP">
+            EDP-1234
+          </div>
+        </div>
+        <div class="flex-1">
+          <div class="text-sm text-[color:var(--text-secondary)]">Proyecto</div>
+          <div class="text-xl font-semibold" data-display-field="Proyecto">
+            Nombre del Proyecto
+          </div>
+        </div>
+        <div class="flex-1">
+          <div class="text-sm text-[color:var(--text-secondary)]">Cliente</div>
+          <div class="text-xl font-semibold" data-display-field="Cliente">
+            Nombre del Cliente
+          </div>
+        </div>
+        <div>
+          <div class="text-sm text-[color:var(--text-secondary)]">Estado</div>
+          <div
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium"
+            data-status-badge>
+            <span class="w-2 h-2 rounded-full"></span>
+            <span data-display-field="Estado">Pendiente</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-			<!-- Columna izquierda -->
-			<div class="space-y-6">
-				<!-- Información General -->
-				<div
-					class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden"
-				>
-					<div
-						class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-5 w-5 text-[color:var(--accent-blue)]"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								fill-rule="evenodd"
-								d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-						<h4 class="font-bold text-base">Información General</h4>
-					</div>
-					<div class="p-4 space-y-4">
-						<!-- N° EDP, Proyecto y Cliente ya están en el resumen superior -->
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div class="form-group">
-								<label class="form-label">Jefe de Proyecto</label>
-								<input
-									type="text"
-									name="jefe_proyecto"
-									class="form-input bg-[color:var(--bg-secondary)]"
-									readonly
-									data-field="Jefe de Proyecto"
-								/>
-							</div>
-							<div class="form-group">
-								<label class="form-label">Mes</label>
-								<input
-									type="text"
-									name="mes"
-									class="form-input bg-[color:var(--bg-secondary)]"
-									readonly
-									data-field="Mes"
-								/>
-							</div>
-						</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+      <!-- Columna izquierda -->
+      <div class="space-y-6">
+        <!-- Información General -->
+        <div
+          class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden">
+          <div
+            class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-[color:var(--accent-blue)]"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clip-rule="evenodd" />
+            </svg>
+            <h4 class="font-bold text-base">Información General</h4>
+          </div>
+          <div class="p-4 space-y-4">
+            <!-- N° EDP, Proyecto y Cliente ya están en el resumen superior -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">Jefe de Proyecto</label>
+                <input
+                  type="text"
+                  name="jefe_proyecto"
+                  class="form-input bg-[color:var(--bg-secondary)]"
+                  readonly
+                  data-field="Jefe de Proyecto" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mes</label>
+                <input
+                  type="text"
+                  name="mes"
+                  class="form-input bg-[color:var(--bg-secondary)]"
+                  readonly
+                  data-field="Mes" />
+              </div>
+            </div>
 
-						<input type="hidden" name="n_edp" data-field="N° EDP" />
-					</div>
-				</div>
+            <input type="hidden" name="n_edp" data-field="N° EDP" />
+          </div>
+        </div>
 
-				<!-- Información Financiera -->
-				<div
-					class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden"
-				>
-					<div
-						class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-5 w-5 text-[color:var(--accent-blue)]"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"
-							/>
-							<path
-								fill-rule="evenodd"
-								d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-						<h4 class="font-bold text-base">Información Financiera</h4>
-					</div>
-					<div class="p-4 space-y-4">
-						<div class="form-group">
-							<label class="form-label">Monto Propuesto</label>
-							<div class="relative">
-								<span
-									class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-									>$</span
-								>
-								<!-- Campo visible formateado -->
-								<input
-									type="text"
-									id="monto_propuesto_formatted"
-									class="form-input pl-7"
-									placeholder="0"
-								/>
-								<!-- Campo oculto con valor real -->
-								<input
-									type="hidden"
-									id="monto_propuesto"
-									name="monto_propuesto"
-									data-field="Monto Propuesto"
-								/>
-								<!-- Mensaje de ayuda opcional -->
-								<div
-									id="monto_propuesto_formatted-format-hint"
-									class="text-xs text-gray-500 mt-1 hidden"
-								>
-									Ingresa solo números sin puntos ni símbolos
-								</div>
-							</div>
-						</div>
+        <!-- Información Financiera -->
+        <div
+          class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden">
+          <div
+            class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-[color:var(--accent-blue)]"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path
+                d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
+                clip-rule="evenodd" />
+            </svg>
+            <h4 class="font-bold text-base">Información Financiera</h4>
+          </div>
+          <div class="p-4 space-y-4">
+            <div class="form-group">
+              <label class="form-label">Monto Propuesto</label>
+              <div class="relative">
+                <span
+                  class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></span>
+                <!-- Campo visible formateado -->
+                <input
+                  type="text"
+                  id="monto_propuesto_formatted"
+                  class="form-input pl-7"
+                  placeholder="0" />
+                <!-- Campo oculto con valor real -->
+                <input
+                  type="hidden"
+                  id="monto_propuesto"
+                  name="monto_propuesto"
+                  data-field="Monto Propuesto" />
+                <!-- Mensaje de ayuda opcional -->
+                <div
+                  id="monto_propuesto_formatted-format-hint"
+                  class="text-xs text-gray-500 mt-1 hidden">
+                  Ingresa solo números sin puntos ni símbolos
+                </div>
+              </div>
+            </div>
 
-						<div class="form-group">
-							<label class="form-label">Monto Aprobado</label>
-							<div class="relative">
-								<span
-									class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-									>$</span
-								>
-								<!-- Campo visible formateado -->
-								<input
-									type="text"
-									id="monto_aprobado_formatted"
-									class="form-input pl-7"
-									placeholder="0"
-								/>
-								<!-- Campo oculto con valor real -->
-								<input
-									type="hidden"
-									id="monto_aprobado"
-									name="monto_aprobado"
-									data-field="Monto Aprobado"
-								/>
-								<!-- Mensaje de ayuda opcional -->
-								<div
-									id="monto_aprobado_formatted-format-hint"
-									class="text-xs text-gray-500 mt-1 hidden"
-								>
-									Ingresa solo números sin puntos ni símbolos
-								</div>
-							</div>
-						</div>
+            <div class="form-group">
+              <label class="form-label">Monto Aprobado</label>
+              <div class="relative">
+                <span
+                  class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></span>
+                <!-- Campo visible formateado -->
+                <input
+                  type="text"
+                  id="monto_aprobado_formatted"
+                  class="form-input pl-7"
+                  placeholder="0" />
+                <!-- Campo oculto con valor real -->
+                <input
+                  type="hidden"
+                  id="monto_aprobado"
+                  name="monto_aprobado"
+                  data-field="Monto Aprobado" />
+                <!-- Mensaje de ayuda opcional -->
+                <div
+                  id="monto_aprobado_formatted-format-hint"
+                  class="text-xs text-gray-500 mt-1 hidden">
+                  Ingresa solo números sin puntos ni símbolos
+                </div>
+              </div>
+            </div>
 
-						<div class="form-group">
-							<label class="form-label">Fecha Estimada de Pago</label>
-							<div class="relative">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-									/>
-								</svg>
-								<input
-									type="date"
-									name="fecha_estimada_pago"
-									class="form-input pl-9"
-									data-field="Fecha Estimada de Pago"
-								/>
-							</div>
-						</div>
-					</div>
-				</div>
+            <div class="form-group">
+              <label class="form-label">Fecha Estimada de Pago</label>
+              <div class="relative">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <input
+                  type="date"
+                  name="fecha_estimada_pago"
+                  class="form-input pl-9"
+                  data-field="Fecha Estimada de Pago" />
+              </div>
+            </div>
+          </div>
+        </div>
 
-				<!-- KPIs y Observaciones -->
-				<div
-					class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden"
-				>
-					<div
-						class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-5 w-5 text-[color:var(--accent-blue)]"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								fill-rule="evenodd"
-								d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm9 4a1 1 0 10-2 0v6a1 1 0 102 0V7zm-3 2a1 1 0 10-2 0v4a1 1 0 102 0V9zm-3 3a1 1 0 10-2 0v1a1 1 0 102 0v-1z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-						<h4 class="font-bold text-base">KPIs y Observaciones</h4>
-					</div>
-					<div class="p-4 space-y-4">
-						<div class="grid grid-cols-2 gap-4">
-							<div class="form-group">
-								<label class="form-label">Días Espera</label>
-								<div class="relative">
-									<input
-										type="number"
-										name="dias_espera"
-										class="form-input bg-[color:var(--bg-secondary)]"
-										readonly
-										data-field="Días Espera"
-									/>
-									<div
-										class="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-[color:var(--text-secondary)] font-medium"
-									>
-										días
-									</div>
-								</div>
-							</div>
-							<div class="form-group">
-								<label class="form-label">Días Hábiles</label>
-								<div class="relative">
-									<input
-										type="number"
-										name="dias_habiles"
-										class="form-input bg-[color:var(--bg-secondary)]"
-										readonly
-										data-field="Días Hábiles"
-									/>
-									<div
-										class="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-[color:var(--text-secondary)] font-medium"
-									>
-										días
-									</div>
-								</div>
-							</div>
-						</div>
+        <!-- KPIs y Observaciones -->
+        <div
+          class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden">
+          <div
+            class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-[color:var(--accent-blue)]"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm9 4a1 1 0 10-2 0v6a1 1 0 102 0V7zm-3 2a1 1 0 10-2 0v4a1 1 0 102 0V9zm-3 3a1 1 0 10-2 0v1a1 1 0 102 0v-1z"
+                clip-rule="evenodd" />
+            </svg>
+            <h4 class="font-bold text-base">KPIs y Observaciones</h4>
+          </div>
+          <div class="p-4 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">Días Espera</label>
+                <div class="relative">
+                  <input
+                    type="number"
+                    name="dias_espera"
+                    class="form-input bg-[color:var(--bg-secondary)]"
+                    readonly
+                    data-field="Días Espera" />
+                  <div
+                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-[color:var(--text-secondary)] font-medium">
+                    días
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Días Hábiles</label>
+                <div class="relative">
+                  <input
+                    type="number"
+                    name="dias_habiles"
+                    class="form-input bg-[color:var(--bg-secondary)]"
+                    readonly
+                    data-field="Días Hábiles" />
+                  <div
+                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-[color:var(--text-secondary)] font-medium">
+                    días
+                  </div>
+                </div>
+              </div>
+            </div>
 
-						<div class="form-group">
-							<label class="form-label">Crítico</label>
-							<div class="flex items-center space-x-4 mt-1">
-								<label class="inline-flex items-center cursor-pointer">
-									<input
-										type="radio"
-										name="critico"
-										value="false"
-										class="form-radio"
-										checked
-									/>
-									<span class="ml-2">No</span>
-								</label>
-								<label class="inline-flex items-center cursor-pointer">
-									<input
-										type="radio"
-										name="critico"
-										value="true"
-										class="form-radio"
-									/>
-									<span class="ml-2">Sí</span>
-								</label>
-							</div>
-						</div>
+            <div class="form-group">
+              <label class="form-label">Crítico</label>
+              <div class="flex items-center space-x-4 mt-1">
+                <label class="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="critico"
+                    value="false"
+                    class="form-radio"
+                    checked />
+                  <span class="ml-2">No</span>
+                </label>
+                <label class="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="critico"
+                    value="true"
+                    class="form-radio" />
+                  <span class="ml-2">Sí</span>
+                </label>
+              </div>
+            </div>
 
-						<div class="form-group">
-							<label class="form-label">Observaciones</label>
-							<textarea
-								name="observaciones"
-								class="form-textarea"
-								rows="1"
-								placeholder="Agregar observaciones o notas relevantes..."
-								data-field="Observaciones"
-							></textarea>
-						</div>
-					</div>
-				</div>
-			</div>
+            <div class="form-group">
+              <label class="form-label">Observaciones</label>
+              <textarea
+                name="observaciones"
+                class="form-textarea"
+                rows="1"
+                placeholder="Agregar observaciones o notas relevantes..."
+                data-field="Observaciones"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
 
-			<!-- Columna derecha -->
-			<div class="space-y-6">
-				<!-- Estado y aprobación -->
-				<div
-					class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden"
-				>
-					<div
-						class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-5 w-5 text-[color:var(--accent-blue)]"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								fill-rule="evenodd"
-								d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-						<h4 class="font-bold text-base">Estado y Aprobación</h4>
-					</div>
-					<div class="p-4 space-y-4">
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div class="form-group">
-								<label class="form-label">Estado</label>
-								<select name="estado" class="form-select" data-field="Estado">
-									<option value="revisión">Revisión</option>
-									<option value="enviado">Enviado</option>
-									<option value="pagado">Pagado</option>
-									<option value="validado">Validado</option>
-								</select>
-							</div>
+      <!-- Columna derecha -->
+      <div class="space-y-6">
+        <!-- Estado y aprobación -->
+        <div
+          class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden">
+          <div
+            class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-[color:var(--accent-blue)]"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clip-rule="evenodd" />
+            </svg>
+            <h4 class="font-bold text-base">Estado y Aprobación</h4>
+          </div>
+          <div class="p-4 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select name="estado" class="form-select" data-field="Estado">
+                  <option value="revisión">Revisión</option>
+                  <option value="enviado">Enviado</option>
+                  <option value="pagado">Pagado</option>
+                  <option value="validado">Validado</option>
+                </select>
+              </div>
 
-							<div class="form-group">
-								<label for="estado_detallado" class="form-label"
-									>Estado Detallado</label
-								>
-								<select
-									name="estado_detallado"
-									id="estado_detallado"
-									class="form-select"
-									data-field="Estado Detallado"
-								>
-									<option value="">Seleccionar</option>
-									<option value="creado">Creado</option>
-									<option value="revisión interna">Revisión Interna</option>
-									<option value="enviado cliente">Enviado Cliente</option>
-									<option value="revisión cliente">Revisión Cliente</option>
-									<option value="aprobado">Aprobado</option>
-									<option value="re-trabajo solicitado">
-										Re-trabajo Solicitado
-									</option>
-									<option value="conformidad emitida">
-										Conformidad Emitida
-									</option>
-								</select>
-							</div>
-						</div>
+              <div class="form-group">
+                <label for="estado_detallado" class="form-label"
+                  >Estado Detallado</label
+                >
+                <select
+                  name="estado_detallado"
+                  id="estado_detallado"
+                  class="form-select"
+                  data-field="Estado Detallado">
+                  <option value="">Seleccionar</option>
+                  <option value="creado">Creado</option>
+                  <option value="revisión interna">Revisión Interna</option>
+                  <option value="enviado cliente">Enviado Cliente</option>
+                  <option value="revisión cliente">Revisión Cliente</option>
+                  <option value="aprobado">Aprobado</option>
+                  <option value="re-trabajo solicitado">
+                    Re-trabajo Solicitado
+                  </option>
+                  <option value="conformidad emitida">
+                    Conformidad Emitida
+                  </option>
+                </select>
+              </div>
+            </div>
 
-						<!-- Campos condicionales para re-trabajo -->
-						<div
-							class="bg-[color:var(--bg-secondary)] rounded-lg p-3 border border-dashed border-[color:var(--border-color)]"
-						>
-							<!-- Motivo No-aprobado (inicialmente oculto) -->
-							<div
-								id="wrap_motivo"
-								class="form-group hidden"
-								style="display: none"
-							>
-								<label for="motivo_no_aprobado" class="form-label"
-									>Motivo No-aprobado</label
-								>
-								<select
-									name="motivo_no_aprobado"
-									id="motivo_no_aprobado"
-									class="form-select"
-									data-field="Motivo No-aprobado"
-								>
-									<option value="">Seleccionar</option>
-									<option value="falta documentación">
-										Falta documentación
-									</option>
-									<option value="error de monto">Error de monto</option>
-									<option value="alcance no claro">Alcance no claro</option>
-									<option value="otros">Otros</option>
-								</select>
-							</div>
+            <!-- Campos condicionales para re-trabajo -->
+            <div
+              class="bg-[color:var(--bg-secondary)] rounded-lg p-3 border border-dashed border-[color:var(--border-color)]">
+              <!-- Motivo No-aprobado (inicialmente oculto) -->
+              <div
+                id="wrap_motivo"
+                class="form-group hidden"
+                style="display: none">
+                <label for="motivo_no_aprobado" class="form-label"
+                  >Motivo No-aprobado</label
+                >
+                <select
+                  name="motivo_no_aprobado"
+                  id="motivo_no_aprobado"
+                  class="form-select"
+                  data-field="Motivo No-aprobado">
+                  <option value="">Seleccionar</option>
+                  <option value="falta documentación">
+                    Falta documentación
+                  </option>
+                  <option value="error de monto">Error de monto</option>
+                  <option value="alcance no claro">Alcance no claro</option>
+                  <option value="otros">Otros</option>
+                </select>
+              </div>
 
-							<!-- Tipo_falla (inicialmente oculto) -->
-							<div
-								id="wrap_falla"
-								class="form-group hidden mt-3"
-								style="display: none"
-							>
-								<label for="tipo_falla" class="form-label">Tipo de Falla</label>
-								<select
-									name="tipo_falla"
-									id="tipo_falla"
-									class="form-select"
-									data-field="Tipo_falla"
-								>
-									<option value="">Seleccionar</option>
-									<option value="retraso doc">Retraso doc</option>
-									<option value="error interno">Error interno</option>
-									<option value="error cliente">Error cliente</option>
-									<option value="otros">Otros</option>
-								</select>
-							</div>
-						</div>
-					</div>
-				</div>
+              <!-- Tipo_falla (inicialmente oculto) -->
+              <div
+                id="wrap_falla"
+                class="form-group hidden mt-3"
+                style="display: none">
+                <label for="tipo_falla" class="form-label">Tipo de Falla</label>
+                <select
+                  name="tipo_falla"
+                  id="tipo_falla"
+                  class="form-select"
+                  data-field="Tipo_falla">
+                  <option value="">Seleccionar</option>
+                  <option value="retraso doc">Retraso doc</option>
+                  <option value="error interno">Error interno</option>
+                  <option value="error cliente">Error cliente</option>
+                  <option value="otros">Otros</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
 
-				<!-- Conformidad -->
-				<div
-					class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden"
-				>
-					<div
-						class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-5 w-5 text-[color:var(--accent-blue)]"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
-						<h4 class="font-bold text-base">Conformidad</h4>
-					</div>
-					<div class="p-4 space-y-4">
-						<div class="form-group">
-							<label for="conformidad_enviada" class="form-label"
-								>Conformidad Enviada</label
-							>
-							<select
-								name="conformidad_enviada"
-								id="conformidad_enviada"
-								class="form-select"
-								data-field="Conformidad Emitida"
-							>
-								<option value="No">No</option>
-								<option value="Sí">Sí</option>
-							</select>
-						</div>
+        <!-- Conformidad -->
+        <div
+          class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden">
+          <div
+            class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-[color:var(--accent-blue)]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h4 class="font-bold text-base">Conformidad</h4>
+          </div>
+          <div class="p-4 space-y-4">
+            <div class="form-group">
+              <label for="conformidad_enviada" class="form-label"
+                >Conformidad Enviada</label
+              >
+              <select
+                name="conformidad_enviada"
+                id="conformidad_enviada"
+                class="form-select"
+                data-field="Conformidad Emitida">
+                <option value="No">No</option>
+                <option value="Sí">Sí</option>
+              </select>
+            </div>
 
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div class="form-group">
-								<label for="fecha_conformidad" class="form-label"
-									>Fecha Conformidad</label
-								>
-								<div class="relative">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-										/>
-									</svg>
-									<input
-										type="date"
-										name="fecha_conformidad"
-										id="fecha_conformidad"
-										class="form-input pl-9"
-										data-field="Fecha Conformidad"
-									/>
-								</div>
-							</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label for="fecha_conformidad" class="form-label"
+                  >Fecha Conformidad</label
+                >
+                <div class="relative">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <input
+                    type="date"
+                    name="fecha_conformidad"
+                    id="fecha_conformidad"
+                    class="form-input pl-9"
+                    data-field="Fecha Conformidad" />
+                </div>
+              </div>
 
-							<div class="form-group">
-								<label for="n_conformidad" class="form-label"
-									>N° Conformidad</label
-								>
-								<div class="relative">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-										/>
-									</svg>
-									<input
-										type="text"
-										name="n_conformidad"
-										id="n_conformidad"
-										class="form-input pl-9"
-										placeholder="Ej: CONF-2023-001"
-										data-field="N° Conformidad"
-									/>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
+              <div class="form-group">
+                <label for="n_conformidad" class="form-label"
+                  >N° Conformidad</label
+                >
+                <div class="relative">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <input
+                    type="text"
+                    name="n_conformidad"
+                    id="n_conformidad"
+                    class="form-input pl-9"
+                    placeholder="Ej: CONF-2023-001"
+                    data-field="N° Conformidad" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-				<!-- Historial de cambios -->
-				<div
-					class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden"
-				>
-					<div
-						class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-5 w-5 text-[color:var(--accent-blue)]"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
-						<h4 class="font-bold text-base">Historial</h4>
-					</div>
-					<div class="p-2 max-h-[180px] overflow-y-auto">
-						<div
-							class="text-xs text-[color:var(--text-secondary)] italic px-2 py-1"
-							data-display-field="Última Actualización"
-						>
-							Última actualización: 27/05/2025 15:30 por admin
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+        <!-- Historial de cambios -->
+        <div
+          class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] shadow-sm overflow-hidden">
+          <div
+            class="flex items-center gap-2 px-4 py-3 bg-[color:var(--bg-highlight)]">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-[color:var(--accent-blue)]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h4 class="font-bold text-base">Historial</h4>
+          </div>
+          <div class="p-2 max-h-[180px] overflow-y-auto">
+            <div
+              class="text-xs text-[color:var(--text-secondary)] italic px-2 py-1"
+              data-display-field="Última Actualización">
+              Última actualización: 27/05/2025 15:30 por admin
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-		<!-- Botones de acción -->
-		<div
-			class="px-6 py-4 bg-[color:var(--bg-secondary)] border-t border-[color:var(--border-color-subtle)] flex justify-between items-center"
-		>
-			<div class="text-sm text-[color:var(--text-secondary)]">
-				<span class="inline-flex items-center">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-4 w-4 mr-1"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
-					Los campos marcados son obligatorios
-				</span>
-			</div>
-			<div class="flex gap-3">
-				<button type="button" id="cancelEdpChanges" class="btn-secondary">
-					Cancelar
-				</button>
-				<button
-					type="submit"
-					class="btn-primary flex items-center gap-1.5 px-5"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-4 w-4"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M5 13l4 4L19 7"
-						/>
-					</svg>
-					Guardar Cambios
-				</button>
-			</div>
-		</div>
-	</form>
+    <!-- Botones de acción -->
+    <div
+      class="px-6 py-4 bg-[color:var(--bg-secondary)] border-t border-[color:var(--border-color-subtle)] flex justify-between items-center">
+      <div class="text-sm text-[color:var(--text-secondary)]">
+        <span class="inline-flex items-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Los campos marcados son obligatorios
+        </span>
+      </div>
+      <div class="flex gap-3">
+        <button type="button" id="cancelEdpChanges" class="btn-secondary">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="btn-primary flex items-center gap-1.5 px-5">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7" />
+          </svg>
+          Guardar Cambios
+        </button>
+      </div>
+    </div>
+  </form>
 </template>

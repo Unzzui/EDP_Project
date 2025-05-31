@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Cabecera y filtros -->
+  <div class="flex flex-col md:flex-row justify-between items-start mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
+    <div>
+      <h1 class="text-2xl font-bold mb-2 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        Gestión de Incidencias
+      </h1>
+      <p class="text-[color:var(--text-secondary)]">
+        Registro y seguimiento de incidencias, bugs y solicitudes de mejora
+      </p>
+    </div>
+    
+    <!-- Botón nueva incidencia -->
+    <div class="mt-4 md:mt-0">
+      <a href="{{ url_for('controller_bp.nueva_incidencia') }}" class="bg-[color:var(--accent-blue-dark)] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+        </svg>
+        Nueva Incidencia
+      </a>
+    </div>
+  </div>
+  
+  <!-- Filtros -->
+  <div class="mb-6">
+    <form method="get" class="flex flex-wrap gap-3">
+      <select name="estado" class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
+        <option value="">Todos los estados</option>
+        {% for estado in opciones.estados %}
+        <option value="{{ estado }}" {% if filtros.estado == estado %}selected{% endif %}>{{ estado|title }}</option>
+        {% endfor %}
+      </select>
+      
+      <select name="tipo" class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
+        <option value="">Todos los tipos</option>
+        {% for tipo in opciones.tipos %}
+        <option value="{{ tipo }}" {% if filtros.tipo == tipo %}selected{% endif %}>{{ tipo|title }}</option>
+        {% endfor %}
+      </select>
+      
+      <select name="edp_relacionado" class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
+        <option value="">Todos los EDPs</option>
+        {% for edp in edps %}
+        <option value="{{ edp }}" {% if filtros.edp_relacionado == edp %}selected{% endif %}>EDP #{{ edp }}</option>
+        {% endfor %}
+      </select>
+      
+      <select name="proyecto_relacionado" class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
+        <option value="">Todos los proyectos</option>
+        {% for proyecto in opciones.proyectos %}
+        <option value="{{ proyecto }}" {% if filtros.proyecto_relacionado == proyecto %}selected{% endif %}>{{ proyecto }}</option>
+        {% endfor %}
+      </select>
+      
+      <button type="submit" class="text-sm bg-[color:var(--accent-blue-dark)] text-white px-4 py-1.5 rounded-lg hover:bg-opacity-90 transition-colors">
+        Filtrar
+      </button>
+      
+      <a href="{{ url_for('controller_bp.vista_issues') }}" class="text-sm bg-[color:var(--bg-subtle)] text-[color:var(--text-primary)] px-4 py-1.5 rounded-lg hover:bg-opacity-90 transition-colors">
+        Limpiar
+      </a>
+    </form>
+  </div>
+  
+  <!-- Tabla de incidencias -->
+  <div class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color)] overflow-hidden mb-6">
+    <div class="p-4 border-b border-[color:var(--border-color-subtle)]">
+      <h2 class="text-lg font-semibold">Incidencias</h2>
+    </div>
+    
+    <div class="overflow-x-auto">
+      {% if incidencias %}
+      <table class="w-full text-sm">
+        <thead class="bg-[color:var(--bg-subtle)]">
+          <tr>
+            <th class="px-4 py-3 text-left">ID</th>
+            <th class="px-4 py-3 text-left">Tipo</th>
+            <th class="px-4 py-3 text-left">Severidad</th>
+            <th class="px-4 py-3 text-left">Estado</th>
+            <th class="px-4 py-3 text-left">Descripción</th>
+            <th class="px-4 py-3 text-left">EDP/Proyecto</th>
+            <th class="px-4 py-3 text-left">Asignado a</th>
+            <th class="px-4 py-3 text-left">Fecha</th>
+            <th class="px-4 py-3 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for incidencia in incidencias %}
+          <tr class="border-t border-[color:var(--border-color-subtle)] hover:bg-[color:var(--bg-hover)]">
+            <td class="px-4 py-3 font-medium">{{ incidencia.ID }}</td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 rounded-full text-xs 
+                {% if incidencia.Tipo == 'bug' %}bg-[color:var(--accent-red)] bg-opacity-15 text-[color:var(--accent-red)]
+                {% elif incidencia.Tipo == 'mejora' %}bg-[color:var(--accent-blue)] bg-opacity-15 text-[color:var(--accent-blue)]
+                {% elif incidencia.Tipo == 'soporte' %}bg-[color:var(--accent-amber)] bg-opacity-15 text-[color:var(--accent-amber)]
+                {% else %}bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)]{% endif %}">
+                {{ incidencia.Tipo|title }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 rounded-full text-xs
+                {% if incidencia.Severidad == 'alta' %}bg-[color:var(--accent-red)] bg-opacity-15 text-[color:var(--accent-red)]
+                {% elif incidencia.Severidad == 'media' %}bg-[color:var(--accent-amber)] bg-opacity-15 text-[color:var(--accent-amber)]
+                {% else %}bg-[color:var(--accent-green)] bg-opacity-15 text-[color:var(--accent-green)]{% endif %}">
+                {{ incidencia.Severidad|title }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 rounded-full text-xs
+                {% if incidencia.Estado == 'abierta' %}bg-[color:var(--accent-blue)] bg-opacity-15 text-[color:var(--accent-blue)]
+                {% elif incidencia.Estado == 'en progreso' %}bg-[color:var(--accent-amber)] bg-opacity-15 text-[color:var(--accent-amber)]
+                {% elif incidencia.Estado == 'resuelta' %}bg-[color:var(--accent-green)] bg-opacity-15 text-[color:var(--accent-green)]
+                {% else %}bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)]{% endif %}">
+                {{ incidencia.Estado|title }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <div class="truncate max-w-xs">{{ incidencia.Descripción }}</div>
+            </td>
+            <td class="px-4 py-3">
+              {% if incidencia["EDP Relacionado"] %}
+              <div>EDP #{{ incidencia["EDP Relacionado"] }}</div>
+              {% endif %}
+              {% if incidencia["Proyecto Relacionado"] %}
+              <div class="text-xs text-[color:var(--text-secondary)]">{{ incidencia["Proyecto Relacionado"] }}</div>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              {{ incidencia["Usuario asignado"]|default('-', true) }}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              {% if incidencia.Timestamp %}
+              <div>{{ incidencia.Timestamp.strftime('%d/%m/%Y') }}</div>
+              <div class="text-xs text-[color:var(--text-secondary)]">{{ incidencia.Timestamp.strftime('%H:%M') }}</div>
+              {% else %}
+              -
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-center">
+              <a href="{{ url_for('controller_bp.detalle_incidencia', issue_id=incidencia.ID) }}" 
+                 class="text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] transition-colors">
+                Ver detalle
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="p-6 text-center text-[color:var(--text-secondary)]">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="mb-2">No hay incidencias que coincidan con los filtros.</p>
+        <a href="{{ url_for('controller_bp.nueva_incidencia') }}" class="text-[color:var(--accent-blue)] hover:underline">Crear una nueva incidencia</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

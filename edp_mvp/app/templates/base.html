@@ -18,8 +18,7 @@
   </head>
 
   <body class="bg-[color:var(--bg-primary)] text-[color:var(--text-primary)]">
-    {# --- Navbar de ancho completo --- #} {% include 'navbar.html' %} {# ---
-    Contenido centrado --- #}
+    {% include 'navbar.html' %} {# --- Contenido centrado --- #}
     <div class="container mx-auto px-4 py-6">
       {% block content %}{% endblock %}
     </div>

@@ -4,6 +4,7 @@
 {% block head %}
 {{ super() }}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+{% include "controller/modal_edp_template.html" %}
 <style>
   /* ===== ESTILOS BÁSICOS DEL TABLERO KANBAN ===== */
   .kanban-column {
@@ -377,11 +378,49 @@ button.processing {
 .contenido-actualizado {
   animation: flash-update 2s ease-in-out;
 }
+/* Estilos para el modal */
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+/* Estilos para formularios dentro del modal */
+.form-group {
+  margin-bottom: 0.75rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 0.625rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
 </style>
+
 {% endblock %}
+<!-- Modal para acciones rápidas -->
 
 {% block content %}
 <!-- Panel principal -->
+
+
 <div class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn">
 
   <!-- Encabezado con stats y navegación -->
@@ -538,12 +577,62 @@ button.processing {
   </label>
   {% endfor %}
 </div>
-  <div id="summary-panel" class="mb-8">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-5 text-sm">
+
+  <!-- KPI -->
+<div id="summary-panel" class="mb-8 bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-highlight)] rounded-2xl shadow-lg border border-[color:var(--border-color)] overflow-hidden">
+  <!-- Encabezado del panel -->
+  <div class="p-5 border-b border-[color:var(--border-color-subtle)] flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      <h2 class="text-lg font-bold">Dashboard Financiero</h2>
+    </div>
+    <div class="flex items-center gap-4">
+      <span id="last-updated-date" class="text-xs text-[color:var(--text-secondary)]"></span>
+      <button id="refresh-metrics" class="p-2 hover:bg-[color:var(--bg-highlight)] rounded-full transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Grid de métricas principales -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0">
+    <!-- Las tarjetas se llenarán con JavaScript -->
+  </div>
+  
+  <!-- Sección inferior con métricas adicionales -->
+  <div class="border-t border-[color:var(--border-color-subtle)] bg-[color:var(--bg-subtle)] px-5 py-3 grid grid-cols-2 sm:grid-cols-4 gap-8">
+    <div class="flex flex-col items-center">
+      <span class="text-xs text-[color:var(--text-secondary)]">EDPs Críticos</span>
+      <span id="edps-criticos" class="text-lg font-bold text-[color:var(--accent-red)]">0</span>
+    </div>
+    <div class="flex flex-col items-center">
+      <span class="text-xs text-[color:var(--text-secondary)]">Días Promedio</span>
+      <span id="dias-promedio" class="text-lg font-bold">0</span>
+    </div>
+    <div class="flex flex-col items-center">
+      <span class="text-xs text-[color:var(--text-secondary)]">Meta Mensual</span>
+      <span id="meta-mensual" class="text-lg font-bold">$0</span>
+    </div>
+    <div class="flex flex-col items-center">
+      <span class="text-xs text-[color:var(--text-secondary)]">Proyección</span>
+      <div class="flex items-center gap-1 mt-0.5">
+        <span id="proyeccion-tendencia" class="text-lg font-bold text-[color:var(--accent-green)]">+5%</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-0 divide-x divide-y divide-[color:var(--border-color-subtle)]">
       <!-- Los contenidos se llenarán con JavaScript usando la estructura metric-card -->
     </div>
   </div>
-
   <!-- Tablero Kanban -->
      <!-- Filtro y contador de validados antiguos -->
   <div class="flex items-center justify-between mb-4 px-4">
@@ -583,7 +672,7 @@ button.processing {
          data-estado="{{ estado }}"
          data-empty="{{ edps|length == 0 }}"
          id="columna-{{ estado }}">
-      <!-- Cabecera de columna -->
+ 
    <!-- Cabecera de columna -->
 <div class="flex flex-col mb-3 pb-2 border-b border-[color:var(--border-color-subtle)]">
   <div class="flex items-center justify-between">
@@ -607,6 +696,7 @@ button.processing {
         <div class="kanban-item bg-[color:var(--bg-secondary)] p-4 rounded-lg shadow-sm border border-[color:var(--border-color)] hover:shadow-md hover:ring-1 hover:ring-[color:var(--accent-blue)] hover:scale-[1.01] transition-all"
              draggable="true"
              data-id="{{ edp['N° EDP'] }}">
+
           <!-- Cabecera de tarjeta -->
           <div class="flex justify-between items-start mb-2">
             <p class="font-bold text-sm">
@@ -709,9 +799,9 @@ button.processing {
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
       </svg>
       <span class="text-green-600">Conformidad enviada</span>
-      {% if edp.get('Fecha Conformidad') %}
-        <span class="ml-1 text-[color:var(--text-secondary)]">({{ edp['Fecha Conformidad'].strftime('%d-%m-%Y') }})</span>
-      {% endif %}
+      {% if edp['Fecha Conformidad'] and edp['Fecha Conformidad'] is not none and edp['Fecha Conformidad'] != 'NaT' %}
+  <span class="ml-1 text-[color:var(--text-secondary)]">({{ edp['Fecha Conformidad'].strftime('%d-%m-%Y') }})</span>
+{% endif %}
     </div>
   {% elif edp.get('Fecha Envío al Cliente') %}
     <!-- Si hay fecha de envío pero no conformidad -->
@@ -732,16 +822,20 @@ button.processing {
   {% endif %}
 </div>
           
-          <!-- Footer de tarjeta -->
-          <div class="flex justify-end pt-2 border-t border-[color:var(--border-color-subtle)]">
-            <a href="{{ url_for('controller_bp.detalle_edp', n_edp=edp['N° EDP']) }}"
-               class="action-link text-xs">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
-              Editar
-            </a>
-          </div>
+
+<!-- Footer de tarjeta -->
+<div class="flex justify-end pt-2 border-t border-[color:var(--border-color-subtle)]">
+<button 
+  class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[color:var(--bg-card)] border border-transparent hover:border-[color:var(--accent-blue-light)] hover:bg-[color:var(--bg-highlight)] transition-all duration-150 shadow-sm hover:shadow"
+  onclick="openEdpModal('{{ edp['N° EDP'] }}')">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-[color:var(--accent-blue)] group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  </svg>
+  <span class="text-xs font-medium text-[color:var(--text-secondary)] group-hover:text-[color:var(--accent-blue)] transition-colors">
+    Editar
+  </span>
+</button>
+</div>
         </div>
         {% endfor %}
         
@@ -779,9 +873,16 @@ button.processing {
 <!-- Scripts -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<!-- Antes del cierre de body -->
+<script src="{{ url_for('static', filename='js/modal_edp_scripts.js') }}"></script>
 <script src="{{ url_for('static', filename='js/controller_kanban.js') }}"></script>
 
-
+<!-- Template del modal para edición de EDP -->
+<div id="edpModalOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+  <div id="edpModalContent" class="bg-[color:var(--bg-card)] rounded-xl shadow-xl border border-[color:var(--border-color)] w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+    <!-- El contenido se llenará dinámicamente -->
+  </div>
+</div>
 
 
 {% endblock %}

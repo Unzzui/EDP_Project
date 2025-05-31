@@ -62,34 +62,76 @@ function updateModalSummary(data) {
 }
 
 // Currency formatting utilities
+// Reemplazar o agregar esta función en controller_kanban.js
 function formatCurrency(value) {
-  // Remove non-digits and convert to number
-  const number = parseInt(value.toString().replace(/[^\d]/g, '')) || 0;
-  // Format with locale settings
-  return number.toLocaleString('es-CL');
+  if (value === undefined || value === null || value === '') return '';
+  
+  const cleanValue = value.toString().replace(/[^\d]/g, '');
+  const number = parseInt(cleanValue) || 0;
+  
+  // Primero formatea solo con separadores de miles
+  const formatted = number.toLocaleString('es-CL', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+  
+  // Luego añade manualmente el símbolo peso si lo deseas
+  return '$' + formatted;
+  
+  // O si prefieres sin el símbolo peso:
+  // return formatted;
 }
 
-// Setup currency input with formatting
+// Setup currency input with formatting - función más robusta
 function setupCurrencyInput(formattedInputId, hiddenValueId) {
+  console.log(`Configurando campos de moneda: ${formattedInputId} -> ${hiddenValueId}`);
+  
+  // Buscar elementos con petición explícita
   const formattedInput = document.getElementById(formattedInputId);
   const hiddenValue = document.getElementById(hiddenValueId);
   
-  if (!formattedInput || !hiddenValue) return;
+  // Validación más descriptiva
+  if (!formattedInput) {
+    console.warn(`Campo de formato ${formattedInputId} no encontrado`);
+    return;
+  }
   
-  // Format on input
+  if (!hiddenValue) {
+    console.warn(`Campo oculto ${hiddenValueId} no encontrado`);
+    return;
+  }
+  
+  console.log(`Campos encontrados: ${formattedInputId}, ${hiddenValueId}`);
+  
+  // Format on input con validación adicional
   formattedInput.addEventListener('input', (e) => {
-    // Extract raw numeric value
-    const rawValue = e.target.value.replace(/[^\d]/g, '');
-    // Update hidden field with raw value
-    hiddenValue.value = rawValue;
-    // Update display with formatted value
-    formattedInput.value = formatCurrency(rawValue);
+    try {
+      // Extract raw numeric value
+      const rawValue = e.target.value.replace(/[^\d]/g, '');
+      // Update hidden field with raw value
+      hiddenValue.value = rawValue;
+      // Update display with formatted value
+      const formatted = formatCurrency(rawValue);
+      formattedInput.value = formatted;
+      console.log(`Formateado (input): ${rawValue} → ${formatted}`);
+    } catch (error) {
+      console.error("Error al formatear entrada:", error);
+    }
   });
   
-  // Format initial value
-  formattedInput.value = formatCurrency(hiddenValue.value);
+  // Format initial value con validación
+  try {
+    if (hiddenValue.value) {
+      const initialFormatted = formatCurrency(hiddenValue.value);
+      formattedInput.value = initialFormatted;
+      console.log(`Valor inicial formateado: ${hiddenValue.value} → ${initialFormatted}`);
+    }
+  } catch (error) {
+    console.error("Error al formatear valor inicial:", error);
+  }
   
-  // Show hint on focus
+  // Show hint on focus con validación
   const hintId = formattedInputId + '-format-hint';
   const hint = document.getElementById(hintId);
   if (hint) {
@@ -343,7 +385,7 @@ function renderEdpModalContent(data) {
 
     // Recolectar datos del formulario
     const formData = new FormData(form);
-    const edpId = data['N° EDP'];
+    const edpId = data['ID'];
     
     // Enviar petición AJAX
     fetch(`/controller/api/update-edp/${edpId}`, {
@@ -399,6 +441,8 @@ function renderEdpModalContent(data) {
 
    updateModalSummary(data);
   // Configurar campos de moneda DESPUÉS de añadir el contenido al DOM
+  
+  setTimeout(() => {
   setupCurrencyInput('monto_propuesto_formatted', 'monto_propuesto');
   setupCurrencyInput('monto_aprobado_formatted', 'monto_aprobado');
   
@@ -407,24 +451,70 @@ function renderEdpModalContent(data) {
   setupConditionalFields(modalContent);
   setupConformidadFields(modalContent);
   // También inicializar los valores formateados a partir de los datos recibidos
-  const montoP = document.getElementById('monto_propuesto');
-  const montoA = document.getElementById('monto_aprobado');
-  
-  if (montoP && data['Monto Propuesto']) {
-    const rawValue = data['Monto Propuesto'].toString().replace(/[^\d]/g, '');
-    montoP.value = rawValue;
-    document.getElementById('monto_propuesto_formatted').value = formatCurrency(rawValue);
+ // Formatear valores iniciales con protección extra contra errores
+  try {
+    const montoP = document.getElementById('monto_propuesto');
+    const montoPFormatted = document.getElementById('monto_propuesto_formatted');
+    
+    if (montoP && montoPFormatted && data['Monto Propuesto']) {
+      const rawValue = data['Monto Propuesto'].toString().replace(/[^\d]/g, '');
+      montoP.value = rawValue;
+      montoPFormatted.value = formatCurrency(rawValue);
+      console.log("✓ Monto Propuesto formateado:", rawValue, "→", formatCurrency(rawValue));
+    }
+    
+    const montoA = document.getElementById('monto_aprobado');
+    const montoAFormatted = document.getElementById('monto_aprobado_formatted');
+    
+    if (montoA && montoAFormatted && data['Monto Aprobado']) {
+      const rawValue = data['Monto Aprobado'].toString().replace(/[^\d]/g, '');
+      montoA.value = rawValue;
+      montoAFormatted.value = formatCurrency(rawValue);
+      console.log("✓ Monto Aprobado formateado:", rawValue, "→", formatCurrency(rawValue));
+    }
+  } catch (error) {
+    console.error("Error al formatear montos:", error);
   }
-  
-  if (montoA && data['Monto Aprobado']) {
-    const rawValue = data['Monto Aprobado'].toString().replace(/[^\d]/g, '');
-    montoA.value = rawValue;
-    document.getElementById('monto_aprobado_formatted').value = formatCurrency(rawValue);
-  }
+},100);
 }
+
+function setupSmartStateTransitions(modalContent, currentState) {
+  const stateSelect = modalContent.querySelector('#estado');
+  const workflowContainer = document.createElement('div');
+  workflowContainer.className = 'mt-4 p-3 bg-[color:var(--bg-subtle)] rounded-lg';
   
-
-
+  // Crear botones contextuales según el estado actual
+  const transitions = getValidTransitions(currentState);
+  
+  workflowContainer.innerHTML = `
+    <p class="text-sm font-medium mb-2">Cambiar estado:</p>
+    <div class="flex gap-2 flex-wrap">
+      ${transitions.map(t => `
+        <button type="button" 
+          class="transition-btn px-3 py-1.5 rounded text-sm font-medium 
+            ${getTransitionColorClass(t.to)}"
+          data-state="${t.to}">
+          ${t.icon} ${t.label}
+        </button>
+      `).join('')}
+    </div>
+  `;
+  
+  // Insertar antes del formulario
+  const form = modalContent.querySelector('#edpModalForm');
+  form.parentNode.insertBefore(workflowContainer, form);
+  
+  // Configurar eventos
+  workflowContainer.querySelectorAll('.transition-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const newState = btn.dataset.state;
+      stateSelect.value = newState;
+      
+      // Mostrar campos relevantes para el nuevo estado
+      showStateRelevantFields(modalContent, newState);
+    });
+  });
+}
 
 /**
  * Muestra una notificación temporal

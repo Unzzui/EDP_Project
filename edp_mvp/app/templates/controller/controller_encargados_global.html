@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mx-auto px-4 py-6">
+  <!-- Header con título y filtros -->
+  <div class="flex flex-col md:flex-row justify-between items-start mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
+    <div>
+      <h1 class="text-2xl font-bold mb-2 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a3 3 0 00-3-3h-2a3 3 0 00-3 3v1h8z" />
+        </svg>
+        Dashboard de Encargados
+      </h1>
+      <p class="text-[color:var(--text-secondary)]">
+        Comparativa global de rendimiento
+      </p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="flex flex-wrap gap-3 mt-4 md:mt-0">
+      <form method="get" class="flex flex-wrap gap-3">
+        <select name="mes" class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
+          <option value="">Todos los meses</option>
+          {% for mes in meses %}
+          <option value="{{ mes }}" {% if filtros.mes == mes %}selected{% endif %}>{{ mes }}</option>
+          {% endfor %}
+        </select>
+        
+        <select name="cliente" class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
+          <option value="">Todos los clientes</option>
+          {% for cliente in clientes %}
+          <option value="{{ cliente }}" {% if filtros.cliente == cliente %}selected{% endif %}>{{ cliente }}</option>
+          {% endfor %}
+        </select>
+        
+        <select name="ordenar_por" class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
+          <option value="monto_pagado_desc" {% if filtros.ordenar_por == 'monto_pagado_desc' %}selected{% endif %}>Pagado ↓</option>
+          <option value="avance_desc" {% if filtros.ordenar_por == 'avance_desc' %}selected{% endif %}>% Avance ↓</option>
+          <option value="dso_asc" {% if filtros.ordenar_por == 'dso_asc' %}selected{% endif %}>DSO ↑</option>
+          <option value="tasa_aprobacion_desc" {% if filtros.ordenar_por == 'tasa_aprobacion_desc' %}selected{% endif %}>Aprobación ↓</option>
+          <option value="edps_criticos_desc" {% if filtros.ordenar_por == 'edps_criticos_desc' %}selected{% endif %}>Críticos ↓</option>
+        </select>
+        
+        <button type="submit" class="text-sm bg-[color:var(--accent-blue-dark)] text-white px-4 py-1.5 rounded-lg hover:bg-opacity-90 transition-colors">
+          Aplicar
+        </button>
+      </form>
+      
+      <a href="{{ url_for('controller_bp.vista_global_encargados') }}" class="text-sm bg-[color:var(--bg-subtle)] text-[color:var(--text-primary)] px-4 py-1.5 rounded-lg hover:bg-opacity-90 transition-colors">
+        Limpiar filtros
+      </a>
+    </div>
+  </div>
+
+  <!-- KPIs Globales en Tarjetas -->
+  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+    <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
+      <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">Meta Global</p>
+      <p class="text-xl font-bold font-mono">${{ "{:,.0f}".format(resumen_global.total_meta).replace(",",".") }}</p>
+    </div>
+    
+    <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
+      <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">Total Pagado</p>
+      <p class="text-xl font-bold font-mono text-[color:var(--accent-green)]">${{ "{:,.0f}".format(resumen_global.total_pagado).replace(",",".") }}</p>
+    </div>
+    
+    <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
+      <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">Total Pendiente</p>
+      <p class="text-xl font-bold font-mono text-[color:var(--accent-orange)]">${{ "{:,.0f}".format(resumen_global.total_pendiente).replace(",",".") }}</p>
+    </div>
+    
+    <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
+      <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">Avance Global</p>
+      <p class="text-xl font-bold font-mono {% if resumen_global.avance_global > 70 %}text-[color:var(--accent-green)]{% elif resumen_global.avance_global > 50 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-orange)]{% endif %}">{{ resumen_global.avance_global }}%</p>
+    </div>
+    
+    <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
+      <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">DSO Promedio</p>
+      <p class="text-xl font-bold font-mono {% if resumen_global.promedio_dso < 45 %}text-[color:var(--accent-green)]{% elif resumen_global.promedio_dso < 60 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-red)]{% endif %}">{{ resumen_global.promedio_dso }}</p>
+    </div>
+    
+    <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
+      <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">Aprobación Promedio</p>
+      <p class="text-xl font-bold font-mono {% if resumen_global.promedio_tasa_aprobacion > 80 %}text-[color:var(--accent-green)]{% elif resumen_global.promedio_tasa_aprobacion > 60 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-orange)]{% endif %}">{{ resumen_global.promedio_tasa_aprobacion }}%</p>
+    </div>
+  </div>
+
+  <!-- Barra de progreso global -->
+  <div class="mb-8">
+    <div class="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
+      <span>Progreso global</span>
+      <span>{{ resumen_global.avance_global }}% completado</span>
+    </div>
+    <div class="h-3 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+      <div class="h-full bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-green)]" 
+           style="width: {{ resumen_global.avance_global }}%"></div>
+    </div>
+  </div>
+
+  <!-- Gráfico de Barras Comparativo -->
+  <div class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] mb-8">
+    <h2 class="text-lg font-semibold mb-4">Comparativa de Avance por Encargado</h2>
+    <div class="h-64">
+      <canvas id="graficoAvance"></canvas>
+    </div>
+  </div>
+
+  <!-- Tabla de Comparación -->
+  <div class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color)] overflow-hidden mb-8">
+    <div class="p-4 border-b border-[color:var(--border-color-subtle)]">
+      <h2 class="text-lg font-semibold">Comparativa Detallada de Encargados</h2>
+      <p class="text-sm text-[color:var(--text-secondary)]">
+        {{ encargados|length }} encargados | Actualizado: {{ now.strftime('%d/%m/%Y %H:%M') }}
+      </p>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-[color:var(--bg-subtle)]">
+          <tr>
+            <th class="px-4 py-3 text-left">Encargado</th>
+            <th class="px-4 py-3 text-right">Meta</th>
+            <th class="px-4 py-3 text-right">Pagado</th>
+            <th class="px-4 py-3 text-right">% Avance</th>
+            <th class="px-4 py-3 text-right">DSO</th>
+            <th class="px-4 py-3 text-right">Tasa Aprobación</th>
+            <th class="px-4 py-3 text-right">EDPs Críticos</th>
+            <th class="px-4 py-3 text-right">Tendencia</th>
+            <th class="px-4 py-3 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for encargado in encargados %}
+          <tr class="border-t border-[color:var(--border-color-subtle)] hover:bg-[color:var(--bg-hover)]">
+            <td class="px-4 py-3 font-medium">{{ encargado.nombre }}</td>
+            <td class="px-4 py-3 text-right font-mono">${{ "{:,.0f}".format(encargado.meta).replace(",",".") }}</td>
+            <td class="px-4 py-3 text-right font-mono">${{ "{:,.0f}".format(encargado.monto_pagado).replace(",",".") }}</td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end">
+                <div class="w-16 h-1.5 bg-[color:var(--bg-input)] rounded-full overflow-hidden mr-2">
+                  <div class="h-full {% if encargado.avance > 70 %}bg-[color:var(--accent-green)]{% elif encargado.avance > 50 %}bg-[color:var(--accent-amber)]{% else %}bg-[color:var(--accent-orange)]{% endif %}" 
+                       style="width: {{ encargado.avance }}%"></div>
+                </div>
+                <span class="{% if encargado.avance > 70 %}text-[color:var(--accent-green)]{% elif encargado.avance > 50 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-orange)]{% endif %} font-medium">
+                  {{ encargado.avance }}%
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-right {% if encargado.dso < 45 %}text-[color:var(--accent-green)]{% elif encargado.dso < 60 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-red)]{% endif %} font-medium">
+              {{ encargado.dso }}
+            </td>
+            <td class="px-4 py-3 text-right">{{ encargado.tasa_aprobacion }}%</td>
+            <td class="px-4 py-3 text-right">
+              {% if encargado.edps_criticos > 0 %}
+              <span class="px-1.5 py-0.5 rounded bg-[color:var(--accent-red)] bg-opacity-15 text-[color:var(--primary-text)] text-xs font-medium">
+                {{ encargado.edps_criticos }}
+              </span>
+              {% else %}
+              <span class="text-[color:var(--text-secondary)]">-</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-right">
+              <span class="{% if encargado.tendencia > 0 %}text-[color:var(--accent-green)]{% elif encargado.tendencia < 0 %}text-[color:var(--accent-red)]{% else %}text-[color:var(--text-secondary)]{% endif %} font-medium">
+                {{ "+" if encargado.tendencia > 0 else "" }}{{ encargado.tendencia }}%
+              </span>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <a href="{{ url_for('controller_bp.vista_encargado', nombre=encargado.nombre) }}" 
+                 class="text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] transition-colors">
+                Ver detalle
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Después de los gráficos actuales -->
+<div class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] mb-8">
+  <div class="flex flex-col md:flex-row justify-between items-start mb-4">
+    <div>
+      <h2 class="text-lg font-semibold">Evolución Mensual de Montos</h2>
+      <p class="text-sm text-[color:var(--text-secondary)]">Seguimiento temporal de pagos y validaciones</p>
+    </div>
+    <div class="flex mt-2 md:mt-0 gap-2">
+      <button id="toggleTotalBtn" class="text-xs px-2 py-1 rounded bg-[color:var(--accent-blue)] bg-opacity-15 text-[color:var(--primary-text)] font-medium">
+        Total Global
+      </button>
+      <button id="toggleEncargadosBtn" class="text-xs px-2 py-1 rounded bg-[color:var(--accent-green)] bg-opacity-15 text-[color:var(--primary-text)] font-medium">
+        Encargados
+      </button>
+      <button id="toggleMetaBtn" class="text-xs px-2 py-1 rounded bg-[color:var(--accent-amber)] bg-opacity-15 text-[color:var(--primary-text)] font-medium">
+        Meta Mensual
+      </button>
+    </div>
+  </div>
+  <div class="h-80">
+    <canvas id="graficoEvolucionMensual"></canvas>
+  </div>
+  <div class="mt-4 text-xs text-[color:var(--text-secondary)] text-center">
+    Haz clic en la leyenda para mostrar/ocultar series específicas
+  </div>
+</div>
+  <!-- Gráficos adicionales -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- Gráfico DSO -->
+    <div class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)]">
+      <h2 class="text-lg font-semibold mb-4">DSO por Encargado</h2>
+      <div class="h-64">
+        <canvas id="graficoDSO"></canvas>
+      </div>
+    </div>
+    
+    <!-- Gráfico Aprobación -->
+    <div class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)]">
+      <h2 class="text-lg font-semibold mb-4">Tasa de Aprobación</h2>
+      <div class="h-64">
+        <canvas id="graficoAprobacion"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Datos para los gráficos
+    const encargados = {{ encargados|tojson }};
+    const nombres = encargados.map(e => e.nombre);
+    const avances = encargados.map(e => e.avance);
+    const dsoValues = encargados.map(e => e.dso);
+    const aprobaciones = encargados.map(e => e.tasa_aprobacion);
+    
+    // Colores para barras según categoría de avance
+    const coloresAvance = avances.map(avance => {
+      if (avance > 70) return 'rgba(52, 211, 153, 0.8)'; // Verde
+      if (avance > 50) return 'rgba(245, 158, 11, 0.8)'; // Ámbar
+      return 'rgba(239, 68, 68, 0.8)'; // Rojo
+    });
+    
+    // Colores para barras según DSO
+    const coloresDSO = dsoValues.map(dso => {
+      if (dso < 45) return 'rgba(52, 211, 153, 0.8)'; // Verde
+      if (dso < 60) return 'rgba(245, 158, 11, 0.8)'; // Ámbar
+      return 'rgba(239, 68, 68, 0.8)'; // Rojo
+    });
+    
+    // Colores para barras según Aprobación
+    const coloresAprobacion = aprobaciones.map(ap => {
+      if (ap > 80) return 'rgba(52, 211, 153, 0.8)'; // Verde
+      if (ap > 60) return 'rgba(245, 158, 11, 0.8)'; // Ámbar
+      return 'rgba(239, 68, 68, 0.8)'; // Rojo
+    });
+    
+    // Gráfico de Avance
+    new Chart(document.getElementById('graficoAvance'), {
+      type: 'bar',
+      data: {
+        labels: nombres,
+        datasets: [{
+          label: '% Avance',
+          data: avances,
+          backgroundColor: coloresAvance,
+          borderColor: coloresAvance.map(c => c.replace('0.8', '1')),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Gráfico de DSO
+    new Chart(document.getElementById('graficoDSO'), {
+      type: 'bar',
+      data: {
+        labels: nombres,
+        datasets: [{
+          label: 'DSO (días)',
+          data: dsoValues,
+          backgroundColor: coloresDSO,
+          borderColor: coloresDSO.map(c => c.replace('0.8', '1')),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+    
+    // Gráfico de Aprobación
+    new Chart(document.getElementById('graficoAprobacion'), {
+      type: 'bar',
+      data: {
+        labels: nombres,
+        datasets: [{
+          label: '% Aprobación',
+          data: aprobaciones,
+          backgroundColor: coloresAprobacion,
+          borderColor: coloresAprobacion.map(c => c.replace('0.8', '1')),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          }
+        }
+      }
+    });
+  });
+  // Datos de evolución mensual
+  const datosMensuales = {{ datos_mensuales|tojson }};
+  
+  // Meta mensual (dividir meta anual entre 12)
+  const metaMensual = {{ resumen_global.total_meta }};
+  
+  // Calcular meta mensual acumulada
+  const metaAcumulada = datosMensuales.meses.map((_, i) => metaMensual * (i + 1));
+  
+  // Crear array con metas mensuales (no acumuladas)
+  const metasPorMes = datosMensuales.meses.map(() => metaMensual);
+  
+  // Paleta de colores para encargados (más estética)
+  const paletaColores = [
+    'rgba(99, 102, 241, 1)',    // Indigo
+    'rgba(16, 185, 129, 1)',    // Emerald
+    'rgba(245, 158, 11, 1)',    // Amber
+    'rgba(236, 72, 153, 1)',    // Pink
+    'rgba(6, 182, 212, 1)',     // Cyan
+    'rgba(139, 92, 246, 1)',    // Purple
+    'rgba(202, 138, 4, 1)',     // Yellow-600
+    'rgba(220, 38, 38, 1)',     // Red
+    'rgba(5, 150, 105, 1)',     // Green
+    'rgba(59, 130, 246, 1)'     // Blue
+  ];
+  
+  // Crear gráfico con opciones mejoradas
+  const chartEvolMensual = new Chart(document.getElementById('graficoEvolucionMensual'), {
+    type: 'line',
+    data: {
+      labels: datosMensuales.meses,
+      datasets: [
+        {
+          label: 'Meta Mensual',
+          data: metasPorMes,
+          borderColor: 'rgba(245, 158, 11, 0.8)',
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+          borderWidth: 2,
+          borderDash: [6, 6],
+          fill: false,
+          tension: 0,
+          pointStyle: 'dash',
+          pointRadius: 0,
+          order: 1
+        },
+        {
+          label: 'Total Global',
+          data: datosMensuales.total_por_mes,
+          borderColor: 'rgba(99, 102, 241, 1)',
+          backgroundColor: (context) => {
+            const chart = context.chart;
+            const {ctx, chartArea} = chart;
+            if (!chartArea) return null;
+            
+            // Crear gradiente
+            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+            gradient.addColorStop(0, 'rgba(99, 102, 241, 0)');
+            gradient.addColorStop(0.5, 'rgba(99, 102, 241, 0.2)');
+            gradient.addColorStop(1, 'rgba(99, 102, 241, 0.4)');
+            return gradient;
+          },
+          borderWidth: 3,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          pointBackgroundColor: 'white',
+          pointHoverBackgroundColor: 'white',
+          pointBorderWidth: 2,
+          order: 0
+        },
+        ...datosMensuales.encargados.map((encargado, index) => ({
+          label: encargado.nombre,
+          data: encargado.montos_por_mes,
+          borderColor: paletaColores[index % paletaColores.length],
+          backgroundColor: `${paletaColores[index % paletaColores.length].slice(0, -2)}0)`,
+          borderWidth: 2,
+          tension: 0.3,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          pointBackgroundColor: 'white',
+          order: 2 + index
+        }))
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              if (value >= 1000000) {
+                return '$' + (value / 1000000).toFixed(1) + 'M';
+              }
+              return '$' + (value / 1000).toFixed(0) + 'K';
+            }
+          },
+          grid: {
+            color: 'rgba(156, 163, 175, 0.1)'
+          }
+        }
+      },
+      interaction: {
+        mode: 'nearest',
+        axis: 'x',
+        intersect: false
+      },
+      plugins: {
+        tooltip: {
+          backgroundColor: 'rgba(28, 25, 23, 0.9)',
+          padding: 12,
+          titleFont: {
+            size: 14
+          },
+          bodyFont: {
+            size: 13
+          },
+          callbacks: {
+            title: function(context) {
+              return `Mes: ${context[0].label}`;
+            },
+            label: function(context) {
+              const dataset = context.dataset;
+              const currentValue = context.parsed.y;
+              
+              // Formato para montos
+              let formattedValue = '$' + currentValue.toLocaleString('es-CL');
+              
+              // Para meta mensual, mostrar porcentaje de avance
+              if (dataset.label === 'Meta Mensual') {
+                const totalIndex = context.dataIndex;
+                const totalValue = datosMensuales.total_por_mes[totalIndex] || 0;
+                const percentage = totalValue / currentValue * 100;
+                
+                return `${dataset.label}: ${formattedValue} (Avance: ${percentage.toFixed(1)}%)`;
+              }
+              
+              // Para total global, mostrar acumulado
+              if (dataset.label === 'Total Global') {
+                const acumulado = datosMensuales.total_por_mes
+                  .slice(0, context.dataIndex + 1)
+                  .reduce((sum, val) => sum + val, 0);
+                  
+                return `${dataset.label}: ${formattedValue} (Acum: $${acumulado.toLocaleString('es-CL')})`;
+              }
+              
+              // Para encargados
+              return `${dataset.label}: ${formattedValue}`;
+            }
+          }
+        },
+        legend: {
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            padding: 15,
+            boxWidth: 8
+          }
+        },
+        annotation: {
+          annotations: {
+            targetLine: {
+              type: 'line',
+              yMin: metaMensual,
+              yMax: metaMensual,
+              borderColor: 'rgba(245, 158, 11, 0.6)',
+              borderWidth: 2,
+              borderDash: [6, 6],
+              label: {
+                content: 'Meta Mensual',
+                enabled: true,
+                position: 'end'
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Funcionalidad para los botones de toggle
+  document.getElementById('toggleTotalBtn').addEventListener('click', function() {
+    // Alternar visibilidad del dataset Total Global
+    const totalDataset = chartEvolMensual.data.datasets.find(ds => ds.label === 'Total Global');
+    totalDataset.hidden = !totalDataset.hidden;
+    chartEvolMensual.update();
+    
+    // Actualizar estilo del botón
+    this.classList.toggle('bg-opacity-15');
+    this.classList.toggle('bg-opacity-50');
+  });
+  
+  document.getElementById('toggleEncargadosBtn').addEventListener('click', function() {
+    // Alternar visibilidad de todos los encargados
+    chartEvolMensual.data.datasets.forEach(dataset => {
+      if (dataset.label !== 'Total Global' && dataset.label !== 'Meta Mensual') {
+        dataset.hidden = !dataset.hidden;
+      }
+    });
+    chartEvolMensual.update();
+    
+    // Actualizar estilo del botón
+    this.classList.toggle('bg-opacity-15');
+    this.classList.toggle('bg-opacity-50');
+  });
+  
+  document.getElementById('toggleMetaBtn').addEventListener('click', function() {
+    // Alternar visibilidad de la meta mensual
+    const metaDataset = chartEvolMensual.data.datasets.find(ds => ds.label === 'Meta Mensual');
+    metaDataset.hidden = !metaDataset.hidden;
+    chartEvolMensual.update();
+    
+    // Actualizar estilo del botón
+    this.classList.toggle('bg-opacity-15');
+    this.classList.toggle('bg-opacity-50');
+  });
+</script>
+{% endblock %}
