@@ -10,15 +10,15 @@ import numpy as np
 
 
 
-controller_bp = Blueprint("controller_bp", __name__)
+controller_bp = Blueprint("controller_bp", __name__,url_prefix="/controller")
 
 
-# Por ejemplo, dentro de controller.py
+
 METAS_ENCARGADOS = {
-    "Diego Bravo": 200_000_000,
-    "Carolina López": 150_000_000,
-    "Pedro Rojas": 100_000_000,
-    "Ana Pérez": 180_000_000,
+    "Diego Bravo": 375_000_000,
+    "Carolina López": 375_000_000,
+    "Pedro Rojas": 375_000_000,
+    "Ana Pérez": 375_000_000,
 }
 
 
@@ -26,7 +26,59 @@ METAS_ENCARGADOS = {
 META_GLOBAL = 1_500_000_000
 
 
-
+def enriquecer_df_con_estado_detallado(df_edp, df_log):
+    """
+    Enriquece el DataFrame de EDPs con el estado detallado más reciente de cada EDP
+    extrayendo esta información del log de cambios.
+    
+    Args:
+        df_edp: DataFrame de EDPs
+        df_log: DataFrame del log de cambios
+    
+    Returns:
+        DataFrame de EDPs enriquecido con la columna 'Estado Detallado'
+    """
+    # Crear una copia para no modificar el original
+    df_enriquecido = df_edp.copy()
+    
+    # Asegurar que existe la columna 'Estado Detallado'
+    if 'Estado Detallado' not in df_enriquecido.columns:
+        df_enriquecido['Estado Detallado'] = ''
+    
+    # Filtrar los registros de log que son cambios de 'Estado Detallado'
+    cambios_estado = df_log[df_log['Campo'] == 'Estado Detallado'].copy()
+    
+    # Si no hay registros, devolver el DataFrame original
+    if cambios_estado.empty:
+        print("No se encontraron registros de 'Estado Detallado' en el log")
+        return df_enriquecido
+    
+    # Convertir la columna 'Fecha y Hora' a datetime para ordenar por fecha
+    cambios_estado['Fecha y Hora'] = pd.to_datetime(cambios_estado['Fecha y Hora'], errors='coerce')
+    
+    # Para cada EDP, obtener el último estado detallado
+    for num_edp in df_enriquecido['N° EDP'].unique():
+        # Filtrar cambios para este EDP
+        cambios_edp = cambios_estado[cambios_estado['N° EDP'] == str(num_edp)]
+        
+        if not cambios_edp.empty:
+            # Ordenar por fecha descendente y tomar el más reciente
+            ultimo_cambio = cambios_edp.sort_values('Fecha y Hora', ascending=False).iloc[0]
+            ultimo_estado = ultimo_cambio['Después']
+            
+            # Actualizar el estado en el DataFrame enriquecido
+            df_enriquecido.loc[df_enriquecido['N° EDP'] == num_edp, 'Estado Detallado'] = ultimo_estado
+    
+    # También identificar re-trabajos por campos relacionados como "Motivo No-aprobado"
+    motivos_rechazo = df_log[df_log['Campo'] == 'Motivo No-aprobado'].copy()
+    if not motivos_rechazo.empty:
+        for num_edp in motivos_rechazo['N° EDP'].unique():
+            # Si hay un motivo de rechazo pero no hay estado detallado, asumir "re-trabajo solicitado"
+            mask = (df_enriquecido['N° EDP'] == num_edp) & (df_enriquecido['Estado Detallado'] == '')
+            if mask.any():
+                df_enriquecido.loc[mask, 'Estado Detallado'] = 're-trabajo solicitado'
+    
+    return df_enriquecido
 
 def obtener_meses_ordenados(df):
     """
@@ -153,7 +205,7 @@ def calcular_dias_habiles(fecha_inicio, fecha_fin):
     dias = pd.bdate_range(start=fecha_inicio, end=fecha_fin)
     return max(len(dias) - 1, 0)
 
-@controller_bp.route("/controller")
+@controller_bp.route("/dashboard")
 def dashboard_controller():
     """
     Dashboard principal del controlador con KPIs, métricas financieras y análisis de EDPs.
@@ -161,7 +213,13 @@ def dashboard_controller():
     """
     # === CARGA Y PREPARACIÓN DE DATOS ===
     df_full = read_sheet("edp!A1:V")
-    df_full = calcular_dias_espera(df_full)
+    df_log = read_sheet("log!A1:G")
+    
+    # Enriquecer con datos del log
+    df_full = enriquecer_df_con_estado_detallado(df_full, df_log)
+    
+    # Ahora puedes usar la columna Estado Detallado con seguridad
+    total_retrabajos = len(df_full[df_full["Estado Detallado"] == "re-trabajo solicitado"])
     
     # Preparar opciones para filtros
     filter_options = {
@@ -324,7 +382,6 @@ def dashboard_controller():
     pagos_data["pagado_medio"] = sum(float(edp.get('Monto Aprobado', 0)) for edp in edps_pagados_conformados if 30 < edp.get('Días Espera', 0) <= 60)
     pagos_data["pagado_critico"] = sum(float(edp.get('Monto Aprobado', 0)) for edp in edps_pagados_conformados if edp.get('Días Espera', 0) > 60)
     
-    print("DEBUG: pagos_data:", pagos_data)  # Debugging line
     
     # Análisis de EDPs pendientes por cobrar
     edps_por_cobrar = [
@@ -641,7 +698,7 @@ def calcular_dso(df_datos, mes_anterior=None, df_mes_anterior=None):
 
 
  
-@controller_bp.route("/controller/api/export-all-csv")
+@controller_bp.route("api/export-all-csv")
 def export_all_csv():
     """
     Exportar todos los datos de EDPs a CSV sin aplicar filtros.
@@ -670,7 +727,7 @@ def export_all_csv():
         return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
 
 
-@controller_bp.route("/controller/api/get-edp/<edp_id>", methods=["GET"])
+@controller_bp.route("api/get-edp/<edp_id>", methods=["GET"])
 def get_edp_data(edp_id):
     """Obtener datos de un EDP específico para mostrar en modales"""
     try:
@@ -698,7 +755,7 @@ def get_edp_data(edp_id):
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-@controller_bp.route("/controller/api/edp-details/<n_edp>", methods=["GET"])
+@controller_bp.route("/api/edp-details/<n_edp>", methods=["GET"])
 def api_get_edp_details(n_edp):
     """API para obtener detalles de un EDP en formato JSON"""
     df = read_sheet("edp!A1:V")
@@ -718,7 +775,7 @@ def api_get_edp_details(n_edp):
     
     return jsonify(edp_data)
 
-@controller_bp.route("/controller/api/update-edp/<n_edp>", methods=["POST"])
+@controller_bp.route("api/update-edp/<n_edp>", methods=["POST"])
 def api_update_edp(n_edp):
     """API para actualizar un EDP desde el modal"""
     try:
@@ -774,7 +831,7 @@ def api_update_edp(n_edp):
         return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
 
 
-@controller_bp.route("/controller/id/<n_edp>", methods=["GET", "POST"])
+@controller_bp.route("id/<n_edp>", methods=["GET", "POST"])
 def detalle_edp(n_edp):
     """
     Vista detallada de un EDP, ahora usando el ID único como parámetro
@@ -881,7 +938,7 @@ def detalle_edp(n_edp):
 
 
 
-@controller_bp.route("/controller/encargado/<nombre>")
+@controller_bp.route("encargado/<nombre>")
 def vista_encargado(nombre):
     df_full = read_sheet("edp!A1:Q")
     df_encargado = df_full[df_full["Jefe de Proyecto"] == nombre]
@@ -1162,7 +1219,7 @@ def obtener_ultimos_meses(n_meses):
         print(traceback.format_exc())
         return []  # En caso de cualquier error, devolver lista vacía
 
-@controller_bp.route("/controller/encargado/<nombre>/<proyecto>")
+@controller_bp.route("encargado/<nombre>/<proyecto>")
 def vista_proyecto_de_encargado(nombre, proyecto):
     df_full = read_sheet("edp!A1:Q")
     # Convert numeric columns
@@ -1222,7 +1279,7 @@ def vista_proyecto_de_encargado(nombre, proyecto):
  
 # Ruta para visualizar el log de un EDP específico desde la hoja "log"
 
-@controller_bp.route("/controller/log/<n_edp>")
+@controller_bp.route("log/<n_edp>")
 def ver_log_edp(n_edp):
     """
     Muestra el historial completo de cambios de un EDP.
@@ -1243,7 +1300,7 @@ def ver_log_edp(n_edp):
     )
 
     
-@controller_bp.route("/controller/kanban")
+@controller_bp.route("kanban")
 def vista_kanban():
     """
     Vista del tablero Kanban con optimizaciones para grandes conjuntos de datos:
@@ -1416,7 +1473,7 @@ def vista_kanban():
         return redirect(url_for("controller_bp.dashboard_controller"))
 
 
-@controller_bp.route("/controller/kanban/update_estado", methods=["POST"])
+@controller_bp.route("kanban/update_estado", methods=["POST"])
 def actualizar_estado_kanban():
     data = request.get_json()
     edp_id = data.get("edp_id")
@@ -1446,7 +1503,6 @@ def actualizar_estado_kanban():
     # Mantener regla de negocio como respaldo
     elif nuevo_estado == "pagado" or nuevo_estado == "validado":
         cambios["Conformidad Enviada"] = "Sí"
-    print(f"Actualizando EDP {edp_id}: estado actual={edp_data.get('Estado')}, nuevo={nuevo_estado}")
 
     # Registrar todos los cambios
     usuario = session.get("usuario", "Kanban")
@@ -1476,7 +1532,7 @@ def actualizar_estado_kanban():
     
     # Hacer la actualización pasando el usuario para auditoría
     update_row(row_idx, cambios, "edp", usuario, force_update=True)
-  # Leer los datos actualizados después de la modificación
+    # Leer los datos actualizados después de la modificación
     df_actualizado = read_sheet("edp!A1:V")
     edp_actualizado = df_actualizado[df_actualizado["N° EDP"] == str(edp_id)].iloc[0].to_dict() 
     
@@ -1509,7 +1565,7 @@ def actualizar_estado_kanban():
     }), 200
 
 
-@controller_bp.route("/controller/kanban/update_estado_detallado", methods=["POST"])
+@controller_bp.route("kanban/update_estado_detallado", methods=["POST"])
 def actualizar_estado_detallado():
     """
     Procesa actualizaciones detalladas de estado con campos adicionales 
@@ -1571,8 +1627,7 @@ def actualizar_estado_detallado():
     usuario=usuario
 )
         
-        # Debugging
-        print(f"Actualizando EDP {edp_id} (detallado): {cambios}")
+       
         
         # Actualizar en Google Sheets
         update_row(row_idx, cambios, "edp", usuario, force_update=True)
@@ -1597,7 +1652,7 @@ def actualizar_estado_detallado():
             "success": False,
             "message": f"Error al actualizar: {str(e)}"
         }), 500
-@controller_bp.route("/controller/log/<n_edp>/csv")
+@controller_bp.route("log/<n_edp>/csv")
 def descargar_log_csv(n_edp):
     """
     Devuelve el historial de cambios de un EDP como archivo CSV descargable.
@@ -1617,7 +1672,7 @@ def descargar_log_csv(n_edp):
 
 
 
-@controller_bp.route("/controller/encargados")
+@controller_bp.route("encargados")
 def vista_global_encargados():
     """
     Vista global de todos los encargados con métricas comparativas.
@@ -1806,7 +1861,7 @@ def vista_global_encargados():
     
 # Añadir estas rutas al final del archivo
 
-@controller_bp.route("/controller/issues")
+@controller_bp.route("issues")
 def vista_issues():
     """
     Vista principal del gestor de incidencias.
@@ -1855,7 +1910,7 @@ def vista_issues():
     )
 
 
-@controller_bp.route("/controller/issues/nueva", methods=["GET", "POST"])
+@controller_bp.route("issues/nueva", methods=["GET", "POST"])
 def nueva_incidencia():
     """
     Formulario para crear una nueva incidencia.
@@ -1914,7 +1969,7 @@ def nueva_incidencia():
     )
 
 
-@controller_bp.route("/controller/issues/<int:issue_id>")
+@controller_bp.route("issues/<int:issue_id>")
 def detalle_incidencia(issue_id):
     """
     Vista detallada de una incidencia específica.
@@ -1977,7 +2032,7 @@ def detalle_incidencia(issue_id):
     )
 
 
-@controller_bp.route("/controller/issues/<int:issue_id>/actualizar", methods=["POST"])
+@controller_bp.route("issues/<int:issue_id>/actualizar", methods=["POST"])
 def actualizar_issue(issue_id):
     """
     Actualiza el estado o detalles de una incidencia.
@@ -2015,7 +2070,7 @@ def actualizar_issue(issue_id):
         return redirect(url_for("controller_bp.detalle_incidencia", issue_id=issue_id))
 
 
-@controller_bp.route("/controller/issues/<int:issue_id>/comentar", methods=["POST"])
+@controller_bp.route("issues/<int:issue_id>/comentar", methods=["POST"])
 def comentar_issue(issue_id):
     """
     Añade un comentario a una incidencia.
@@ -2041,7 +2096,7 @@ def comentar_issue(issue_id):
         return redirect(url_for("controller_bp.detalle_incidencia", issue_id=issue_id))
     
     
-@controller_bp.route("/controller/issues/analisis")
+@controller_bp.route("issues/analisis")
 def analisis_issues():
     """
     Vista de análisis de incidencias para mejora de procesos.
@@ -2178,7 +2233,7 @@ def get_edp_by_id(n_edp):
         print(traceback.format_exc())
         return None
     
-@controller_bp.route('/controller/detalle_edp/<string:n_edp>/json')
+@controller_bp.route('detalle_edp/<string:n_edp>/json')
 def detalle_edp_json(n_edp):
     """Devuelve los datos de un EDP en formato JSON para el modal de edición rápida"""
     edp = get_edp_by_unique_id(n_edp)
@@ -2228,7 +2283,7 @@ def get_edp_by_unique_id(unique_id):
         return pd.DataFrame()  # Devolver DataFrame vacío en caso de error
 
 
-@controller_bp.route('/controller/api/edp-details/<edp_id>')
+@controller_bp.route('api/edp-details/<edp_id>')
 def api_edp_details(edp_id):
     """API endpoint para obtener detalles de EDP por ID único"""
     # Usar la función que busca por ID único pero mantiene compatibilidad
@@ -2241,7 +2296,7 @@ def api_edp_details(edp_id):
     return jsonify(edp_data)
 
 
-@controller_bp.route('/controller/api/update-edp/<edp_id>', methods=['POST'])
+@controller_bp.route('api/update-edp/<edp_id>', methods=['POST'])
 def update_edp_api(edp_id):
     """Actualiza un EDP mediante API (usado por el modal)"""
     try:
@@ -2268,7 +2323,7 @@ def update_edp_api(edp_id):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 # Función de compatibilidad para rutas antiguas
-@controller_bp.route('/controller/api/edp-details-by-number/<string:edp_number>')
+@controller_bp.route('api/edp-details-by-number/<string:edp_number>')
 def api_edp_details_by_number(edp_number):
     """Compatibilidad con rutas antiguas que usan número de EDP"""
     # Buscar el primer EDP que coincida con ese número 
@@ -2281,3 +2336,265 @@ def api_edp_details_by_number(edp_number):
     # Redirigir a la ruta que usa ID único
     edp_id = matches.iloc[0]["ID"]
     return redirect(url_for('controller_bp.api_edp_details', edp_id=edp_id))
+
+
+@controller_bp.route("retrabajos")
+def analisis_retrabajos():
+    """Dashboard especializado en análisis de re-trabajos basado en el historial completo de logs"""
+    try:
+        # Obtener datos de EDP y LOG
+        df_edp = read_sheet("edp!A1:V")
+        df_log = read_sheet("log!A1:G")
+        
+        # Obtener parámetros de filtro
+        filtros = {
+            "mes": request.args.get("mes"),
+            "encargado": request.args.get("encargado"),
+            "cliente": request.args.get("cliente"),
+            "tipo_falla": request.args.get("tipo_falla"),
+            "fecha_desde": request.args.get("fecha_desde"),
+            "fecha_hasta": request.args.get("fecha_hasta")
+        }
+        
+        # ====== MODIFICACIÓN PRINCIPAL: ANÁLISIS BASADO EN LOG HISTÓRICO ======
+        # Filtrar todos los cambios a re-trabajo solicitado en el log
+        df_log_retrabajos = df_log[
+            (df_log["Campo"] == "Estado Detallado") & 
+            (df_log["Después"] == "re-trabajo solicitado")
+        ]
+        
+        # Convertir fechas para filtrado temporal
+        df_log_retrabajos = df_log_retrabajos.copy()
+
+        df_log_retrabajos.loc[:, "Fecha y Hora"] = pd.to_datetime(df_log_retrabajos["Fecha y Hora"])        
+        # Aplicar filtros temporales si existen
+        if filtros["fecha_desde"]:
+            fecha_desde = pd.to_datetime(filtros["fecha_desde"])
+            df_log_retrabajos = df_log_retrabajos[df_log_retrabajos["Fecha y Hora"] >= fecha_desde]
+        
+        if filtros["fecha_hasta"]:
+            fecha_hasta = pd.to_datetime(filtros["fecha_hasta"])
+            df_log_retrabajos = df_log_retrabajos[df_log_retrabajos["Fecha y Hora"] <= fecha_hasta]
+        
+        
+        if "Proyecto" in df_log_retrabajos.columns:
+            df_log_retrabajos = df_log_retrabajos.drop(columns=["Proyecto"], axis=1)
+        # Enriquecer log con información de EDP para poder filtrar por encargado y cliente
+        df_log_enriquecido = pd.merge(
+            df_log_retrabajos,
+            df_edp[["N° EDP", "Proyecto", "Jefe de Proyecto", "Cliente", "Mes", "Tipo_falla", "Motivo No-aprobado","Monto Aprobado"]],
+            on="N° EDP",
+            how="left"
+        )
+        
+   
+        # Aplicar filtros de EDP también al log
+        if filtros["encargado"]:
+            df_log_enriquecido = df_log_enriquecido[df_log_enriquecido["Jefe de Proyecto"] == filtros["encargado"]]
+        
+        if filtros["cliente"]:
+            df_log_enriquecido = df_log_enriquecido[df_log_enriquecido["Cliente"] == filtros["cliente"]]
+        
+        if filtros["mes"]:
+            df_log_enriquecido = df_log_enriquecido[df_log_enriquecido["Mes"] == filtros["mes"]]
+        
+        if filtros["tipo_falla"]:
+            df_log_enriquecido = df_log_enriquecido[df_log_enriquecido["Tipo_falla"] == filtros["tipo_falla"]]
+        
+        # Estadísticas basadas en el log
+        total_retrabajos_log = len(df_log_enriquecido)
+        edps_unicos_con_retrabajo = df_log_enriquecido["N° EDP"].nunique()
+        
+        # Buscar motivos y tipos asociados a cada ocurrencia de re-trabajo
+        retrabajos_completos = []
+        
+        for _, row in df_log_enriquecido.iterrows():
+            edp_id = row["N° EDP"]
+            fecha_cambio = row["Fecha y Hora"]
+            
+            # Buscar registros de motivo y tipo de falla cercanos (mismo día, mismo EDP)
+            fecha_inicio = fecha_cambio - pd.Timedelta(hours=1)
+            fecha_fin = fecha_cambio + pd.Timedelta(hours=1)
+            
+            # Buscar motivo cercano
+            motivo_cercano = df_log[
+                (df_log["N° EDP"] == edp_id) &
+                (df_log["Campo"] == "Motivo No-aprobado") &
+                (pd.to_datetime(df_log["Fecha y Hora"]) >= fecha_inicio) &
+                (pd.to_datetime(df_log["Fecha y Hora"]) <= fecha_fin)
+            ]
+            
+            # Buscar tipo de falla cercano
+            tipo_cercano = df_log[
+                (df_log["N° EDP"] == edp_id) &
+                (df_log["Campo"] == "Tipo_falla") &
+                (pd.to_datetime(df_log["Fecha y Hora"]) >= fecha_inicio) &
+                (pd.to_datetime(df_log["Fecha y Hora"]) <= fecha_fin)
+            ]
+            
+            # Crear registro enriquecido
+            registro = {
+                "N° EDP": edp_id,
+                "Proyecto": row.get("Proyecto", ""),
+                "Cliente": row.get("Cliente", ""),
+                "Jefe de Proyecto": row.get("Jefe de Proyecto", ""),
+                "Fecha": fecha_cambio,
+                "Estado Anterior": row["Antes"],
+                "Motivo No-aprobado": motivo_cercano["Después"].iloc[0] if not motivo_cercano.empty else row.get("Motivo No-aprobado", ""),
+                "Tipo_falla": tipo_cercano["Después"].iloc[0] if not tipo_cercano.empty else row.get("Tipo_falla", ""),
+                "Usuario": row["Usuario"]
+            }
+            
+            retrabajos_completos.append(registro)
+        
+        # Crear DataFrame para análisis detallado
+        df_analisis = pd.DataFrame(retrabajos_completos)
+        # ====== ANÁLISIS DETALLADO DE RETRABAJOS ======
+        # 1. Análisis por motivo de rechazo
+        if not df_analisis.empty and "Motivo No-aprobado" in df_analisis.columns:
+            motivos_rechazo = df_analisis["Motivo No-aprobado"].value_counts().to_dict()
+        else:
+            motivos_rechazo = {}
+        
+        # 2. Análisis por tipo de falla
+        if not df_analisis.empty and "Tipo_falla" in df_analisis.columns:
+            tipos_falla = df_analisis["Tipo_falla"].value_counts().to_dict()
+        else:
+            tipos_falla = {}
+        
+        # 3. Análisis por encargado
+        if not df_analisis.empty and "Jefe de Proyecto" in df_analisis.columns:
+            retrabajos_por_encargado = df_analisis["Jefe de Proyecto"].value_counts().to_dict()
+        else:
+            retrabajos_por_encargado = {}
+        
+        # 4. Análisis temporal
+        if not df_analisis.empty and "Fecha" in df_analisis.columns:
+            df_analisis["mes"] = df_analisis["Fecha"].dt.strftime("%Y-%m")
+            tendencia_por_mes = df_analisis["mes"].value_counts().sort_index().to_dict()
+        else:
+            tendencia_por_mes = {}
+            
+        # 5. Análisis por proyecto
+        if not df_analisis.empty and "Proyecto" in df_analisis.columns:
+            retrabajos_por_proyecto_raw = df_analisis["Proyecto"].value_counts().to_dict()
+            
+            # Estructura correcta para cada proyecto
+            proyectos_problematicos = {}
+            for proyecto, cantidad in retrabajos_por_proyecto_raw.items():
+                # Buscar el total de EDPs para este proyecto
+                total_edps_proyecto = len(df_edp[df_edp["Proyecto"] == proyecto]) if "Proyecto" in df_edp.columns else 0
+                
+                # Calcular el porcentaje
+                porcentaje = round((cantidad / total_edps_proyecto * 100), 1) if total_edps_proyecto > 0 else 0
+                
+                # Crear estructura de datos correcta
+                proyectos_problematicos[proyecto] = {
+                    "total": total_edps_proyecto,
+                    "retrabajos": cantidad,
+                    "porcentaje": porcentaje
+                }
+        else:
+            proyectos_problematicos = {}
+        # 6. Análisis por usuario solicitante
+        if not df_analisis.empty and "Usuario" in df_analisis.columns:
+            usuarios_solicitantes = df_analisis["Usuario"].value_counts().to_dict()
+        else:
+            usuarios_solicitantes = {}
+        
+        # Calcular estadísticas globales
+        total_edps = len(df_edp)
+        porcentaje_edps_afectados = round((edps_unicos_con_retrabajo / total_edps * 100), 1) if total_edps > 0 else 0
+        
+        # ====== CALCULAR PORCENTAJES ======
+        porcentaje_motivos = {}
+        for motivo, cantidad in motivos_rechazo.items():
+            porcentaje_motivos[motivo] = round((cantidad / total_retrabajos_log * 100), 1) if total_retrabajos_log > 0 else 0
+            
+        porcentaje_tipos = {}  
+        for tipo, cantidad in tipos_falla.items():
+            porcentaje_tipos[tipo] = round((cantidad / total_retrabajos_log * 100), 1) if total_retrabajos_log > 0 else 0
+            
+        # ====== PREPARAR DATOS PARA GRÁFICOS ======
+        chart_data = {
+            "motivos_labels": list(motivos_rechazo.keys()),
+            "motivos_data": list(motivos_rechazo.values()),
+            "tipos_labels": list(tipos_falla.keys()),
+            "tipos_data": list(tipos_falla.values()),
+            "tendencia_meses": list(tendencia_por_mes.keys()),
+            "tendencia_valores": list(tendencia_por_mes.values()),
+            "encargados": list(retrabajos_por_encargado.keys()),
+            "retrabajos_encargado": list(retrabajos_por_encargado.values()),
+            # Add missing 'eficiencia' key to chart_data
+            "eficiencia": []  # Initialize with empty list
+        }
+        # Calculate efficiency metrics if we have data for encargados
+        if chart_data["encargados"]:
+            
+            for encargado in chart_data["encargados"]:
+                # Find total EDPs for this encargado in the original dataset
+                total_edps_encargado = len(df_edp[df_edp["Jefe de Proyecto"] == encargado]) 
+                # Find retrabajos count for this encargado
+                retrabajos_count = retrabajos_por_encargado.get(encargado, 0)
+                
+                if total_edps_encargado > 0:
+                    # Efficiency = 100 - (retrabajos/total_edps * 100)
+                    # Higher is better - fewer retrabajos per EDP means higher efficiency
+                    eficiencia = 100 - (retrabajos_count / total_edps_encargado * 100)
+                    # Cap at 0 to avoid negative efficiency
+                    eficiencia = max(0, round(eficiencia, 1))
+                else:
+                    eficiencia = 0
+                    
+                chart_data["eficiencia"].append(eficiencia)
+        # ====== Calcular Impacto Financiero ====== 
+        
+  
+        
+        
+        # ====== PREPARAR DATOS PARA LA TABLA DE REGISTROS ======
+        registros = retrabajos_completos
+        registros = clean_nat_values(registros)
+        
+        # ====== OPCIONES PARA FILTROS ======
+        filter_options = {
+            "meses": sorted(df_edp["Mes"].dropna().unique()),
+            "encargados": sorted(df_edp["Jefe de Proyecto"].dropna().unique()),
+            "clientes": sorted(df_edp["Cliente"].dropna().unique()),
+            "tipos_falla": sorted(df_edp["Tipo_falla"].dropna().unique()) if "Tipo_falla" in df_edp.columns else []
+        }
+        
+        # ====== ESTADÍSTICAS RESUMEN ======
+        stats = {
+            "total_edps": total_edps,
+            "total_retrabajos": total_retrabajos_log,  # Total de ocurrencias de re-trabajo
+            "edps_con_retrabajo": edps_unicos_con_retrabajo,  # Número de EDPs únicos con re-trabajo
+            "porcentaje_edps_afectados": porcentaje_edps_afectados,
+            "porcentaje_retrabajos": porcentaje_edps_afectados,  # Añadir este campo para compatibilidad
+            "promedio_retrabajos_por_edp": round(total_retrabajos_log / edps_unicos_con_retrabajo, 2) if edps_unicos_con_retrabajo > 0 else 0
+        }
+        
+        # ====== RETORNAR TEMPLATE CON TODOS LOS DATOS ======
+        return render_template(
+            "controller/controller_retrabajos.html",
+            stats=stats,
+            motivos_rechazo=motivos_rechazo,
+            porcentaje_motivos=porcentaje_motivos,
+            tipos_falla=tipos_falla,
+            porcentaje_tipos=porcentaje_tipos,
+            retrabajos_por_encargado=retrabajos_por_encargado,
+            tendencia_por_mes=tendencia_por_mes,
+            impacto_financiero=0,  # Calcular si es necesario
+            proyectos_problematicos=proyectos_problematicos,
+            registros=registros,
+            chart_data=chart_data,
+            filtros=filtros,
+            filter_options=filter_options,
+            usuarios_solicitantes=usuarios_solicitantes
+        )
+    except Exception as e:
+        import traceback
+        print(f"Error en analisis_retrabajos: {str(e)}")
+        print(traceback.format_exc())
+        flash(f"Error al cargar el análisis de re-trabajos: {str(e)}", "error")
+        return redirect(url_for("controller_bp.dashboard_controller"))

@@ -556,3 +556,30 @@ function showNotification(message, type = 'info') {
     notification.classList.add('translate-y-20', 'opacity-0');
   }, 3000);
 }
+
+// Agregar a modal_edp_scripts.js
+function setupOtrosFields() {
+  // Para motivo no aprobado
+  const motivoSelect = document.getElementById('motivo_no_aprobado');
+  const motivoOtroWrap = document.getElementById('wrap_motivo_otro');
+  
+  if (motivoSelect && motivoOtroWrap) {
+    motivoSelect.addEventListener('change', function() {
+      motivoOtroWrap.classList.toggle('hidden', this.value !== 'otros');
+    });
+    // Inicializar estado
+    motivoOtroWrap.classList.toggle('hidden', motivoSelect.value !== 'otros');
+  }
+  
+  // Para tipo de falla
+  const fallaSelect = document.getElementById('tipo_falla');
+  const fallaOtroWrap = document.getElementById('wrap_falla_otro');
+  
+  if (fallaSelect && fallaOtroWrap) {
+    fallaSelect.addEventListener('change', function() {
+      fallaOtroWrap.classList.toggle('hidden', this.value !== 'otros');
+    });
+    // Inicializar estado
+    fallaOtroWrap.classList.toggle('hidden', fallaSelect.value !== 'otros');
+  }
+}

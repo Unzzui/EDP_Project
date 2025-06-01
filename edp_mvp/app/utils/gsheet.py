@@ -160,7 +160,26 @@ def read_sheet(range_name, apply_transformations=True):
     
     # Crear DataFrame (primero verificar que hay datos después de la cabecera)
     if len(values) > 1:
-        df = pd.DataFrame(values[1:], columns=values[0])
+        # Verificar duplicados en encabezados
+        headers = values[0]
+        duplicate_headers = [h for h in set(headers) if headers.count(h) > 1]
+        
+        if duplicate_headers:
+            print(f"Advertencia: Columnas duplicadas encontradas en {range_name}: {duplicate_headers}")
+            # Renombrar encabezados duplicados agregando un sufijo
+            unique_headers = []
+            counts = {}
+            for h in headers:
+                if h in counts:
+                    counts[h] += 1
+                    unique_headers.append(f"{h}_{counts[h]}")
+                else:
+                    counts[h] = 0
+                    unique_headers.append(h)
+            df = pd.DataFrame(values[1:], columns=unique_headers)
+        else:
+            df = pd.DataFrame(values[1:], columns=headers)
+        
         df = df.fillna("")
     else:
         # Solo hay encabezados, crear DataFrame vacío con esas columnas
@@ -181,7 +200,15 @@ def read_sheet(range_name, apply_transformations=True):
         # Transformaciones específicas para la hoja de incidencias
         for date_col in ["Timestamp", "Fecha última actualización", "Fecha resolución"]:
             if date_col in df.columns:
-                df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+                try:
+                    df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+                except ValueError as e:
+                    if "duplicate keys" in str(e):
+                        print(f"Advertencia: Valores duplicados en columna {date_col}, usando conversión segura")
+                        # Usar método alternativo fila por fila
+                        df[date_col] = df[date_col].apply(lambda x: pd.to_datetime(x, errors='coerce'))
+                    else:
+                        raise e
                 
         # Convertir ID a numérico si existe
         if 'ID' in df.columns:
@@ -198,14 +225,22 @@ def read_sheet(range_name, apply_transformations=True):
         if existentes:
             df[existentes] = df[existentes].apply(lambda s: s.str.strip().str.lower())
 
-        # Fechas
+        # Fechas - usar método seguro para evitar error de duplicate keys
         date_cols = [
             "Fecha Emisión", "Fecha Envío al Cliente", "Fecha Estimada de Pago",
             "Fecha Conformidad", "Fecha Registro", "Fecha y Hora"
         ]
         for col in date_cols:
             if col in df.columns:
-                df[col] = pd.to_datetime(df[col], errors="coerce")
+                try:
+                    df[col] = pd.to_datetime(df[col], errors="coerce")
+                except ValueError as e:
+                    if "duplicate keys" in str(e):
+                        print(f"Advertencia: Valores duplicados en columna {col}, usando conversión segura")
+                        # Usar método alternativo fila por fila
+                        df[col] = df[col].apply(lambda x: pd.to_datetime(x, errors='coerce'))
+                    else:
+                        raise e
 
         # Estado limpio
         if "Estado" in df.columns:
@@ -214,14 +249,21 @@ def read_sheet(range_name, apply_transformations=True):
         else:
             df["Validado"] = False
 
-        # Días Espera
+        # Días Espera - usar versión segura en caso de que haya problemas con las fechas
         if "Fecha Envío al Cliente" in df.columns:
-            fecha_envio = df["Fecha Envío al Cliente"]
-            fecha_ref = df["Fecha Conformidad"] if "Fecha Conformidad" in df.columns else hoy
-            df["Días Espera"] = (fecha_ref.fillna(hoy) - fecha_envio).dt.days
+            try:
+                fecha_envio = df["Fecha Envío al Cliente"]
+                fecha_ref = df["Fecha Conformidad"] if "Fecha Conformidad" in df.columns else hoy
+                df["Días Espera"] = (fecha_ref.fillna(hoy) - fecha_envio).dt.days
+            except Exception as e:
+                print(f"Error calculando Días Espera: {str(e)}")
+                df["Días Espera"] = "—"
         else:
             df["Días Espera"] = "—"
 
+        # Resto del código sin cambios...
+        # (El resto del código permanece igual)
+        
         # Días Hábiles
         if "Fecha Envío al Cliente" in df.columns:
             def calcular_dias_habiles(row):
@@ -247,7 +289,6 @@ def read_sheet(range_name, apply_transformations=True):
             df["Falta Conformidad"] = False
 
         # Crítico - Ahora verificamos que Días Espera sea numérico antes de comparar
-        # Crítico - Versión más robusta que verifica cada valor
         if "Días Espera" in df.columns:
             # Crear una máscara booleana para filas donde Días Espera es un número
             is_numeric = pd.to_numeric(df["Días Espera"], errors='coerce').notna()

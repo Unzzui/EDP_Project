@@ -101,7 +101,24 @@
           Encargados
         </a>
       </li>
-      <!-- Agregar después del enlace a "Encargados" en la lista de navegación principal -->
+      <li>
+        <a
+          href="{{ url_for('controller_bp.analisis_retrabajos') }}"
+          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 {% if 'retrabajos' in request.endpoint %} text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold {% else %} hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% endif %}">
+          <svg
+            class="w-4 h-4 mr-1.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Re-trabajos
+        </a>
+      </li>
       <li>
         <a
           href="{{ url_for('controller_bp.vista_issues') }}"
@@ -258,6 +275,11 @@
       href="{{ url_for('controller_bp.vista_global_encargados') }}"
       class="block py-2 px-4 rounded-md mb-1 {% if 'encargados' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
       Encargados
+    </a>
+    <a
+      href="{{ url_for('controller_bp.analisis_retrabajos') }}"
+      class="block py-2 px-4 rounded-md {% if 'retrabajos' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
+      Re-trabajos
     </a>
     <a
       href="{{ url_for('controller_bp.vista_issues') }}"

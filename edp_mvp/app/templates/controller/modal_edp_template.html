@@ -387,13 +387,46 @@
                   class="form-select"
                   data-field="Motivo No-aprobado">
                   <option value="">Seleccionar</option>
-                  <option value="falta documentación">
-                    Falta documentación
+                  <option value="documentacion_incompleta">
+                    Documentación incompleta o incorrecta
                   </option>
-                  <option value="error de monto">Error de monto</option>
-                  <option value="alcance no claro">Alcance no claro</option>
-                  <option value="otros">Otros</option>
+                  <option value="inconsistencia_montos">
+                    Inconsistencia en montos o valores
+                  </option>
+                  <option value="fuera_alcance">
+                    Alcance fuera de contrato
+                  </option>
+                  <option value="requisitos_tecnicos">
+                    No cumple requisitos técnicos
+                  </option>
+                  <option value="falta_aprobacion">
+                    Falta de aprobación previa
+                  </option>
+                  <option value="error_formato">
+                    Error en formato o presentación
+                  </option>
+                  <option value="incumplimiento_plazo">
+                    Incumplimiento de plazo
+                  </option>
+                  <option value="objeciones_cliente">
+                    Objeciones del cliente
+                  </option>
+                  <option value="cambio_requerimientos">
+                    Cambio en requerimientos
+                  </option>
+                  <option value="otros">Otro (especificar)</option>
                 </select>
+
+                <!-- Campo adicional para especificar "otros" motivos -->
+                <div id="wrap_motivo_otro" class="form-group mt-2 hidden">
+                  <input
+                    type="text"
+                    name="motivo_otro_detalle"
+                    id="motivo_otro_detalle"
+                    class="form-input"
+                    placeholder="Especifique el motivo"
+                    data-field="Motivo Detalle" />
+                </div>
               </div>
 
               <!-- Tipo_falla (inicialmente oculto) -->
@@ -408,11 +441,52 @@
                   class="form-select"
                   data-field="Tipo_falla">
                   <option value="">Seleccionar</option>
-                  <option value="retraso doc">Retraso doc</option>
-                  <option value="error interno">Error interno</option>
-                  <option value="error cliente">Error cliente</option>
-                  <option value="otros">Otros</option>
+                  <optgroup label="Errores de Proceso">
+                    <option value="error_proceso_interno">
+                      Error de proceso interno
+                    </option>
+                    <option value="error_planificacion">
+                      Error en planificación
+                    </option>
+                    <option value="falla_control_calidad">
+                      Falla en control de calidad
+                    </option>
+                  </optgroup>
+                  <optgroup label="Errores de Comunicación">
+                    <option value="error_comunicacion">
+                      Error de comunicación
+                    </option>
+                    <option value="coord_cliente">
+                      Problema de coordinación con cliente
+                    </option>
+                    <option value="coord_interna">
+                      Problema de coordinación interna
+                    </option>
+                  </optgroup>
+                  <optgroup label="Errores Técnicos">
+                    <option value="error_tecnico">
+                      Error técnico en entregable
+                    </option>
+                    <option value="error_requisitos">
+                      Error de interpretación de requisitos
+                    </option>
+                    <option value="retraso_documental">
+                      Retraso en gestión documental
+                    </option>
+                  </optgroup>
+                  <option value="otros">Otro (especificar)</option>
                 </select>
+
+                <!-- Campo adicional para especificar "otros" tipos -->
+                <div id="wrap_falla_otro" class="form-group mt-2 hidden">
+                  <input
+                    type="text"
+                    name="falla_otro_detalle"
+                    id="falla_otro_detalle"
+                    class="form-input"
+                    placeholder="Especifique el tipo de falla"
+                    data-field="Falla Detalle" />
+                </div>
               </div>
             </div>
           </div>

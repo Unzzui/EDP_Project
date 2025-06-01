@@ -1,0 +1,344 @@
+/* Reset & Base Styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+
+}
+
+
+
+
+
+.light {
+  --background: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --bg-hover: #f8fafc;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #64748b;
+  
+  --border-color: #e2e8f0;
+  --border-color-subtle: #f1f5f9;
+  
+  --accent-blue: #2563eb;
+  --accent-green: #059669;
+  --accent-amber: #d97706;
+  --accent-red: #dc2626;
+  --accent-purple: #7c3aed;
+  --accent-aqua: #14b8a6;
+  --accent-pink: #ec4899;
+  --accent-yellow: #facc15;
+  --accent-gray: #6b7280;
+  
+  --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.1);
+  --info: #3b82f6;
+  --info-bg: rgba(59, 130, 246, 0.1);
+  
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+/* Class for forcing dark mode */
+.dark {
+  --background: #0f172a;
+  --bg-card: #0f172a;
+  --bg-subtle: #334155;
+  --bg-hover: #0f172a;
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  
+  --border-color: #334155;
+  --border-color-subtle: #0f172a;
+  
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-red: #f43f5e;
+  --accent-purple: #8b5cf6;
+  
+  --success: #34d399;
+  --success-bg: rgba(16, 185, 129, 0.2);
+  --warning: #fbbf24;
+  --warning-bg: rgba(245, 158, 11, 0.2);
+  --danger: #f87171;
+  --danger-bg: rgba(239, 68, 68, 0.2);
+  --info: #60a5fa;
+  --info-bg: rgba(59, 130, 246, 0.2);
+  
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Component Styles */
+
+/* Cards */
+
+.card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+  transition: var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Status Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-success {
+  background-color: var(--success-bg);
+  color: var(--success);
+}
+
+.badge-warning {
+  background-color: var(--warning-bg);
+  color: var(--warning);
+}
+
+.badge-danger {
+  background-color: var(--danger-bg);
+  color: var(--danger);
+}
+
+.badge-info {
+  background-color: var(--info-bg);
+  color: var(--info);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: var(--transition-base);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #5B8BFF 0%, #4A6FD3 100%);
+  color: white;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(91, 139, 255, 0.4);
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--accent-blue-light) 0%, var(--accent-blue) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(91, 139, 255, 0.6);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
+  box-shadow: 0 2px 6px rgba(14, 203, 140, 0.4);
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, var(--accent-green-light) 0%, var(--accent-green) 100%);
+  box-shadow: 0 4px 12px rgba(14, 203, 140, 0.6);
+}
+
+.btn-secondary {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-hover);
+}
+
+.btn-success {
+  background-color: var(--success);
+  color: white;
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  color: white;
+}
+
+/* Form Controls */
+.form-control {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  color: var(--text-primary);
+  transition: var(--transition-base);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Tables */
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color-subtle);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: var(--bg-hover);
+}
+
+/* Charts */
+.chart-container {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  overflow: hidden;
+}
+
+/* Progress bar */
+.progress-bar {
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+
+/* Utility Classes */
+.shadow-hover {
+  transition: var(--transition-base);
+}
+
+.shadow-hover:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.animate-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+
+/* Agregar después de las variables de tema */
+
+/* Estabilización de elementos de formulario */
+select {
+  /* Aplicar padding consistente en ambos modos */
+  padding-right: 2.5rem !important;
+  /* Estilos consistentes para evitar saltos */
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
+/* Flecha personalizada para modo claro */
+
+/* Add this at the end of your file */
+
+/* Form inputs dark mode fix */
+.dark input[type="date"],
+.dark input[type="datetime-local"],
+.dark input[type="month"],
+.dark input[type="time"],
+.dark select {
+  color-scheme: dark;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+.dark input[type="month"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* Select arrow in dark mode */
+.dark select {
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}

@@ -16,12 +16,12 @@ def create_app():
     from app.auth.routes import auth_bp
     from app.edp.routes import edp_bp
     from app.dashboard.controller import controller_bp
-    from app.dashboard.gerente import gerente_bp
+    from app.dashboard.manager import manager_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(edp_bp, url_prefix="/edp")
     app.register_blueprint(controller_bp)
-    app.register_blueprint(gerente_bp)
+    app.register_blueprint(manager_bp)
 
     return app
 
