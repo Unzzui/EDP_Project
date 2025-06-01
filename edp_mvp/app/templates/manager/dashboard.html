@@ -4,8 +4,12 @@
 
 {% block content %}
 
+ {% include 'manager/modal-proyectos-criticos.html' %}
 <div class="container mx-auto px-4 py-6 space-y-6">
-<div id="charts-data" class="hidden">{{ charts_data | safe }}</div> <!-- Story-telling headline -->
+ 
+<script id="charts-data" type="application/json">
+{{ charts_json|safe }}
+</script>
   <div class="bg-[color:var(--bg-subtle)] border-l-4 border-[color:var(--accent-blue)] p-4 rounded-lg shadow-lg relative mb-6">
     <h2 class="font-bold text-lg">
       {% if kpis.vs_meta_ingresos > 0 %}
@@ -21,81 +25,259 @@
   </div>
 
   <!-- Header con KPIs principales y filtros -->
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+<!-- Header con título y toggle de filtros -->
+  <div class="flex justify-between items-center">
     <div>
       <h1 class="text-3xl font-bold text-[color:var(--text-primary)]">Dashboard Ejecutivo</h1>
       <p class="text-[color:var(--text-secondary)]">Vista panorámica del rendimiento empresarial</p>
     </div>
     
-    <!-- Filtros mejorados -->
-    <div class="flex flex-wrap gap-2">
-      <form class="flex flex-wrap gap-2" method="get" id="dashboard-filters">
-        <!-- Rango de fecha personalizado -->
-        <div class="flex items-center gap-1">
-          <input type="date" name="fecha_inicio" value="{{ fecha_inicio|default('') }}" 
-            class="bg-[color:var(--bg-card)] text-[color:var(--text-primary)] border border-[color:var(--border-color)] rounded-lg px-2 py-2 text-sm w-32 dark:color-scheme-dark">
-          <span class="text-[color:var(--text-primary)]">a</span>
-          <input type="date" name="fecha_fin" value="{{ fecha_fin|default('') }}" 
-            class="bg-[color:var(--bg-card)] text-[color:var(--text-primary)] border border-[color:var(--border-color)] rounded-lg px-2 py-2 text-sm w-32 dark:color-scheme-dark">
-        </div>
-        
-        <!-- Selector de periodo predefinido -->
-        <select name="periodo" class="bg-[color:var(--bg-card)] text-[color:var(--text-primary)] border border-[color:var(--border-color)] rounded-lg px-3 py-2 text-sm">
-          <option value="all_dates" {% if periodo == 'all_dates' %}selected{% endif %}>Todos</option>
-          <option value="mes" {% if periodo == 'mes' %}selected{% endif %}>Este Mes</option>
-          <option value="trimestre" {% if periodo == 'trimestre' %}selected{% endif %}>Trimestre</option>
-          <option value="año" {% if periodo == 'año' %}selected{% endif %}>Año</option>
-        </select>
-        
-        <!-- Selector de gestor -->
-        <select name="departamento" class="bg-[color:var(--bg-card)] text-[color:var(--text-primary)] border border-[color:var(--border-color)] rounded-lg px-3 py-2 text-sm">
-          <option value="todos" {% if departamento == 'todos' %}selected{% endif %}>Todos los gestores</option>
-          {% for gestor in gestores %}
-          <option value="{{ gestor.nombre }}" {% if departamento == gestor.nombre %}selected{% endif %}>{{ gestor.nombre }}</option>
-          {% endfor %}
-        </select>
-        
-        <!-- Selector de cliente (nuevo) -->
-        <select name="cliente" class="bg-[color:var(--bg-card)] text-[color:var(--text-primary)] border border-[color:var(--border-color)] rounded-lg px-3 py-2 text-sm">
-          <option value="todos" {% if cliente == 'todos' %}selected{% endif %}>Todos los clientes</option>
-          {% for cliente in clientes %}
-          <option value="{{ cliente.nombre }}" {% if cliente_seleccionado == cliente.nombre %}selected{% endif %}>{{ cliente.nombre }}</option>
-          {% endfor %}
-        </select>
-        
-        <!-- Selector de estado (nuevo) -->
-        <select name="estado" class="bg-[color:var(--bg-card)] text-[color:var(--text-primary)] border border-[color:var(--border-color)] rounded-lg px-3 py-2 text-sm">
-          <option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos los estados</option>
-          <option value="a_tiempo" {% if estado == 'a_tiempo' %}selected{% endif %}>A tiempo</option>
-          <option value="en_riesgo" {% if estado == 'en_riesgo' %}selected{% endif %}>En riesgo</option>
-          <option value="retrasado" {% if estado == 'retrasado' %}selected{% endif %}>Retrasado</option>
-        </select>
-        
-        <button type="submit" class="bg-[color:var(--accent-blue)] text-white rounded-lg px-3 py-2 text-sm hover:bg-blue-600 transition">
-          Aplicar Filtros
-        </button>
-        
-        <button type="button" class="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] rounded-lg px-3 py-2 text-sm border border-[color:var(--border-color)] transition" onclick="resetFilters()">
-          Restablecer
-        </button>
-      </form>
+    <!-- Toggle de filtros prominente -->
+    <div class="flex items-center space-x-3">
+      <!-- Indicador de filtros activos -->
+      {% set filtros_activos = [] %}
+      {% if fecha_inicio or fecha_fin %}{% set _ = filtros_activos.append('Fechas') %}{% endif %}
+      {% if departamento != 'todos' %}{% set _ = filtros_activos.append('Gestor') %}{% endif %}
+      {% if cliente != 'todos' %}{% set _ = filtros_activos.append('Cliente') %}{% endif %}
+      {% if estado != 'todos' %}{% set _ = filtros_activos.append('Estado') %}{% endif %}
+      {% if vista != 'general' %}{% set _ = filtros_activos.append('Vista') %}{% endif %}
       
-      <!-- Botón de exportación -->
-      <button class="flex items-center gap-2 bg-[color:var(--bg-card)] text-[color:var(--text-primary)] border border-[color:var(--border-color)] rounded-lg px-3 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition" id="export-dashboard">
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      {% if filtros_activos %}
+      <div class="flex items-center space-x-1">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+          {{ filtros_activos|length }} filtro{{ 's' if filtros_activos|length > 1 else '' }}
+        </span>
+        <a href="{{ url_for('manager_bp.dashboard') }}" class="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
+          Limpiar
+        </a>
+      </div>
+      {% endif %}
+      
+      <!-- Botón toggle de filtros -->
+      <button id="toggle-filters-btn" class="flex items-center px-4 py-2 bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white rounded-lg transition-colors shadow-md">
+        <svg id="filter-icon" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
         </svg>
-        Exportar
+        <span id="filter-text">Mostrar filtros</span>
+        <svg id="filter-chevron" class="w-4 h-4 ml-1 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+        </svg>
       </button>
     </div>
   </div>
+
+  <!-- Sección de filtros - OCULTA POR DEFECTO -->
+  <div id="filters-section" class="hidden">
+    <!-- Animación suave al mostrar -->
+    <div class="section-title-modern mb-5">
+      <h2 class="text-xl font-semibold">🔍 Filtros de Búsqueda</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <form method="GET" class="bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-5 mb-6 shadow-sm">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <!-- Rango de fechas mejorado -->
+        <div class="form-group md:col-span-2">
+          <label class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Rango de fechas</label>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="relative">
+              <input type="date" name="fecha_inicio" id="fecha_inicio" 
+                     class="form-input w-full pl-9" 
+                     value="{{ fecha_inicio or '' }}"
+                     placeholder="Fecha inicio">
+              <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)] pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+            <div class="relative">
+              <input type="date" name="fecha_fin" id="fecha_fin" 
+                     class="form-input w-full pl-9" 
+                     value="{{ fecha_fin or '' }}"
+                     placeholder="Fecha fin">
+              <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)] pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <!-- Botones de rango rápido -->
+          <div class="mt-2 flex gap-1 flex-wrap">
+            <button type="submit" name="periodo_rapido" value="7" class="quick-date-btn text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] hover:bg-[color:var(--accent-blue)] hover:text-white transition-colors {{ 'bg-[color:var(--accent-blue)] text-white' if periodo_rapido == '7' else '' }}">
+              7 días
+            </button>
+            <button type="submit" name="periodo_rapido" value="30" class="quick-date-btn text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] hover:bg-[color:var(--accent-blue)] hover:text-white transition-colors {{ 'bg-[color:var(--accent-blue)] text-white' if periodo_rapido == '30' else '' }}">
+              30 días
+            </button>
+            <button type="submit" name="periodo_rapido" value="90" class="quick-date-btn text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] hover:bg-[color:var(--accent-blue)] hover:text-white transition-colors {{ 'bg-[color:var(--accent-blue)] text-white' if periodo_rapido == '90' else '' }}">
+              90 días
+            </button>
+            <button type="submit" name="periodo_rapido" value="365" class="quick-date-btn text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] hover:bg-[color:var(--accent-blue)] hover:text-white transition-colors {{ 'bg-[color:var(--accent-blue)] text-white' if periodo_rapido == '365' else '' }}">
+              1 año
+            </button>
+          </div>
+        </div>
+
+        <!-- Departamento/Jefe de Proyecto -->
+        <div class="form-group">
+          <label for="departamento" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Jefe de Proyecto</label>
+          <div class="relative">
+            <select name="departamento" id="departamento" class="form-select w-full pl-9">
+              <option value="todos" {% if departamento == 'todos' %}selected{% endif %}>Todos</option>
+              {% for j in jefes_proyecto %}
+                <option value="{{ j }}" {% if departamento == j %}selected{% endif %}>{{ j }}</option>
+              {% endfor %}
+            </select>
+            <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)] pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cliente -->
+        <div class="form-group">
+          <label for="cliente" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Cliente</label>
+          <div class="relative">
+            <select name="cliente" id="cliente" class="form-select w-full pl-9">
+              <option value="todos" {% if cliente == 'todos' %}selected{% endif %}>Todos</option>
+              {% for c in clientes %}
+                <option value="{{ c }}" {% if cliente == c %}selected{% endif %}>{{ c }}</option>
+              {% endfor %}
+            </select>
+            <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)] pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1.581.814l-4.419-3.996-4.419 3.996A1 1 0 014 16V4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Segunda fila -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+        <!-- Estado -->
+        <div class="form-group">
+          <label for="estado" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Estado</label>
+          <div class="relative">
+            <select name="estado" id="estado" class="form-select w-full pl-9">
+              <option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos</option>
+              <option value="pendientes" {% if estado == 'pendientes' %}selected{% endif %}>Pendientes</option>
+              {% for est in ["revisión", "enviado", "pagado", "validado"] %}
+                <option value="{{ est }}" {% if estado == est %}selected{% endif %}>{{ est|title }}</option>
+              {% endfor %}
+            </select>
+            <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)] pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vista (filtro rápido) -->
+        <div class="form-group">
+          <label for="vista" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Vista</label>
+          <div class="relative">
+            <select name="vista" id="vista" class="form-select w-full pl-9">
+              <option value="general" {% if vista == 'general' %}selected{% endif %}>General</option>
+              <option value="criticos" {% if vista == 'criticos' %}selected{% endif %}>Solo críticos</option>
+              <option value="completados" {% if vista == 'completados' %}selected{% endif %}>Completados</option>
+              <option value="alto_valor" {% if vista == 'alto_valor' %}selected{% endif %}>Alto valor (>$50M)</option>
+            </select>
+            <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)] pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Espacios para mantener el layout -->
+        <div class="form-group"></div>
+        <div class="form-group"></div>
+      </div>
+
+      <!-- Filtros avanzados (desplegable opcional) -->
+      <div id="advanced-filters" class="hidden mt-4 pt-4 border-t border-[color:var(--border-color-subtle)]">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <!-- Rango de montos -->
+          <div class="form-group">
+            <label for="monto_min" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Monto mínimo (millones)</label>
+            <div class="relative">
+              <input type="number" name="monto_min" id="monto_min" placeholder="0" class="form-input w-full pl-9" value="{{ monto_min or '' }}">
+              <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="monto_max" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Monto máximo (millones)</label>
+            <div class="relative">
+              <input type="number" name="monto_max" id="monto_max" placeholder="1000" class="form-input w-full pl-9" value="{{ monto_max or '' }}">
+              <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Días de espera -->
+          <div class="form-group">
+            <label for="dias_min" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Días mínimos</label>
+            <div class="relative">
+              <input type="number" name="dias_min" id="dias_min" placeholder="0" class="form-input w-full pl-9" value="{{ dias_min or '' }}">
+              <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="mt-4 flex items-center justify-between">
+        <button type="button" id="toggle-advanced" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] transition-colors flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+          </svg>
+          <span id="advanced-text">Filtros avanzados</span>
+        </button>
+
+        <div class="flex items-center space-x-3">
+          <a href="{{ url_for('manager_bp.dashboard') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] transition-colors">
+            Limpiar filtros
+          </a>
+          <button type="submit" class="btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Aplicar filtros
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
   
   <!-- KPIs Principales - Primera fila con contexto aumentado -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
     <!-- KPI: Ingresos totales con contexto y más detalles -->
     <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-5 text-white shadow-lg relative">
       <div class="absolute top-2 right-2">
-        <button class="text-white/80 hover:text-white" aria-label="Ver detalles de ingresos" title="Ver detalles" data-tooltip="Incluye todos los ingresos facturados en el período seleccionado">
+    <button class="text-[#f5f5f7]/80 hover:text-[#f5f5f7]" aria-label="Ver detalles de ingresos" title="Ver detalles">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
           </svg>
@@ -103,8 +285,8 @@
       </div>
       <div class="flex justify-between items-start">
         <div>
-          <p class="text-emerald-100 text-sm font-medium">Ingresos Totales</p>
-          <p class="text-3xl font-bold mt-1">${{ kpis.ingresos_totales }}M</p>
+      <p style="color:#f5f5f7" class="text-sm font-medium">Ingresos Totales</p>
+      <p style="color:#f5f5f7" class="text-3xl font-bold mt-1">${{ kpis.ingresos_totales }}M</p>
           <div class="flex items-center mt-1">
             <svg class="w-4 h-4 mr-1 {% if kpis.crecimiento_ingresos < 0 %}rotate-180 text-red-300{% else %}text-emerald-200{% endif %}" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
@@ -134,190 +316,252 @@
       </div>
     </div>
     
-    <!-- KPI: Proyectos Activos con contexto y más detalles -->
-    <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-5 text-white shadow-lg relative">
-      <div class="absolute top-2 right-2">
-        <button class="text-white/80 hover:text-white" aria-label="Ver detalles de proyectos" title="Ver detalles" data-tooltip="Proyectos con actividad en los últimos 30 días">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="flex justify-between items-start">
-        <div>
-          <p class="text-blue-100 text-sm font-medium">Proyectos Activos</p>
-          <p class="text-3xl font-bold mt-1">{{ kpis.proyectos_activos }}</p>
-          <div class="flex items-center mt-1">
-            <span class="text-sm">{{ kpis.proyectos_on_time }}% a tiempo</span>
-          </div>
-          
-          <!-- Desglose de proyectos - Contexto añadido -->
-          <div class="mt-3 space-y-1.5">
-            <div class="flex justify-between text-xs">
-              <span class="text-blue-100">A tiempo:</span>
-              <span class="font-medium">{{ kpis.num_proyectos_on_time }}</span>
-            </div>
-            <div class="flex justify-between text-xs">
-              <span class="text-blue-100">En riesgo:</span>
-              <span class="font-medium">{{ kpis.num_proyectos_riesgo }}</span>
-            </div>
-            <div class="flex justify-between text-xs">
-              <span class="text-blue-100">Retrasados:</span>
-              <span class="font-medium">{{ kpis.num_proyectos_retrasados }}</span>
-            </div>
-          </div>
-        </div>
-        <span class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
-          </svg>
+    <!-- KPI: Monto Pendiente - AHORA DESTACADO CON GRADIENTE AZUL -->
+<div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-5 text-white shadow-lg relative">
+  <div class="absolute top-2 right-2">
+    <button class="text-white/80 hover:text-white" aria-label="Ver detalles de cobranza" title="Ver análisis de cobranza">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+      </svg>
+    </button>
+  </div>
+  <div class="flex justify-between items-start">
+    <div>
+      <p style="color:#f5f5f7" class="text-sm font-medium">Monto Pendiente</p>
+      <p style="color:#f5f5f7" class="text-3xl font-bold mt-1">${{ kpis.monto_pendiente }}M</p>
+      <div class="flex items-center mt-1">
+        <span class="text-sm {% if kpis.tendencia_pendiente > 0 %}text-red-300{% else %}text-blue-200{% endif %}">
+          {% if kpis.tendencia_pendiente > 0 %}+{% endif %}{{ kpis.tendencia_pendiente }}% vs mes anterior
         </span>
       </div>
-    </div>
-    
-    <!-- KPI: Calidad - Con definición clara y contexto -->
-    <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-5 text-white shadow-lg relative">
-      <div class="absolute top-2 right-2">
-        <button class="text-white/80 hover:text-white" aria-label="Ver definición de calidad" title="Ver definición" data-tooltip="Índice que combina conformidad de entregables (40%), satisfacción del cliente (40%) y auditorías internas (20%)">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-          </svg>
-        </button>
+      
+      <!-- DSO y benchmarks -->
+      <div class="mt-3 pt-2 border-t border-white/20">
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-blue-100">DSO: {{ kpis.dso }} días</span>
+          <span class="text-xs {% if kpis.dso > 90 %}text-red-300{% else %}text-blue-100{% endif %}">
+            (Meta: 90 días)
+          </span>
+        </div>
+        <div class="w-full bg-blue-700/40 rounded-full h-1.5 mt-1">
+          <div class="bg-white h-1.5 rounded-full" style="width: {% if kpis.dso < 90 %}{{ kpis.dso / 0.9 }}{% else %}100{% endif %}%"></div>
+        </div>
       </div>
-      <div class="flex justify-between items-start">
-        <div>
-          <p class="text-purple-100 text-sm font-medium">Índice de Calidad</p>
-          <p class="text-3xl font-bold mt-1">{{ kpis.indice_calidad }}%</p>
-          <div class="flex items-center mt-1">
-            <svg class="w-4 h-4 mr-1 {% if kpis.retrabajos_reducidos < 0 %}rotate-180 text-red-300{% else %}text-purple-200{% endif %}" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+    </div>
+    <span class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path>
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path>
+      </svg>
+    </span>
+  </div>
+</div>
+
+<!-- KPI: Proyectos y Montos Críticos - COMBINADO -->
+<div class="bg-gradient-to-br from-red-700 to-red-800 rounded-xl p-5 text-white shadow-lg relative">
+  <div class="absolute top-2 right-2">
+    <button class="text-white/80 hover:text-white" title="Proyectos y montos con riesgo elevado">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+      </svg>
+    </button>
+  </div>
+  
+  <div class="flex justify-between items-start">
+    <div>
+      <!-- Título combinado -->
+      <div class="flex items-center space-x-2">
+        <p style="color:#f5f5f7" class="text-sm font-medium">Proyectos Críticos</p>
+        <span class="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded">
+          {{ kpis.q_proyectos_criticos }} proyectos
+        </span>
+      </div>
+      
+      <!-- Valor crítico -->
+      <p style="color:#f5f5f7" class="text-3xl font-bold mt-1">${{ kpis.monto_pendiente_critico }}M</p>
+      <div class="flex items-center mt-1">
+        <span class="text-sm">{{ kpis.pct_critico }}% del total pendiente</span>
+      </div>
+      
+      <!-- Costo financiero y acciones -->
+      <div class="mt-3 pt-2 border-t border-white/20">
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-xs text-amber-100">Costo financiero:</span>
+          <span class="text-xs font-medium">${{ kpis.costo_financiero }}M</span>
+        </div>
+        
+        <!-- Botones de acción (ambos incluidos) -->
+        <div class="grid grid-cols-2 gap-2 mt-2">
+          <button id="show-critical-projects-btn" class="text-xs py-1.5 px-2 bg-white/20 hover:bg-white/30 text-white rounded flex items-center justify-center font-medium transition-colors">
+            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+              <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
             </svg>
-            <span class="text-sm">+{{ kpis.retrabajos_reducidos }}% mejora</span>
-          </div>
-          
-          <!-- Componentes de calidad -->
-          <div class="mt-3 space-y-1.5">
-            <div class="flex justify-between text-xs">
-              <span class="text-purple-100">Conformidad:</span>
-              <span class="font-medium">{{ kpis.tasa_conformidad }}%</span>
-            </div>
-            <div class="flex justify-between text-xs">
-              <span class="text-purple-100">Satisfacción:</span>
-              <span class="font-medium">{{ kpis.satisfaccion_cliente }}%</span>
-            </div>
-            <div class="flex justify-between text-xs">
-              <span class="text-purple-100">Auditorías:</span>
-              <span class="font-medium">{{ kpis.auditorias_aprobadas }}%</span>
-            </div>
-          </div>
+            Ver detalle
+          </button>
+          <button class="text-xs py-1.5 px-2 bg-white/20 hover:bg-white/30 text-white rounded flex items-center justify-center font-medium transition-colors">
+            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+            </svg>
+            Plan de acción
+          </button>
         </div>
-        <span class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-          </svg>
-        </span>
       </div>
     </div>
     
-    <!-- KPI: Satisfacción del Cliente - Con contexto y benchmarks -->
-    <div class="bg-gradient-to-br from-gray-600 to-gray-700 rounded-xl p-5 text-white shadow-lg relative">
-      <div class="absolute top-2 right-2">
-        <button class="text-white/80 hover:text-white" aria-label="Ver detalles de satisfacción" title="Ver detalles" data-tooltip="Promedio ponderado de encuestas de satisfacción post-proyecto">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="flex justify-between items-start">
-        <div>
-          <p class="text-amber-100 text-sm font-medium">Satisfacción Cliente</p>
-          <p class="text-3xl font-bold mt-1">{{ kpis.satisfaccion_cliente }}%</p>
-          <div class="flex items-center mt-1">
-            <span class="text-sm">{{kpis.roi_promedio}}% ROI promedio</span>
-          </div>
-          
-          <!-- Comparativa con industria - Contexto de benchmark -->
-          <div class="mt-3 space-y-1.5">
-            <div class="flex justify-between text-xs">
-              <span class="text-amber-100">Benchmark industria:</span>
-              <span class="font-medium">85%</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-xs text-amber-100">NPS:</span>
-              <span class="text-xs font-medium">
-                <span class="px-1.5 py-0.5 bg-amber-700 text-amber-100 rounded">{{ kpis.nps_score }}</span>
-                {% if kpis.nps_score > 50 %}Excelente{% elif kpis.nps_score > 30 %}Bueno{% else %}Mejorable{% endif %}
-              </span>
-            </div>
-          </div>
-        </div>
-        <span class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z"></path>
-          </svg>
-        </span>
+    <!-- Lado derecho con ícono y visualización de distribución -->
+    <div class="flex flex-col items-center">
+      <span class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+        </svg>
+      </span>
+      
+      <!-- Mini gráfico de distribución por antiguedad -->
+      <div class="mt-2 w-1.5 h-16 flex flex-col-reverse">
+        <div class="w-full rounded-b-sm" style="height: {{ kpis.pct_mas90d|default(25) }}%; background-color: rgba(239, 68, 68, 0.9);"></div>
+        <div class="w-full" style="height: {{ kpis.pct_90d|default(25) }}%; background-color: rgba(245, 158, 11, 0.9);"></div>
+        <div class="w-full" style="height: {{ kpis.pct_60d|default(25) }}%; background-color: rgba(245, 158, 11, 0.6);"></div>
+        <div class="w-full rounded-t-sm" style="height: {{ kpis.pct_30d|default(25) }}%; background-color: rgba(239, 68, 68, 0.5);"></div>
       </div>
     </div>
   </div>
+</div>
+<!-- KPI: Rentabilidad General -->
+<div class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl p-5 text-white shadow-lg relative">
+  <div class="absolute top-2 right-2">
+    <button class="text-[#f5f5f7]/80 hover:text-[#f5f5f7]" title="Análisis de márgenes y estructura de costos">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+      </svg>
+    </button>
+  </div>
+  <div class="flex justify-between items-start">
+    <div>
+      <!-- Título y valor principal -->
+      <div class="flex items-center space-x-2">
+        <p style="color:#f5f5f7" class="text-sm font-medium">Rentabilidad General</p>
+        <span class="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded">
+          {% if kpis.posicion_vs_benchmark >= 0 %}↗{% else %}↘{% endif %} {{ kpis.posicion_vs_benchmark|abs }}% vs benchmark
+        </span>
+      </div>
+      
+      <!-- Margen principal -->
+      <p style="color:#f5f5f7" class="text-3xl font-bold mt-1">{{ kpis.rentabilidad_general }}%</p>
+      <div class="flex items-center mt-1">
+        <svg class="w-4 h-4 mr-1 {% if kpis.tendencia_rentabilidad < 0 %}rotate-180 text-red-300{% else %}text-[#f5f5f7]{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+        </svg>
+        <span class="text-sm {% if kpis.tendencia_rentabilidad < 0 %}text-red-300{% else %}text-[#f5f5f7]{% endif %}">{{ kpis.tendencia_rentabilidad|abs }}% {% if kpis.tendencia_rentabilidad < 0 %}menos{% else %}más{% endif %} vs periodo anterior</span>
+      </div>
+      
+      <!-- Desglose financiero -->
+      <div class="mt-3 pt-2 border-t border-white/20">
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="flex justify-between">
+            <span style="color:#f5f5f7; opacity: 0.9">Margen bruto:</span>
+            <span style="color:#f5f5f7" class="font-medium">${{ kpis.margen_bruto_absoluto }}M</span>
+          </div>
+          <div class="flex justify-between">
+            <span style="color:#f5f5f7; opacity: 0.9">Costos totales:</span>
+            <span style="color:#f5f5f7" class="font-medium">${{ kpis.costos_totales }}M</span>
+          </div>
+          <div class="flex justify-between">
+            <span style="color:#f5f5f7; opacity: 0.9">ROI:</span>
+            <span style="color:#f5f5f7" class="font-medium">{{ kpis.roi_calculado }}%</span>
+          </div>
+          <div class="flex justify-between">
+            <span style="color:#f5f5f7; opacity: 0.9">EBITDA:</span>
+            <span style="color:#f5f5f7" class="font-medium">{{ kpis.ebitda_porcentaje }}%</span>
+          </div>
+        </div>
+        
+        <!-- Barra de progreso vs meta -->
+        <div class="mt-3">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs" style="color:#f5f5f7; opacity: 0.9">Meta: {{ kpis.meta_rentabilidad }}%</span>
+            <span class="text-xs {% if kpis.vs_meta_rentabilidad >= 0 %}text-[#f5f5f7]{% else %}text-red-300{% endif %}">
+              {{ kpis.vs_meta_rentabilidad|abs }}% 
+              {% if kpis.vs_meta_rentabilidad >= 0 %}sobre meta{% else %}bajo meta{% endif %}
+            </span>
+          </div>
+          <div class="w-full bg-purple-700/40 rounded-full h-1.5">
+            <div class="bg-white h-1.5 rounded-full" style="width: {{ kpis.pct_meta_rentabilidad }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Lado derecho con visualización de estructura de costos -->
+    <div class="flex flex-col items-center">
+      <span class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v2a1 1 0 102 0V9z" clip-rule="evenodd"></path>
+        </svg>
+      </span>
+      
+      <!-- Mini visualización de estructura de costos -->
+      <div class="mt-2 w-8 h-16 flex flex-col-reverse">
+        <!-- Personal (35% + factor tiempo) -->
+        <div class="w-full rounded-b-sm bg-blue-400" style="height: 35%;"></div>
+        <!-- Overhead (15%) -->
+        <div class="w-full bg-green-400" style="height: 15%;"></div>
+        <!-- Tecnología (8%) -->
+        <div class="w-full bg-yellow-400" style="height: 8%;"></div>
+        <!-- Margen (resto) -->
+        <div class="w-full rounded-t-sm bg-white/80" style="height: 42%;"></div>
+      </div>
+      
+      <!-- Tooltip explicativo -->
+      <div class="text-xs text-center mt-1" style="color:#f5f5f7; opacity: 0.8">
+        <div>Personal</div>
+        <div>Overhead</div>
+        <div>Tech</div>
+        <div>Margen</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
   
   <!-- KPIs Financieros conectados - Segunda fila mejorada -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <!-- KPI: Monto Pendiente con DSO mejorado y contexto -->
-    <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm text-[color:var(--text-secondary)]">Monto Pendiente</p>
-          <p class="text-xl font-bold mt-1">${{ kpis.monto_pendiente }}M</p>
-          <div class="flex items-center mt-1">
-            <span class="text-xs {% if kpis.tendencia_pendiente > 0 %}text-red-500 dark:text-red-400{% else %}text-green-500 dark:text-green-400{% endif %}">
-              {% if kpis.tendencia_pendiente > 0 %}+{% endif %}{{ kpis.tendencia_pendiente }}% vs mes anterior
-            </span>
-          </div>
+    <!-- KPI: Distribución por Antigüedad (NUEVO) - Da contexto visual al monto pendiente -->
+    <div style="background-color: var(--bg-card)" class="p-4 rounded-xl border border-[color:var(--border-color)] border-l-[3px] border-l-[color:var(--accent-blue)] shadow-lg relative">
+      <p class="text-sm text-[color:var(--text-secondary)]">Distribución por Antigüedad</p>
+      <div class="flex items-center justify-between mt-3 h-8">
+        <div class="h-full flex rounded-md overflow-hidden w-full">
+ <div class="h-full bg-green-500" style="width: {{ kpis.pct_30d|default(25) }}%"></div>
+<div class="h-full bg-blue-500" style="width: {{ kpis.pct_60d|default(25) }}%"></div>
+<div class="h-full bg-yellow-500" style="width: {{ kpis.pct_90d|default(25) }}%"></div>
+<div class="h-full bg-red-500" style="width: {{ kpis.pct_mas90d|default(25) }}%"></div>
         </div>
-        <span class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path>
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path>
-          </svg>
-        </span>
       </div>
-      <div class="flex items-center justify-between mt-2">
-        <div>
-          <span class="text-xs text-[color:var(--text-secondary)]">DSO:</span>
-          <span class="text-xs font-medium ml-1">{{ kpis.dso }} días</span>
-        </div>
-        <div>
-          <span class="text-xs {% if kpis.dso > 90 %}text-red-500 dark:text-red-400{% else %}text-[color:var(--text-secondary)]{% endif %}">
-            (Industria: 90 días)
-          </span>
-        </div>
+      <div class="flex justify-between text-xs mt-3">
+        <span class="flex flex-col items-center">
+          <span class="w-2 h-2 bg-green-500 rounded-full mb-1"></span>
+          <span>0-30d</span>
+<span class="font-medium">{{ kpis.pct_30d|default(25) }}%</span>
+        </span>
+        <span class="flex flex-col items-center">
+          <span class="w-2 h-2 bg-blue-500 rounded-full mb-1"></span>
+          <span>30-60d</span>
+<span class="font-medium">{{ kpis.pct_60d|default(25) }}%</span>
+        </span>
+        <span class="flex flex-col items-center">
+          <span class="w-2 h-2 bg-yellow-500 rounded-full mb-1"></span>
+          <span>60-90d</span>
+<span class="font-medium">{{ kpis.pct_90d|default(25) }}%</span>
+        </span>
+        <span class="flex flex-col items-center">
+          <span class="w-2 h-2 bg-red-500 rounded-full mb-1"></span>
+          <span>>90d</span>
+<span class="font-medium">{{ kpis.pct_mas90d|default(25) }}%</span>        </span>
       </div>
     </div>
     
-    <!-- KPI: Monto Pendiente Crítico - Separado claramente del total -->
-    <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm text-[color:var(--text-secondary)]">Monto Crítico (>90d)</p>
-          <p class="text-xl font-bold mt-1 text-red-600">${{ kpis.monto_pendiente_critico }}M</p>
-          <div class="flex items-center mt-1">
-            <span class="text-xs text-[color:var(--text-secondary)]">{{ kpis.pct_critico }}% del total pendiente</span>
-          </div>
-        </div>
-        <span class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center text-red-600 dark:text-red-300">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-          </svg>
-        </span>
-      </div>
-      <div class="flex items-center justify-between mt-2">
-        <span class="text-xs text-[color:var(--text-secondary)]">Costo financiero:</span>
-        <span class="text-xs font-medium ml-1 text-red-600 dark:text-red-400">${{ kpis.costo_financiero }}M</span>
-      </div>
-    </div>
-    
-    <!-- KPI: Eficiencia Operativa - Nuevo KPI consolidado -->
-    <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
+    <!-- KPI: Eficiencia Operativa - NUEVO (reemplaza monto crítico duplicado) -->
+    <div style="background-color: var(--bg-card)" class="p-4 rounded-xl border border-[color:var(--border-color)] border-l-[3px] border-l-[color:var(--accent-green)] shadow-lg relative">      
       <div class="flex items-center justify-between">
         <div>
           <p class="text-sm text-[color:var(--text-secondary)]">Eficiencia Operativa</p>
@@ -341,30 +585,54 @@
       </div>
     </div>
     
-    <!-- KPI: Proyectos Críticos - con acciones directas -->
-    <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
+    <!-- KPI: Liquidez Proyectada (NUEVO) - Conectado con el flujo de caja -->
+    <div style="background-color: var(--bg-card)" class="p-4 rounded-xl border border-[color:var(--border-color)] border-l-[3px] border-l-[color:var(--accent-purple)] shadow-lg relative">      
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-sm text-[color:var(--text-secondary)]">Proyectos Críticos</p>
-          <p class="text-xl font-bold mt-1">{{ kpis.proyectos_criticos }}</p>
+          <p class="text-sm text-[color:var(--text-secondary)]">Liquidez Proyectada</p>
+          <p class="text-xl font-bold mt-1">${{ kpis.liquidez_proyectada|default('3.5') }}M</p>
           <div class="flex items-center mt-1">
-            <span class="text-xs text-[color:var(--text-secondary)]">${{ kpis.valor_proyectos_criticos }}M en riesgo</span>
+            <span class="text-xs text-[color:var(--text-secondary)]">Próximos 30 días</span>
           </div>
         </div>
-        <span class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center text-amber-600 dark:text-amber-300">
+        <span class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-300">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"></path>
+            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path>
           </svg>
         </span>
       </div>
-      <!-- Botón de acción directa -->
-      <button class="w-full mt-2 text-xs py-1 px-2 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900 dark:hover:bg-amber-800 text-amber-800 dark:text-amber-200 rounded flex items-center justify-center font-medium transition-colors">
-        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
-        </svg>
-        Ver proyectos críticos
-      </button>
+      <div class="mt-2 w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+        <div class="bg-purple-600 h-2 rounded-full" style="width: {{ kpis.pct_liquidez|default('65') }}%"></div>
+      </div>
+      <div class="flex items-center justify-between mt-1">
+        <span class="text-xs text-[color:var(--text-secondary)]">Cobertura:</span>
+        <span class="text-xs font-medium ml-1">{{ kpis.ratio_cobertura|default('0.8') }}x</span>
+      </div>
+    </div>
+    
+    <!-- KPI: Satisfacción del Cliente - NUEVO (reemplaza proyectos críticos duplicado) -->
+    <div style="background-color: var(--bg-card)" class="p-4 rounded-xl border border-[color:var(--border-color)] border-l-[3px] border-l-[color:var(--accent-gray)] shadow-lg relative">      
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-[color:var(--text-secondary)]">Satisfacción Cliente</p>
+          <p class="text-xl font-bold mt-1">{{ kpis.satisfaccion_cliente }}%</p>
+          <div class="flex items-center mt-1">
+            <span class="text-xs text-[color:var(--text-secondary)]">{{ kpis.nps_score }} NPS</span>
+          </div>
+        </div>
+        <span class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z"></path>
+          </svg>
+        </span>
+      </div>
+      <div class="mt-2 w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+        <div class="bg-green-600 h-2 rounded-full" style="width: {{ kpis.satisfaccion_cliente }}%"></div>
+      </div>
+      <div class="flex items-center justify-between mt-1">
+        <span class="text-xs text-[color:var(--text-secondary)]">Benchmark:</span>
+        <span class="text-xs font-medium ml-1">85%</span>
+      </div>
     </div>
   </div>
   
@@ -964,93 +1232,98 @@
         <!-- Scripts para funcionalidad interactiva -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script src="{{ url_for('static', filename='js/manager-charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/critical-projects-modal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/utils-dashboard-manager.js') }}"></script>
 <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          // Configuración e inicialización de charts
-          // Este código sería generado dinámicamente basado en los datos
-          
-          // Mostrar/ocultar menú de acciones de proyecto
-          const projectActionsBtn = document.getElementById('project-actions-btn');
-          const projectActionsMenu = document.getElementById('project-actions-menu');
-          
-          if (projectActionsBtn && projectActionsMenu) {
-            projectActionsBtn.addEventListener('click', function() {
-              projectActionsMenu.classList.toggle('hidden');
-            });
-          }
-          
-          // Toggle entre vistas de proyectos
-          const viewButtons = document.querySelectorAll('[data-view]');
-          if (viewButtons.length) {
-            viewButtons.forEach(button => {
-              button.addEventListener('click', function() {
-                // Cambiar estado activo de botones
-                document.querySelectorAll('[data-view]').forEach(btn => {
-                  btn.classList.remove('active-view-btn');
-                  btn.classList.add('bg-[color:var(--bg-subtle)]', 'text-[color:var(--text-secondary)]');
-                });
-                this.classList.add('active-view-btn');
-                this.classList.remove('bg-[color:var(--bg-subtle)]', 'text-[color:var(--text-secondary)]');
-                
-                // Mostrar vista correspondiente
-                const viewToShow = this.getAttribute('data-view');
-                if (viewToShow === 'chart') {
-                  document.getElementById('project-chart-view').classList.remove('hidden');
-                  document.getElementById('project-bubble-view').classList.add('hidden');
-                } else {
-                  document.getElementById('project-chart-view').classList.add('hidden');
-                  document.getElementById('project-bubble-view').classList.remove('hidden');
-                }
-              });
-            });
-          }
-          
-          // Toggle entre vistas de pareto
-          const paretoIngresos = document.getElementById('pareto-toggle-ingresos');
-          const paretoPendiente = document.getElementById('pareto-toggle-pendiente');
-          
-          if (paretoIngresos && paretoPendiente) {
-            paretoIngresos.addEventListener('click', function() {
-              paretoIngresos.classList.add('bg-[color:var(--accent-blue)]', 'text-white');
-              paretoIngresos.classList.remove('bg-[color:var(--bg-subtle)]', 'text-[color:var(--text-secondary)]', 'border');
-              
-              paretoPendiente.classList.remove('bg-[color:var(--accent-blue)]', 'text-white');
-              paretoPendiente.classList.add('bg-[color:var(--bg-subtle)]', 'text-[color:var(--text-secondary)]', 'border', 'border-[color:var(--border-color)]');
-              
-              // Aquí iría el código para actualizar el gráfico
-            });
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleFiltersBtn = document.getElementById('toggle-filters-btn');
+    const filtersSection = document.getElementById('filters-section');
+    const filterText = document.getElementById('filter-text');
+    const filterChevron = document.getElementById('filter-chevron');
+    
+    let filtersVisible = false;
+    
+    // Función para mostrar/ocultar filtros
+    function toggleFilters() {
+        filtersVisible = !filtersVisible;
+        
+        if (filtersVisible) {
+            // Mostrar filtros
+            filtersSection.classList.remove('hidden');
+            filtersSection.style.opacity = '0';
+            filtersSection.style.transform = 'translateY(-10px)';
             
-            paretoPendiente.addEventListener('click', function() {
-              paretoPendiente.classList.add('bg-[color:var(--accent-blue)]', 'text-white');
-              paretoPendiente.classList.remove('bg-[color:var(--bg-subtle)]', 'text-[color:var(--text-secondary)]', 'border');
-              
-              paretoIngresos.classList.remove('bg-[color:var(--accent-blue)]', 'text-white');
-              paretoIngresos.classList.add('bg-[color:var(--bg-subtle)]', 'text-[color:var(--text-secondary)]', 'border', 'border-[color:var(--border-color)]');
-              
-              // Aquí iría el código para actualizar el gráfico
-            });
-          }
-          
-          // Función para resetear filtros
-          window.resetFilters = function() {
-            const form = document.getElementById('dashboard-filters');
-            if (form) {
-              // Restablecer campos de fecha
-              form.querySelectorAll('input[type="date"]').forEach(input => {
-                input.value = '';
-              });
-              
-              // Restablecer selects al primer valor
-              form.querySelectorAll('select').forEach(select => {
-                if (select.options.length) {
-                  select.selectedIndex = 0;
-                }
-              });
-              
-              // Enviar formulario
-              form.submit();
+            // Animación de entrada
+            setTimeout(() => {
+                filtersSection.style.transition = 'all 0.3s ease-out';
+                filtersSection.style.opacity = '1';
+                filtersSection.style.transform = 'translateY(0)';
+            }, 10);
+            
+            // Actualizar botón
+            filterText.textContent = 'Ocultar filtros';
+            filterChevron.style.transform = 'rotate(180deg)';
+            toggleFiltersBtn.classList.add('bg-blue-700');
+            
+        } else {
+            // Ocultar filtros
+            filtersSection.style.transition = 'all 0.3s ease-in';
+            filtersSection.style.opacity = '0';
+            filtersSection.style.transform = 'translateY(-10px)';
+            
+            setTimeout(() => {
+                filtersSection.classList.add('hidden');
+            }, 300);
+            
+            // Actualizar botón
+            filterText.textContent = 'Mostrar filtros';
+            filterChevron.style.transform = 'rotate(0deg)';
+            toggleFiltersBtn.classList.remove('bg-blue-700');
+        }
+    }
+    
+    // Event listener para el botón
+    toggleFiltersBtn.addEventListener('click', toggleFilters);
+    
+    // Auto-mostrar filtros si hay filtros activos aplicados
+    {% if filtros_activos %}
+        // Si hay filtros aplicados, mostrar automáticamente
+        setTimeout(toggleFilters, 100);
+    {% endif %}
+    
+    // Funcionalidad para filtros avanzados (ya existente)
+    const toggleAdvanced = document.getElementById('toggle-advanced');
+    const advancedFilters = document.getElementById('advanced-filters');
+    const advancedText = document.getElementById('advanced-text');
+    
+    if (toggleAdvanced && advancedFilters) {
+        toggleAdvanced.addEventListener('click', function() {
+            const isHidden = advancedFilters.classList.contains('hidden');
+            
+            if (isHidden) {
+                advancedFilters.classList.remove('hidden');
+                advancedText.textContent = 'Ocultar filtros avanzados';
+            } else {
+                advancedFilters.classList.add('hidden');
+                advancedText.textContent = 'Filtros avanzados';
             }
-          }
         });
-        </script>
+    }
+});
+</script>
+
+<!-- CSS adicional para mejores transiciones -->
+<style>
+#filters-section {
+    transition: all 0.3s ease-out;
+}
+
+#filter-chevron {
+    transition: transform 0.3s ease;
+}
+
+.btn-primary {
+    @apply bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center;
+}
+</style>
 {% endblock %}

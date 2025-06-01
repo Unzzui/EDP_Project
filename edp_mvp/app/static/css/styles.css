@@ -1,52 +1,37 @@
-:root {
-  /* Fondo y superficies - Gradiente sutil de oscuridad */
-  --bg-primary: #0f172a;        /* Fondo principal más profundo con tinte azulado */
-  --bg-secondary: #0f172a;      /* Contenedores con más carácter */
-  --bg-card: #1e293b;           /* Tarjetas con tono distintivo */
-  --bg-card-hover: #2B2B36;     /* Hover con diferencia perceptible */
-  --bg-input: #18181F;          /* Campos de formulario */
-  --bg-elevated: #2D2D38;       /* Elementos elevados (modales, tooltips) */
-  
-  /* Bordes y separadores - Definición refinada */
-  --border-color: #34344A;              /* Bordes principales con tinte púrpura */
-  --border-color-subtle: #34344A40;     /* Bordes secundarios con transparencia */
-  --separator: linear-gradient(90deg, #34344A00, #34344A80, #34344A00); /* Separadores elegantes */
-  
-  /* Texto - Legibilidad mejorada */
-  --text-primary: #E8E8F0;      /* Texto principal ligeramente azulado, menos duro que blanco puro */
-  --text-secondary: #A0A0B8;    /* Texto secundario con tinte */
-  --text-disabled: #6C6C80;     /* Texto desactivado */
-  
-  /* Acentos - Paleta más vibrante y cohesiva */
-  --accent-blue: #5B8BFF;       /* Azul principal más vibrante */
-  --accent-blue-dark: #4A6FD3;  /* Variante oscura */
-  --accent-blue-light: #7AA2FF; /* Variante clara */
-  
-  --accent-green: #0ECB8C;      /* Verde más vibrante */
-  --accent-green-dark: #0AA876; /* Variante oscura */
-  --accent-green-light: #47E3AE; /* Variante clara */
-  
-  --accent-amber: #FFB845;      /* Ámbar vibrante */
-  --accent-amber-dark: #E09E38; /* Variante oscura */
-  
-  --accent-red: #F65164;        /* Rojo más distintivo */
-  --accent-red-dark: #D73E50;   /* Variante oscura */
-  
-  /* Estados y feedback - Colores de estado mejorados */
-  --state-success-bg: rgba(14, 203, 140, 0.15);  /* Fondo éxito */
-  --state-warning-bg: rgba(255, 184, 69, 0.15);  /* Fondo advertencia */
-  --state-error-bg: rgba(246, 81, 100, 0.15);    /* Fondo error */
-  
-  /* Efectos */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(52, 52, 74, 0.4);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(52, 52, 74, 0.5);
-  
-  /* Efectos de brillo y glow para elementos destacados */
-  --glow-blue: 0 0 12px rgba(91, 139, 255, 0.3);
-  --glow-green: 0 0 12px rgba(14, 203, 140, 0.3);
-  --glow-amber: 0 0 12px rgba(255, 184, 69, 0.3);
-  --glow-red: 0 0 12px rgba(246, 81, 100, 0.3);
+:root{
+  --background: #1c1c1e;              /* Fondo base */
+  --bg-card: #1c1c1e;                 /* Tarjetas / secciones elevadas */
+  --bg-subtle: #29292b;              /* Hover y fondos secundarios */
+  --bg-hover: #2e2e30;
+
+  --text-primary: #f5f5f7;           /* Blanco suave para evitar exceso de contraste */
+  --text-secondary: #c7c7cc;
+  --text-tertiary: #8e8e93;
+
+  --border-color: #3a3a3c;
+  --border-color-subtle: #2a2a2c;
+
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-red: #f43f5e;
+  --accent-purple: #8b5cf6;
+
+  --success: #30d158;
+  --success-bg: rgba(48, 209, 88, 0.12);
+  --warning: #ffd60a;
+  --warning-bg: rgba(255, 214, 10, 0.12);
+  --danger: #ff453a;
+  --danger-bg: rgba(255, 69, 58, 0.12);
+  --info: #64d2ff;
+  --info-bg: rgba(100, 210, 255, 0.12);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.2);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .light{
