@@ -1,8 +1,6 @@
-# app/auth/routes.py
-
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, logout_user, login_required, UserMixin, current_user
-from app import login_manager
+from ..extensions import login_manager  # ← Solo esta línea para login_manager
 from .forms import LoginForm  # Import the form we just created
 
 auth_bp = Blueprint("auth", __name__)
@@ -13,7 +11,6 @@ class User(UserMixin):
         self.id = id
         self.email = email
 
-
 # Esta función es requerida por Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
@@ -23,7 +20,7 @@ def load_user(user_id):
 def login():
     # Si el usuario ya está autenticado, redirigir al dashboard
     if current_user.is_authenticated:
-        return redirect(url_for("controller_bp.dashboard_controller"))
+        return redirect(url_for("controller.dashboard"))  # ← Corregido el nombre del blueprint
     
     # Crear el formulario
     form = LoginForm()
@@ -38,20 +35,21 @@ def login():
         # Redirigir a la página solicitada o al dashboard
         next_page = request.args.get('next')
         if not next_page or not next_page.startswith('/'):
-            next_page = url_for('controller_bp.dashboard_controller')
+            next_page = url_for('controller.dashboard')  # ← Corregido el nombre del blueprint
         return redirect(next_page)
     
     # Renderizar la plantilla con el formulario
     return render_template("login.html", form=form)
 
-
 @auth_bp.route("/logout")
+@login_required  # ← Agregado decorator
 def logout():
-    return render_template("login.html")
-
-
+    logout_user()  # ← Agregada la función de logout
+    flash('Has cerrado sesión exitosamente.', 'info')
+    return redirect(url_for('auth.login'))  # ← Redirigir al login
 
 @auth_bp.route("/change-password")
+@login_required  # ← Agregado decorator
 def change_password():
     # This is a placeholder - implementation can be added later
-    return render_template("login.html")  # Replace with actual template when available
+    return render_template("change_password.html")  # ← Template específico

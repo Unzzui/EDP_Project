@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect,url_for,flash
 
-from app.utils.gsheet import read_sheet, append_row
-from app.edp.forms import EDPForm
+from ..utils.gsheet import read_sheet, append_row
+from ..edp.forms import EDPForm
 
 edp_bp = Blueprint('edp', __name__)
 

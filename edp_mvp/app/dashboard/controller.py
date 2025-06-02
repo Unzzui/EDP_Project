@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash,jsonify
-from app.utils.gsheet import read_sheet, update_row,log_cambio_edp, read_log, crear_incidencia, leer_incidencias, actualizar_incidencia, agregar_comentario_incidencia
+from ..utils.gsheet import read_sheet, update_row,log_cambio_edp, read_log, crear_incidencia, leer_incidencias, actualizar_incidencia, agregar_comentario_incidencia
 from pandas import isna
 from datetime import datetime, timedelta
 import pandas as pd
-from app.extensions import socketio
+from ..extensions import socketio
 from flask import session  # arriba del archivo
 from flask import make_response
 import numpy as np

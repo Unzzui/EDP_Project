@@ -20,7 +20,7 @@
         </svg>
         <span
           class="bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-green)] bg-clip-text text-transparent">
-          o waww
+          EDP Controller
         </span>
       </a>
     </div>
@@ -164,8 +164,8 @@
         <button
           class="flex items-center space-x-2 p-1 rounded-full hover:bg-[color:var(--bg-highlight)] transition-colors focus:outline-none">
           <span class="hidden sm:block text-sm"
-            >{{ current_user.username|default('Haschbulla Magomedovich
-            Magomedov') }}</span
+            >{{ current_user.username|default('Haschbulla Magomedovich')
+            }}</span
           >
           <img
             src="{{ current_user.avatar_url|default(url_for('static', filename='img/profile_pic.png')) }}"

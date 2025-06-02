@@ -2,7 +2,7 @@ import pandas as pd
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
-from app.config import Config
+from ..config import Config
 
 from datetime import datetime, timezone, timedelta
 import re
@@ -144,7 +144,7 @@ def read_sheet(range_name, apply_transformations=True):
     Lee datos de Google Sheets y los convierte en DataFrame de pandas.
     
     Args:
-        range_name (str): Rango a leer, ej: "edp!A1:Z"
+        range_name (str): Rango a leer, ej: "edp!A1:Z", "cost_header!A1:Q", "projects!A1:I"
         apply_transformations (bool): Si se deben aplicar transformaciones específicas por tipo de hoja
     
     Returns:
@@ -195,7 +195,8 @@ def read_sheet(range_name, apply_transformations=True):
     # Fecha actual para cálculos
     hoy = pd.to_datetime(datetime.today())
     
-    # Aplicar transformaciones según el tipo de hoja
+    # ===== APLICAR TRANSFORMACIONES SEGÚN TIPO DE HOJA =====
+    
     if sheet_type == "issues":
         # Transformaciones específicas para la hoja de incidencias
         for date_col in ["Timestamp", "Fecha última actualización", "Fecha resolución"]:
@@ -205,7 +206,6 @@ def read_sheet(range_name, apply_transformations=True):
                 except ValueError as e:
                     if "duplicate keys" in str(e):
                         print(f"Advertencia: Valores duplicados en columna {date_col}, usando conversión segura")
-                        # Usar método alternativo fila por fila
                         df[date_col] = df[date_col].apply(lambda x: pd.to_datetime(x, errors='coerce'))
                     else:
                         raise e
@@ -214,7 +214,159 @@ def read_sheet(range_name, apply_transformations=True):
         if 'ID' in df.columns:
             df['ID'] = pd.to_numeric(df['ID'], errors='coerce')
     
-    else:  # Para "edp" u otras hojas, aplicar las transformaciones originales
+    elif sheet_type == 'cost_header':
+        # ===== TRANSFORMACIONES PARA COST_HEADER =====
+        print(f"📊 Aplicando transformaciones para cost_header: {len(df)} registros")
+        
+        # Convertir IDs a numérico - EXCEPT project_id which should remain string
+        for id_col in ['cost_id']:  # Removed 'project_id' from this list
+            if id_col in df.columns:
+                df[id_col] = pd.to_numeric(df[id_col], errors='coerce')
+
+        # Keep project_id as string (OT identifier)
+        if 'project_id' in df.columns:
+            df['project_id'] = df['project_id'].astype(str).str.strip()
+            print(f"✅ cost_header 'project_id' kept as string: {df['project_id'].dtype}")
+        # Convertir montos a numérico
+        for monto_col in ['importe_bruto', 'importe_neto']:
+            if monto_col in df.columns:
+                # Limpiar formato de moneda y convertir
+                df[monto_col] = df[monto_col].astype(str).str.replace(r'[^\d.-]', '', regex=True)
+                df[monto_col] = pd.to_numeric(df[monto_col], errors='coerce').fillna(0)
+        
+        # Convertir fechas
+        date_cols = ['fecha_factura', 'fecha_recepcion', 'fecha_vencimiento', 'fecha_pago']
+        for col in date_cols:
+            if col in df.columns:
+                try:
+                    df[col] = pd.to_datetime(df[col], errors="coerce")
+                except ValueError as e:
+                    if "duplicate keys" in str(e):
+                        print(f"Advertencia: Valores duplicados en columna {col}, usando conversión segura")
+                        df[col] = df[col].apply(lambda x: pd.to_datetime(x, errors='coerce'))
+                    else:
+                        raise e
+        
+        # Normalizar estados y tipos categóricos
+        categorical_cols = ['estado_costo', 'tipo_costo', 'moneda']
+        for col in categorical_cols:
+            if col in df.columns:
+                df[col] = df[col].astype(str).str.strip().str.lower()
+        
+        # Calcular días de vencimiento (si aplica)
+        if 'fecha_vencimiento' in df.columns and 'fecha_pago' in df.columns:
+            # Calcular días transcurridos desde vencimiento para facturas no pagadas
+            df['dias_vencimiento'] = (hoy - df['fecha_vencimiento']).dt.days
+            # Solo para registros sin fecha de pago
+            mask_no_pagado = df['fecha_pago'].isna()
+            df.loc[~mask_no_pagado, 'dias_vencimiento'] = 0
+        
+        # Estado de pago calculado
+        if 'fecha_pago' in df.columns:
+            df['pagado'] = df['fecha_pago'].notna()
+        
+        # Calcular estado de vencimiento
+        if 'dias_vencimiento' in df.columns:
+            def estado_vencimiento(row):
+                if row.get('pagado', False):
+                    return 'pagado'
+                elif pd.isna(row.get('fecha_vencimiento')):
+                    return 'sin_vencimiento'
+                elif row.get('dias_vencimiento', 0) > 0:
+                    return 'vencido'
+                elif row.get('dias_vencimiento', 0) > -7:
+                    return 'por_vencer'
+                else:
+                    return 'vigente'
+            
+            df['estado_vencimiento'] = df.apply(estado_vencimiento, axis=1)
+        
+        print(f"✅ Transformaciones cost_header aplicadas: {len(df)} registros procesados")
+    
+    elif sheet_type == 'projects':
+        # ===== TRANSFORMACIONES PARA PROJECTS =====
+        print(f"📊 Aplicando transformaciones para projects: {len(df)} registros")
+        
+        # ===== FIX: NO convertir project_id a numérico, mantenerlo como string =====
+        if 'project_id' in df.columns:
+            df['project_id'] = df['project_id'].astype(str).str.strip()  # Mantener como string
+            print(f"✅ Projects 'project_id' mantenido como string: {df['project_id'].dtype}")
+            print(f"🔍 Muestra project_id después de transformación: {df['project_id'].head(3).tolist()}")
+        
+        # Convertir monto del contrato
+        if 'monto_contrato' in df.columns:
+            # Limpiar formato de moneda y convertir
+            df['monto_contrato'] = df['monto_contrato'].astype(str).str.replace(r'[^\d.-]', '', regex=True)
+            df['monto_contrato'] = pd.to_numeric(df['monto_contrato'], errors='coerce').fillna(0)
+        
+        # Convertir fechas
+        date_cols = ['fecha_inicio', 'fecha_fin_prevista']
+        for col in date_cols:
+            if col in df.columns:
+                try:
+                    df[col] = pd.to_datetime(df[col], errors="coerce")
+                except ValueError as e:
+                    if "duplicate keys" in str(e):
+                        print(f"Advertencia: Valores duplicados en columna {col}, usando conversión segura")
+                        df[col] = df[col].apply(lambda x: pd.to_datetime(x, errors='coerce'))
+                    else:
+                        raise e
+        
+        # Normalizar campos de texto
+        text_cols = ['proyecto', 'cliente', 'gestor', 'jefe_proyecto', 'moneda']
+        for col in text_cols:
+            if col in df.columns:
+                df[col] = df[col].astype(str).str.strip()
+        
+        # Normalizar moneda
+        if 'moneda' in df.columns:
+            df['moneda'] = df['moneda'].str.upper()
+        
+        # Calcular duración del proyecto
+        if 'fecha_inicio' in df.columns and 'fecha_fin_prevista' in df.columns:
+            df['duracion_dias'] = (df['fecha_fin_prevista'] - df['fecha_inicio']).dt.days
+        
+        # Calcular estado del proyecto basado en fechas
+        if 'fecha_inicio' in df.columns and 'fecha_fin_prevista' in df.columns:
+            def estado_proyecto(row):
+                fecha_inicio = row.get('fecha_inicio')
+                fecha_fin = row.get('fecha_fin_prevista')
+                
+                if pd.isna(fecha_inicio) or pd.isna(fecha_fin):
+                    return 'pendiente'
+                elif hoy < fecha_inicio:
+                    return 'no_iniciado'
+                elif hoy > fecha_fin:
+                    return 'vencido'
+                else:
+                    return 'en_curso'
+            
+            df['estado_proyecto'] = df.apply(estado_proyecto, axis=1)
+        
+        # Calcular porcentaje de avance temporal
+        if 'fecha_inicio' in df.columns and 'fecha_fin_prevista' in df.columns:
+            def porcentaje_temporal(row):
+                fecha_inicio = row.get('fecha_inicio')
+                fecha_fin = row.get('fecha_fin_prevista')
+                
+                if pd.isna(fecha_inicio) or pd.isna(fecha_fin):
+                    return 0
+                
+                duracion_total = (fecha_fin - fecha_inicio).days
+                if duracion_total <= 0:
+                    return 100
+                
+                dias_transcurridos = (hoy - fecha_inicio).days
+                porcentaje = min(max((dias_transcurridos / duracion_total) * 100, 0), 100)
+                return round(porcentaje, 1)
+            
+            df['porcentaje_avance_temporal'] = df.apply(porcentaje_temporal, axis=1)
+        
+        
+        print(f"✅ Transformaciones projects aplicadas: {len(df)} registros procesados")
+    
+    elif sheet_type == 'edp':  
+        # ===== TRANSFORMACIONES PARA EDP (EXISTENTES) =====
         # Monto
         for col in ["Monto Propuesto", "Monto Aprobado"]:
             if col in df.columns:
@@ -237,7 +389,6 @@ def read_sheet(range_name, apply_transformations=True):
                 except ValueError as e:
                     if "duplicate keys" in str(e):
                         print(f"Advertencia: Valores duplicados en columna {col}, usando conversión segura")
-                        # Usar método alternativo fila por fila
                         df[col] = df[col].apply(lambda x: pd.to_datetime(x, errors='coerce'))
                     else:
                         raise e
@@ -260,9 +411,6 @@ def read_sheet(range_name, apply_transformations=True):
                 df["Días Espera"] = "—"
         else:
             df["Días Espera"] = "—"
-
-        # Resto del código sin cambios...
-        # (El resto del código permanece igual)
         
         # Días Hábiles
         if "Fecha Envío al Cliente" in df.columns:
@@ -312,7 +460,7 @@ def read_sheet(range_name, apply_transformations=True):
                 else:
                     return "En espera"
             df["Estado Visual"] = df.apply(estado_visual, axis=1)
-
+    
     return df
 
 def append_row(row_values, sheet_name="edp"):
@@ -890,3 +1038,130 @@ def agregar_comentario_incidencia(id_incidencia, comentario, usuario="Sistema"):
         return False
     
     
+
+
+# Agregar al final del archivo
+
+def read_cost_header(filtros=None):
+    """
+    Lee la hoja cost_header con filtros opcionales.
+    
+    Args:
+        filtros (dict, optional): Filtros como:
+            - project_id: ID del proyecto
+            - estado_costo: Estado del costo
+            - proveedor: Nombre del proveedor
+            - vencidos_only: True para solo vencidos
+            
+    Returns:
+        DataFrame: Costos que cumplen los filtros
+    """
+    df = read_sheet("cost_header!A:Q")
+    
+    if df.empty:
+        return pd.DataFrame()
+    
+    # Aplicar filtros
+    if filtros:
+        if 'project_id' in filtros and filtros['project_id']:
+            df = df[df['project_id'] == filtros['project_id']]
+        if 'estado_costo' in filtros and filtros['estado_costo']:
+            df = df[df['estado_costo'] == filtros['estado_costo'].lower()]
+        if 'proveedor' in filtros and filtros['proveedor']:
+            df = df[df['proveedor'].str.contains(filtros['proveedor'], case=False, na=False)]
+        if 'vencidos_only' in filtros and filtros['vencidos_only']:
+            df = df[df['estado_vencimiento'] == 'vencido']
+    
+    return df
+
+def read_projects(filtros=None):
+    """
+    Lee la hoja projects con filtros opcionales.
+    
+    Args:
+        filtros (dict, optional): Filtros como:
+            - cliente: Nombre del cliente
+            - jefe_proyecto: Jefe de proyecto
+            - estado_proyecto: Estado del proyecto
+            - activos_only: True para solo proyectos activos
+            
+    Returns:
+        DataFrame: Proyectos que cumplen los filtros
+    """
+    df = read_sheet("projects!A:I")
+    
+    if df.empty:
+        return pd.DataFrame()
+    
+    # Aplicar filtros
+    if filtros:
+        if 'cliente' in filtros and filtros['cliente']:
+            df = df[df['cliente'].str.contains(filtros['cliente'], case=False, na=False)]
+        if 'jefe_proyecto' in filtros and filtros['jefe_proyecto']:
+            df = df[df['jefe_proyecto'] == filtros['jefe_proyecto']]
+        if 'estado_proyecto' in filtros and filtros['estado_proyecto']:
+            df = df[df['estado_proyecto'] == filtros['estado_proyecto']]
+        if 'activos_only' in filtros and filtros['activos_only']:
+            df = df[df['estado_proyecto'].isin(['en_curso', 'no_iniciado'])]
+    
+    return df
+
+def append_cost(cost_data, sheet_name="cost_header"):
+    """
+    Inserta un nuevo registro de costo.
+    
+    Args:
+        cost_data (dict): Datos del costo con las columnas requeridas
+        sheet_name (str): Nombre de la hoja (cost_header por defecto)
+    """
+    # Generar cost_id único
+    df_existing = read_sheet(f"{sheet_name}!A:A", apply_transformations=False)
+    if not df_existing.empty and len(df_existing) > 0:
+        cost_ids = pd.to_numeric(df_existing.iloc[:, 0], errors='coerce').dropna()
+        next_id = int(cost_ids.max()) + 1 if len(cost_ids) > 0 else 1
+    else:
+        next_id = 1
+    
+    # Preparar fila
+    row_values = [next_id]
+    campos = [
+        "project_id", "proveedor", "factura", "fecha_factura", "fecha_recepcion",
+        "fecha_vencimiento", "fecha_pago", "importe_bruto", "importe_neto",
+        "moneda", "estado_costo", "tipo_costo", "detalle_costo",
+        "responsable_registro", "observaciones", "url_respaldo"
+    ]
+    
+    for campo in campos:
+        row_values.append(cost_data.get(campo, ""))
+    
+    append_row(row_values, sheet_name)
+    return next_id
+
+def append_project(project_data, sheet_name="projects"):
+    """
+    Inserta un nuevo proyecto.
+    
+    Args:
+        project_data (dict): Datos del proyecto con las columnas requeridas
+        sheet_name (str): Nombre de la hoja (projects por defecto)
+    """
+    # Generar project_id único
+    df_existing = read_sheet(f"{sheet_name}!A:A", apply_transformations=False)
+    if not df_existing.empty and len(df_existing) > 0:
+        project_ids = pd.to_numeric(df_existing.iloc[:, 0], errors='coerce').dropna()
+        next_id = int(project_ids.max()) + 1 if len(project_ids) > 0 else 1
+    else:
+        next_id = 1
+    
+    # Preparar fila
+    row_values = [next_id]
+    campos = [
+        "proyecto", "cliente", "gestor", "jefe_proyecto", "fecha_inicio",
+        "fecha_fin_prevista", "monto_contrato", "moneda"
+    ]
+    
+    for campo in campos:
+        row_values.append(project_data.get(campo, ""))
+    
+    append_row(row_values, sheet_name)
+    return next_id
