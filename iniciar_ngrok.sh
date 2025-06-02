@@ -32,7 +32,7 @@ fi
 echo "🧹 Limpiando procesos anteriores..."
 # pkill -f "python.*run" 2>/dev/null
 # pkill -f "ngrok" 2>/dev/null
-sleep 5
+sleep 2
 
 echo "🔧 Iniciando aplicación Flask..."
 

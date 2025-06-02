@@ -826,43 +826,60 @@
       </div>
     </div>
     
-    <!-- Distribución por Cliente - con análisis de concentración -->
-    <div class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-bold">Distribución por Cliente</h2>
-        <div class="text-xs px-2 py-1 rounded {% if kpis.concentracion_clientes > 70 %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% elif kpis.concentracion_clientes > 50 %}bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200{% else %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% endif %}">
-          {{ kpis.concentracion_clientes }}% en Top 5
-        </div>
-      </div>
-      <div class="h-72">
-        <canvas id="budgetDistributionChart"></canvas>
-      </div>
-      <!-- Análisis de riesgo de concentración -->
-      <div class="mt-3 text-xs text-[color:var(--text-secondary)] border-t border-[color:var(--border-color-subtle)] pt-3">
-        {% if kpis.concentracion_clientes > 70 %}
-        <p class="flex items-center text-red-500 dark:text-red-400">
-          <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-          </svg>
-          Alta concentración: riesgo de dependencia significativo
-        </p>
-        {% elif kpis.concentracion_clientes > 50 %}
-        <p class="flex items-center text-amber-500 dark:text-amber-400">
-          <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-          </svg>
-          Concentración moderada: diversificar cartera
-        </p>
-        {% else %}
-        <p class="flex items-center text-green-500 dark:text-green-400">
-          <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-          </svg>
-          Buena diversificación: riesgo controlado
-        </p>
-        {% endif %}
-      </div>
+ <!-- Distribución de Costos - OPEX vs CAPEX -->
+{% set ratio_opex = charts.get('analisis_costos', {}).get('kpis', {}).get('ratio_opex_capex', 0) %}
+
+<div class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg font-bold">Distribución de Costos</h2>
+    <div class="text-xs px-2 py-1 rounded
+      {% if ratio_opex > 80 %}
+        bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+      {% elif ratio_opex > 60 %}
+        bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200
+      {% else %}
+        bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+      {% endif %}
+    ">
+      {{ ratio_opex }}% OPEX
     </div>
+  </div>
+
+  <!-- Gráfico de distribución -->
+  <div class="h-72">
+    <canvas id="budgetDistributionChart"></canvas>
+  </div>
+
+  <!-- Análisis de distribución -->
+  <div class="mt-3 text-xs text-[color:var(--text-secondary)] border-t border-[color:var(--border-color-subtle)] pt-3">
+    {% if ratio_opex > 80 %}
+    <p class="flex items-center text-red-500 dark:text-red-400">
+      <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+      </svg>
+      Alto gasto operativo: revisar eficiencia de costos
+    </p>
+    {% elif ratio_opex > 60 %}
+    <p class="flex items-center text-amber-500 dark:text-amber-400">
+      <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+      </svg>
+      Mayor proporción operativa: monitorear balance con CAPEX
+    </p>
+    {% else %}
+    <p class="flex items-center text-green-500 dark:text-green-400">
+      <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+      </svg>
+      Buena distribución entre OPEX y CAPEX
+    </p>
+    {% endif %}
+  </div>
+</div>
+
+
+
+    
   </div>
   
   <!-- Tercera fila de gráficos y alertas -->
@@ -917,7 +934,7 @@
       <div class="h-60">
         <canvas id="paretoClientChart"></canvas>
       </div>
-      
+ 
       <!-- Análisis de riesgo por cliente principal -->
       <div class="mt-4 pt-3 border-t border-[color:var(--border-color-subtle)]">
         <p class="text-sm font-medium mb-2">Cliente principal: {{ kpis.cliente_principal }}</p>
@@ -1157,7 +1174,6 @@
                     <th class="px-4 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Cliente</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Monto</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Días</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Próxima fecha</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Encargado</th>
                     <th class="px-4 py-3 text-right text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Acciones</th>
                   </tr>
@@ -1176,12 +1192,7 @@
                         {{ edp.dias }}d
                       </span>
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">
-                      <span class="{% if edp.dias_prox_fecha < 0 %}text-red-500 dark:text-red-400{% endif %}">
-                        {{ edp.prox_fecha|default("-") }}
-                        {% if edp.dias_prox_fecha < 0 %}({{ edp.dias_prox_fecha|abs }}d atraso){% endif %}
-                      </span>
-                    </td>
+                 
                     <td class="px-4 py-3">{{ edp.encargado }}</td>
                     <td class="px-4 py-3 text-right text-sm space-x-2">
                       <button class="text-[color:var(--accent-blue)] hover:underline">Ver</button>
@@ -1202,7 +1213,7 @@
             <!-- Paginación -->
             <div class="mt-4 flex justify-between items-center">
               <span class="text-sm text-[color:var(--text-secondary)]">
-                Mostrando <span class="font-medium">1</span> a <span class="font-medium">10</span> de <span class="font-medium">{{ total_edps }}</span> EDPs
+                  Mostrando <span class="font-medium">{{ top_edps|length }}</span> EDPs
               </span>
               <div class="flex space-x-1">
                 <button class="px-3 py-1 border border-[color:var(--border-color)] rounded-md text-sm bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)]">
@@ -1298,6 +1309,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<!-- ...existing code... -->
+
 
 <!-- CSS adicional para mejores transiciones -->
 <style>

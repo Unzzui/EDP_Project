@@ -658,12 +658,12 @@ if (departmentProfitElement) {
 const budgetDistributionElement = document.getElementById('budgetDistributionChart');
 if (budgetDistributionElement) {
   try {
-    const data = chartsData.presupuesto_categorias;
+    const data = chartsData.analisis_costos.distribucion_tipo;
     const adaptiveColors = getAdaptiveColors();
-    console.log('🥧 Creando budget distribution chart:', data);
+    console.log('📊 Creando gráfico de distribución de costos:', data);
     
     new Chart(budgetDistributionElement, {
-      type: 'pie',
+      type: 'doughnut',
       data: data,
       options: {
         responsive: true,
@@ -671,7 +671,7 @@ if (budgetDistributionElement) {
         plugins: {
           title: {
             display: true,
-            text: 'Distribución del Presupuesto',
+            text: 'Distribución OPEX vs CAPEX',
             color: adaptiveColors.textPrimary
           },
           legend: {
@@ -694,7 +694,7 @@ if (budgetDistributionElement) {
                 const value = context.parsed;
                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                return context.label + ': $' + value + 'M (' + percentage + '%)';
+                return `${context.label}: $${value.toFixed(1)}M (${percentage}%)`;
               }
             }
           }
@@ -707,9 +707,9 @@ if (budgetDistributionElement) {
         }
       }
     });
-    console.log('✅ Budget distribution chart creado');
+    console.log('✅ Gráfico de distribución de costos creado');
   } catch (e) {
-    console.error('❌ Error creando budget distribution chart:', e);
+    console.error('❌ Error creando gráfico de distribución de costos:', e);
   }
 }
 

@@ -347,11 +347,12 @@ def crear_relaciones_datos_simplificado():
                 costs_summary = df_costs_valid.groupby('project_id').agg({
                     'importe_neto': 'sum',
                     'cost_id': 'count',
-                    'estado_costo': lambda x: (x == 'pagado').sum() if len(x) > 0 else 0
+                    'estado_costo': lambda x: (x == 'pagado').sum() if len(x) > 0 else 0,
                 }).to_dict('index')
                 costs_lookup = costs_summary
                 print(f"✅ Índice de costos creado: {len(costs_lookup)} proyectos con costos")
         
+        print(f'Debug costs_lookup: {costs_lookup}')
         # Índice de cambios por EDP
         log_lookup = {}
         if not df_log.empty and 'N° EDP' in df_log.columns:
@@ -454,6 +455,7 @@ def calcular_kpis_ejecutivos_simplificado(datos_relacionados, fecha_inicio=None,
         else:
             dso = 45
         
+        
         # Aging buckets
         bucket_0_15 = len(df_pendientes[df_pendientes['Días Espera'] <= 15]) if not df_pendientes.empty else 0
         bucket_16_30 = len(df_pendientes[(df_pendientes['Días Espera'] > 15) & (df_pendientes['Días Espera'] <= 30)]) if not df_pendientes.empty else 0
@@ -505,6 +507,10 @@ def calcular_kpis_ejecutivos_simplificado(datos_relacionados, fecha_inicio=None,
         cliente_principal = max(clientes_data.items(), key=lambda x: x[1])[0] if clientes_data else "N/A"
         pct_ingresos_principal = (max(clientes_data.values()) / monto_emitido * 100) if clientes_data and monto_emitido > 0 else 0
         
+        
+        dso_cliente_principal = df_periodo[df_periodo['Cliente'] == cliente_principal]['Días Espera'].mean() if cliente_principal != "N/A" else 45
+        
+        
         # ===== EFICIENCIA POR GESTOR =====
         eficiencia_gestores = {}
         rentabilidad_por_gestor = {}
@@ -535,8 +541,8 @@ def calcular_kpis_ejecutivos_simplificado(datos_relacionados, fecha_inicio=None,
         # ===== MÉTRICAS DE CALIDAD =====
         reprocesos = df_periodo[df_periodo['Estado Detallado'] == 're-trabajo solicitado'] if 'Estado Detallado' in df_periodo.columns else pd.DataFrame()
         reprocesos_promedio = round((len(reprocesos) / len(df_periodo)) * 100, 1) if len(df_periodo) > 0 else 0
-        reprocesos_p95 = round(reprocesos_promedio * 1.5, 1)
         retrabajos_reducidos = round(100 - reprocesos_promedio, 1)
+        reprocesos_p95 = round(reprocesos_promedio * 1.5, 1)
         
         conformidades_ok = len(df_periodo[df_periodo['Conformidad Enviada'] == 'Sí']) if 'Conformidad Enviada' in df_periodo.columns else len(df_completados)
         tasa_conformidad = round((conformidades_ok / len(df_periodo)) * 100, 1) if len(df_periodo) > 0 else 85
@@ -554,6 +560,7 @@ def calcular_kpis_ejecutivos_simplificado(datos_relacionados, fecha_inicio=None,
             'pct_critico': round(pct_critico, 1),
             'pct_cobrado': round(pct_cobrado, 1),
             'dso': round(dso, 1),
+            'dso_cliente_principal': round(dso_cliente_principal, 1),
             'costo_financiero': 0,
             
             # Operativos
@@ -856,8 +863,10 @@ def obtener_datos_charts_simplificado(datos_relacionados, departamento='todos', 
             return {}
         
         df_edp = datos_relacionados['df_edp']
+        df_cost = read_sheet('cost_header!A1:Q')
         costs_lookup = datos_relacionados['costs_lookup']
-        
+
+        print(f'Debug tipo_costo: {costs_lookup}')
         # Aplicar filtros
         df_periodo = aplicar_filtros_basicos(df_edp, None, None, departamento, cliente, estado)
         
@@ -870,10 +879,11 @@ def obtener_datos_charts_simplificado(datos_relacionados, departamento='todos', 
             'cash_in_forecast': build_cash_forecast_simplificado(df_periodo),
             'cash_forecast_detallado': build_cash_forecast_detallado(df_periodo),  # Nuevo
             'estado_proyectos': build_estado_proyectos_simplificado(df_periodo),
-            'presupuesto_categorias': build_distribucion_clientes_simplificado(df_periodo),
             'aging_buckets': build_aging_buckets_simplificado(df_periodo),
             'tendencia_financiera': build_tendencia_mensual_simplificado(df_edp),  # Mejorado
-            'rentabilidad_departamentos': build_rentabilidad_simplificado(df_periodo, costs_lookup)
+            'rentabilidad_departamentos': build_rentabilidad_simplificado(df_periodo, costs_lookup),
+            'analisis_costos': build_analisis_costos(df_cost),
+            'concentracion_clientes': build_distribucion_clientes_simplificado(df_periodo),
         }
         
     except Exception as e:
@@ -944,36 +954,64 @@ def build_estado_proyectos_simplificado(df_periodo):
         return {'labels': [], 'datasets': []}
 
 def build_distribucion_clientes_simplificado(df_periodo):
-    """Distribución por cliente usando solo datos de EDP"""
+    """Distribución por cliente usando análisis de Pareto (80/20) con montos en millones"""
     try:
         if 'Cliente' not in df_periodo.columns:
-            return {'labels': ['Sin datos'], 'datasets': []}
+            return {'labels': [], 'datasets': []}
         
-        clientes_montos = df_periodo.groupby('Cliente')['Monto Aprobado'].sum()
+        # Calcular montos por cliente y convertir a millones
+        clientes_montos = df_periodo.groupby('Cliente')['Monto Aprobado'].sum() / 1_000_000
         
         if clientes_montos.empty:
-            return {'labels': ['Sin datos'], 'datasets': []}
+            return {'labels': [], 'datasets': []}
         
-        top_clientes = clientes_montos.nlargest(8)
-        total = top_clientes.sum()
-        porcentajes = (top_clientes / total * 100).round(1) if total > 0 else top_clientes
+        # Ordenar clientes por monto de mayor a menor
+        clientes_ordenados = clientes_montos.sort_values(ascending=False)
+        
+        # Tomar los top 10 clientes
+        top_clientes = clientes_ordenados.head(10)
+        
+        # Calcular porcentajes acumulados
+        total = clientes_ordenados.sum()
+        porcentajes_acumulados = (top_clientes.cumsum() / total * 100).round(1)
         
         return {
             'labels': top_clientes.index.tolist(),
             'datasets': [
                 {
-                    'data': porcentajes.tolist(),
+                    'type': 'bar',
+                    'label': 'Monto (M$)',
+                    'data': top_clientes.round(1).tolist(),
                     'backgroundColor': [
-                        'rgba(59, 130, 246, 0.7)', 'rgba(16, 185, 129, 0.7)', 
-                        'rgba(249, 115, 22, 0.7)', 'rgba(139, 92, 246, 0.7)',
-                        'rgba(244, 63, 94, 0.7)', 'rgba(6, 182, 212, 0.7)',
-                        'rgba(251, 191, 36, 0.7)', 'rgba(107, 114, 128, 0.7)'
-                    ][:len(top_clientes)]
+                        'rgba(59, 130, 246, 0.7)',  # blue
+                        'rgba(16, 185, 129, 0.7)',  # green
+                        'rgba(249, 115, 22, 0.7)',  # orange
+                        'rgba(139, 92, 246, 0.7)',  # purple
+                        'rgba(244, 63, 94, 0.7)',   # red
+                        'rgba(6, 182, 212, 0.7)',   # cyan
+                        'rgba(251, 191, 36, 0.7)',  # yellow
+                        'rgba(107, 114, 128, 0.7)', # gray
+                        'rgba(236, 72, 153, 0.7)',  # pink
+                        'rgba(168, 85, 247, 0.7)'   # violet
+                    ],
+                    'yAxisID': 'y'
+                },
+                {
+                    'type': 'line',
+                    'label': 'Porcentaje Acumulado',
+                    'data': porcentajes_acumulados.tolist(),
+                    'borderColor': 'rgba(234, 88, 12, 1)',
+                    'borderWidth': 2,
+                    'fill': False,
+                    'yAxisID': 'percentage',
+                    'pointBackgroundColor': 'rgba(234, 88, 12, 1)',
+                    'pointRadius': 4,
+                    'pointHoverRadius': 6
                 }
             ]
         }
     except Exception as e:
-        print(f"Error en distribución clientes simplificado: {e}")
+        print(f"Error en distribución clientes Pareto: {e}")
         return {'labels': [], 'datasets': []}
 
 def build_aging_buckets_simplificado(df_periodo):
@@ -1527,8 +1565,8 @@ def generar_cash_forecast(df_edp):
         
         # ===== PREPARAR Y VALIDAR DATOS =====
         df_edp['Fecha Emisión'] = pd.to_datetime(df_edp['Fecha Emisión'], errors='coerce')
-        df_edp['Monto Aprobado'] = pd.to_numeric(df_edp['Monto Aprobado'], errors='coerce').fillna(0)
-        df_edp['Días Espera'] = pd.to_numeric(df_edp['Días Espera'], errors='coerce').fillna(0)
+        df_edp['Monto Aprobado'] = pd.to_numeric(df_edp['Monto Aprobado'], errors='coerce')
+        df_edp['Días Espera'] = pd.to_numeric(df_edp['Días Espera'], errors='coerce')
         
         # Filtrar solo pendientes
         df_pendientes = df_edp[~df_edp['Estado'].str.strip().isin(['pagado', 'validado'])].copy()
@@ -1654,7 +1692,7 @@ def generar_cash_forecast(df_edp):
             'distribucion_aplicada': 'inteligente' if concentracion_maxima > 0.8 else 'natural',
             'factor_concentracion': round(concentracion_maxima, 2),
             'volatilidad': _calcular_volatilidad_backlog(df_pendientes)
-        }
+        };
         
         return {
             # Montos principales
@@ -1777,7 +1815,7 @@ def _aplicar_distribucion_inteligente(df_pendientes, total_backlog, df_edp_compl
 
 def _calcular_probabilidades_redistribuidas(df_pendientes, total_30d, total_60d, total_90d):
     """
-    Calcula probabilidades cuando se aplicó redistribución inteligente
+    Calcula probabilidades cuando se aplició redistribución inteligente
     """
     try:
         # Probabilidades base ajustadas por contexto
@@ -2299,7 +2337,7 @@ def calcular_proyeccion_anual_inteligente(df_edp, año_actual, mes_actual, ingre
         ]
         
         if len(df_año_actual) >= 3:  # Al menos 3 meses de datos
-            # Agrupar por mes
+        # Agrupar por mes
             ingresos_mensuales = df_año_actual.groupby(df_año_actual['Fecha Emisión'].dt.month)['Monto Aprobado'].sum() / 1_000_000
             
             # Calcular tendencia de los últimos 3 meses
@@ -2518,8 +2556,8 @@ def calcular_costo_financiero_real(df_edp):
         return 1.2
 
 def obtener_kpis_anuales_vacios():
-    """Retorna KPIs anuales vacíos"""
-    return {
+        """Retorna KPIs anuales vacíos"""
+        return {
         'ingresos_ytd': 0,
         'meta_anual': 250.0,
         'proyeccion_anual': 0,
@@ -2536,8 +2574,142 @@ def obtener_kpis_anuales_vacios():
         'costo_financiero': 0
     }
 
-# ===== MODIFICAR LA FUNCIÓN PRINCIPAL PARA USAR LOS CÁLCULOS REALES =====
 
-# En la función dashboard(), después de calcular_kpis_ejecutivos_simplificado, agregar:
 
 # ===== PASO 4.1: AGREGAR KPIs ANUALES REALES =====
+from datetime import datetime
+import pandas as pd
+
+def build_analisis_costos(df_cost):
+    """Construye análisis de costos para el dashboard"""
+    try:        
+        if df_cost is None or df_cost.empty:
+            return {'error': 'No hay datos de costos disponibles'}
+
+        # Limpieza y conversión de columnas clave
+        df_cost['project_id'] = df_cost['project_id'].astype(str).str.strip()
+        df_cost['tipo_costo'] = df_cost['tipo_costo'].str.lower().fillna('opex')
+        df_cost['estado_costo'] = df_cost['estado_costo'].str.lower().fillna('pendiente')
+        df_cost['importe_neto'] = pd.to_numeric(df_cost['importe_neto'], errors='coerce').fillna(0)
+        df_cost['proveedor'] = df_cost['proveedor'].fillna('Sin especificar')
+        if 'fecha_factura' in df_cost.columns:
+            df_cost['fecha_factura'] = pd.to_datetime(df_cost['fecha_factura'], errors='coerce')
+        elif 'created_at' in df_cost.columns:
+            df_cost['fecha_factura'] = pd.to_datetime(df_cost['created_at'], errors='coerce')
+        else:
+            df_cost['fecha_factura'] = pd.NaT  # o puedes omitir la columna
+        df_cost = df_cost.dropna(subset=['fecha_factura'])
+
+        # --- 1. Análisis por tipo de costo
+        analisis_tipo = df_cost.groupby('tipo_costo')['importe_neto'].agg(total='sum', count='count').reset_index()
+        total_costos = analisis_tipo['total'].sum()
+
+        distribucion_tipo = {
+            'labels': analisis_tipo['tipo_costo'].tolist(),
+            'datasets': [{
+                'data': (analisis_tipo['total'] / 1_000_000).round(2).tolist(),
+                'backgroundColor': ['rgba(59, 130, 246, 0.7)', 'rgba(16, 185, 129, 0.7)'],
+                'borderColor': ['rgb(59, 130, 246)', 'rgb(16, 185, 129)'],
+                'borderWidth': 1
+            }]
+        }
+
+        # --- 2. Estado de pagos
+        analisis_estado = df_cost.groupby('estado_costo')['importe_neto'].agg(total='sum', count='count').reset_index()
+        estado_pagos = {
+            'labels': analisis_estado['estado_costo'].tolist(),
+            'datasets': [{
+                'data': (analisis_estado['total'] / 1_000_000).round(2).tolist(),
+                'backgroundColor': ['rgba(34, 197, 94, 0.7)', 'rgba(234, 179, 8, 0.7)'],
+                'borderColor': ['rgb(34, 197, 94)', 'rgb(234, 179, 8)'],
+                'borderWidth': 1
+            }]
+        }
+
+        # --- 3. Top 5 proveedores por costo total
+        top_proveedores = df_cost.groupby('proveedor')['importe_neto'].sum().sort_values(ascending=True).tail(5)
+        proveedores_chart = {
+            'labels': top_proveedores.index.tolist(),
+            'datasets': [{
+                'data': (top_proveedores.values / 1_000_000).round(2).tolist(),
+                'backgroundColor': [
+                    'rgba(59, 130, 246, 0.7)',
+                    'rgba(16, 185, 129, 0.7)',
+                    'rgba(234, 179, 8, 0.7)',
+                    'rgba(239, 68, 68, 0.7)',
+                    'rgba(168, 85, 247, 0.7)'
+                ]
+            }]
+        }
+
+        # --- 4. Tendencia diaria
+        tendencia_diaria = df_cost.groupby('fecha_factura')['importe_neto'].sum().reset_index().sort_values('fecha_factura')
+        tendencia_chart = {
+            'labels': tendencia_diaria['fecha_factura'].dt.strftime('%Y-%m-%d').tolist(),
+            'datasets': [{
+                'label': 'Costos Diarios',
+                'data': (tendencia_diaria['importe_neto'] / 1_000_000).round(2).tolist(),
+                'borderColor': 'rgb(59, 130, 246)',
+                'backgroundColor': 'rgba(59, 130, 246, 0.1)',
+                'fill': True
+            }]
+        }
+
+        # --- 5. Tendencia mensual por tipo
+        df_cost['año_mes'] = df_cost['fecha_factura'].dt.strftime('%Y-%m')
+        tendencia_mensual = df_cost.groupby(['año_mes', 'tipo_costo'])['importe_neto'].sum().reset_index()
+        meses_unicos = sorted(tendencia_mensual['año_mes'].unique())
+
+        datos_opex, datos_capex = [], []
+        for mes in meses_unicos:
+            opex = tendencia_mensual.query("año_mes == @mes and tipo_costo == 'opex'")['importe_neto'].sum()
+            capex = tendencia_mensual.query("año_mes == @mes and tipo_costo == 'capex'")['importe_neto'].sum()
+            datos_opex.append(round(opex / 1_000_000, 2))
+            datos_capex.append(round(capex / 1_000_000, 2))
+
+        labels_meses = [datetime.strptime(m, '%Y-%m').strftime('%b %Y') for m in meses_unicos]
+
+        tendencia_mensual_chart = {
+            'labels': labels_meses,
+            'datasets': [
+                {
+                    'label': 'OPEX',
+                    'data': datos_opex,
+                    'backgroundColor': 'rgba(59, 130, 246, 0.7)',
+                    'borderColor': 'rgb(59, 130, 246)',
+                    'borderWidth': 1
+                },
+                {
+                    'label': 'CAPEX',
+                    'data': datos_capex,
+                    'backgroundColor': 'rgba(16, 185, 129, 0.7)',
+                    'borderColor': 'rgb(16, 185, 129)',
+                    'borderWidth': 1
+                }
+            ]
+        }
+
+        # --- 6. KPIs
+        pagado_total = analisis_estado.query("estado_costo == 'pagado'")['total'].sum() if 'pagado' in analisis_estado['estado_costo'].values else 0
+        opex_total = analisis_tipo.query("tipo_costo == 'opex'")['total'].sum() if 'opex' in analisis_tipo['tipo_costo'].values else 0
+
+        kpis = {
+            'total_costos': round(total_costos / 1_000_000, 2),
+            'total_facturas': len(df_cost),
+            'promedio_factura': round((total_costos / len(df_cost)) / 1_000_000, 2) if len(df_cost) > 0 else 0,
+            'porcentaje_pagado': round((pagado_total / total_costos) * 100, 2) if total_costos > 0 else 0,
+            'ratio_opex_capex': round((opex_total / total_costos) * 100, 2) if total_costos > 0 else 0
+        }
+        return {
+            'distribucion_tipo': distribucion_tipo,
+            'estado_pagos': estado_pagos,
+            'top_proveedores': proveedores_chart,
+            'tendencia_costos': tendencia_chart,
+            'tendencia_mensual': tendencia_mensual_chart,
+            'kpis': kpis
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {'error': f'❌ Error en análisis de costos: {e}'}
