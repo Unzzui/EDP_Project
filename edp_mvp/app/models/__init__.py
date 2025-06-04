@@ -140,13 +140,13 @@ class KPI(BaseModel):
 class LogEntry(BaseModel):
     """Log entry model for tracking changes."""
     
-    id: Optional[int] = None
-    timestamp: Optional[datetime] = None
+    # id: Optional[int] = None
+    fecha_hora: Optional[datetime] = None
     n_edp: Optional[str] = None
     proyecto: Optional[str] = None
     campo: Optional[str] = None
-    valor_anterior: Optional[str] = None
-    valor_nuevo: Optional[str] = None
+    antes: Optional[str] = None
+    despues: Optional[str] = None
     usuario: Optional[str] = None
 
 

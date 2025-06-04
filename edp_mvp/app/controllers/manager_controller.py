@@ -13,7 +13,7 @@ from ..services.manager_service import ManagerService
 from ..services.cashflow_service import CashFlowService
 from ..services.analytics_service import AnalyticsService
 from ..services.kpi_service import KPIService
-from ..services.dashboard_service import DashboardService
+from ..services.controller_service import ControllerService
 from ..utils.validation_utils import ValidationUtils
 from ..utils.format_utils import FormatUtils
 from ..utils.date_utils import DateUtils
@@ -37,7 +37,7 @@ manager_service = ManagerService()
 cashflow_service = CashFlowService()
 analytics_service = AnalyticsService()
 kpi_service = KPIService()
-dashboard_service = DashboardService()
+controller_service = ControllerService()
 
 class ManagerControllerError(Exception):
     """Custom exception for manager controller errors"""

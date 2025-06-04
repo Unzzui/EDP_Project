@@ -4,18 +4,28 @@ This controller replaces the monolithic dashboard/controller.py file.
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, make_response
 from typing import Dict, Any, Optional, List
-from datetime import datetime
 import traceback
-
+from datetime import datetime, timedelta
+import traceback
 from ..services.kanban_service import KanbanService
 from ..services.analytics_service import AnalyticsService
 from ..services.edp_service import EDPService
-from ..services.dashboard_service import DashboardService
+from ..services.controller_service import ControllerService
 from ..services.kpi_service import KPIService
 from ..utils.validation_utils import ValidationUtils
 from ..utils.format_utils import FormatUtils
 from ..utils.date_utils import DateUtils
 from ..extensions import socketio
+import pandas as pd
+
+class DictToObject:
+    """Simple class to convert dictionaries to objects with dot notation access."""
+    def __init__(self, dictionary):
+        for key, value in dictionary.items():
+            if isinstance(value, dict):
+                setattr(self, key, DictToObject(value))
+            else:
+                setattr(self, key, value)
 
 # Create Blueprint
 controller_controller_bp = Blueprint("controller", __name__, url_prefix="/controller")
@@ -24,62 +34,164 @@ controller_controller_bp = Blueprint("controller", __name__, url_prefix="/contro
 kanban_service = KanbanService()
 analytics_service = AnalyticsService()
 edp_service = EDPService()
-dashboard_service = DashboardService()
+controller_service = ControllerService()
 kpi_service = KPIService()
+
+
+
+class ManagerControllerError(Exception):
+    """Custom exception for manager controller errors"""
+    pass
+
+def _handle_controller_error(error: Exception, context: str = "") -> Dict[str, Any]:
+    """Handle controller errors consistently"""
+    error_msg = f"Error in manager controller{': ' + context if context else ''}: {str(error)}"
+    print(f"❌ {error_msg}")
+    print(f"🔍 Traceback: {traceback.format_exc()}")
+    
+    return {
+        'error': True,
+        'message': error_msg,
+        'data': None
+    }
+
+def _parse_date_filters(request) -> Dict[str, Any]:
+    """Parse and validate date filters from request"""
+    hoy = datetime.now()
+    fecha_inicio = request.args.get('fecha_inicio')
+    fecha_fin = request.args.get('fecha_fin')
+    periodo_rapido = request.args.get('periodo_rapido')
+    
+    # Procesar filtros de fecha rápidos
+    if periodo_rapido:
+        if periodo_rapido == '7':
+            fecha_inicio = (hoy - timedelta(days=7)).strftime('%Y-%m-%d')
+            fecha_fin = hoy.strftime('%Y-%m-%d')
+        elif periodo_rapido == '30':
+            fecha_inicio = (hoy - timedelta(days=30)).strftime('%Y-%m-%d')
+            fecha_fin = hoy.strftime('%Y-%m-%d')
+        elif periodo_rapido == '90':
+            fecha_inicio = (hoy - timedelta(days=90)).strftime('%Y-%m-%d')
+            fecha_fin = hoy.strftime('%Y-%m-%d')
+        elif periodo_rapido == '365':
+            fecha_inicio = (hoy - timedelta(days=365)).strftime('%Y-%m-%d')
+            fecha_fin = hoy.strftime('%Y-%m-%d')
+    
+    return {
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+        'periodo_rapido': periodo_rapido
+    }
+
+def _parse_filters(request) -> Dict[str, Any]:
+    """Parse all filters from request"""
+    date_filters = _parse_date_filters(request)
+    
+    return {
+        **date_filters,
+        'departamento': request.args.get('departamento', 'todos'),
+        'cliente': request.args.get('cliente', 'todos'),
+        'estado': request.args.get('estado', 'todos'),
+        'vista': request.args.get('vista', 'general'),
+        'monto_min': request.args.get('monto_min'),
+        'monto_max': request.args.get('monto_max'),
+        'dias_min': request.args.get('dias_min')
+    }
+
+def _get_empty_dashboard_data() -> Dict[str, Any]:
+    """Get empty dashboard data for error cases"""
+    empty_kpis_dict = controller_service.get_empty_kpis()
+    
+    return {
+        'error': "Error al cargar datos",
+        'kpis': DictToObject(empty_kpis_dict),  # Convert to object for dot notation
+        'charts_json': "{}",
+        'charts': {},
+        'cash_forecast': {},
+        'alertas': [],
+        'fecha_inicio': None,
+        'fecha_fin': None,
+        'periodo_rapido': None,
+        'departamento': 'todos',
+        'cliente': 'todos',
+        'estado': 'todos',
+        'vista': 'general',
+        'monto_min': None,
+        'monto_max': None,
+        'dias_min': None,
+        'jefes_proyecto': [],
+        'clientes': [],
+        'rentabilidad_proyectos': [],
+        'rentabilidad_clientes': [],
+        'rentabilidad_gestores': [],
+        'top_edps': []
+    }
+
 
 @controller_controller_bp.route("/dashboard")
 def dashboard_controller():
-    """Main controller dashboard with KPIs, metrics and analysis."""
+    """
+    Dashboard principal del controlador con KPIs, métricas financieras y análisis de EDPs.
+    Refactorizado para usar el servicio especializado de controller manteniendo compatibilidad completa.
+    """
     try:
-        # Get filters from request
-        filters = {
-            "mes": request.args.get("mes"),
-            "encargado": request.args.get("encargado"),
-            "cliente": request.args.get("cliente"),
-            "estado": request.args.get("estado"),
-            "estado_detallado": request.args.get("estado_detallado")
-        }
+        print("🚀 Iniciando carga del dashboard de controller...")
         
-        # Get dashboard overview data
-        dashboard_response = dashboard_service.get_dashboard_overview(filters)
+        # ===== PASO 1: OBTENER FILTROS =====
+        filters = _parse_filters(request)
+        print(f"📊 Filtros aplicados: {filters}")
+        
+        # ===== PASO 2: CARGAR DATOS CRUDOS =====
+        datos_response = controller_service.load_related_data()
+        if not datos_response.success:
+            print(f"❌ Error cargando datos relacionados: {datos_response.message}")
+            return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
+        
+        datos_relacionados = datos_response.data
+        print(f"✅ Datos relacionados cargados exitosamente")
+        print(f"🔍 Datos relacionados: {datos_relacionados.keys()}")
+        
+        # Extract raw DataFrames
+        df_edp_raw = pd.DataFrame(datos_relacionados.get('edps', []))
+        df_log_raw = pd.DataFrame(datos_relacionados.get('logs', []))
+        
+        
+        if df_edp_raw is None or df_edp_raw.empty:
+            print("❌ Error: No se pudo cargar el DataFrame de EDP")
+            return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
+        
+        # ===== PASO 3: PROCESAR CON EL NUEVO SERVICIO =====
+        dashboard_response = controller_service.get_processed_dashboard_context(df_edp_raw, df_log_raw, filters)
         
         if not dashboard_response.success:
-            flash(f"Error loading dashboard: {dashboard_response.message}", "error")
-            return render_template("error.html", message=dashboard_response.message)
+            print(f"❌ Error procesando dashboard: {dashboard_response.message}")
+            return render_template('controller/controller_dashboard.html', **dashboard_response.data)
         
-        dashboard_data = dashboard_response.data
+        dashboard_context = dashboard_response.data
+        print(f"✅ Dashboard procesado exitosamente")
         
-        # Get KPIs data
-        kpis_response = kpi_service.calculate_comprehensive_kpis(filters)
-        kpis_data = kpis_response.data if kpis_response.success else {}
+        # ===== PASO 4: RENDERIZAR TEMPLATE =====
+        print(f"🎯 Dashboard de controller cargado exitosamente")
+        return render_template('controller/controller_dashboard.html', **dashboard_context)
         
-        return render_template(
-            "controller/controller_dashboard.html",
-            # Datos base
-            registros=dashboard_data.get('records', []),
-            filtros=filters,
-            
-            # Opciones para filtros
-            meses=dashboard_data.get('filter_options', {}).get('meses', []),
-            encargados=dashboard_data.get('filter_options', {}).get('encargados', []),
-            clientes=dashboard_data.get('filter_options', {}).get('clientes', []),
-            estados_detallados=dashboard_data.get('filter_options', {}).get('estados_detallados', []),
-            
-            # KPIs y métricas
-            **kpis_data,
-            **dashboard_data.get('metrics', {}),
-            
-            # Datos adicionales
-            chart_data=dashboard_data.get('chart_data', {}),
-            recent_activity=dashboard_data.get('recent_activity', []),
-            alerts=dashboard_data.get('alerts', []),
-            last_updated=dashboard_data.get('last_updated')
-        )
-    
     except Exception as e:
-        flash(f"Unexpected error: {str(e)}", "error")
-        return render_template("error.html", message="An unexpected error occurred")
-
+        error_info = _handle_controller_error(e, "dashboard")
+        print(f"💥 Error crítico en dashboard de controller: {error_info}")
+        
+        # Return default context on critical error
+        try:
+            default_context = controller_service._get_default_processed_context(filters if 'filters' in locals() else {})
+            return render_template('controller/controller_dashboard.html', **default_context)
+        except:
+            return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
+        return render_template('controller/controller_dashboard.html', **template_context)
+        
+    except Exception as e:
+        error_info = _handle_controller_error(e, "dashboard")
+        print(f"💥 Error crítico en dashboard de controller: {error_info}")
+        return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
+    
+    
 @controller_controller_bp.route("/kanban")
 def vista_kanban():
     """Kanban board view with filtering and real-time updates."""
@@ -154,7 +266,7 @@ def actualizar_estado_kanban():
             return jsonify({
                 "success": False,
                 "message": update_response.message
-            }), 400
+            }, 400)
     
     except Exception as e:
         return jsonify({
@@ -201,7 +313,7 @@ def actualizar_estado_detallado():
             return jsonify({
                 "success": False,
                 "message": update_response.message
-            }), 400
+            }, 400)
     
     except Exception as e:
         return jsonify({
@@ -463,6 +575,100 @@ def analisis_issues():
     except Exception as e:
         flash(f"Error al cargar análisis: {str(e)}", "error")
         return redirect(url_for("controller.vista_issues"))
+
+# === HELPER FUNCTIONS ===
+
+def _calcular_dso_simple(registros):
+    """
+    Calcula DSO simple para una lista de registros (diccionarios)
+    """
+    if not registros:
+        return 0
+    
+    registros_validos = []
+    for r in registros:
+        if r.get("Fecha Emisión") and (r.get("Fecha Pago") or r.get("Fecha Conformidad")):
+            try:
+                fecha_emision = datetime.strptime(str(r["Fecha Emisión"]), "%Y-%m-%d")
+                fecha_final = None
+                
+                if r.get("Fecha Pago"):
+                    fecha_final = datetime.strptime(str(r["Fecha Pago"]), "%Y-%m-%d")
+                elif r.get("Fecha Conformidad"):
+                    fecha_final = datetime.strptime(str(r["Fecha Conformidad"]), "%Y-%m-%d")
+                
+                if fecha_final:
+                    dias_cobro = (fecha_final - fecha_emision).days
+                    if dias_cobro >= 0:
+                        registros_validos.append({
+                            'dias': dias_cobro,
+                            'monto': float(r.get("monto_aprobado", 0))
+                        })
+            except:
+                continue
+    
+    if not registros_validos:
+        return 0
+    
+    # Calculate weighted average
+    total_monto = sum(r['monto'] for r in registros_validos)
+    if total_monto == 0:
+        return 0
+    
+    dso = sum(r['dias'] * r['monto'] for r in registros_validos) / total_monto
+    return round(dso, 1)
+
+
+def _calcular_variaciones_mensuales(df_full_dict, mes_actual_param, meses_disponibles, total_pagado_global, META_GLOBAL):
+    """
+    Calcula las variaciones de métricas respecto al mes anterior.
+    """
+    variaciones = {
+        "meta_var_porcentaje": 0,
+        "pagado_var_porcentaje": 0,
+        "pendiente_var_porcentaje": 0,
+        "avance_var_porcentaje": 0
+    }
+    
+    if not meses_disponibles or len(meses_disponibles) <= 1:
+        return variaciones
+    
+    mes_actual = mes_actual_param if mes_actual_param else max(meses_disponibles)
+    mes_anterior = None
+    
+    if mes_actual and len(meses_disponibles) > 1:
+        try:
+            idx_mes_actual = meses_disponibles.index(mes_actual)
+            mes_anterior = meses_disponibles[idx_mes_actual - 1] if idx_mes_actual > 0 else None
+        except ValueError:
+            pass
+    
+    if mes_anterior:
+        # Filter records for previous month
+        registros_mes_anterior = [r for r in df_full_dict if r.get("Mes") == mes_anterior]
+        
+        # Previous month metrics
+        meta_mes_anterior = META_GLOBAL  # Assuming constant META_GLOBAL
+        pagado_mes_anterior = sum(float(r.get("monto_aprobado", 0)) for r in registros_mes_anterior if r.get("estado") == "pagado")
+        avance_mes_anterior = round(pagado_mes_anterior / meta_mes_anterior * 100, 1) if meta_mes_anterior > 0 else 0
+        
+        # Calculate variations
+        variaciones["pagado_var_porcentaje"] = round(
+            ((total_pagado_global - pagado_mes_anterior) / pagado_mes_anterior * 100) if pagado_mes_anterior else 0, 1
+        )
+        
+        # Pending variations
+        pendiente_actual = META_GLOBAL - total_pagado_global
+        pendiente_anterior = meta_mes_anterior - pagado_mes_anterior
+        variaciones["pendiente_var_porcentaje"] = round(
+            ((pendiente_actual - pendiente_anterior) / pendiente_anterior * 100) if pendiente_anterior else 0, 1
+        )
+        
+        # Progress variation (in percentage points)
+        avance_global = round(total_pagado_global / META_GLOBAL * 100, 1) if META_GLOBAL > 0 else 0
+        variaciones["avance_var_porcentaje"] = round(avance_global - avance_mes_anterior, 1)
+    
+    return variaciones
 
 # API endpoints for real-time data
 @controller_controller_bp.route("/api/kanban/stats")

@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 
 from ..services.edp_service import EDPService
-from ..services.dashboard_service import DashboardService
+from ..services.controller_service import ControllerService
 from ..services.kpi_service import KPIService
 from ..utils.validation_utils import ValidationUtils
 from ..utils.format_utils import FormatUtils
@@ -19,7 +19,7 @@ edp_controller_bp = Blueprint("edp_controller", __name__, url_prefix="/edp")
 
 # Initialize services
 edp_service = EDPService()
-dashboard_service = DashboardService()
+controller_service = ControllerService()
 kpi_service = KPIService()
 
 
@@ -28,7 +28,7 @@ def index():
     """Main EDP dashboard page."""
     try:
         # Get dashboard overview data
-        overview_response = dashboard_service.get_dashboard_overview()
+        overview_response = controller_service.get_dashboard_overview()
         
         if not overview_response.success:
             flash(f"Error loading dashboard: {overview_response.message}", "error")

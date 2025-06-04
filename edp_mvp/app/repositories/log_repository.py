@@ -4,29 +4,61 @@ Log Repository for handling log entries data operations.
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 from ..models import LogEntry
-from . import BaseRepository
-
+from . import BaseRepository, SheetsRepository
+import pandas as pd
 
 class LogRepository(BaseRepository):
     """Repository for managing log entries."""
     
     def __init__(self):
         super().__init__()
-        self.sheet_name = "Logs"
+        self.sheets_repo = SheetsRepository()
+        self.sheet_name = "log"
+        self.range_name = "log!A:G"
     
     def find_all(self) -> List[LogEntry]:
         """Get all log entries."""
         try:
-            sheet = self.get_sheet(self.sheet_name)
-            if not sheet:
-                return []
+            df = self._read_sheet_with_transformations()
+            models = self._dataframe_to_models(df)
             
-            records = sheet.get_all_records()
-            return [self._dict_to_log_entry(record) for record in records]
+            return {
+                'success': True,
+                'data': models,
+                'message': f"Successfully retrieved {len(models)} Log entries."
+            }
         except Exception as e:
-            print(f"Error fetching all logs: {e}")
-            return []
+            return {
+                'success': False,
+                'data': [],
+                'message': f"Error retrieving Logs: {str(e)}"
+            }
     
+    
+
+    def _read_sheet_with_transformations(self) -> pd.DataFrame:
+        """Read EDP sheet with all transformations applied."""
+        values = self._read_range(self.range_name)
+        df = self._values_to_dataframe(values)
+        
+        if df.empty:
+            return df
+        
+        # Apply transformations
+        df = self._apply_transformations(df)
+        
+        return df
+    
+    def _apply_transformations(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Apply necessary transformations to the DataFrame."""
+        # Convert timestamp to datetime
+        # df['fecha_hora'] = pd.to_datetime(df['fecha_hora'], errors='coerce')
+        
+        # # Convert details from string to dictionary if needed
+        # if 'campo' in df.columns:
+        #     df['campo'] = df['campo'].apply(lambda x: eval(x) if isinstance(x, str) else x)
+        
+        return df
     def find_by_edp_id(self, edp_id: str) -> List[LogEntry]:
         """Get all log entries for a specific EDP."""
         try:
@@ -133,3 +165,65 @@ class LogRepository(BaseRepository):
             log_entry.user,
             str(log_entry.details) if log_entry.details else ''
         ]
+
+    def _dataframe_to_models(self, df: pd.DataFrame) -> List[LogEntry]:
+        """Convert DataFrame to list of EDP models."""
+        models = []
+        
+        for _, row in df.iterrows():
+            model_data = {
+                'id': row.get('id'),
+                'fecha_hora': row.get('fecha_hora'),
+                'n_edp': row.get('n_edp'),
+                'proyecto': row.get('proyecto'),
+                'campo': row.get('campo'),
+                'antes': row.get('antes'),
+                'despues': row.get('despues'),
+                'usuario': row.get('usuario', {})
+            }
+            
+            # Clean None values and convert types
+            cleaned_data = {}
+            for k, v in model_data.items():
+                if pd.isna(v):
+                    cleaned_data[k] = None
+                else:
+                    cleaned_data[k] = v
+            
+            models.append(LogEntry.from_dict(cleaned_data))
+        
+        return models
+    
+    def _model_to_row_values(self, log: LogEntry, headers: Optional[List[str]] = None) -> List[str]:
+        """Convert EDP model to row values for Google Sheets."""
+        if headers is None:
+            headers = self.sheets_repo._get_headers(self.sheet_name)
+        
+        # Map model fields to sheet columns (now using lowercase names)
+        field_mapping = {
+            'id': log.id,
+            'fecha_hora': log.timestamp.isoformat() if log.timestamp else None,
+            'n_edp': log.edp_id,
+            'proyecto': log.proyecto,
+            'campo': str(log.details) if log.details else None,
+            'antes': str(log.before) if log.before else None,
+            'despues': str(log.after) if log.after else None,
+            'usuario': log.user
+        }
+        
+        # Build row values according to headers
+        row_values = []
+        for header in headers:
+            value = field_mapping.get(header, "")
+            row_values.append(str(value) if value is not None else "")
+        
+        return row_values
+    
+    def _get_last_column(self, num_cols: int) -> str:
+        """Convert column number to Excel column letter."""
+        result = ""
+        while num_cols > 0:
+            num_cols -= 1
+            result = chr(65 + (num_cols % 26)) + result
+            num_cols //= 26
+        return result

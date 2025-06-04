@@ -24,7 +24,7 @@ def test_service_imports():
         print("3. Testing other services...")
         from edp_mvp.app.services.kanban_service import KanbanService
         from edp_mvp.app.services.edp_service import EDPService
-        from edp_mvp.app.services.dashboard_service import DashboardService
+        from edp_mvp.app.services.controller_service import DashboardService
         from edp_mvp.app.services.kpi_service import KPIService
         from edp_mvp.app.services.manager_service import ManagerService
         
