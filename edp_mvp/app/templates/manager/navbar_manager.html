@@ -4,7 +4,7 @@
     <!-- Logo y título -->
     <div class="flex items-center">
       <a
-        href="{{ url_for('manager_bp.dashboard') }}"
+        href="{{ url_for('manager.dashboard') }}"
         class="flex items-center text-lg font-bold transition-transform hover:scale-105">
         <svg
           class="w-6 h-6 text-[color:var(--accent-blue)] mr-2"
@@ -47,7 +47,7 @@
     <ul class="hidden md:flex space-x-8 text-sm font-medium">
       <li>
         <a
-          href="{{ url_for('manager_bp.dashboard') }}"
+          href="{{ url_for('manager.dashboard') }}"
           class="flex items-center py-2 px-3 rounded-md transition-all duration-200 {% if 'dashboard' in request.endpoint %} text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold {% else %} hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% endif %}">
           <svg
             class="w-4 h-4 mr-1.5"
@@ -141,7 +141,7 @@
     <div class="flex items-center space-x-3">
       <!-- Breadcrumb visual para vista controller -->
       <a
-        href="{{ url_for('controller_bp.dashboard_controller') }}"
+        href="{{ url_for('controller.dashboard_controller') }}"
         class="hidden sm:flex items-center text-xs text-[color:var(--text-secondary)] hover:text-[color:var(--accent-blue)] transition-colors">
         <svg
           class="w-3 h-3 mr-1"
@@ -277,7 +277,7 @@
     id="mobile-menu"
     class="hidden md:hidden bg-[color:var(--bg-card)] border-t border-[color:var(--border-color)] px-2 py-3 animate-fadeIn">
     <a
-      href="{{ url_for('manager_bp.dashboard') }}"
+      href="{{ url_for('manager.dashboard') }}"
       class="block py-2 px-4 rounded-md mb-1 {% if 'dashboard' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
       Dashboard
     </a>

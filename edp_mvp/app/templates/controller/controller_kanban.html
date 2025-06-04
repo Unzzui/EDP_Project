@@ -448,7 +448,7 @@ button.processing {
         Ocultar columnas vacías
       </button>
       
-      <a href="{{ url_for('controller_bp.dashboard_controller') }}" 
+      <a href="{{ url_for('controller.dashboard_controller') }}" 
          class="flex items-center bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-xl text-sm border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -519,7 +519,7 @@ button.processing {
     </div>
 
     <div class="mt-4 flex items-center justify-end">
-      <a href="{{ url_for('controller_bp.vista_kanban') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] mr-4 transition-colors">
+      <a href="{{ url_for('controller.vista_kanban') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] mr-4 transition-colors">
         Limpiar filtros
       </a>
       <button type="submit" class="btn-primary">

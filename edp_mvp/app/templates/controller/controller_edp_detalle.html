@@ -199,7 +199,7 @@
 
     <!-- ===== ACCIONES ===== -->
     <div class="flex flex-wrap justify-end gap-3 pt-4">
-      <a href="{{ url_for('controller_bp.dashboard_controller') }}" class="btn-secondary">Volver</a>
+      <a href="{{ url_for('controller.dashboard_controller') }}" class="btn-secondary">Volver</a>
       <button type="submit" class="btn-primary flex items-center" id="submitButton">
         <span>Guardar Cambios</span>
         <span id="loadingIndicator" class="ml-2 hidden">
@@ -215,7 +215,7 @@
 
 <!-- ===== HISTORIAL ===== -->
 <div class="mb-4 bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow">
-  <a href="{{ url_for('controller_bp.ver_log_edp', n_edp=edp['N° EDP']) }}" class="flex items-center text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)]">
+  <a href="{{ url_for('controller.ver_log_edp', n_edp=edp['N° EDP']) }}" class="flex items-center text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)]">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 001.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
     </svg>

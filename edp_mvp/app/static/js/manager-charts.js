@@ -585,7 +585,7 @@ if (cashForecastElement) {
 const departmentProfitElement = document.getElementById('departmentProfitChart');
 if (departmentProfitElement) {
   try {
-    const data = chartsData.rentabilidad_departamentos;
+    const data = chartsData.rendimiento_gestores;
     const adaptiveColors = getAdaptiveColors();
     console.log('📈 Creando department profit chart:', data);
     
@@ -599,7 +599,7 @@ if (departmentProfitElement) {
         plugins: {
           title: {
             display: true,
-            text: 'Rentabilidad por Departamento',
+            text: 'Rentabilidad por Jefe de Proyecto',
             color: adaptiveColors.textPrimary
           },
           legend: {
@@ -658,7 +658,7 @@ if (departmentProfitElement) {
 const budgetDistributionElement = document.getElementById('budgetDistributionChart');
 if (budgetDistributionElement) {
   try {
-    const data = chartsData.analisis_costos.distribucion_tipo;
+    const data = chartsData.opex_capex_breakdown;
     const adaptiveColors = getAdaptiveColors();
     console.log('📊 Creando gráfico de distribución de costos:', data);
     
@@ -1210,5 +1210,87 @@ if (timelineElement) {
     }
     originalSetItem.apply(this, arguments);
   };
+  // ===== SPARKLINE PARA KPI INGRESOS TOTALES =====
+  function renderSparkline() {
+    const sparklineCanvas = document.getElementById('ingresosSparkline');
+    if (!sparklineCanvas) {
+      console.log('📊 Sparkline canvas not found');
+      return;
+    }
+    
+    try {
+      // Obtener datos del atributo data-sparkline
+      const sparklineData = sparklineCanvas.getAttribute('data-sparkline');
+      if (!sparklineData) {
+        console.log('📊 No sparkline data found');
+        return;
+      }
+      
+      const data = JSON.parse(sparklineData);
+      const adaptiveColors = getAdaptiveColors();
+      
+      console.log('✨ Renderizando sparkline con datos:', data);
+      
+      // Configuración minimalista para sparkline
+      new Chart(sparklineCanvas, {
+        type: 'line',
+        data: {
+          labels: ['', '', '', '', '', ''], // Etiquetas vacías para datos de 6 meses
+          datasets: [{
+            data: data,
+            borderColor: 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            borderWidth: 1.5,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: false
+            }
+          },
+          scales: {
+            x: {
+              display: false
+            },
+            y: {
+              display: false
+            }
+          },
+          elements: {
+            point: {
+              radius: 0
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          animation: {
+            duration: 1000,
+            easing: 'easeInOutQuart'
+          }
+        }
+      });
+      
+      console.log('✅ Sparkline renderizado exitosamente');
+      
+    } catch (error) {
+      console.error('❌ Error renderizando sparkline:', error);
+    }
+  }
+  
+  // Renderizar sparkline después de que se inicialicen los otros charts
+  renderSparkline();
+
   console.log('🎉 Charts Manager inicializado con tema adaptativo automático');
 });

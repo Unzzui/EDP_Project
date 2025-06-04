@@ -1,5 +1,10 @@
 from edp_mvp.app import create_app
 from edp_mvp.app.extensions import socketio
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv()
 
 app = create_app()
 

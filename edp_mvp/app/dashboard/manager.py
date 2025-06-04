@@ -6,6 +6,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
 import traceback
+import math
 
 # Constants
 COSTO_CAPITAL_ANUAL = 0.12  # 12% anual
@@ -143,7 +144,8 @@ def dashboard():
                                  clientes=[],
                                  rentabilidad_proyectos=pd.DataFrame(),
                                  rentabilidad_clientes=pd.DataFrame(),
-                                 rentabilidad_gestores=pd.DataFrame())
+                                 rentabilidad_gestores=pd.DataFrame(),
+                                 top_edps=[])
         
         print(f"📊 Datos relacionados simplificados creados exitosamente")
         
@@ -172,14 +174,46 @@ def dashboard():
                 fecha_inicio = (hoy - timedelta(days=365)).strftime('%Y-%m-%d')
                 fecha_fin = hoy.strftime('%Y-%m-%d')
         
+        
+        
+        
         # ===== PASO 3: PREPARAR LISTAS PARA SELECTORES =====
         df_edp = datos_relacionados['df_edp']
         jefes_proyecto = sorted([j for j in df_edp['Jefe de Proyecto'].unique() if pd.notna(j) and str(j).strip()])
         clientes = sorted([c for c in df_edp['Cliente'].unique() if pd.notna(c) and str(c).strip()])
+      
+        try:
+            # Obtener top EDPs
+            df_pendientes = df_edp[~df_edp['Estado'].str.strip().isin(['validado', 'pagado'])].copy()
+           
+            df_pendientes['Monto Aprobado'] = pd.to_numeric(df_pendientes['Monto Aprobado'], errors='coerce')
+            
+            print(f"🔍 df_pendientes shape: {df_pendientes.shape}")
+            print(df_pendientes[['N° EDP', 'Monto Aprobado', 'Estado']].head(5))
+            top10 = df_pendientes.sort_values('Monto Aprobado', ascending=False).head(10)
+            top_edps = []
+            for _, row in top10.iterrows():
+                top_edps.append({
+                    'id': row.get('ID', ''),
+                    'edp': row.get('N° EDP', ''),
+                    'proyecto': row.get('Proyecto', ''),
+                    'cliente': row.get('Cliente', ''),
+                    'monto': float(row.get('Monto Aprobado', 0)) / 1_000_000,  # Convert to millions
+                    'dias_espera': int(row.get('Días Espera', 0)),
+                    'encargado': row.get('Jefe de Proyecto', ''),
+                })
+            
+
+            
+            total_edps = len(df_pendientes)
+        except Exception as e:
+            print(f"❌ Error al obtener los top EDPs: {e}")
+            top_edps = []
+            total_edps = 0
         
         # ===== PASO 4: CALCULAR KPIs SIMPLIFICADOS =====
         try:
-            kpis = calcular_kpis_ejecutivos_simplificado(
+            kpis = calcular_kpis_ejecutivos(
                 datos_relacionados, 
                 fecha_inicio, 
                 fecha_fin, 
@@ -242,6 +276,7 @@ def dashboard():
         
         return render_template('manager/dashboard.html', 
                              kpis=kpis,
+                             top_edps=top_edps,
                              charts=charts_data_clean,
                              charts_json=charts_json,
                              cash_forecast=cash_forecast_data,
@@ -262,6 +297,8 @@ def dashboard():
                              rentabilidad_clientes=pd.DataFrame(),
                              rentabilidad_gestores=pd.DataFrame(),
                              error=None)
+                             
+                             
     
     except Exception as e:
         print(f"❌ Error crítico en dashboard simplificado: {str(e)}")
@@ -285,7 +322,9 @@ def dashboard():
                              clientes=[],
                              rentabilidad_proyectos=pd.DataFrame(),
                              rentabilidad_clientes=pd.DataFrame(),
-                             rentabilidad_gestores=pd.DataFrame())
+                             rentabilidad_gestores=pd.DataFrame(),
+                             top_edps=[]
+                            )
 
 # ===== FUNCIONES DE DATOS SIMPLIFICADAS =====
 def crear_relaciones_datos_simplificado():
@@ -385,7 +424,7 @@ def crear_relaciones_datos_simplificado():
         traceback.print_exc()
         return None
 
-def calcular_kpis_ejecutivos_simplificado(datos_relacionados, fecha_inicio=None, fecha_fin=None, departamento='todos', cliente='todos', estado='todos'):
+def calcular_kpis_ejecutivos(datos_relacionados, fecha_inicio=None, fecha_fin=None, departamento='todos', cliente='todos', estado='todos'):
     """Calcula KPIs usando el enfoque simplificado sin merges complejos"""
     try:
         if datos_relacionados is None:
@@ -549,6 +588,38 @@ def calcular_kpis_ejecutivos_simplificado(datos_relacionados, fecha_inicio=None,
         
         indice_calidad = round(100 - (total_cambios / len(df_periodo) * 10) if len(df_periodo) > 0 else 100, 1)
         
+                # 1. Historial real de 6 meses
+        hoy = datetime.today()
+        primer_dia_mes_actual = hoy.replace(day=1)
+
+        # Filtrar los últimos 6 meses (incluye mes actual)
+        fecha_corte = (primer_dia_mes_actual - pd.DateOffset(months=5)).replace(day=1)
+        df_ultimos_6 = df_periodo[df_periodo['Fecha Conformidad'] >= fecha_corte]
+
+        # Agrupar por mes
+        historial_millones = (
+            df_ultimos_6
+            .groupby(pd.Grouper(key='Fecha Conformidad', freq='M'))['Monto Aprobado']
+            .sum()
+            .sort_index()
+            .tail(6)                          # Asegura exactamente 6 elementos
+            .div(1_000_000)                   # A millones
+            .round(1)
+            .tolist()
+        )
+
+       
+        # 2. Run-rate anual
+        meses_transcurridos = hoy.month      # 1 … 12
+        monto_cobrado_ytd = (
+            df_edp[df_edp['Fecha Conformidad'] >= hoy.replace(month=1, day=1)]['Monto Aprobado']
+            .sum()
+        )
+        print(f"📈 Monto cobrado YTD: {monto_cobrado_ytd} millones")
+        run_rate_anual_millones = round((monto_cobrado_ytd / meses_transcurridos) * 12 / 1_000_000, 1)
+
+        
+        
         # ===== RETORNAR KPIs CONSOLIDADOS =====
         return {
             # Financieros básicos
@@ -611,11 +682,19 @@ def calcular_kpis_ejecutivos_simplificado(datos_relacionados, fecha_inicio=None,
             'eficiencia_gestores': eficiencia_gestores,
             'rentabilidad_por_gestor': rentabilidad_por_gestor,
             
-            # Metas y benchmarks
+            # Metas y benchmarks 
             'meta_ingresos': 3000,
             'vs_meta_ingresos': round(monto_cobrado / 1_000_000 - 3000, 1),
             'pct_meta_ingresos': round(monto_cobrado / 1_000_000 / 3000 * 100, 1),
             'crecimiento_ingresos': 8.5,
+            
+            # ✅ KPIs específicos para "Ingresos Totales" mejorado
+            'run_rate_anual': run_rate_anual_millones, # Run-rate: 12 × promedio mensual YTD
+            'historial_6_meses': historial_millones, # Últimos 6 meses (incluye mes actual)
+            'top_driver_1_name': 'Proyecto Atacama',
+            'top_driver_1_value': '12.3',
+            'top_driver_2_name': 'Cliente Premium',
+            'top_driver_2_value': '8.7',
             
             # Calidad y eficiencia
             'utilizacion_recursos': round(pct_avance * 0.8 + (100 - pct_critico) * 0.2, 1),
@@ -685,7 +764,7 @@ def calcular_kpis_ejecutivos_simplificado(datos_relacionados, fecha_inicio=None,
         }
         
     except Exception as e:
-        print(f"❌ Error en calcular_kpis_ejecutivos_simplificado: {e}")
+        print(f"❌ Error en calcular_kpis_ejecutivos: {e}")
         import traceback
         traceback.print_exc()
         return obtener_kpis_vacios()
@@ -2180,7 +2259,7 @@ def critical_projects():
         'count': len(proyectos_criticos)
     })
     
-# Agregar estas funciones después de la función calcular_kpis_ejecutivos_simplificado
+# Agregar estas funciones después de la función calcular_kpis_ejecutivos
 
 def calcular_kpis_anuales_reales(datos_relacionados):
     """Calcula KPIs anuales reales basados en datos de Google Sheets"""
@@ -2713,3 +2792,58 @@ def build_analisis_costos(df_cost):
         import traceback
         traceback.print_exc()
         return {'error': f'❌ Error en análisis de costos: {e}'}
+
+
+def get_top_edps_by_value(df_edp, estado='todos'):
+    """
+    Obtiene los top EDPs por valor pendiente con capacidades de filtrado y paginación.
+    
+    Args:
+        df_edp (pd.DataFrame): DataFrame con los datos de EDPs
+        estado (str): Estado para filtrar ('todos', 'pendiente', 'riesgo', 'critico')
+     
+    
+    Returns:
+        dict: Diccionario con los EDPs filtrados y metadata de paginación
+    """
+    try:
+        # Crear copia para no modificar el original
+        df_edp = df_edp.copy()
+            
+        df_pendientes = df_edp[~df_edp['Estado'].str.strip().isin(['validado', 'pagado'])].copy()
+        df_pendientes['Monto Aprobado'] = pd.to_numeric(df_pendientes['Monto Aprobado'], errors='coerce')
+        
+        
+        df_pendientes['Próxima Fecha'] = pd.to_datetime(df_pendientes['Fecha Estimada de Pago'], errors='coerce')
+        df_pendientes['Días Próx Fecha'] = (df_pendientes['Próxima Fecha'] - datetime.now()).dt.days
+        
+        top10 = df_pendientes.sort_values('Monto Aprobado', ascending=False).head(10)
+        top_edps = []
+        for _, row in top10.iterrows():
+            top_edps.append({
+                'id': row.get('ID', ''),
+                'edp': row.get('N° EDP', ''),
+                'proyecto': row.get('Proyecto', ''),
+                'cliente': row.get('Cliente', ''),
+                'monto': float(row.get('Monto Aprobado', 0)) / 1_000_000,  # Convert to millions
+                'dias': int(row.get('Días Espera', 0)),
+                'encargado': row.get('Jefe de Proyecto', ''),
+                'prox_fecha': row['Próxima Fecha'].strftime('%d/%m/%Y') if pd.notna(row['Próxima Fecha']) else '-',
+                'dias_prox_fecha': int(row.get('Días Próx Fecha', 0)) if pd.notna(row.get('Días Próx Fecha')) else 0
+            })
+            
+      
+        print(f"📊 Top EDPs obtenidos: {top_edps}")
+        return {
+            'top_edps': top_edps,
+        }
+            
+    except Exception as e:
+        print(f"Error al obtener los top EDPs: {e}")
+        return {
+            'top_edps': [],
+            'total_items': 0,
+        }
+    
+        
+   

@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container mx-auto px-4 py-6">
   <div class="mb-6">
-    <a href="{{ url_for('controller_bp.vista_issues') }}" class="text-[color:var(--accent-blue)] hover:underline flex items-center">
+    <a href="{{ url_for('controller.vista_issues') }}" class="text-[color:var(--accent-blue)] hover:underline flex items-center">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
@@ -66,7 +66,7 @@
           <h3 class="text-sm font-medium mb-2">Relacionado con</h3>
           <div class="flex flex-wrap gap-2">
             {% if incidencia["EDP Relacionado"] %}
-            <a href="{{ url_for('controller_bp.detalle_edp', n_edp=incidencia['EDP Relacionado']) }}" class="px-2 py-1 text-xs bg-[color:var(--bg-subtle)] rounded-lg hover:bg-[color:var(--bg-hover)] transition-colors">
+            <a href="{{ url_for('controller.detalle_edp', n_edp=incidencia['EDP Relacionado']) }}" class="px-2 py-1 text-xs bg-[color:var(--bg-subtle)] rounded-lg hover:bg-[color:var(--bg-hover)] transition-colors">
               EDP #{{ incidencia["EDP Relacionado"] }}
             </a>
             {% endif %}
@@ -89,7 +89,7 @@
         
         <div class="p-6">
           <!-- Formulario para añadir comentario -->
-          <form method="post" action="{{ url_for('controller_bp.comentar_issue', issue_id=incidencia.ID) }}" class="mb-6">
+          <form method="post" action="{{ url_for('controller.comentar_issue', issue_id=incidencia.ID) }}" class="mb-6">
             <div>
               <label for="comentario" class="block text-sm font-medium mb-1">Añadir comentario</label>
               <textarea id="comentario" name="comentario" required rows="3" class="w-full rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-input)] px-3 py-2"></textarea>
@@ -135,7 +135,7 @@
       <div class="bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color)] p-6 mb-6">
         <h2 class="text-lg font-semibold mb-4">Actualizar estado</h2>
         
-        <form method="post" action="{{ url_for('controller_bp.actualizar_issue', issue_id=incidencia.ID) }}">
+        <form method="post" action="{{ url_for('controller.actualizar_issue', issue_id=incidencia.ID) }}">
           <!-- Estado -->
           <div class="mb-4">
             <label for="estado" class="block text-sm font-medium mb-1">Estado</label>

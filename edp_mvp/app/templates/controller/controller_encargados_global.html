@@ -47,7 +47,7 @@
         </button>
       </form>
       
-      <a href="{{ url_for('controller_bp.vista_global_encargados') }}" class="text-sm bg-[color:var(--bg-subtle)] text-[color:var(--text-primary)] px-4 py-1.5 rounded-lg hover:bg-opacity-90 transition-colors">
+      <a href="{{ url_for('controller.vista_global_encargados') }}" class="text-sm bg-[color:var(--bg-subtle)] text-[color:var(--text-primary)] px-4 py-1.5 rounded-lg hover:bg-opacity-90 transition-colors">
         Limpiar filtros
       </a>
     </div>
@@ -166,7 +166,7 @@
               </span>
             </td>
             <td class="px-4 py-3 text-center">
-              <a href="{{ url_for('controller_bp.vista_encargado', nombre=encargado.nombre) }}" 
+              <a href="{{ url_for('controller.vista_encargado', nombre=encargado.nombre) }}" 
                  class="text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] transition-colors">
                 Ver detalle
               </a>
