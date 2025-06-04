@@ -193,213 +193,30 @@ class ManagerService(BaseService):
     def _calculate_executive_kpis(self, df_full: pd.DataFrame, df_filtered: pd.DataFrame) -> Dict[str, Any]:
         """Calculate executive-level KPIs that match template expectations."""
         try:
-            # Calculos solo con el dataframe completo luego # de aplicar filtros
             if df_full.empty:
                 print("Warning: DataFrame is empty, returning default KPIs")
                 return self.get_empty_kpis()
             
-            print(f"Debug: DataFrame columns: {df_full.columns.tolist()}")
-            print(f"Debug: DataFrame shape: {df_full.shape}")
+            # Prepare data
+            df_full = self._prepare_kpi_data(df_full)
             
-            # Convert monetary columns
-            for col in ['monto_propuesto', 'monto_aprobado']:
-                if col in df_full.columns:
-                    df_full[col] = pd.to_numeric(df_full[col], errors='coerce').fillna(0)
+            # Calculate different KPI categories
+            financial_kpis = self._calculate_financial_kpis(df_full)
+            operational_kpis = self._calculate_operational_kpis(df_full)
+            profitability_kpis = self._calculate_profitability_kpis(df_full)
+            aging_kpis = self._calculate_aging_kpis(df_full)
+            efficiency_kpis = self._calculate_efficiency_kpis(df_full)
             
-            # Basic calculations
-            total_edps = len(df_full)
-            total_approved = len(df_full[df_full['estado'].isin(['pagado', 'validado'])])
-            total_pending = len(df_full[df_full['estado'].isin(['enviado', 'revisión', 'pendiente'])])
-            print(f"Debug: Total EDPs: {total_edps}, Approved: {total_approved}, Pending: {total_pending}")
-            # Financial calculations
-            total_proposed = df_full['monto_propuesto'].sum() if 'monto_propuesto' in df_full.columns else 0
-            total_paid = df_full[df_full['estado'].isin(['pagado', 'validado'])]['monto_aprobado'].sum() if 'monto_aprobado' in df_full.columns else 0
-            pending_amount = df_full[df_full['estado'].isin(['enviado', 'revisión', 'pendiente'])]['monto_propuesto'].sum() if 'monto_propuesto' in df_full.columns else 0
-            
-            # Calculate target and performance metrics
-            meta_ingresos = total_proposed * 1.1  # Assume target is 10% higher than proposed
-            vs_meta_ingresos = ((total_paid - meta_ingresos) / meta_ingresos * 100) if meta_ingresos > 0 else 0
-            pct_meta_ingresos = (total_paid / meta_ingresos * 100) if meta_ingresos > 0 else 0
-            
-            # Growth calculations (simulate monthly growth)
-            crecimiento_ingresos = 5.2  # Mock positive growth
-            tendencia_pendiente = -2.1  # Mock declining pending trend
-            
-            # Format values to match template expectations (in millions)
-            ingresos_totales = round(total_paid / 1_000_000, 1)
-            monto_pendiente = round(pending_amount / 1_000_000, 1) 
-            meta_ingresos_m = round(meta_ingresos / 1_000_000, 1)
-            run_rate_anual = round(ingresos_totales * 12, 1)
-            
-            # Generate sample historical data for sparkline
-            historial_6_meses = [
-                round(ingresos_totales * 0.8, 1),
-                round(ingresos_totales * 0.9, 1),
-                round(ingresos_totales * 0.85, 1),
-                round(ingresos_totales * 1.1, 1),
-                round(ingresos_totales * 1.05, 1),
-                ingresos_totales
-            ]
-            
-            # Top drivers (mock data for now)
-            top_driver_1_name = "Proyecto Principal"
-            top_driver_1_value = round(ingresos_totales * 0.3, 1)
-            top_driver_2_name = "Cliente Premium"  
-            top_driver_2_value = round(ingresos_totales * 0.25, 1)
-            
-            # DSO calculations with error handling
-            try:
-                dso = self._calculate_dso(df_full)
-                dso_cliente_principal = dso * 0.8  # Mock data - main client has better DSO
-            except Exception as e:
-                print(f"Error calculating DSO: {e}")
-                dso = 45.0
-                dso_cliente_principal = 30.0
-            
-            # Client analysis
-            pct_ingresos_principal = 35.5  # Mock percentage for main client
-            riesgo_pago_principal = 20  # Mock risk score
-            tendencia_pago_principal = 'mejora'  # Mock trend
-            
-            # Calculate project timing KPIs with error handling
-            try:
-                proyectos_on_time = self._calculate_projects_on_time(df_full)
-                proyectos_retrasados = self._calculate_projects_delayed(df_full)
-            except Exception as e:
-                print(f"Error calculating project timing KPIs: {e}")
-                proyectos_on_time = 75
-                proyectos_retrasados = 15
-            
-            # Calculate efficiency score with error handling
-            try:
-                efficiency_score = self._calculate_efficiency_score(df_full)
-            except Exception as e:
-                print(f"Error calculating efficiency score: {e}")
-                efficiency_score = 75.0
-            
-            # Get real cost data from CostService
-            try:
-                cost_data_response = self.cost_service.get_cost_dashboard_data()
-                if cost_data_response.success and cost_data_response.data:
-                    cost_kpis = cost_data_response.data.get('kpis', {})
-                    cost_total_amount = cost_kpis.get('total_amount', '0')
-                    # Extract numeric value from formatted currency
-                   
-                    cost_numeric = float(re.sub(r'[^\d.]', '', cost_total_amount)) if cost_total_amount else 0
-                    cost_total_m = round(cost_numeric / 1_000_000, 1)  # Convert to millions
-                    # Calculate real profitability with cost data
-                    real_margin = ingresos_totales - cost_total_m
-                    real_profitability = (real_margin / ingresos_totales * 100) if ingresos_totales > 0 else 0
-                    
-                    # Use real cost data
-                    costos_totales = cost_total_m
-                    margen_bruto_absoluto = real_margin
-                    rentabilidad_general = real_profitability
-                else:
-                    # Fallback to mock data
-                    costos_totales = round(ingresos_totales * 0.65, 1)
-                    margen_bruto_absoluto = round(ingresos_totales * 0.35, 1)
-                    rentabilidad_general = 25.5
-            except Exception as e:
-                print(f"Error getting cost data: {e}")
-                # Fallback to mock data
-                costos_totales = round(ingresos_totales * 0.65, 1)
-                margen_bruto_absoluto = round(ingresos_totales * 0.35, 1)
-                rentabilidad_general = 25.5
-            
-            
-            # Aging buckets for EDPs
-            if 'dias_espera' not in df_full.columns or df_full.empty:
-                bucket_0_15    = bucket_16_30 = bucket_31_60 = bucket_61_90 = bucket_90_plus = 0
-            else:
-                dias = pd.to_numeric(df_full['dias_espera'], errors='coerce')
-                bucket_0_15    = int((dias <= 15).sum())
-                bucket_16_30   = int(((dias > 15)  & (dias <= 30)).sum())
-                bucket_31_60   = int(((dias > 30)  & (dias <= 60)).sum())
-                bucket_61_90   = int(((dias > 60)  & (dias <= 90)).sum())
-                bucket_90_plus = int((dias > 90).sum())
-
-            total = len(df_full)
-
-            if total > 0:
-                # 0–30 días = suma de bucket_0_15 + bucket_16_30
-                pct_30d = round((bucket_0_15 + bucket_16_30) / total * 100, 1)
-                # 30–60 días = bucket_31_60
-                pct_60d = round(bucket_31_60 / total * 100, 1)
-                # 60–90 días = bucket_61_90
-                pct_90d = round(bucket_61_90 / total * 100, 1)
-                # >90 días = bucket_90_plus
-                pct_mas90d = round(bucket_90_plus / total * 100, 1)
-            else:
-                pct_30d = pct_60d = pct_90d = pct_mas90d = 0
-                    
-            # Critital Edps
-            if "critico" in df_full.columns:
-                critical_edps = df_full[df_full["critico"] == True].shape[0]
-            else:
-                critical_edps = 0
-                
-                
-            critical_amount = df_full[df_full["critico"] == True]['monto_aprobado'].sum() if 'monto_aprobado' in df_full.columns else 0
-
-            print(f"Debug: Critical EDPs: {critical_edps}, Efficiency Score: {efficiency_score}")
-            return {
-                # Financial KPIs that match template
-                'ingresos_totales': ingresos_totales,
-                'monto_pendiente': monto_pendiente,
-                'meta_ingresos': meta_ingresos_m,
-                'run_rate_anual': run_rate_anual,
-                'vs_meta_ingresos': round(vs_meta_ingresos, 1),
-                'pct_meta_ingresos': min(round(pct_meta_ingresos, 1), 100),
-                'crecimiento_ingresos': crecimiento_ingresos,
-                'tendencia_pendiente': tendencia_pendiente,
-                'historial_6_meses': historial_6_meses,
-                
-                # DSO and payment metrics
-                'dso': round(dso, 1),
-                'dso_cliente_principal': round(dso_cliente_principal, 1),
-                'pct_ingresos_principal': pct_ingresos_principal,
-                'riesgo_pago_principal': riesgo_pago_principal,
-                'tendencia_pago_principal': tendencia_pago_principal,
-                
-                # Rentabilidad KPIs - USING REAL COST DATA
-                'rentabilidad_general': round(rentabilidad_general, 1),  # Real profitability using cost data
-                'tendencia_rentabilidad': round(2.3, 1),  # Mock positive trend
-                'posicion_vs_benchmark': round(5.2, 1),  # Mock benchmark comparison
-                'vs_meta_rentabilidad': round(rentabilidad_general - 35.0, 1),  # Real vs target
-                'meta_rentabilidad': 35.0,  # Target profitability percentage
-                'pct_meta_rentabilidad': round(rentabilidad_general / 35.0 * 100, 1) if rentabilidad_general > 0 else 0,  # Real percentage of target achieved
-                'mejora_eficiencia': round(3.4, 1),  # Mock efficiency improvement
-                'eficiencia_global': round(78.5, 1),  # Mock global efficiency
-                
-                # Additional financial metrics using real cost data
-                'margen_bruto_absoluto': round(margen_bruto_absoluto, 1),  # Real gross margin
-                'costos_totales': round(costos_totales, 1),  # Real total costs
-                
-                # Additional KPIs for aging buckets
-                'pct_30d': pct_30d,
-                'pct_60d': pct_60d,
-                'pct_90d': pct_90d,
-                'pct_mas90d': pct_mas90d,
-                # Project timing KPIs - CALCULATE FROM DATA
-                'proyectos_on_time': proyectos_on_time,
-                'proyectos_retrasados': proyectos_retrasados,
-                
-                # Top drivers
-                'top_driver_1_name': top_driver_1_name,
-                'top_driver_1_value': top_driver_1_value,
-                'top_driver_2_name': top_driver_2_name,
-                'top_driver_2_value': top_driver_2_value,
-                
-                # Legacy fields for compatibility
-                'total_edps': total_edps,
-                'total_approved': total_approved,
-                'total_pending': total_pending,
-                'approval_rate': round((total_approved / total_edps * 100) if total_edps > 0 else 0, 1),
-                'critical_edps': critical_edps,
-                'efficiency_score': efficiency_score,
-                'critical_amount': round(critical_amount / 1_000_000, 1),  # Convert to millions
+            # Combine all KPIs
+            kpis = {
+                **financial_kpis,
+                **operational_kpis,
+                **profitability_kpis,
+                **aging_kpis,
+                **efficiency_kpis
             }
+            
+            return kpis
             
         except Exception as e:
             print(f"Error in _calculate_executive_kpis: {str(e)}")
@@ -440,7 +257,6 @@ class ManagerService(BaseService):
         """Generate data for various charts using real column names and dashboard format."""
         try:
             charts = {}
-            print(f"Debug: Generating charts with columns: {df_full.columns.tolist()}")
             
             # Ensure monetary columns are numeric
             for col in ['monto_propuesto', 'monto_aprobado']:
@@ -587,7 +403,6 @@ class ManagerService(BaseService):
             total = sorted_clients.sum()
             pct_acum = (top_10_clientes.cumsum() / total * 100).round(1)
             
-            print(f"Debug: Top 10 clients: {top_10_clientes.index.tolist()}")
             
             return {
                 'labels': top_10_clientes.index.tolist(),
@@ -951,7 +766,6 @@ class ManagerService(BaseService):
                             }).to_dict('index')
                             costs_lookup = costs_summary
                         
-                        print(f"Debug: Loaded {len(costs_lookup)} projects with cost data")
             except Exception as e:
                 print(f"Warning: Could not load cost data for manager performance: {e}")
             
@@ -1068,7 +882,6 @@ class ManagerService(BaseService):
             df_costs['tipo_costo'] = df_costs['tipo_costo'].str.lower().fillna('opex')
 
             analisis_tipo = df_costs.groupby('tipo_costo')['importe_neto'].agg(total='sum', count='count').reset_index()
-            print(f"Debug: Análisis de costos por tipo: {analisis_tipo}")
             total_costos = analisis_tipo['total'].sum()
 
             return {
@@ -1598,7 +1411,6 @@ class ManagerService(BaseService):
                         df_costs = costs_response.get('data', pd.DataFrame())
                         if not df_costs.empty:
                             costs_available = True
-                            print(f"Debug: Loaded {len(df_costs)} cost records for profitability analysis")
                 except Exception as e:
                     print(f"Warning: Could not load detailed cost data: {e}")
             
@@ -1702,70 +1514,61 @@ class ManagerService(BaseService):
     def generate_executive_alerts(self, datos_relacionados: Dict[str, Any], kpis: Dict[str, Any], cash_forecast: Dict[str, Any]) -> ServiceResponse:
         """Generate executive alerts based on KPIs and forecasts."""
         try:
-            alerts = []
+            alertas = []
             
-            # Convert parameters to dictionaries if they're not already
-            if not isinstance(kpis, dict):
-                if hasattr(kpis, '__dict__'):
-                    kpis = vars(kpis)
-                elif hasattr(kpis, 'to_dict'):
-                    kpis = kpis.to_dict()
-                elif hasattr(kpis, 'data') and isinstance(kpis.data, dict):
-                    kpis = kpis.data
-                else:
-                    kpis = {}
+            # Preparar datos
+            datos_relacionados['monto_aprobado'] = pd.to_numeric(datos_relacionados['monto_aprobado'], errors='coerce').fillna(0)
+            datos_relacionados['dias_espera'] = pd.to_numeric(datos_relacionados['dias_espera'], errors='coerce').fillna(0)
             
-            if not isinstance(cash_forecast, dict):
-                if hasattr(cash_forecast, '__dict__'):
-                    cash_forecast = vars(cash_forecast)
-                elif hasattr(cash_forecast, 'to_dict'):
-                    cash_forecast = cash_forecast.to_dict()
-                elif hasattr(cash_forecast, 'data') and isinstance(cash_forecast.data, dict):
-                    cash_forecast = cash_forecast.data
-                else:
-                    cash_forecast = {}
+            # Filtrar pendientes
+            df_pendientes = datos_relacionados[~datos_relacionados['estado'].str.strip().isin(['pagado', 'validado'])]
             
-            # Critical EDPs alert
-            if kpis.get('edps_criticos', 0) > 0:
-                alerts.append({
-                    'type': 'warning',
-                    'title': 'EDPs Críticos',
-                    'message': f"Hay {kpis['edps_criticos']} EDPs críticos que requieren atención inmediata",
-                    'priority': 'high'
+            print(f"Debug: Found {len(df_pendientes)} pending EDPs for alert generation")
+            if df_pendientes.empty:
+                return alertas
+            
+            # Alerta 1: EDPs críticos (>30 días)
+            edps_criticos = df_pendientes[df_pendientes['dias_espera'] > 30]
+            if len(edps_criticos) > 0:
+                monto_critico = edps_criticos['monto_aprobado'].sum() / 1_000_000
+                alertas.append({
+                    'tipo': 'critico',
+                    'titulo': f'{len(edps_criticos)} EDPs críticos',
+                    'mensaje': f'${monto_critico:.1f}M en EDPs con más de 30 días de espera',
+                    'icono': 'exclamation-triangle'
                 })
             
-            # DSO alert
-            dso = kpis.get('dso_promedio', 0)
-            if dso > 60:
-                alerts.append({
-                    'type': 'danger',
-                    'title': 'DSO Elevado',
-                    'message': f"El DSO promedio es de {dso:.1f} días, por encima del objetivo",
-                    'priority': 'high'
+            # Alerta 2: Concentración en un cliente
+            if 'cliente' in df_pendientes.columns:
+                clientes_montos = df_pendientes.groupby('cliente')['monto_aprobado'].sum()
+                if len(clientes_montos) > 0:
+                    cliente_principal = clientes_montos.idxmax()
+                    monto_principal = clientes_montos.max()
+                    concentracion = (monto_principal / df_pendientes['monto_aprobado'].sum()) * 100
+                    
+                    if concentracion > 40:
+                        alertas.append({
+                            'tipo': 'warning',
+                            'titulo': 'Alta concentración',
+                            'mensaje': f'{concentracion:.1f}% del backlog en {cliente_principal}',
+                            'icono': 'chart-pie'
+                        })
+            
+            # Alerta 3: Montos pendientes altos
+            monto_total_pendiente = df_pendientes['monto_aprobado'].sum() / 1_000_000
+            if monto_total_pendiente > 1000:  # Más de 1000M
+                alertas.append({
+                    'tipo': 'info',
+                    'titulo': 'Backlog alto',
+                    'mensaje': f'${monto_total_pendiente:.1f}M en EDPs pendientes',
+                    'icono': 'currency-dollar'
                 })
             
-            # Collection efficiency alert
-            eficiencia = kpis.get('eficiencia_cobro', 0)
-            if eficiencia < 70:
-                alerts.append({
-                    'type': 'warning',
-                    'title': 'Eficiencia de Cobro Baja',
-                    'message': f"La eficiencia de cobro es del {eficiencia:.1f}%, por debajo del objetivo",
-                    'priority': 'medium'
-                })
-            
-            return ServiceResponse(
-                success=True,
-                message=f"{len(alerts)} alerts generated successfully",
-                data=alerts
-            )
+            return alertas[:10]  # Máximo 5 alertas
             
         except Exception as e:
-            return ServiceResponse(
-                success=False,
-                message=f"Error generating executive alerts: {str(e)}",
-                data=[]
-            )
+            print(f"Error en obtener_alertas_criticas: {e}")
+            return []
     
     def get_cost_management_insights(self) -> Dict[str, Any]:
         """Get cost management insights for executive dashboard."""
@@ -2100,3 +1903,322 @@ class ManagerService(BaseService):
         except Exception as e:
             print(f"Error in _analyze_profitability_by_managers: {e}")
             return []
+    
+    def _prepare_kpi_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Prepare and clean data for KPI calculations."""
+        df = df.copy()
+        
+        # Convert monetary columns
+        for col in ['monto_propuesto', 'monto_aprobado']:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        
+        # Clean estado column
+        if 'estado' in df.columns:
+            df['estado'] = df['estado'].str.strip().str.lower()
+        
+        return df
+
+    def _calculate_financial_kpis(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate financial KPIs."""
+        try:
+            # Basic financial calculations
+            total_proposed = df['monto_propuesto'].sum() if 'monto_propuesto' in df.columns else 0
+            total_paid = df[df['estado'].isin(['pagado', 'validado'])]['monto_aprobado'].sum() if 'monto_aprobado' in df.columns else 0
+            pending_amount = df[df['estado'].isin(['enviado', 'revisión', 'pendiente'])]['monto_propuesto'].sum() if 'monto_propuesto' in df.columns else 0
+            
+            # Calculate target and performance metrics
+            meta_ingresos = total_proposed * 1.1  # Assume target is 10% higher than proposed
+            vs_meta_ingresos = ((total_paid - meta_ingresos) / meta_ingresos * 100) if meta_ingresos > 0 else 0
+            pct_meta_ingresos = (total_paid / meta_ingresos * 100) if meta_ingresos > 0 else 0
+            
+            # Growth calculations (simulate monthly growth)
+            crecimiento_ingresos = 5.2  # Mock positive growth
+            tendencia_pendiente = -2.1  # Mock declining pending trend
+            
+            # Format values to match template expectations (in millions)
+            ingresos_totales = round(total_paid / 1_000_000, 1)
+            monto_pendiente = round(pending_amount / 1_000_000, 1) 
+            meta_ingresos_m = round(meta_ingresos / 1_000_000, 1)
+            run_rate_anual = round(ingresos_totales * 12, 1)
+            
+            # Generate sample historical data for sparkline
+            historial_6_meses = [
+                round(ingresos_totales * 0.8, 1),
+                round(ingresos_totales * 0.9, 1),
+                round(ingresos_totales * 0.85, 1),
+                round(ingresos_totales * 1.1, 1),
+                round(ingresos_totales * 1.05, 1),
+                ingresos_totales
+            ]
+            
+            # Top drivers (mock data for now)
+            top_driver_1_name = "Proyecto Principal"
+            top_driver_1_value = round(ingresos_totales * 0.3, 1)
+            top_driver_2_name = "Cliente Premium"  
+            top_driver_2_value = round(ingresos_totales * 0.25, 1)
+            
+            return {
+                'ingresos_totales': ingresos_totales,
+                'monto_pendiente': monto_pendiente,
+                'meta_ingresos': meta_ingresos_m,
+                'run_rate_anual': run_rate_anual,
+                'vs_meta_ingresos': round(vs_meta_ingresos, 1),
+                'pct_meta_ingresos': min(round(pct_meta_ingresos, 1), 100),
+                'crecimiento_ingresos': crecimiento_ingresos,
+                'tendencia_pendiente': tendencia_pendiente,
+                'historial_6_meses': historial_6_meses,
+                'top_driver_1_name': top_driver_1_name,
+                'top_driver_1_value': top_driver_1_value,
+                'top_driver_2_name': top_driver_2_name,
+                'top_driver_2_value': top_driver_2_value,
+            }
+            
+        except Exception as e:
+            print(f"Error calculating financial KPIs: {e}")
+            return {}
+
+    def _calculate_operational_kpis(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate operational KPIs."""
+        try:
+            # Basic counts
+            total_edps = len(df)
+            total_approved = len(df[df['estado'].isin(['pagado', 'validado'])])
+            total_pending = len(df[df['estado'].isin(['enviado', 'revisión', 'pendiente'])])
+            
+            # Critical EDPs
+            critical_edps = 0
+            critical_amount = 0
+            if "critico" in df.columns:
+                critical_edps = df[df["critico"] == True].shape[0]
+                if 'monto_aprobado' in df.columns:
+                    critical_amount = df[df["critico"] == True]['monto_aprobado'].sum()
+            
+            # DSO calculations
+            try:
+                dso = self._calculate_dso(df)
+                dso_cliente_principal = dso * 0.8  # Mock data - main client has better DSO
+            except Exception as e:
+                print(f"Error calculating DSO: {e}")
+                dso = 45.0
+                dso_cliente_principal = 30.0
+            
+            # Client analysis (mock data)
+            pct_ingresos_principal = 35.5
+            riesgo_pago_principal = 20
+            tendencia_pago_principal = 'mejora'
+            
+            # Calculate project timing KPIs
+            try:
+                proyectos_on_time = self._calculate_projects_on_time(df)
+                proyectos_retrasados = self._calculate_projects_delayed(df)
+            except Exception as e:
+                print(f"Error calculating project timing KPIs: {e}")
+                proyectos_on_time = 75
+                proyectos_retrasados = 15
+            
+            return {
+                'total_edps': total_edps,
+                'total_approved': total_approved,
+                'total_pending': total_pending,
+                'approval_rate': round((total_approved / total_edps * 100) if total_edps > 0 else 0, 1),
+                'critical_edps': critical_edps,
+                'critical_amount': round(critical_amount / 1_000_000, 1),
+                'dso': round(dso, 1),
+                'dso_cliente_principal': round(dso_cliente_principal, 1),
+                'pct_ingresos_principal': pct_ingresos_principal,
+                'riesgo_pago_principal': riesgo_pago_principal,
+                'tendencia_pago_principal': tendencia_pago_principal,
+                'proyectos_on_time': proyectos_on_time,
+                'proyectos_retrasados': proyectos_retrasados,
+            }
+            
+        except Exception as e:
+            print(f"Error calculating operational KPIs: {e}")
+            return {}
+
+    def _calculate_profitability_kpis(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate profitability KPIs using real cost data."""
+        try:
+            # Get revenue data
+            ingresos_totales = 0
+            if 'monto_aprobado' in df.columns:
+                total_paid = df[df['estado'].isin(['pagado', 'validado'])]['monto_aprobado'].sum()
+                ingresos_totales = round(total_paid / 1_000_000, 1)
+            
+            # Get real cost data from CostService
+            try:
+                cost_data_response = self.cost_service.get_cost_dashboard_data()
+                if cost_data_response.success and cost_data_response.data:
+                    cost_kpis = cost_data_response.data.get('kpis', {})
+                    cost_total_amount = cost_kpis.get('total_amount', '0')
+                    
+                    # Extract numeric value from formatted currency
+                    cost_numeric = float(re.sub(r'[^\d.]', '', cost_total_amount)) if cost_total_amount else 0
+                    cost_total_m = round(cost_numeric / 1_000_000, 1)  # Convert to millions
+                    
+                    # Calculate real profitability with cost data
+                    real_margin = ingresos_totales - cost_total_m
+                    real_profitability = (real_margin / ingresos_totales * 100) if ingresos_totales > 0 else 0
+                    
+                    # Use real cost data
+                    costos_totales = cost_total_m
+                    margen_bruto_absoluto = real_margin
+                    rentabilidad_general = real_profitability
+                else:
+                    # Fallback to mock data
+                    costos_totales = round(ingresos_totales * 0.65, 1)
+                    margen_bruto_absoluto = round(ingresos_totales * 0.35, 1)
+                    rentabilidad_general = 25.5
+            except Exception as e:
+                print(f"Error getting cost data: {e}")
+                # Fallback to mock data
+                costos_totales = round(ingresos_totales * 0.65, 1)
+                margen_bruto_absoluto = round(ingresos_totales * 0.35, 1)
+                rentabilidad_general = 25.5
+            
+            return {
+                'rentabilidad_general': round(rentabilidad_general, 1),
+                'tendencia_rentabilidad': round(2.3, 1),
+                'posicion_vs_benchmark': round(5.2, 1),
+                'vs_meta_rentabilidad': round(rentabilidad_general - 35.0, 1),
+                'meta_rentabilidad': 35.0,
+                'pct_meta_rentabilidad': round(rentabilidad_general / 35.0 * 100, 1) if rentabilidad_general > 0 else 0,
+                'mejora_eficiencia': round(3.4, 1),
+                'eficiencia_global': round(78.5, 1),
+                'margen_bruto_absoluto': round(margen_bruto_absoluto, 1),
+                'costos_totales': round(costos_totales, 1),
+            }
+            
+        except Exception as e:
+            print(f"Error calculating profitability KPIs: {e}")
+            return {}
+
+    def _calculate_aging_kpis(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate aging bucket KPIs."""
+        try:
+            if 'dias_espera' not in df.columns or df.empty:
+                return {
+                    'pct_30d': 25, 'pct_60d': 25, 'pct_90d': 25, 'pct_mas90d': 25
+                }
+            
+            dias = pd.to_numeric(df['dias_espera'], errors='coerce')
+            bucket_0_15 = int((dias <= 15).sum())
+            bucket_16_30 = int(((dias > 15) & (dias <= 30)).sum())
+            bucket_31_60 = int(((dias > 30) & (dias <= 60)).sum())
+            bucket_61_90 = int(((dias > 60) & (dias <= 90)).sum())
+            bucket_90_plus = int((dias > 90).sum())
+            
+            total = len(df)
+            
+            if total > 0:
+                pct_30d = round((bucket_0_15 + bucket_16_30) / total * 100, 1)
+                pct_60d = round(bucket_31_60 / total * 100, 1)
+                pct_90d = round(bucket_61_90 / total * 100, 1)
+                pct_mas90d = round(bucket_90_plus / total * 100, 1)
+            else:
+                pct_30d = pct_60d = pct_90d = pct_mas90d = 0
+            
+            return {
+                'pct_30d': pct_30d,
+                'pct_60d': pct_60d,
+                'pct_90d': pct_90d,
+                'pct_mas90d': pct_mas90d,
+            }
+            
+        except Exception as e:
+            print(f"Error calculating aging KPIs: {e}")
+            return {}
+
+    def _calculate_efficiency_kpis(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate efficiency and cycle time KPIs."""
+        try:
+            # Basic efficiency calculations
+            estados_pendientes = ['enviado', 'revisión', 'enviado ']
+            estados_completados = ['pagado', 'validado', 'pagado ', 'validado ']
+            
+            df_pendientes = df[df['estado'].str.strip().isin(estados_pendientes)]
+            df_completados = df[df['estado'].str.strip().isin(estados_completados)]
+            
+            # Calculate derived metrics
+            pct_avance = (len(df_completados) / len(df) * 100) if len(df) > 0 else 0
+            
+            # Calculate efficiency score
+            try:
+                efficiency_score = self._calculate_efficiency_score(df)
+            except Exception as e:
+                print(f"Error calculating efficiency score: {e}")
+                efficiency_score = 75.0
+            
+            # DSO for cycle time
+            try:
+                dso = self._calculate_dso(df)
+            except Exception:
+                dso = 45.0
+            
+            # Cycle time metrics
+            tiempo_medio_ciclo = dso
+            meta_tiempo_ciclo = 30
+            benchmark_tiempo_ciclo = 35
+            
+            eficiencia_actual = round(pct_avance * 0.8, 1)  # Simplified calculation
+            eficiencia_anterior = max(0, eficiencia_actual - 5.3)
+            mejora_eficiencia = round(eficiencia_actual - eficiencia_anterior, 1)
+            
+            tiempo_medio_ciclo_pct = round((meta_tiempo_ciclo / tiempo_medio_ciclo * 100), 1) if tiempo_medio_ciclo > 0 else 0
+            
+            # Tiempos por etapa
+            tiempo_emision = round(tiempo_medio_ciclo * 0.18, 1)
+            tiempo_gestion = round(tiempo_medio_ciclo * 0.27, 1)
+            tiempo_conformidad = round(tiempo_medio_ciclo * 0.33, 1)
+            tiempo_pago = round(tiempo_medio_ciclo * 0.22, 1)
+            
+            etapa_emision_pct = int(tiempo_emision / tiempo_medio_ciclo * 100) if tiempo_medio_ciclo > 0 else 18
+            etapa_gestion_pct = int(tiempo_gestion / tiempo_medio_ciclo * 100) if tiempo_medio_ciclo > 0 else 27
+            etapa_conformidad_pct = int(tiempo_conformidad / tiempo_medio_ciclo * 100) if tiempo_medio_ciclo > 0 else 33
+            etapa_pago_pct = int(tiempo_pago / tiempo_medio_ciclo * 100) if tiempo_medio_ciclo > 0 else 22
+            
+            # Oportunidad de mejora
+            if tiempo_conformidad > 15:
+                oportunidad_mejora = f"Reducir tiempo de conformidad con cliente ({tiempo_conformidad:.1f} días vs. benchmark 7 días)"
+            elif tiempo_gestion > 12:
+                oportunidad_mejora = f"Optimizar tiempo de gestión interna ({tiempo_gestion:.1f} días vs. benchmark 8 días)"
+            else:
+                oportunidad_mejora = "Mantener tiempos actuales dentro del benchmark"
+            
+            return {
+                'efficiency_score': efficiency_score,
+                'mejora_eficiencia': mejora_eficiencia,
+                'tiempo_medio_ciclo': round(tiempo_medio_ciclo, 1),
+                'tiempo_medio_ciclo_pct': tiempo_medio_ciclo_pct,
+                'meta_tiempo_ciclo': meta_tiempo_ciclo,
+                'benchmark_tiempo_ciclo': benchmark_tiempo_ciclo,
+                'tiempo_emision': tiempo_emision,
+                'tiempo_gestion': tiempo_gestion,
+                'tiempo_conformidad': tiempo_conformidad,
+                'tiempo_pago': tiempo_pago,
+                'etapa_emision_pct': etapa_emision_pct,
+                'etapa_gestion_pct': etapa_gestion_pct,
+                'etapa_conformidad_pct': etapa_conformidad_pct,
+                'etapa_pago_pct': etapa_pago_pct,
+                'oportunidad_mejora': oportunidad_mejora,
+            }
+            
+        except Exception as e:
+            print(f"Error calculating efficiency KPIs: {e}")
+            return {}
+
+    def _calculate_projects_on_time(self, df: pd.DataFrame) -> int:
+        """Calculate percentage of projects delivered on time."""
+        # Simplified calculation - in reality would need proper date analysis
+        if 'dias_espera' in df.columns:
+            on_time = (df['dias_espera'] <= 30).sum()
+            return round((on_time / len(df) * 100) if len(df) > 0 else 0)
+        return 75  # Default
+
+    def _calculate_projects_delayed(self, df: pd.DataFrame) -> int:
+        """Calculate percentage of projects that are delayed."""
+        if 'dias_espera' in df.columns:
+            delayed = (df['dias_espera'] > 45).sum()
+            return round((delayed / len(df) * 100) if len(df) > 0 else 0)
+        return 15  # Default

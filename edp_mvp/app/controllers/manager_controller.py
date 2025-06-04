@@ -124,20 +124,7 @@ def _get_empty_dashboard_data() -> Dict[str, Any]:
         'rentabilidad_proyectos': [],
         'rentabilidad_clientes': [],
         'rentabilidad_gestores': [],
-        'top_edps': [],
-        
-        # ===== RENTABILIDAD GENERAL KPIs - VALORES POR DEFECTO =====
-        'rentabilidad_general': 0,
-        'tendencia_rentabilidad': 0,
-        'posicion_vs_benchmark': 0,
-        'vs_meta_rentabilidad': 0,
-        'meta_rentabilidad': 35.0,
-        'pct_meta_rentabilidad': 0,
-        'mejora_eficiencia': 0,
-        'eficiencia_global': 0,
-        'margen_bruto_absoluto': 0,
-        'costos_totales': 0,
-        'ingresos_totales': 0
+        'top_edps': []
     }
 
 @manager_controller_bp.route('/dashboard')
@@ -226,16 +213,19 @@ def dashboard():
             print(f"✅ Proyecciones de cash flow generadas")
         
         # ===== PASO 9: ALERTAS EJECUTIVAS =====
-        alertas_response = manager_service.generate_executive_alerts(
+        alertas = manager_service.generate_executive_alerts(
             datos_relacionados, kpis, cash_forecast
         )
-        if not alertas_response.success:
-            print(f"⚠️ Warning generando alertas: {alertas_response.message}")
+        if alertas is None:
+            # En caso de que el método devuelva None en lugar de lista
+            print("⚠️ Warning generando alertas: respuesta None en lugar de lista")
             alertas = []
-        else:
-            alertas = alertas_response.data
-            print(f"✅ Alertas generadas: {len(alertas)} alertas")
-        
+        elif not isinstance(alertas, list):
+            # Si no es lista, podemos levantar un error o convertirlo
+            print("⚠️ Warning: generate_executive_alerts no devolvió lista")
+            alertas = []
+
+        print(f"✅ Alertas generadas: {len(alertas)} alertas")
         # ===== PASO 10: PREPARAR CONTEXTO PARA TEMPLATE =====
         template_context = {
             'kpis': kpis,
@@ -249,20 +239,6 @@ def dashboard():
             'rentabilidad_proyectos': rentabilidad_data.get('proyectos', []),
             'rentabilidad_clientes': rentabilidad_data.get('clientes', []),
             'rentabilidad_gestores': rentabilidad_data.get('gestores', []),
-            
-            # ===== RENTABILIDAD GENERAL KPIs - USING REAL COST DATA =====
-            'rentabilidad_general': kpis_dict.get('rentabilidad_general', 0),  # Real profitability using cost data
-            'tendencia_rentabilidad': kpis_dict.get('tendencia_rentabilidad', 0),  # Trend
-            'posicion_vs_benchmark': kpis_dict.get('posicion_vs_benchmark', 0),  # Benchmark comparison
-            'vs_meta_rentabilidad': kpis_dict.get('vs_meta_rentabilidad', 0),  # Real vs target
-            'meta_rentabilidad': kpis_dict.get('meta_rentabilidad', 35.0),  # Target profitability percentage
-            'pct_meta_rentabilidad': kpis_dict.get('pct_meta_rentabilidad', 0),  # Real percentage of target achieved
-            'mejora_eficiencia': kpis_dict.get('mejora_eficiencia', 0),  # Efficiency improvement
-            'eficiencia_global': kpis_dict.get('eficiencia_global', 0),  # Global efficiency
-            'margen_bruto_absoluto': kpis_dict.get('margen_bruto_absoluto', 0),  # Real gross margin
-            'costos_totales': kpis_dict.get('costos_totales', 0),  # Real total costs
-            'ingresos_totales': kpis_dict.get('ingresos_totales', 0),  # Total revenue
-            
             # Filtros aplicados (para mantener estado en formularios)
             **filters
         }
