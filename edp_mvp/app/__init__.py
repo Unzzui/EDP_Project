@@ -1,11 +1,12 @@
 from flask import Flask
-from .config import Config
+from .config import get_config
 from flask_login import LoginManager
 from .extensions import socketio, login_manager
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)
+    config = get_config()
+    app.config.from_object(config)
 
     login_manager.init_app(app)
     socketio.init_app(app)
