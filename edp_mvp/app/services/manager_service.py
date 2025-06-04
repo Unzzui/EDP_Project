@@ -310,6 +310,7 @@ class ManagerService(BaseService):
             if df_pendientes.empty:
                     return {'labels': ['30 días', '60 días', '90 días'], 'datasets': []}
                 
+            df_pendientes = df_pendientes.copy()
             # Usar Fecha Estimada de Pago si existe, sino estimar
             if 'fecha_estimada_pago' in df_pendientes.columns:
                 df_pendientes['fecha_estimada_pago'] = pd.to_datetime(df_pendientes['fecha_estimada_pago'], errors='coerce')
@@ -842,7 +843,6 @@ class ManagerService(BaseService):
                     colores.append('rgba(249, 115, 22, 0.7)')  # Naranja - Bajo
                 else:
                     colores.append('rgba(239, 68, 68, 0.8)')   # Rojo - Negativo
-            print(f'Rentabilidades calculadas: {rentabilidades}')
             return {
                 'labels': labels,
                 'datasets': [
@@ -1515,6 +1515,8 @@ class ManagerService(BaseService):
         """Generate executive alerts based on KPIs and forecasts."""
         try:
             alertas = []
+            datos_relacionados = datos_relacionados.get('edps', [])
+            datos_relacionados = pd.DataFrame(datos_relacionados)
             
             # Preparar datos
             datos_relacionados['monto_aprobado'] = pd.to_numeric(datos_relacionados['monto_aprobado'], errors='coerce').fillna(0)
@@ -1523,7 +1525,6 @@ class ManagerService(BaseService):
             # Filtrar pendientes
             df_pendientes = datos_relacionados[~datos_relacionados['estado'].str.strip().isin(['pagado', 'validado'])]
             
-            print(f"Debug: Found {len(df_pendientes)} pending EDPs for alert generation")
             if df_pendientes.empty:
                 return alertas
             

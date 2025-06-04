@@ -26,9 +26,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Actualiza el resumen superior del modal
 function updateModalSummary(data) {
-  document.querySelector('[data-display-field="N° EDP"]').textContent = data['N° EDP'] || 'N/A';
-  document.querySelector('[data-display-field="Proyecto"]').textContent = data['Proyecto'] || 'N/A';
-  document.querySelector('[data-display-field="Cliente"]').textContent = data['Cliente'] || 'N/A';
+  document.querySelector('[data-display-field="N° EDP"]').textContent = data['n_edp'] || 'N/A';
+  document.querySelector('[data-display-field="Proyecto"]').textContent = data['proyecto'] || 'N/A';
+  document.querySelector('[data-display-field="Cliente"]').textContent = data['cliente'] || 'N/A';
   
   // Actualizar la fecha de última actualización si existe
   if (data['Última Actualización']) {
@@ -38,7 +38,7 @@ function updateModalSummary(data) {
   
   // Actualizar el indicador de estado
   const statusBadge = document.querySelector('[data-status-badge]');
-  const statusText = data['Estado'] || 'pendiente';
+  const statusText = data['estado'] || 'pendiente';
   const statusDot = statusBadge.querySelector('span:first-child');
   
   // Definir colores según estado
@@ -78,9 +78,7 @@ function formatCurrency(value) {
   
   // Luego añade manualmente el símbolo peso si lo deseas
   return '$' + formatted;
-  
-  // O si prefieres sin el símbolo peso:
-  // return formatted;
+
 }
 
 // Setup currency input with formatting - función más robusta
@@ -456,7 +454,7 @@ function renderEdpModalContent(data) {
     const montoP = document.getElementById('monto_propuesto');
     const montoPFormatted = document.getElementById('monto_propuesto_formatted');
     
-    if (montoP && montoPFormatted && data['Monto Propuesto']) {
+    if (montoP && montoPFormatted && data['monto_propuesto']) {
       const rawValue = data['Monto Propuesto'].toString().replace(/[^\d]/g, '');
       montoP.value = rawValue;
       montoPFormatted.value = formatCurrency(rawValue);
@@ -466,8 +464,8 @@ function renderEdpModalContent(data) {
     const montoA = document.getElementById('monto_aprobado');
     const montoAFormatted = document.getElementById('monto_aprobado_formatted');
     
-    if (montoA && montoAFormatted && data['Monto Aprobado']) {
-      const rawValue = data['Monto Aprobado'].toString().replace(/[^\d]/g, '');
+    if (montoA && montoAFormatted && data['monto_aprobado']) {
+      const rawValue = data['monto_aprobado'].toString().replace(/[^\d]/g, '');
       montoA.value = rawValue;
       montoAFormatted.value = formatCurrency(rawValue);
       console.log("✓ Monto Aprobado formateado:", rawValue, "→", formatCurrency(rawValue));

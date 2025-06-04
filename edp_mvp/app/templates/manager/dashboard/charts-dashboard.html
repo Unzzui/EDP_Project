@@ -1,0 +1,705 @@
+<!-- Gráficos principales mejorados -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+  <!-- Gráfico de tendencia financiera con comparativos -->
+  <div
+    class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold">Tendencia Financiera</h2>
+      <div class="flex items-center space-x-3">
+        <button
+          class="text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)] border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card)] active-chart-btn"
+          data-chart-view="ingresos">
+          Ingresos
+        </button>
+        <button
+          class="text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)] border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card)]"
+          data-chart-view="margen">
+          Margen
+        </button>
+        <button
+          class="text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)] border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card)]"
+          data-chart-view="cashflow">
+          Cash Flow
+        </button>
+      </div>
+    </div>
+    <div class="h-80">
+      <canvas id="financialTrendChart"></canvas>
+    </div>
+
+    <div
+      class="mt-4 grid grid-cols-4 text-center text-xs border-t border-[color:var(--border-color-subtle)] pt-3">
+      <div>
+        <p class="text-[color:var(--text-secondary)]">YTD</p>
+        <p class="font-medium">${{ kpis.ingresos_ytd|default('186.5') }}M</p>
+      </div>
+      <div>
+        <p class="text-[color:var(--text-secondary)]">Meta anual</p>
+        <p class="font-medium">${{ kpis.meta_anual|default('250.0') }}M</p>
+      </div>
+      <div>
+        <p class="text-[color:var(--text-secondary)]">Proyección</p>
+        <p class="font-medium">
+          ${{ kpis.proyeccion_anual|default('235.8') }}M
+        </p>
+      </div>
+      <div>
+        <p class="text-[color:var(--text-secondary)]">Año anterior</p>
+        <p class="font-medium">
+          ${{ kpis.ingresos_ano_anterior|default('198.2') }}M
+        </p>
+      </div>
+    </div>
+  </div>
+  <!-- Distribución de proyectos - Ahora con bubble chart -->
+  <div
+    class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
+    <h2 class="text-lg font-bold mb-4">Estado de Proyectos</h2>
+    <div class="flex flex-col md:flex-row h-80">
+      <div class="w-full md:w-1/2 mb-4 md:mb-0 md:pr-4 relative">
+        <!-- Toggle entre visualizaciones -->
+        <div class="absolute top-0 left-0 z-10 flex space-x-1">
+          <button
+            class="text-xs px-2 py-1 rounded bg-[color:var(--bg-card)] border border-[color:var(--border-color)] active-view-btn"
+            data-view="chart">
+            Gráfica
+          </button>
+          <button
+            class="text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)] border border-[color:var(--border-color)]"
+            data-view="bubble">
+            Mapa riesgo
+          </button>
+        </div>
+
+        <!-- Vista 1: Gráfica de pastel -->
+        <div id="project-chart-view">
+          <canvas id="projectStatusChart"></canvas>
+        </div>
+
+        <!-- Vista 2: Bubble chart de riesgos (inicialmente oculta) -->
+        <div id="project-bubble-view" class="hidden h-full">
+          <canvas id="projectBubbleChart"></canvas>
+        </div>
+      </div>
+
+      <div class="w-full md:w-1/2 flex flex-col justify-center">
+        <div class="space-y-4">
+          <!-- Estado de proyectos detalle -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <span class="w-3 h-3 rounded-full bg-[#10B981] mr-2"></span>
+              <span>A tiempo</span>
+            </div>
+            <span class="font-semibold">{{ kpis.proyectos_on_time }}%</span>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <span class="w-3 h-3 rounded-full bg-[#FBBF24] mr-2"></span>
+              <span>En riesgo</span>
+            </div>
+            <span class="font-semibold"
+              >{{ 100 - kpis.proyectos_on_time - kpis.proyectos_retrasados
+              }}%</span
+            >
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <span class="w-3 h-3 rounded-full bg-[#F87171] mr-2"></span>
+              <span>Retrasados</span>
+            </div>
+            <span class="font-semibold">{{ kpis.proyectos_retrasados }}%</span>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <span class="w-3 h-3 rounded-full bg-[#60A5FA] mr-2"></span>
+              <span>Completados</span>
+            </div>
+            <span class="font-semibold">{{ kpis.pct_avance }}%</span>
+          </div>
+        </div>
+
+        <!-- Acciones rápidas con menú expandible -->
+        <div class="mt-6">
+          <button
+            id="project-actions-btn"
+            class="w-full bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition flex items-center justify-center">
+            <span>Acciones de proyecto</span>
+            <svg
+              class="w-4 h-4 ml-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+
+          <!-- Menú de acciones (inicialmente oculto) -->
+          <div
+            id="project-actions-menu"
+            class="hidden mt-2 space-y-2 p-2 bg-[color:var(--bg-subtle)] border border-[color:var(--border-color)] rounded-lg">
+            <a
+              href="#"
+              class="block text-sm py-1.5 px-3 rounded hover:bg-[color:var(--bg-card)] transition">
+              Ver proyectos en riesgo
+            </a>
+            <a
+              href="#"
+              class="block text-sm py-1.5 px-3 rounded hover:bg-[color:var(--bg-card)] transition">
+              Gestionar planificación
+            </a>
+            <a
+              href="#"
+              class="block text-sm py-1.5 px-3 rounded hover:bg-[color:var(--bg-card)] transition">
+              Asignar recursos
+            </a>
+            <a
+              href="#"
+              class="block text-sm py-1.5 px-3 rounded hover:bg-[color:var(--bg-card)] transition">
+              Actualizar estado
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Financieros conectados y mejorados -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Proyección cash-in conectada con aging buckets -->
+  <div
+    class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold">Cash-In Forecast</h2>
+      <div class="flex space-x-1">
+        <span
+          class="text-xs px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-md"
+          >30-60-90d</span
+        >
+        <button
+          class="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
+          title="Ver metodología de cálculo"
+          data-tooltip="Basado en fechas de conformidad estimadas y probabilidad histórica de cumplimiento por cliente">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clip-rule="evenodd"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="h-60">
+      <canvas id="cashInForecastChart"></canvas>
+    </div>
+    <div class="mt-4 pt-4 border-t border-[color:var(--border-color-subtle)]">
+      <div class="grid grid-cols-3 gap-2 text-center text-xs">
+        <div>
+          <p class="text-[color:var(--text-secondary)]">30 días</p>
+          <p id="forecast-30d" class="font-medium text-sm mt-1">
+            ${{ cash_forecast.total_30d|default('...') }}M
+          </p>
+          <p class="text-[color:var(--text-tertiary)] text-xs">
+            {{ cash_forecast.prob_30d|default('...') }}% prob.
+          </p>
+        </div>
+        <div>
+          <p class="text-[color:var(--text-secondary)]">60 días</p>
+          <p id="forecast-60d" class="font-medium text-sm mt-1">
+            ${{ cash_forecast.total_60d|default('...') }}M
+          </p>
+          <p class="text-[color:var(--text-tertiary)] text-xs">
+            {{ cash_forecast.prob_60d|default('...') }}% prob.
+          </p>
+        </div>
+        <div>
+          <p class="text-[color:var(--text-secondary)]">90 días</p>
+          <p id="forecast-90d" class="font-medium text-sm mt-1">
+            ${{ cash_forecast.total_90d|default('...') }}M
+          </p>
+          <p class="text-[color:var(--text-tertiary)] text-xs">
+            {{ cash_forecast.prob_90d|default('...') }}% prob.
+          </p>
+        </div>
+      </div>
+      <div class="mt-3 text-center">
+        <p class="text-[color:var(--text-secondary)] text-xs">
+          Total ponderado:
+        </p>
+        <p id="forecast-weighted" class="font-semibold text-sm mt-1">
+          ${{ cash_forecast.total_ponderado|default('...') }}M
+        </p>
+        <div class="mt-2">
+          <button
+            class="text-xs text-[color:var(--accent-blue)] hover:underline flex items-center mx-auto">
+            <svg
+              class="w-3.5 h-3.5 mr-1"
+              fill="currentColor"
+              viewBox="0 0 20 20">
+              <path
+                d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+            </svg>
+            Ajustar escenarios
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rentabilidad por departamento - con benchmarks y contexto -->
+  <div
+    class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold">Rentabilidad por Gestor</h2>
+      <button
+        class="text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)] border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card)]"
+        title="Cambiar vista"
+        id="toggle-profit-view">
+        Vista %
+      </button>
+    </div>
+    <div class="h-72">
+      <canvas id="departmentProfitChart"></canvas>
+    </div>
+
+    <!-- Contexto de meta y benchmark -->
+    <div
+      class="mt-3 border-t border-[color:var(--border-color-subtle)] pt-3 flex justify-between items-center">
+      <span class="text-xs text-[color:var(--text-secondary)]"
+        >Meta de rentabilidad: {{ kpis.meta_rentabilidad }}%</span
+      >
+      <button
+        class="text-xs text-[color:var(--accent-blue)] hover:underline flex items-center">
+        Análisis detallado
+        <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+            clip-rule="evenodd"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Distribución de Costos - OPEX vs CAPEX -->
+  {% set ratio_opex = charts.get('analisis_costos', {}).get('kpis',
+  {}).get('ratio_opex_capex', 0) %}
+
+  <div
+    class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold">Distribución de Costos</h2>
+      <div
+        class="text-xs px-2 py-1 rounded {% if ratio_opex > 80 %} bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 {% elif ratio_opex > 60 %} bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 {% else %} bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 {% endif %}">
+        {{ ratio_opex }}% OPEX
+      </div>
+    </div>
+
+    <!-- Gráfico de distribución -->
+    <div class="h-72">
+      <canvas id="budgetDistributionChart"></canvas>
+    </div>
+
+    <!-- Análisis de distribución -->
+    <div
+      class="mt-3 text-xs text-[color:var(--text-secondary)] border-t border-[color:var(--border-color-subtle)] pt-3">
+      {% if ratio_opex > 80 %}
+      <p class="flex items-center text-red-500 dark:text-red-400">
+        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+            clip-rule="evenodd"></path>
+        </svg>
+        Alto gasto operativo: revisar eficiencia de costos
+      </p>
+      {% elif ratio_opex > 60 %}
+      <p class="flex items-center text-amber-500 dark:text-amber-400">
+        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+            clip-rule="evenodd"></path>
+        </svg>
+        Mayor proporción operativa: monitorear balance con CAPEX
+      </p>
+      {% else %}
+      <p class="flex items-center text-green-500 dark:text-green-400">
+        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clip-rule="evenodd"></path>
+        </svg>
+        Buena distribución entre OPEX y CAPEX
+      </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Tercera fila de gráficos y alertas -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+  <!-- Aging Buckets conectados con la proyección de cash -->
+  <div
+    class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative lg:col-span-2">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold">Distribución por Antigüedad</h2>
+      <div class="flex items-center">
+        <!-- Benchmarks industry -->
+        <span class="text-xs mr-2 text-[color:var(--text-secondary)]"
+          >DSO industria: 90d</span
+        >
+        <span
+          class="h-4 border-l border-[color:var(--border-color-subtle)] mx-2"></span>
+        <button
+          class="text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)] border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card)]"
+          id="toggle-aging-view">
+          Ver tendencia
+        </button>
+      </div>
+    </div>
+    <div class="h-60">
+      <canvas id="agingBucketsChart"></canvas>
+    </div>
+
+    <!-- Costo financiero acumulado -->
+    <div class="mt-4 pt-3 border-t border-[color:var(--border-color-subtle)]">
+      <div class="flex justify-between items-center">
+        <span class="text-sm">Costo financiero acumulado:</span>
+        <span class="text-sm font-medium text-red-500 dark:text-red-400"
+          >${{ kpis.costo_financiero_total }}M</span
+        >
+      </div>
+      <!-- Acciones directas - Botones conectados con módulos específicos -->
+      <div class="mt-3 flex space-x-2">
+        <button
+          class="flex-1 text-xs py-1.5 bg-[color:var(--bg-subtle)] hover:bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded transition-colors">
+          Plan de acción 30d+
+        </button>
+        <button
+          class="flex-1 text-xs py-1.5 bg-[color:var(--bg-subtle)] hover:bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded transition-colors">
+          Plan de acción 60d+
+        </button>
+        <button
+          class="flex-1 text-xs py-1.5 bg-[color:var(--bg-subtle)] hover:bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded transition-colors">
+          Plan de acción 90d+
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráfico avanzado - Pareto de clientes con información de riesgo -->
+  <div
+    class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative lg:col-span-2 text[color:var(--text-primary)]">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold">Concentración por Cliente</h2>
+      <div class="flex space-x-1">
+        <button
+          class="text-xs px-2 py-1 rounded bg-[color:var(--accent-blue)] text-white"
+          id="pareto-toggle-ingresos">
+          Ingresos
+        </button>
+        <button
+          class="text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)] border border-[color:var(--border-color)]"
+          id="pareto-toggle-pendiente">
+          Pendiente
+        </button>
+      </div>
+    </div>
+    <div class="h-60">
+      <canvas id="paretoClientChart"></canvas>
+    </div>
+
+    <!-- Análisis de riesgo por cliente principal -->
+    <div class="mt-4 pt-3 border-t border-[color:var(--border-color-subtle)]">
+      <p class="text-sm font-medium mb-2">
+        Cliente principal: {{ kpis.cliente_principal }}
+      </p>
+      <div class="flex space-x-4 text-xs">
+        <div>
+          <p class="text-[color:var(--text-secondary)]">% Ingresos</p>
+          <p class="font-medium">{{ kpis.pct_ingresos_principal }}%</p>
+        </div>
+        <div>
+          <p class="text-[color:var(--text-secondary)]">DSO promedio</p>
+          <p class="font-medium">{{ kpis.dso_cliente_principal }}d</p>
+        </div>
+        <div>
+          <p class="text-[color:var(--text-secondary)]">Riesgo pago</p>
+          <p
+            class="font-medium {% if kpis.riesgo_pago_principal|default(15) > 70 %}text-red-500 dark:text-red-400{% elif kpis.riesgo_pago_principal|default(15) > 40 %}text-amber-500 dark:text-amber-400{% else %}text-green-500 dark:text-green-400{% endif %}">
+            {{ kpis.riesgo_pago_principal|default(15) }}%
+          </p>
+        </div>
+        <div>
+          <p class="text-[color:var(--text-secondary)]">Histórico</p>
+          <p class="font-medium">
+            {% if kpis.tendencia_pago_principal == 'mejora' %}
+            <span class="text-green-500 dark:text-green-400 flex items-center">
+              <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                  clip-rule="evenodd"></path>
+              </svg>
+              Mejora
+            </span>
+            {% elif kpis.tendencia_pago_principal == 'estable' %}
+            <span class="text-blue-500 dark:text-blue-400 flex items-center">
+              <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M8 4a1 1 0 100 2h8a1 1 0 100-2H8zM8 10a1 1 0 100 2h8a1 1 0 100-2H8zM8 16a1 1 0 100 2h8a1 1 0 100-2H8z"
+                  clip-rule="evenodd"></path>
+              </svg>
+              Estable
+            </span>
+            {% else %}
+            <span class="text-red-500 dark:text-red-400 flex items-center">
+              <svg
+                class="w-3 h-3 mr-1 rotate-180"
+                fill="currentColor"
+                viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                  clip-rule="evenodd"></path>
+              </svg>
+              Deterioro
+            </span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+
+      <!-- Acciones para mitigar riesgo de cliente -->
+      <div class="mt-3 flex justify-between items-center">
+        {% if kpis.riesgo_pago_principal|default(15) > 50 %}
+        <span class="text-xs text-red-500 dark:text-red-400 flex items-center">
+          <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"></path>
+          </svg>
+          Revisar exposición financiera
+        </span>
+        {% endif %}
+        <button
+          class="text-xs text-[color:var(--accent-blue)] hover:underline ml-auto">
+          Estrategia de diversificación
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alertas críticas y panel de acciones -->
+  <div
+    class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative lg:col-span-2">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold flex items-center">
+        Alertas Críticas {% if alertas|length > 3 %}
+        <span
+          class="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
+          <span class="text-xs font-medium text-red-800 dark:text-red-200"
+            >{{ alertas|length }}</span
+          >
+        </span>
+        {% endif %}
+      </h2>
+      <button
+        class="text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)] border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card)]">
+        Filtrar
+      </button>
+    </div>
+    <div class="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+      {% for alerta in alertas[:5] %}
+      <div
+        class="p-3 rounded-lg bg-[color:var(--bg-subtle)] border-l-4 {% if alerta.tipo == 'critico' %}border-red-500{% elif alerta.tipo == 'alto' %}border-amber-500{% else %}border-blue-500{% endif %}">
+        <div class="flex justify-between items-start">
+          <h3 class="font-medium text-sm">{{ alerta.titulo }}</h3>
+          <span
+            class="text-xs px-1.5 py-0.5 rounded {% if alerta.tipo == 'critico' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% elif alerta.tipo == 'alto' %}bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200{% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
+            {{ alerta.tipo|title }}
+          </span>
+        </div>
+        <p class="text-sm mt-1 text-[color:var(--text-secondary)]">
+          {{ alerta.descripcion }}
+        </p>
+
+        <!-- Acciones inmediatas para cada alerta -->
+        <div
+          class="flex justify-between items-center mt-2 pt-2 border-t border-[color:var(--border-color-subtle)]">
+          <span class="text-xs text-[color:var(--text-tertiary)]"
+            >{{ alerta.fecha }}</span
+          >
+          <div class="flex space-x-2">
+            <button
+              class="text-xs py-0.5 px-2 bg-[color:var(--bg-card)] rounded border border-[color:var(--border-color)] hover:bg-[color:var(--bg-subtle)]">
+              Asignar
+            </button>
+            <button
+              class="text-xs py-0.5 px-2 bg-[color:var(--accent-blue)] text-white rounded hover:bg-blue-600">
+              {{ alerta.accion_principal }}
+            </button>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-center py-8">
+        <svg
+          class="w-12 h-12 mx-auto text-[color:var(--text-tertiary)]"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <p class="mt-2 text-sm text-[color:var(--text-secondary)]">
+          No hay alertas críticas en este momento
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Resumen y acciones para todas las alertas -->
+    {% if alertas|length > 0 %}
+    <div
+      class="mt-4 pt-3 border-t border-[color:var(--border-color-subtle)] flex justify-between items-center">
+      <span class="text-sm">
+        <strong>{{ alertas|length }}</strong> alertas requieren atención
+      </span>
+      <button
+        class="text-xs flex items-center text-[color:var(--accent-blue)] hover:underline">
+        Ver todas
+        <svg class="w-3.5 h-3.5 ml-1" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+            clip-rule="evenodd"></path>
+        </svg>
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Widget de métricas de eficiencia operativa -->
+  <div
+    class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative lg:col-span-2">
+    <h2 class="text-lg font-bold mb-4">Indicadores de Eficiencia</h2>
+
+    <div class="space-y-4">
+      <!-- Tiempo promedio ciclo completo -->
+      <div>
+        <div class="flex justify-between items-center mb-1">
+          <div class="flex items-center">
+            <span class="text-sm">Tiempo medio ciclo EDP</span>
+            <button
+              class="ml-1 text-[color:var(--text-tertiary)]"
+              title="Tiempo desde emisión hasta pago final">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clip-rule="evenodd"></path>
+              </svg>
+            </button>
+          </div>
+          <span class="text-xs font-medium"
+            >{{ kpis.tiempo_medio_ciclo }} días</span
+          >
+        </div>
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div
+            class="bg-blue-600 h-2 rounded-full"
+            style="width: {{ kpis.tiempo_medio_ciclo_pct }}%"></div>
+        </div>
+        <div class="flex justify-between text-xs mt-1">
+          <span>Meta: {{ kpis.meta_tiempo_ciclo }}d</span>
+          <span>Benchmark: {{ kpis.benchmark_tiempo_ciclo }}d</span>
+        </div>
+      </div>
+
+      <!-- Desglose de tiempos por etapa -->
+      <div class="mt-6">
+        <p class="text-sm font-medium mb-3">Desglose por etapa (días)</p>
+        <div class="grid grid-cols-4 gap-2">
+          <div class="text-center">
+            <div class="h-20 flex items-end justify-center">
+              <div
+                class="w-full bg-blue-200 dark:bg-blue-900/40 rounded-t-md"
+                style="height: {{ kpis.etapa_emision_pct }}%"></div>
+            </div>
+            <p class="text-xs mt-1">Emisión</p>
+            <p class="text-xs font-medium">{{ kpis.tiempo_emision }}d</p>
+          </div>
+          <div class="text-center">
+            <div class="h-20 flex items-end justify-center">
+              <div
+                class="w-full bg-green-200 dark:bg-green-900/40 rounded-t-md"
+                style="height: {{ kpis.etapa_gestion_pct }}%"></div>
+            </div>
+            <p class="text-xs mt-1">Gestión</p>
+            <p class="text-xs font-medium">{{ kpis.tiempo_gestion }}d</p>
+          </div>
+          <div class="text-center">
+            <div class="h-20 flex items-end justify-center">
+              <div
+                class="w-full bg-purple-200 dark:bg-purple-900/40 rounded-t-md"
+                style="height: {{ kpis.etapa_conformidad_pct }}%"></div>
+            </div>
+            <p class="text-xs mt-1">Conformidad</p>
+            <p class="text-xs font-medium">{{ kpis.tiempo_conformidad }}d</p>
+          </div>
+          <div class="text-center">
+            <div class="h-20 flex items-end justify-center">
+              <div
+                class="w-full bg-amber-200 dark:bg-amber-900/40 rounded-t-md"
+                style="height: {{ kpis.etapa_pago_pct }}%"></div>
+            </div>
+            <p class="text-xs mt-1">Pago</p>
+            <p class="text-xs font-medium">{{ kpis.tiempo_pago }}d</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Oportunidad de mejora -->
+      <div class="mt-4 pt-3 border-t border-[color:var(--border-color-subtle)]">
+        <p class="text-sm font-medium flex items-center">
+          <svg
+            class="w-4 h-4 mr-1 text-amber-500 dark:text-amber-400"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+              clip-rule="evenodd"></path>
+          </svg>
+          Principal oportunidad de mejora:
+        </p>
+        <div class="flex justify-between items-center mt-2">
+          <span class="text-sm">{{ kpis.oportunidad_mejora }}</span>
+          <button
+            class="text-xs text-[color:var(--accent-blue)] hover:underline">
+            Plan de acción
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/manager-charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/critical-projects-modal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/utils-dashboard-manager.js') }}"></script>

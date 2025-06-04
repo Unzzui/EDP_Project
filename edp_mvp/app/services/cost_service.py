@@ -36,7 +36,6 @@ class CostService(BaseService):
                 )
             
             df_costs = costs_response.get('data', pd.DataFrame())
-            print(f'importe_neto: {df_costs.get("importe_neto", 0)}')
             
             if df_costs.empty:
                 return ServiceResponse(

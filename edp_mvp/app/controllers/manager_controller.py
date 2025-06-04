@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 import traceback
 import json
+import pandas as pd
 
 from ..services.manager_service import ManagerService
 from ..services.cashflow_service import CashFlowService
@@ -257,37 +258,80 @@ def api_critical_projects():
     API endpoint for critical projects analysis.
     Reemplaza la función original de análisis de proyectos críticos.
     """
-    try:
-        # ===== OBTENER FILTROS =====
-        filters = _parse_filters(request)
-        
-        # ===== CARGAR DATOS =====
+    """API para obtener proyectos críticos con EDP pendientes"""
+    try:    
+  
+        # ===== PASO 2: CARGAR DATOS RELACIONADOS =====
         datos_response = manager_service.load_related_data()
         if not datos_response.success:
-            return jsonify({
-                'success': False,
-                'message': datos_response.message,
-                'data': []
-            })
+            print(f"❌ Error cargando datos relacionados: {datos_response.message}")
+      
+
+        # Pextraigo la lista de EDPs y la convierto en DataFrame
+        lista_edps = datos_response.data.get('edps', [])
+
+        # CONVIERTO la lista de diccionarios  en DataFrame
+        df_edp = pd.DataFrame(lista_edps)
+
+    
+        df_edp['monto_aprobado'] = pd.to_numeric(df_edp['monto_aprobado'], errors='coerce')
         
-        # ===== ANALIZAR PROYECTOS CRÍTICOS =====
-        critical_response = manager_service.analyze_critical_projects(
-            datos_response.data, filters
-        )
         
-        if not critical_response.success:
-            return jsonify({
-                'success': False,
-                'message': critical_response.message,
-                'data': []
-            })
+        # Filtrar proyectos críticos (> 30 días de espera)
+        df_criticos = df_edp[(df_edp['dias_espera'] >= 30) & 
+                            (~df_edp['estado'].str.strip().isin(['pagado', 'validado']))].copy()
+        
+        
+        # Agrupar por proyecto y cliente
+        proyectos_criticos = []
+        for (proyecto, cliente), grupo in df_criticos.groupby(['proyecto', 'cliente']):
+            # Saltar si no hay datos válidos
+            if pd.isnull(proyecto) or pd.isnull(cliente):
+                continue
+                
+            jefe_proyecto = grupo['jefe_proyecto'].iloc[0] if not grupo['jefe_proyecto'].empty else "Sin asignar"
+            valor_total = grupo['monto_aprobado'].sum() / 1_000_000  # Convertir a millones
+            max_delay = grupo['dias_espera'].max()
+            
+            # Obtener EDPs relacionados
+            edps_relacionados = []
+            for _, row in grupo.iterrows():
+                if pd.isnull(row['n_edp']):
+                    continue
+                    
+                # Determinar estado basado en días de retraso
+                estado = 'critico' if row['dias_espera'] > 30 else 'Riesgo' if row['dias_espera'] > 15 else 'Pendiente'
+                
+                fecha_emisión = row['fecha_emision'].strftime('%d/%m/%Y') if not pd.isnull(row['fecha_emision']) else "N/A"
+                
+                edps_relacionados.append({
+                    'id': row['n_edp'],
+                    'date': fecha_emisión,
+                    'amount': round(row['monto_aprobado'] / 1_000_000, 2),  # Convertir a millones
+                    'days': int(row['dias_espera']),
+                    'status': estado
+                })
+            
+            if edps_relacionados:  # Solo agregar si tiene EDPs relacionados
+                proyectos_criticos.append({
+                    'name': proyecto,
+                    'client': cliente,
+                    'value': round(valor_total, 2),
+                    'delay': int(max_delay),
+                    'manager': jefe_proyecto,
+                    'edps': edps_relacionados
+                })
+        # Ordenar por valor total descendente
+        proyectos_criticos = sorted(proyectos_criticos, key=lambda x: x['value'], reverse=True)
+        
+        # Calcular valor total en riesgo
+        total_value = sum(p['value'] for p in proyectos_criticos)
         
         return jsonify({
-            'success': True,
-            'message': 'Proyectos críticos analizados exitosamente',
-            'data': critical_response.data
+            'projects': proyectos_criticos,
+            'total_value': round(total_value, 2),
+            'count': len(proyectos_criticos)
         })
-        
     except Exception as e:
         error_info = _handle_controller_error(e, "api_critical_projects")
         return jsonify({
