@@ -309,7 +309,7 @@ python status_check.py
 ### 📊 Google Sheets
 
 - **Archivo**: `app/utils/gsheet.py`
-- **Credenciales**: `app/keys/edp-control-system-f3cfafc0093a.json`
+- **Credenciales**: `app/keys/tu-credencial.json`
 
 ### 🌐 Ngrok (Desarrollo)
 

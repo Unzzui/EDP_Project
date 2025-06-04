@@ -50,7 +50,7 @@ class ControllerService(BaseService):
             print("Log de cambios vacío, no se puede enriquecer con estado detallado.")
             return df_enriquecido
 
-        cambios_estado = df_log[df_log['Campo'] == 'Estado Detallado'].copy()
+        cambios_estado = df_log[df_log['campo'] == 'Estado Detallado'].copy()
         if cambios_estado.empty:
             print("No se encontraron registros de 'Estado Detallado' en el log")
             #return df_enriquecido # Keep going to check motivos_rechazo

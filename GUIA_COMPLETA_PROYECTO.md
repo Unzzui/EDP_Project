@@ -153,7 +153,7 @@ generate_executive_alerts()            # Alertas ejecutivas
 ### 🔑 Configuración Google Sheets:
 
 ```
-Credenciales: /edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json
+Credenciales: /edp_mvp/app/keys/tu-credencial.json
 ```
 
 ---
