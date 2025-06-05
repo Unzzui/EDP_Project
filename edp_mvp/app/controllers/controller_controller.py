@@ -92,7 +92,7 @@ def _parse_filters(request) -> Dict[str, Any]:
         'departamento': request.args.get('departamento', 'todos'),
         'cliente': request.args.get('cliente', 'todos'),
         'estado': request.args.get('estado', 'todos'),
-        'vista': request.args.get('vista', 'general'),
+        'jefe_proyecto': request.args.get('jefe_proyecto', 'todos'),
         'monto_min': request.args.get('monto_min'),
         'monto_max': request.args.get('monto_max'),
         'dias_min': request.args.get('dias_min')
@@ -141,6 +141,8 @@ def dashboard_controller():
         filters = _parse_filters(request)
         print(f"📊 Filtros aplicados: {filters}")
         
+        
+        
         # ===== PASO 2: CARGAR DATOS CRUDOS =====
         datos_response = controller_service.load_related_data()
         if not datos_response.success:
@@ -155,6 +157,8 @@ def dashboard_controller():
         df_edp_raw = pd.DataFrame(datos_relacionados.get('edps', []))
         df_log_raw = pd.DataFrame(datos_relacionados.get('logs', []))
         
+        # ===== PASO 3: Aplicar Filtros a df_edp_raw =====
+      
         
         if df_edp_raw is None or df_edp_raw.empty:
             print("❌ Error: No se pudo cargar el DataFrame de EDP")
@@ -184,7 +188,7 @@ def dashboard_controller():
             return render_template('controller/controller_dashboard.html', **default_context)
         except:
             return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
-        return render_template('controller/controller_dashboard.html', **template_context)
+  
         
     except Exception as e:
         error_info = _handle_controller_error(e, "dashboard")

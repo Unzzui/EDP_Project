@@ -64,7 +64,7 @@ class ControllerService(BaseService):
                 ultimo_estado = ultimo_cambio['Después']
                 df_enriquecido.loc[df_enriquecido['n_edp'] == num_edp, 'estado_detallado'] = ultimo_estado
         
-        motivos_rechazo = df_log[df_log['campo'] == 'Motivo No-aprobado'].copy()
+        motivos_rechazo = df_log[df_log['campo'] == 'motivo_no_aprobado'].copy()
         if not motivos_rechazo.empty:
             for num_edp in motivos_rechazo['n_edp'].unique():
                 mask = (df_enriquecido['n_edp'] == num_edp) & (df_enriquecido['estado_detallado'] == '')
@@ -78,8 +78,8 @@ class ControllerService(BaseService):
         Obtiene los meses únicos del DataFrame y los ordena cronológicamente.
         """
         try:
-            if "Mes" not in df.columns:
-                print("WARNING: Columna 'Mes' no encontrada en el DataFrame")
+            if "mes" not in df.columns:
+                print("WARNING: Columna 'mes' no encontrada en el DataFrame")
                 return []
             
             meses = df["mes"].dropna().unique()
@@ -143,9 +143,9 @@ class ControllerService(BaseService):
         df_calculado['dias_espera'] = None # Initialize with a default
         
         for idx, row in df_calculado.iterrows():
-            if pd.notna(row.get('Fecha Envío al Cliente')):
-                fecha_envio = row['Fecha Envío al Cliente']
-                if row.get('Conformidad Enviada') == 'Sí' and pd.notna(row.get('fecha_conformidad')):
+            if pd.notna(row.get('fecha_envio_cliente')):
+                fecha_envio = row['fecha_envio_cliente']
+                if row.get('conformidad_enviada') == 'Sí' and pd.notna(row.get('fecha_conformidad')):
                     df_calculado.at[idx, 'dias_espera'] = (row['fecha_conformidad'] - fecha_envio).days
                 else:
                     df_calculado.at[idx, 'dias_espera'] = (now - fecha_envio).days
@@ -182,77 +182,36 @@ class ControllerService(BaseService):
 
     def _calcular_dso_para_dataset(self, df_datos: pd.DataFrame) -> float:
         """
-        Calcula el DSO (Days Sales Outstanding) para un dataset específico
+        Calcula el DSO (Days Sales Outstanding) usando la columna precalculada 'dias_espera',
+        ponderado por el 'monto_aprobado'.
         """
-        if df_datos.empty: return 0
+        if df_datos.empty:
+            return 0
 
-        required_cols = ["fecha_emision", "monto_aprobado"]
+        required_cols = ["dias_espera", "monto_aprobado"]
         for col in required_cols:
             if col not in df_datos.columns:
-                print(f"WARNING: Columna '{col}' no encontrada en el DataFrame para DSO.")
+                print(f"WARNING: Columna '{col}' no encontrada.")
                 return 0
-        
-        # Ensure 'monto_aprobado' is numeric
+
+        # Limpieza
         df_datos['monto_aprobado'] = pd.to_numeric(df_datos['monto_aprobado'], errors='coerce').fillna(0)
+        df_datos['dias_espera'] = pd.to_numeric(df_datos['dias_espera'], errors='coerce')
 
-        # Convert date columns to datetime, coercing errors
-        df_datos["fecha_emision"] = pd.to_datetime(df_datos["fecha_emision"], errors='coerce')
-   
-        if "fecha_conformidad" in df_datos.columns:
-            df_datos["fecha_conformidad"] = pd.to_datetime(df_datos["fecha_conformidad"], errors='coerce')
+        # Filtrado de valores válidos
+        df_valid = df_datos[
+            (~df_datos['dias_espera'].isna()) &
+            (df_datos['dias_espera'] >= 0) &
+            (df_datos['monto_aprobado'] > 0)
+        ]
 
-        fecha_pago_exists = "fecha_estimada_pago" in df_datos.columns
-        fecha_conformidad_exists = "fecha_conformidad" in df_datos.columns
-        
-        mask_conditions = [~pd.isna(df_datos["fecha_emision"])]
-        sub_mask_conditions = []
-
-        if fecha_pago_exists:
-            sub_mask_conditions.append(~pd.isna(df_datos["fecha_estimada_pago"]))
-        if fecha_conformidad_exists:
-            sub_mask_conditions.append(~pd.isna(df_datos["fecha_conformidad"]))
-        
-        if not sub_mask_conditions: # No date to compare with emission
-            return 0
-        
-        # Combine sub-conditions with OR
-        combined_sub_mask = sub_mask_conditions[0]
-        for condition in sub_mask_conditions[1:]:
-            combined_sub_mask = combined_sub_mask | condition
-        mask_conditions.append(combined_sub_mask)
-
-        # Combine all main conditions with AND
-        final_mask = mask_conditions[0]
-        for condition in mask_conditions[1:]:
-            final_mask = final_mask & condition
-            
-        df_calculable = df_datos[final_mask].copy()
-        
-        if df_calculable.empty:
-            return 0
-        
-        if fecha_pago_exists and fecha_conformidad_exists:
-            df_calculable["Fecha Final"] = df_calculable.apply(
-                lambda x: x["fecha_estimada_pago"] if pd.notna(x["fecha_estimada_pago"]) else x["fecha_conformidad"], axis=1
-            )
-        elif fecha_pago_exists:
-            df_calculable["Fecha Final"] = df_calculable["fecha_estimada_pago"]
-        elif fecha_conformidad_exists:
-            df_calculable["Fecha Final"] = df_calculable["fecha_conformidad"]
-        else: # Should not happen due to earlier check, but as a safeguard
+        if df_valid.empty:
             return 0
 
-        df_calculable["Días Cobro"] = (df_calculable["Fecha Final"] - df_calculable["fecha_emision"]).dt.days
-        df_calculable = df_calculable[df_calculable["Días Cobro"] >= 0] # Filter out negative days
-        
-        montos = df_calculable["monto_aprobado"].values
-        dias = df_calculable["Días Cobro"].values
-        
-        if len(montos) == 0 or sum(montos) == 0:
-            return 0
-        
-        dso = np.average(dias, weights=montos)
+        # Cálculo del DSO
+        dso = np.average(df_valid['dias_espera'], weights=df_valid['monto_aprobado'])
         return round(dso, 1)
+
 
     def _calcular_dso(self, df_datos: pd.DataFrame, mes_anterior_str: Optional[str] = None, df_mes_anterior: Optional[pd.DataFrame] = None) -> Tuple[float, float, list]:
         """
@@ -284,7 +243,7 @@ class ControllerService(BaseService):
             return round(dso_global, 1), round(dso_var, 1), top_proyectos
 
         df_datos["fecha_emision"] = pd.to_datetime(df_datos["fecha_emision"], errors='coerce')
-        df_pendientes = df_datos[df_datos["Estado"].isin(["enviado", "pendiente", "revisión"])].copy()
+        df_pendientes = df_datos[df_datos["estado"].isin(["enviado", "pendiente", "revisión"])].copy()
         
         if not df_pendientes.empty:
             # Calculate 'dias_pendiente' safely
@@ -301,7 +260,7 @@ class ControllerService(BaseService):
                     "nombre": row.get("proyecto", "Sin nombre"), 
                     "dias": int(row["dias_pendiente"]) if pd.notna(row["dias_pendiente"]) else 0, # Ensure dias is int
                     "monto": row.get("monto_aprobado", 0), # Already ensured numeric
-                    "encargado": row.get("Jefe de proyecto", "")
+                    "encargado": row.get("jefe_proyecto", "")
                 }
                 for _, row in top_3.iterrows() if pd.notna(row.get("dias_pendiente")) # Ensure 'dias_pendiente' is not NaN
             ]
@@ -338,10 +297,10 @@ class ControllerService(BaseService):
                 pass 
         
         if mes_anterior_str:
-            df_mes_anterior = df_full[df_full["Mes"] == mes_anterior_str]
+            df_mes_anterior = df_full[df_full["mes"] == mes_anterior_str]
             
             meta_mes_anterior = META_GLOBAL 
-            pagado_mes_anterior = df_mes_anterior[df_mes_anterior["Estado"] == "pagado"]["monto_aprobado"].sum()
+            pagado_mes_anterior = df_mes_anterior[df_mes_anterior["estado"] == "pagado"]["monto_aprobado"].sum()
             avance_mes_anterior = round(pagado_mes_anterior / meta_mes_anterior * 100, 1) if meta_mes_anterior > 0 else 0.0
             
             if pagado_mes_anterior != 0:
@@ -620,7 +579,7 @@ class ControllerService(BaseService):
             # 1. Cash Flow Forecast (compatible with dashboard format)
             charts['cash_in_forecast'] = self._build_cash_forecast_chart(df_full)
             
-            # 2. Status Distribution (Estado Proyectos)
+            # 2. Status Distribution (estado Proyectos)
             charts['estado_proyectos'] = self._build_status_distribution_chart(df_full)
             
             # 3. Client Performance (Concentración Clientes)
@@ -1223,9 +1182,9 @@ class ControllerService(BaseService):
         if df.empty: return alerts
 
         # Critical EDPs alert
-        # Ensure 'Crítico' column exists, treat missing as False
-        df['Crítico'] = df.get('Crítico', pd.Series(False, index=df.index)).fillna(False).astype(bool)
-        critical_count = len(df[df['Crítico'] == True]) # Explicitly check for True
+        # Ensure 'critico' column exists, treat missing as False
+        df['critico'] = df.get('critico', pd.Series(False, index=df.index)).fillna(False).astype(bool)
+        critical_count = len(df[df['critico'] == True]) # Explicitly check for True
         if critical_count > 0:
             alerts.append({'type': 'warning', 'title': 'EDPs Críticos', 
                            'message': f'{critical_count} EDPs marcados como críticos requieren atención inmediata', 
@@ -1272,10 +1231,10 @@ class ControllerService(BaseService):
         if df.empty: # Handle empty DataFrame input
             # Define all expected columns to avoid issues later, even if empty
             expected_cols = [
-                'fecha_emision', 'Fecha Envío al Cliente', 'fecha_conformidad', 'fecha_estimada_pago', 'Fecha Estimada de Pago',
-                'monto_propuesto', 'monto_aprobado', 'Validado', 'Crítico', 'Conformidad Enviada',
-                'dias_espera', 'Días Hábiles', 'Estado', 'Mes', 'Cliente', 'Jefe de proyecto', 
-                'estado_detallado', 'Motivo No-aprobado', 'Tipo_falla', 'n_edp', 'proyecto' # Added n_edp, proyecto
+                'fecha_emision', 'fecha_envio_cliente', 'fecha_conformidad', 'fecha_estimada_pago', 'Fecha Estimada de Pago',
+                'monto_propuesto', 'monto_aprobado', 'Validado', 'critico', 'conformidad_enviada',
+                'dias_espera', 'Días Hábiles', 'estado', 'mes', 'cliente', 'jefe_proyecto', 
+                'estado_detallado', 'motivo_no_aprobado', 'tipo_falla', 'n_edp', 'proyecto' # Added n_edp, proyecto
             ]
             df_prepared = pd.DataFrame(columns=expected_cols)
             # Set appropriate dtypes for an empty DataFrame if necessary, though operations below handle it.
@@ -1284,7 +1243,7 @@ class ControllerService(BaseService):
 
         df_prepared = df.copy()
 
-        date_cols = ['fecha_emision', 'Fecha Envío al Cliente', 'fecha_conformidad', 'fecha_estimada_pago', 'Fecha Estimada de Pago']
+        date_cols = ['fecha_emision', 'fecha_envio_cliente', 'fecha_conformidad', 'fecha_estimada_pago', 'Fecha Estimada de Pago']
         for col in date_cols:
             if col in df_prepared.columns:
                 df_prepared[col] = pd.to_datetime(df_prepared[col], errors='coerce')
@@ -1298,7 +1257,7 @@ class ControllerService(BaseService):
             else:
                 df_prepared[col] = 0.0
         
-        bool_cols_map = {'Validado': False, 'Crítico': False}
+        bool_cols_map = {'Validado': False, 'critico': False}
         for col, default_val in bool_cols_map.items():
             if col in df_prepared.columns:
                 if df_prepared[col].dtype == 'object':
@@ -1314,16 +1273,16 @@ class ControllerService(BaseService):
             else:
                 df_prepared[col] = default_val
         
-        if 'Conformidad Enviada' not in df_prepared.columns:
-            df_prepared['Conformidad Enviada'] = 'No'
+        if 'conformidad_enviada' not in df_prepared.columns:
+            df_prepared['conformidad_enviada'] = 'No'
         else:
-            df_prepared['Conformidad Enviada'] = df_prepared['Conformidad Enviada'].fillna('No')
+            df_prepared['conformidad_enviada'] = df_prepared['conformidad_enviada'].fillna('No')
 
         df_prepared = self._calcular_dias_espera(df_prepared)
 
-        if 'Fecha Envío al Cliente' in df_prepared.columns and 'fecha_conformidad' in df_prepared.columns:
+        if 'fecha_envio_cliente' in df_prepared.columns and 'fecha_conformidad' in df_prepared.columns:
             df_prepared['Días Hábiles'] = df_prepared.apply(
-                lambda row: self._calcular_dias_habiles(row.get('Fecha Envío al Cliente'), row.get('fecha_conformidad')),
+                lambda row: self._calcular_dias_habiles(row.get('fecha_envio_cliente'), row.get('fecha_conformidad')),
                 axis=1
             )
         else: # Ensure column exists even if calculation can't be done
@@ -1334,8 +1293,8 @@ class ControllerService(BaseService):
 
 
         ensure_cols_with_defaults = {
-            'Estado': '', 'Mes': '', 'Cliente': '', 'Jefe de proyecto': '', 
-            'estado_detallado': '', 'Motivo No-aprobado': '', 'Tipo_falla': '',
+            'estado': '', 'mes': '', 'cliente': '', 'jefe_proyecto': '', 
+            'estado_detallado': '', 'motivo_no_aprobado': '', 'tipo_falla': '',
             'n_edp': '', 'proyecto': '' # Added n_edp, proyecto
         }
         for col, default_value in ensure_cols_with_defaults.items():
@@ -1396,59 +1355,68 @@ class ControllerService(BaseService):
                 print("Warning: df_full is empty after preparation. Returning default context.")
                 return ServiceResponse(success=True, data=self._get_default_processed_context(request_filters), message="Input data was empty or unprocessable, dashboard shows default values.")
 
+
+
             # 2. Filter Options
             meses_ordenados = self._obtener_meses_ordenados(df_full)
-            clientes_unicos = sorted(list(df_full["Cliente"].dropna().unique())) if "Cliente" in df_full.columns else []
-            encargados_unicos = sorted(list(df_full["Jefe de proyecto"].dropna().unique())) if "Jefe de proyecto" in df_full.columns else []
-            estados_detallados_unicos = sorted(list(df_full["estado_detallado"].dropna().unique())) if "estado_detallado" in df_full.columns else []
+            clientes_unicos = sorted(list(df_full["cliente"].dropna().unique())) if "cliente" in df_full.columns else []
+            encargados_unicos = sorted(list(df_full["jefe_proyecto"].dropna().unique())) if "jefe_proyecto" in df_full.columns else []
+            estado_filter = sorted(list(df_full["estado"].dropna().unique())) if "estado" in df_full.columns else []
             
             filter_options = {
-                "meses": meses_ordenados,
-                "clientes": clientes_unicos,
-                "encargados": encargados_unicos,
-                "estados_detallados": estados_detallados_unicos
+                "mes": meses_ordenados,
+                "cliente": clientes_unicos,
+                "jefe_proyecto": encargados_unicos,
+                "estado": estado_filter
             }
 
-            # 3. Apply Filters
-            df_filtered = df_full.copy()
-            mes_filter = request_filters.get("mes")
-            encargado_filter = request_filters.get("encargado")
-            cliente_filter = request_filters.get("cliente")
-            estado_filter = request_filters.get("estado")
-            estado_detallado_filter = request_filters.get("estado_detallado")
-
-            if mes_filter:
-                df_filtered = df_filtered[df_filtered["Mes"] == mes_filter]
-            if encargado_filter:
-                df_filtered = df_filtered[df_filtered["Jefe de proyecto"] == encargado_filter]
-            if cliente_filter:
-                df_filtered = df_filtered[df_filtered["Cliente"] == cliente_filter]
             
-            # estado_detallado filter (applied before Estado filter, as in original)
-            if estado_detallado_filter:
-                df_filtered = df_filtered[df_filtered["estado_detallado"] == estado_detallado_filter]
+            # 3. Apply Filters
+            filters = {  
+                'mes' : request_filters.get("mes"),
+                'jefe_proyecto' : request_filters.get("jefe_proyecto"),
+                'cliente' : request_filters.get("cliente"),
+                'estado' : request_filters.get("estado"),
+            }
 
-            # Estado filter logic
-            if estado_filter == "pendientes":
-                df_filtered = df_filtered[df_filtered["Estado"].isin(["revisión", "enviado"])]
-            elif estado_filter == "todos":
-                pass # No estado filter
-            elif estado_filter: # Specific estado
-                df_filtered = df_filtered[df_filtered["Estado"] == estado_filter]
-            elif not estado_detallado_filter: # Default if no estado_filter and no estado_detallado_filter
-                 df_filtered = df_filtered[df_filtered["Estado"].isin(["revisión", "enviado"])]
+            df = df_full.copy()
+            if filters["mes"]:
+                df = df[df["mes"] == filters["mes"]]
+            if filters["jefe_proyecto"] and filters["jefe_proyecto"] != "todos":
+                df = df[df["jefe_proyecto"] == filters["jefe_proyecto"]]
+            if filters["cliente"] and filters["cliente"] != "todos":
+                df = df[df["cliente"] == filters["cliente"]]
 
+            # Aplicar filtro de estado con nueva lógica
+            if filters["estado"] == "pendientes":
+                # Filtro "Pendientes" - solo muestra estados de revisión y enviado
+                df = df[df["estado"].isin(["revisión", "enviado"])]
+            elif filters["estado"] == "todos":  # Nueva opción explícita para "Todos"
+                # No aplicar filtro de estado, mostrar todo
+                pass
+            elif filters["estado"]:
+                # Filtro específico (validado, pagado, etc)
+                df = df[df["estado"] == filters["estado"]]
+            elif not filters["estado"] or filters["estado"] == "todos":
+                # Filtro predeterminado al cargar la página cuando estado es None o "todos"
+                df = df[df["estado"].isin(["revisión", "enviado"])]
 
+            df_filtered = df.copy()  # Keep filtered DataFrame for later use
+
+            mes_filter = filters["mes"] if filters["mes"] else None
+            encargado_filter = filters["jefe_proyecto"] if filters["jefe_proyecto"] and filters["jefe_proyecto"] != "todos" else None
+            cliente_filter = filters["cliente"] if filters["cliente"] and filters["cliente"] != "todos" else None
+            estado_filter = filters["estado"] if filters["estado"] and filters["estado"] != "todos" else None
             # 4. Calculate KPIs and Metrics
 
             # KPIs Globales
             total_edp_global = df_full.shape[0]
-            total_validados_global = df_full[df_full["Validado"] == True].shape[0]
+            total_validados_global = df_full[df_full["estado"].isin(["validado", "pagado"])].shape[0]
             # Use pd.Series.mean() which handles empty series by returning NaN
             dias_espera_promedio_global_raw = df_full["dias_espera"].mean()
             dias_espera_promedio_global = round(dias_espera_promedio_global_raw if pd.notna(dias_espera_promedio_global_raw) else 0, 1)
             
-            validados_rapidos_global = df_full[(df_full["Validado"] == True) & (df_full["dias_espera"] <= 30)].shape[0]
+            validados_rapidos_global = df_full[df_full["estado"].isin(["validado", "pagado"]) & (df_full["dias_espera"] <= 30)].shape[0]
             porcentaje_validacion_rapida_global = round(validados_rapidos_global / total_validados_global * 100, 1) if total_validados_global > 0 else 0.0
             kpis_globales = {
                 "total_edp_global": total_edp_global,
@@ -1459,7 +1427,7 @@ class ControllerService(BaseService):
 
             # KPIs Filtrados
             total_filtrados = df_filtered.shape[0]
-            total_criticos_filtrados = df_filtered[df_filtered["Crítico"] == True].shape[0]
+            total_criticos_filtrados = df_filtered[df_filtered["critico"] == True].shape[0]
             
             dias_espera_promedio_filtrado_raw = df_filtered["dias_espera"].mean()
             dias_espera_promedio_filtrado = round(dias_espera_promedio_filtrado_raw if pd.notna(dias_espera_promedio_filtrado_raw) else 0, 1)
@@ -1474,7 +1442,7 @@ class ControllerService(BaseService):
             }
 
             # Métricas Financieras
-            total_pagado_global = df_full[df_full["Estado"] == "pagado"]["monto_aprobado"].sum()
+            total_pagado_global = df_full[df_full["estado"] == "pagado"]["monto_aprobado"].sum()
             total_propuesto_global = df_full["monto_propuesto"].sum()
             total_aprobado_global = df_full["monto_aprobado"].sum()
             
@@ -1492,8 +1460,8 @@ class ControllerService(BaseService):
             }
             # Specific filtered financial KPIs (passed separately to template in original)
             dso_filtrado = self._calcular_dso_para_dataset(df_filtered.copy()) if not df_filtered.empty else 0.0
-            total_pendiente_filtrado = df_filtered[df_filtered["Estado"].isin(["enviado", "pendiente", "revisión"])]["monto_propuesto"].sum()
-            total_pagado_filtrado = df_filtered[df_filtered["Estado"].isin(["pagado", "validado"])]["monto_aprobado"].sum()
+            total_pendiente_filtrado = df_filtered[df_filtered["estado"].isin(["enviado", "pendiente", "revisión"])]["monto_propuesto"].sum()
+            total_pagado_filtrado = df_filtered[df_filtered["estado"].isin(["pagado", "validado"])]["monto_aprobado"].sum()
 
 
             # Variaciones Mensuales
@@ -1505,9 +1473,9 @@ class ControllerService(BaseService):
             avance_encargado = 0.0
             monto_pendiente_encargado = 0.0
             if encargado_filter: # df_filtered is already filtered by encargado if filter is active
-                monto_pagado_encargado = df_filtered[df_filtered["Estado"] == "pagado"]["monto_aprobado"].sum()
+                monto_pagado_encargado = df_filtered[df_filtered["estado"] == "pagado"]["monto_aprobado"].sum()
                 # Original used monto_aprobado for pendiente_por_pago_encargado
-                pendiente_por_pago_encargado = df_filtered[df_filtered["Estado"].isin(["pendiente", "revisión", "enviado"])]["monto_aprobado"].sum()
+                pendiente_por_pago_encargado = df_filtered[df_filtered["estado"].isin(["pendiente", "revisión", "enviado"])]["monto_aprobado"].sum()
                 monto_pendiente_encargado = pendiente_por_pago_encargado if pd.notna(pendiente_por_pago_encargado) else 0.0
 
                 if meta_por_encargado > 0:
@@ -1520,13 +1488,13 @@ class ControllerService(BaseService):
             }
 
             # KPIs Conformidad
-            total_con_conformidad = df_full[df_full["Conformidad Enviada"] == "Sí"].shape[0]
+            total_con_conformidad = df_full[df_full["conformidad_enviada"] == "Sí"].shape[0]
             porcentaje_conformidad = round((total_con_conformidad / total_edp_global * 100), 1) if total_edp_global > 0 else 0.0
             
             tiempo_promedio_conformidad = 0.0
-            mask_fechas_validas = df_full["Fecha Envío al Cliente"].notna() & df_full["fecha_conformidad"].notna()
+            mask_fechas_validas = df_full["fecha_envio_cliente"].notna() & df_full["fecha_conformidad"].notna()
             if mask_fechas_validas.any():
-                tiempos_conformidad = (df_full.loc[mask_fechas_validas, "fecha_conformidad"] - df_full.loc[mask_fechas_validas, "Fecha Envío al Cliente"]).dt.days
+                tiempos_conformidad = (df_full.loc[mask_fechas_validas, "fecha_conformidad"] - df_full.loc[mask_fechas_validas, "fecha_envio_cliente"]).dt.days
                 # Filter out negative days if any, though less likely for conformity
                 tiempos_conformidad_positivos = tiempos_conformidad[tiempos_conformidad >= 0]
                 if not tiempos_conformidad_positivos.empty:
@@ -1542,8 +1510,8 @@ class ControllerService(BaseService):
             # Análisis Retrabajos
             total_retrabajos = df_full[df_full["estado_detallado"] == "re-trabajo solicitado"].shape[0]
             porcentaje_retrabajos = round((total_retrabajos / total_edp_global * 100), 1) if total_edp_global > 0 else 0.0
-            motivos_rechazo_series = df_full["Motivo No-aprobado"].value_counts() if "Motivo No-aprobado" in df_full.columns else pd.Series(dtype="object")
-            tipos_falla_series = df_full["Tipo_falla"].value_counts() if "Tipo_falla" in df_full.columns else pd.Series(dtype="object")
+            motivos_rechazo_series = df_full["motivo_no_aprobado"].value_counts() if "motivo_no_aprobado" in df_full.columns else pd.Series(dtype="object")
+            tipos_falla_series = df_full["tipo_falla"].value_counts() if "tipo_falla" in df_full.columns else pd.Series(dtype="object")
             analisis_retrabajos = {
                 "total_retrabajos": total_retrabajos,
                 "porcentaje_retrabajos": porcentaje_retrabajos,
@@ -1552,7 +1520,7 @@ class ControllerService(BaseService):
             }
 
             # Pagos Data (uses df_full)
-            edps_pagados_conformados_df = df_full[df_full["Estado"].isin(["pagado", "validado"])]
+            edps_pagados_conformados_df = df_full[df_full["estado"].isin(["pagado", "validado"])]
             pagos_data = {
                 "total_edp_pagados_conformados": edps_pagados_conformados_df.shape[0],
                 "total_pagado_global_kpi": edps_pagados_conformados_df["monto_aprobado"].sum(),
@@ -1562,7 +1530,7 @@ class ControllerService(BaseService):
             }
 
             # Pendientes Data (uses df_full)
-            edps_por_cobrar_df = df_full[df_full["Estado"].isin(["enviado", "pendiente", "revisión"])]
+            edps_por_cobrar_df = df_full[df_full["estado"].isin(["enviado", "pendiente", "revisión"])]
             pendientes_data = {
                 "total_edps_por_cobrar": edps_por_cobrar_df.shape[0],
                 "total_pendiente_por_cobrar": edps_por_cobrar_df["monto_propuesto"].sum(), # Original uses monto_propuesto here
@@ -1581,7 +1549,7 @@ class ControllerService(BaseService):
                     idx_mes_actual = meses_ordenados_str.index(str(mes_filter))
                     if idx_mes_actual > 0:
                         mes_anterior_para_dso = meses_ordenados_str[idx_mes_actual - 1]
-                        df_mes_anterior_para_dso = df_full[df_full["Mes"] == mes_anterior_para_dso].copy()
+                        df_mes_anterior_para_dso = df_full[df_full["mes"] == mes_anterior_para_dso].copy()
                 except ValueError: # mes_filter might not be in list
                     pass 
             
@@ -1601,10 +1569,10 @@ class ControllerService(BaseService):
             context = {
                 "registros": registros,
                 "filtros": request_filters, # Pass back the applied filters
-                "meses": filter_options["meses"],
-                "encargados": filter_options["encargados"],
-                "clientes": filter_options["clientes"],
-                "estados_detallados": filter_options["estados_detallados"],
+                "meses": filter_options["mes"],
+                "encargados": filter_options["jefe_proyecto"],
+                "clientes": filter_options["cliente"],
+                "estados_detallados": filter_options["estado"],
                 
                 "dso_global": dso_global,
                 "dso_var": dso_var,

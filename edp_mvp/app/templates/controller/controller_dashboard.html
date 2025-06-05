@@ -920,52 +920,52 @@
      <tbody>
   {% for registro in registros %}
     <tr 
-      data-proyecto="{{ registro.get('Proyecto', '') }}"
-      data-jefe="{{ registro.get('Jefe de Proyecto', '') }}"
-      data-cliente="{{ registro.get('Cliente', '') }}"
-      data-mes="{{ registro.get('Mes', '') }}"
-      data-edp="{{ registro.get('N° EDP', '') }}"
-      data-n-conformidad="{{ registro.get('N° Conformidad', '') }}"
-      data-estado="{{ registro.get('Estado', '') }}"
-      data-dias="{{ registro.get('Días Espera', 0) }}"
-      data-dias-habiles="{{ registro.get('Días Hábiles', 0) }}"
-      data-monto-propuesto="{{ registro.get('Monto Propuesto', 0)|default(0) }}"
-      data-monto-aprobado="{{ registro.get('Monto Aprobado', 0)|default(0) }}"
-      data-critico="{{ 1 if registro.get('Crítico', False) else 0 }}"
-      class="{% if registro.get('Crítico', False) %}data-table-row-critical{% endif %}{% if registro.get('Estado', '') == 'validado' %}data-table-row-validated{% endif %}"
+      data-proyecto="{{ registro.get('proyecto', '') }}"
+      data-jefe="{{ registro.get('jefe_proyecto', '') }}"
+      data-cliente="{{ registro.get('cliente', '') }}"
+      data-mes="{{ registro.get('mes', '') }}"
+      data-edp="{{ registro.get('n_edp', '') }}"
+      data-n-conformidad="{{ registro.get('n_conformidad', '') }}"
+      data-estado="{{ registro.get('estado', '') }}"
+      data-dias="{{ registro.get('dias_espera', 0) }}"
+      data-dias-habiles="{{ registro.get('dias_habiles', 0) }}"
+      data-monto-propuesto="{{ registro.get('Mmonto_propuesto', 0)|default(0) }}"
+      data-monto-aprobado="{{ registro.get('monto_aprobado', 0)|default(0) }}"
+      data-critico="{{ 1 if registro.get('critico', False) else 0 }}"
+      class="{% if registro.get('critico', False) %}data-table-row-critical{% endif %}{% if registro.get('Estado', '') == 'validado' %}data-table-row-validated{% endif %}"
     >
-      <td class="font-medium">{{ registro.get('Proyecto', '-') }}</td>
-      <td>{{ registro.get('Jefe de Proyecto', '-') }}</td>
-      <td>{{ registro.get('Cliente', '-') }}</td>
-      <td>{{ registro.get('Mes', '-') }}</td>
-      <td>{{ registro.get('N° EDP', '-') }}</td>      
-      <td>{{ registro.get('N° Conformidad', '-') }}</td>
+      <td class="font-medium">{{ registro.get('proyecto', '-') }}</td>
+      <td>{{ registro.get('jefe_proyecto', '-') }}</td>
+      <td>{{ registro.get('cliente', '-') }}</td>
+      <td>{{ registro.get('mes', '-') }}</td>
+      <td>{{ registro.get('n_edp', '-') }}</td>      
+      <td>{{ registro.get('n_conformidad', '-') }}</td>
       <td>
-        <span class="estado-pill estado-{{ registro.get('Estado', 'pendiente') }}">
-          {{ registro.get('Estado', 'pendiente') }}
+        <span class="estado-pill estado-{{ registro.get('estado', 'pendiente') }}">
+          {{ registro.get('estado', 'pendiente') }}
         </span>
       </td>
       
-      {% set dias = registro.get('Días Espera', 0)|int %}
+      {% set dias = registro.get('dias_espera', 0)|int %}
       <td class="text-center {% if dias > 30 %}text-[color:var(--accent-red)] font-medium{% elif dias > 20 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-green)]{% endif %}">
         {{ dias }}
       </td>
       
       <td class="text-center">{{ registro.get('Días Hábiles', 0) }}</td>
-      <td class="text-right">${{ "{:,.0f}".format(registro.get('Monto Propuesto', 0)|default(0)).replace(",",".") }}</td>
-      <td class="text-right">${{ "{:,.0f}".format(registro.get('Monto Aprobado', 0)|default(0)).replace(",",".") }}</td>
+      <td class="text-right">${{ "{:,.0f}".format(registro.get('Mmonto_propuesto', 0)|default(0)).replace(",",".") }}</td>
+      <td class="text-right">${{ "{:,.0f}".format(registro.get('monto_aprobado', 0)|default(0)).replace(",",".") }}</td>
       <td class="text-center">
         {% if registro.get('Crítico', False) %}
           <span class="text-[color:var(--accent-red)]">●</span>
         {% else %}
           <span class="text-[color:var(--text-secondary)]">○</span>
         {% endif %}
- <td class="max-w-xs truncate" title="{{ registro.get('Observaciones', '') }}">
-  {{ registro.get('Observaciones', '-')[:15] ~ ('...' if registro.get('Observaciones') and registro.get('Observaciones')|length > 50 else '') }}
+ <td class="max-w-xs truncate" title="{{ registro.get('observaciones', '') }}">
+  {{ registro.get('observaciones', '-')[:15] ~ ('...' if registro.get('observaciones') and registro.get('observaciones')|length > 50 else '') }}
 </td>
 
     <td>
-<a href="{{ url_for('controller.detalle_edp', n_edp=registro.get('ID', '')) }}" 
+<a href="{{ url_for('controller.detalle_edp', n_edp=registro.get('id', '')) }}" 
      class="flex items-center justify-center text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] bg-[color:var(--bg-card-hover)] hover:bg-[color:var(--bg-highlight)] p-1.5 rounded-full transition-colors"
      title="Ver detalles del EDP">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
