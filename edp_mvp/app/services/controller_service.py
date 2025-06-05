@@ -61,7 +61,7 @@ class ControllerService(BaseService):
             cambios_edp = cambios_estado[cambios_estado['n_edp'] == str(num_edp)]
             if not cambios_edp.empty:
                 ultimo_cambio = cambios_edp.sort_values('fecha_hora', ascending=False).iloc[0]
-                ultimo_estado = ultimo_cambio['Después']
+                ultimo_estado = ultimo_cambio['despues']
                 df_enriquecido.loc[df_enriquecido['n_edp'] == num_edp, 'estado_detallado'] = ultimo_estado
         
         motivos_rechazo = df_log[df_log['campo'] == 'motivo_no_aprobado'].copy()
