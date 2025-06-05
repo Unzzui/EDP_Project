@@ -260,7 +260,7 @@ class ControllerService(BaseService):
                     "nombre": row.get("proyecto", "Sin nombre"), 
                     "dias": int(row["dias_pendiente"]) if pd.notna(row["dias_pendiente"]) else 0, # Ensure dias is int
                     "monto": row.get("monto_aprobado", 0), # Already ensured numeric
-                    "encargado": row.get("jefe_proyecto", "")
+                    "jefe_proyecto": row.get("jefe_proyecto", "")
                 }
                 for _, row in top_3.iterrows() if pd.notna(row.get("dias_pendiente")) # Ensure 'dias_pendiente' is not NaN
             ]
@@ -1360,13 +1360,13 @@ class ControllerService(BaseService):
             # 2. Filter Options
             meses_ordenados = self._obtener_meses_ordenados(df_full)
             clientes_unicos = sorted(list(df_full["cliente"].dropna().unique())) if "cliente" in df_full.columns else []
-            encargados_unicos = sorted(list(df_full["jefe_proyecto"].dropna().unique())) if "jefe_proyecto" in df_full.columns else []
+            jefes_unicos = sorted(list(df_full["jefe_proyecto"].dropna().unique())) if "jefe_proyecto" in df_full.columns else []
             estado_filter = sorted(list(df_full["estado"].dropna().unique())) if "estado" in df_full.columns else []
             
             filter_options = {
                 "mes": meses_ordenados,
                 "cliente": clientes_unicos,
-                "jefe_proyecto": encargados_unicos,
+                "jefe_proyecto": jefes_unicos,
                 "estado": estado_filter
             }
 
@@ -1404,7 +1404,7 @@ class ControllerService(BaseService):
             df_filtered = df.copy()  # Keep filtered DataFrame for later use
 
             mes_filter = filters["mes"] if filters["mes"] else None
-            encargado_filter = filters["jefe_proyecto"] if filters["jefe_proyecto"] and filters["jefe_proyecto"] != "todos" else None
+            jefes_filter = filters["jefe_proyecto"] if filters["jefe_proyecto"] and filters["jefe_proyecto"] != "todos" else None
             cliente_filter = filters["cliente"] if filters["cliente"] and filters["cliente"] != "todos" else None
             estado_filter = filters["estado"] if filters["estado"] and filters["estado"] != "todos" else None
             # 4. Calculate KPIs and Metrics
@@ -1468,11 +1468,11 @@ class ControllerService(BaseService):
             variaciones = self._calcular_variaciones_mensuales(df_full.copy(), mes_filter, meses_ordenados, total_pagado_global)
 
             # Info Encargado
-            meta_por_encargado = METAS_ENCARGADOS.get(encargado_filter, 0)
+            meta_por_encargado = METAS_ENCARGADOS.get(jefes_filter, 0)
             monto_pagado_encargado = 0.0
             avance_encargado = 0.0
             monto_pendiente_encargado = 0.0
-            if encargado_filter: # df_filtered is already filtered by encargado if filter is active
+            if jefes_filter: # df_filtered is already filtered by encargado if filter is active
                 monto_pagado_encargado = df_filtered[df_filtered["estado"] == "pagado"]["monto_aprobado"].sum()
                 # Original used monto_aprobado for pendiente_por_pago_encargado
                 pendiente_por_pago_encargado = df_filtered[df_filtered["estado"].isin(["pendiente", "revisión", "enviado"])]["monto_aprobado"].sum()
@@ -1565,12 +1565,16 @@ class ControllerService(BaseService):
             registros_raw = df_filtered.to_dict(orient="records")
             registros = self._clean_nat_values(registros_raw)
 
+
+            total_edps_criticos_global = df_full[df_full["estado"].isin(["enviado", "pendiente", "revisión"]) & (df_full["dias_espera"] >= 30)].shape[0]
+          
+    
             # 6. Construct Final Context Dictionary
             context = {
                 "registros": registros,
                 "filtros": request_filters, # Pass back the applied filters
                 "meses": filter_options["mes"],
-                "encargados": filter_options["jefe_proyecto"],
+                "jefes_proyectos": filter_options["jefe_proyecto"],
                 "clientes": filter_options["cliente"],
                 "estados_detallados": filter_options["estado"],
                 
@@ -1580,6 +1584,7 @@ class ControllerService(BaseService):
                 "dso_filtrado": dso_filtrado,
                 "total_pendiente_filtrado": total_pendiente_filtrado,
                 "total_pagado_filtrado": total_pagado_filtrado,
+                'total_edps_criticos_global': total_edps_criticos_global,
                 
                 **kpis_globales,
                 **kpis_filtrados,
@@ -1601,3 +1606,5 @@ class ControllerService(BaseService):
             # Return a default, structured, empty context on failure
             default_context = self._get_default_processed_context(request_filters)
             return ServiceResponse(success=False, message=error_message, data=default_context)
+
+

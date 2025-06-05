@@ -329,7 +329,7 @@ function renderEdpModalContent(data) {
   const template = document.getElementById('edpModalTemplate');
   
   // Actualizar título del modal
-  document.getElementById('modalTitle').textContent = `Detalle de EDP: ${data['N° EDP']}`;
+  document.getElementById('modalTitle').textContent = `Detalle de EDP: ${data['n_edp'] || 'N/A'}`;
   
   // Clonar template
   const content = template.content.cloneNode(true);
@@ -383,7 +383,7 @@ function renderEdpModalContent(data) {
 
     // Recolectar datos del formulario
     const formData = new FormData(form);
-    const edpId = data['ID'];
+    const edpId = data['id'];
     
     // Enviar petición AJAX
     fetch(`/controller/api/update-edp/${edpId}`, {
@@ -455,10 +455,10 @@ function renderEdpModalContent(data) {
     const montoPFormatted = document.getElementById('monto_propuesto_formatted');
     
     if (montoP && montoPFormatted && data['monto_propuesto']) {
-      const rawValue = data['Monto Propuesto'].toString().replace(/[^\d]/g, '');
+      const rawValue = data['monto_propuesto'].toString().replace(/[^\d]/g, '');
       montoP.value = rawValue;
       montoPFormatted.value = formatCurrency(rawValue);
-      console.log("✓ Monto Propuesto formateado:", rawValue, "→", formatCurrency(rawValue));
+      console.log("✓ monto_propuesto formateado:", rawValue, "→", formatCurrency(rawValue));
     }
     
     const montoA = document.getElementById('monto_aprobado');

@@ -9,7 +9,7 @@ from . import BaseRepository, SheetsRepository
 from ..models import EDP
 from ..utils.date_utils import parse_date_safe
 from ..utils.format_utils import clean_numeric_value
-
+import numpy as np
 
 class EDPRepository(BaseRepository):
     """Repository for EDP operations."""
@@ -207,6 +207,24 @@ class EDPRepository(BaseRepository):
                     df["dias_espera"] = (fecha_conformidad.fillna(hoy) - fecha_envio).dt.days
                 else:
                     df["dias_espera"] = (hoy - fecha_envio).dt.days
+            
+   
+
+            if "fecha_envio_cliente" in df.columns and len(df) > 0:
+                df["fecha_envio_cliente"] = pd.to_datetime(df["fecha_envio_cliente"], errors='coerce')
+                df["fecha_conformidad"] = pd.to_datetime(df.get("fecha_conformidad", pd.NaT), errors='coerce')
+                hoy = pd.Timestamp.today()
+
+                df["fecha_final"] = df["fecha_conformidad"].fillna(hoy)
+
+                # Asegúrate de que ambas fechas no sean NaT
+                mask_validas = (~df["fecha_envio_cliente"].isna()) & (~df["fecha_final"].isna())
+
+                df.loc[mask_validas, "dias_habiles"] = df.loc[mask_validas].apply(
+                    lambda row: np.busday_count(row["fecha_envio_cliente"].date(), row["fecha_final"].date()),
+                    axis=1
+                )
+
             
             # Calculate critical status
             if "dias_espera" in df.columns and len(df) > 0:

@@ -914,7 +914,9 @@ function updateSummaryPanel() {
 			}
 		});
 	});
-
+	console.log(
+		`Total tarjetas: ${totalTarjetas}, Tarjetas críticas: ${tarjetasCriticas}, Total días: ${totalDias}, Tarjetas con días: ${tarjetasConDias}`
+	);
 	// Calcular promedio
 	diasPromedio =
 		tarjetasConDias > 0 ? Math.round(totalDias / tarjetasConDias) : 0;
@@ -2542,6 +2544,5 @@ function setupSocketConnection() {
 		showToast(`EDP actualizado: ${data.edp_id || "desconocido"}`, "info");
 	});
 }
-
 
 

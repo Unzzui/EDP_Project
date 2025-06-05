@@ -1,11 +1,19 @@
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
-from ..config import Config
-
-from datetime import datetime, timezone, timedelta
+from ..config import get_config
+import pandas as pd
 import re
+import traceback
+import pandas as pd
+import re
+import traceback
+import re
+
+
+
+
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 def idx_to_a1(idx):          # 0-based
@@ -29,10 +37,11 @@ ALLOWED = {
 def generate_unique_id():
     """Genera un nuevo ID único para un EDP"""
     service = get_service()
+    config = get_config()
     
     # Obtener todos los IDs existentes
     result = service.spreadsheets().values().get(
-        spreadsheetId=Config.SHEET_ID,
+        spreadsheetId=config.SHEET_ID,
         range="edp!A:A"
     ).execute()
     values = result.get("values", [])
@@ -114,29 +123,30 @@ def validar_transicion(estado_actual, nuevo_estado):
 
 
 def validar_edp(edp_original, updates):
-    cur = edp_original["Estado Detallado"]
-    new = updates.get("Estado Detallado", cur)
+    cur = edp_original["estado_detallado"]
+    new = updates.get("estado_detallado", cur)
 
     validar_transicion(cur, new)  # la func. que vimos antes
 
     # reglas extra
     if new == "aprobado":
-        faltan = [c for c in ("Monto Aprobado", "Fecha Estimada de Pago") if not updates.get(c)]
+        faltan = [c for c in ("monto_aprobado", "fecha_estimada_pago") if not updates.get(c)]
         if faltan:
             raise ValueError(f"Faltan campos requeridos: {', '.join(faltan)}")
 
-    if new == "re-trabajo solicitado" and not updates.get("Motivo No-aprobado"):
+    if new == "re-trabajo solicitado" and not updates.get("motivo_no_aprobado"):
         raise ValueError("Debes elegir Motivo No-aprobado al pasar a Re-trabajo")
 
     # Mejora para la validación de Conformidad Enviada
-    if updates.get("Conformidad Enviada") == "Sí":
-        campos_requeridos = ["N° Conformidad", "Fecha Conformidad"]
+    if updates.get("conformidad_enviada") == "Sí":
+        campos_requeridos = ["n_conformidad", "fecha_conformidad"]
         faltan = [c for c in campos_requeridos if not updates.get(c)]
         if faltan:
             raise ValueError(f"Al marcar Conformidad Enviada como 'Sí', debes completar: {', '.join(faltan)}")
 
 def get_service():
-    creds = Credentials.from_service_account_file(Config.GOOGLE_CREDENTIALS, scopes=SCOPES)
+    config = get_config()
+    creds = Credentials.from_service_account_file(config.GOOGLE_CREDENTIALS, scopes=SCOPES)
     return build('sheets', 'v4', credentials=creds)
 
 def read_sheet(range_name, apply_transformations=True):
@@ -151,8 +161,9 @@ def read_sheet(range_name, apply_transformations=True):
         DataFrame: Datos solicitados
     """
     service = get_service()
+    config = get_config()
     sheet = service.spreadsheets()
-    result = sheet.values().get(spreadsheetId=Config.SHEET_ID, range=range_name).execute()
+    result = sheet.values().get(spreadsheetId=config.SHEET_ID, range=range_name).execute()
     values = result.get('values', [])
     if not values:
         print(f"No hay datos en el rango {range_name}")
@@ -470,12 +481,13 @@ def append_row(row_values, sheet_name="edp"):
     - Usa USER_ENTERED para respetar fórmulas/formato.
     """
     service = get_service()
+    config = get_config()
     sheet   = service.spreadsheets()
 
     # 1) Leer encabezados (primera fila)
     header_range = f"{sheet_name}!1:1"
     headers = sheet.values().get(
-        spreadsheetId=Config.SHEET_ID,
+        spreadsheetId=config.SHEET_ID,
         range=header_range
     ).execute().get("values", [[]])[0]
 
@@ -485,7 +497,7 @@ def append_row(row_values, sheet_name="edp"):
 
     # 3) Append dinámico (indica sólo la hoja, sin rango fijo)
     sheet.values().append(
-        spreadsheetId   = Config.SHEET_ID,
+        spreadsheetId   = config.SHEET_ID,
         range           = sheet_name,       # ← deja que Sheets coloque al final
         valueInputOption= "USER_ENTERED",
         insertDataOption= "INSERT_ROWS",
@@ -505,7 +517,7 @@ def update_edp_by_id(edp_id, updates, usuario="Sistema"):
     try:
         # Buscar la fila por ID único
         df = read_sheet("edp!A1:Z")
-        matches = df[df["ID"] == str(edp_id)]
+        matches = df[df["id"] == str(edp_id)]
         
         if matches.empty:
             print(f"EDP con ID {edp_id} no encontrado")
@@ -542,12 +554,13 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema", force_u
     """
     try:
         service = get_service()
+        config = get_config()
         sheet = service.spreadsheets()
 
         # --- 1. Obtener encabezados ---
         header_range = f"{sheet_name}!A1:1"
         result = sheet.values().get(
-            spreadsheetId=Config.SHEET_ID,
+            spreadsheetId=config.SHEET_ID,
             range=header_range
         ).execute()
         
@@ -562,7 +575,7 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema", force_u
         row_range = f"{sheet_name}!A{row_number}:{last_col}{row_number}"
         
         result = sheet.values().get(
-            spreadsheetId=Config.SHEET_ID,
+            spreadsheetId=config.SHEET_ID,
             range=row_range
         ).execute()
         
@@ -599,7 +612,7 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema", force_u
         if cambios_reales:
             body = {"values": [row_values]}
             sheet.values().update(
-                spreadsheetId=Config.SHEET_ID,
+                spreadsheetId=config.SHEET_ID,
                 range=row_range,
                 valueInputOption="USER_ENTERED",
                 body=body
@@ -607,9 +620,9 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema", force_u
             print(f"Actualización enviada a Sheets: {len(cambios_reales)} cambios")
             
             # --- 5. Registrar solo los cambios reales en el log ---
-            id_edp = before.get("ID", "0")  # Obtener el ID único como identificador primario
-            n_edp = before.get("N° EDP", "—")
-            proyecto = before.get("Proyecto", "—")
+            id_edp = before.get("id", "0")  # Obtener el ID único como identificador primario
+            n_edp = before.get("n_edp", "—")
+            proyecto = before.get("proyecto", "—")
             
             for campo, antes, despues in cambios_reales:
                 log_cambio_edp(
@@ -724,8 +737,9 @@ def log_cambio_edp(n_edp: str,
 
     # 3. Escribir - actualizado rango a A:G para incluir la columna proyecto
     service = get_service()
+    config = get_config()
     service.spreadsheets().values().append(
-        spreadsheetId   = Config.SHEET_ID,
+        spreadsheetId   = config.SHEET_ID,
         range           = "log!A:G",  # Actualizado de A:F a A:G
         valueInputOption= "USER_ENTERED",
         insertDataOption= "INSERT_ROWS",
@@ -744,22 +758,23 @@ def read_log(n_edp=None, proyecto=None, usuario=None, range_name="log!A1:G"):
         range_name (str): Rango a leer
     """
     service = get_service()
+    config = get_config()
     sheet = service.spreadsheets()
 
     result = sheet.values().get(
-        spreadsheetId=Config.SHEET_ID,
+        spreadsheetId=config.SHEET_ID,
         range=range_name
     ).execute()
     values = result.get("values", [])
 
     if not values:
         # Devolver DataFrame vacío con columnas esperadas
-        return pd.DataFrame(columns=['Fecha y Hora', 'N° EDP', 'Proyecto', 'Campo', 'Antes', 'Después', 'Usuario'])
+        return pd.DataFrame(columns=['fecha_hora', 'n_edp', 'proyecto', 'campo', 'antes', 'despues', 'usuario'])
 
     # Manejar compatibilidad con formato antiguo (sin columna Proyecto)
     if len(values[0]) == 6:  # Formato antiguo: A:F
         # Insertar columna 'Proyecto' en la posición 2 (entre N° EDP y Campo)
-        values[0].insert(2, 'Proyecto')
+        values[0].insert(2, 'proyecto')
         for row in values[1:]:
             # Añadir valor vacío para la columna proyecto en filas de datos
             if len(row) == 6:
@@ -769,20 +784,20 @@ def read_log(n_edp=None, proyecto=None, usuario=None, range_name="log!A1:G"):
     df = pd.DataFrame(values[1:], columns=values[0]).fillna("")
 
     # Convertir fecha-hora
-    if "Fecha y Hora" in df.columns:
-        df["Fecha y Hora"] = pd.to_datetime(df["Fecha y Hora"], errors="coerce")
+    if "fecha_hora" in df.columns:
+        df["fecha_hora"] = pd.to_datetime(df["fecha_hora"], errors="coerce")
 
     # Filtrado
     if n_edp:
-        df = df[df["N° EDP"] == str(n_edp)]
+        df = df[df["n_edp"] == str(n_edp)]
     if proyecto:
-        df = df[df["Proyecto"] == str(proyecto)]
+        df = df[df["proyecto"] == str(proyecto)]
     if usuario:
-        df = df[df["Usuario"].str.lower() == usuario.lower()]
+        df = df[df["usuario"].str.lower() == usuario.lower()]
 
     # Orden descendente
-    if "Fecha y Hora" in df.columns:
-        df = df.sort_values("Fecha y Hora", ascending=False)
+    if "fecha_hora" in df.columns:
+        df = df.sort_values("fecha_hora", ascending=False)
 
     return df
 
@@ -805,10 +820,11 @@ def crear_incidencia(tipo: str,
     L) Fecha resolución · M) `Solución/Comentarios`
     """
     service = get_service()
+    config = get_config()
     
     # 1. Obtener el último ID de incidencia
     result = service.spreadsheets().values().get(
-        spreadsheetId=Config.SHEET_ID,
+        spreadsheetId=config.SHEET_ID,
         range="issues!A:A"
     ).execute()
     values = result.get("values", [])
@@ -843,7 +859,7 @@ def crear_incidencia(tipo: str,
     
     # 4. Insertar en la hoja
     service.spreadsheets().values().append(
-        spreadsheetId=Config.SHEET_ID,
+        spreadsheetId=config.SHEET_ID,
         range="issues!A:R",
         valueInputOption="USER_ENTERED",
         insertDataOption="INSERT_ROWS",
@@ -959,13 +975,14 @@ def actualizar_incidencia(id_incidencia, actualizaciones, usuario="Sistema"):
         
         # Preparar actualizaciones para Google Sheets
         service = get_service()
+        config = get_config()
         
         for campo, valor in actualizaciones.items():
             if campo in columnas:
                 col_letra = columnas[campo]
                 # Actualizar celda
                 service.spreadsheets().values().update(
-                    spreadsheetId=Config.SHEET_ID,
+                    spreadsheetId=config.SHEET_ID,
                     range=f"issues!{col_letra}{row_idx}",
                     valueInputOption="USER_ENTERED",
                     body={"values": [[valor]]}
@@ -1016,8 +1033,9 @@ def agregar_comentario_incidencia(id_incidencia, comentario, usuario="Sistema"):
         
         # Actualizar la celda
         service = get_service()
+        config = get_config()
         service.spreadsheets().values().update(
-            spreadsheetId=Config.SHEET_ID,
+            spreadsheetId=config.SHEET_ID,
             range=f"issues!M{row_idx}",
             valueInputOption="USER_ENTERED",
             body={"values": [[comentarios_actualizados]]}
@@ -1025,7 +1043,7 @@ def agregar_comentario_incidencia(id_incidencia, comentario, usuario="Sistema"):
         
         # Actualizar también la fecha de última actualización
         service.spreadsheets().values().update(
-            spreadsheetId=Config.SHEET_ID,
+            spreadsheetId=config.SHEET_ID,
             range=f"issues!K{row_idx}",
             valueInputOption="USER_ENTERED",
             body={"values": [[timestamp]]}

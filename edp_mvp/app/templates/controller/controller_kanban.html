@@ -484,12 +484,12 @@ button.processing {
       </div>
 
       <div class="form-group">
-        <label for="encargado" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Encargado de Proyecto</label>
+        <label for="jefe_proyecto" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Encargado de Proyecto</label>
         <div class="relative">
-          <select name="encargado" id="encargado" class="form-select w-full pl-9">
+          <select name="jefe_proyecto" id="jefe_proyecto" class="form-select w-full pl-9">
             <option value="">Todos</option>
-            {% for e in encargados %}
-              <option value="{{ e }}" {% if filtros.encargado == e %}selected{% endif %}>{{ e }}</option>
+            {% for e in jefe_proyectos %}
+              <option value="{{ e }}" {% if filtros.jefe_proyecto == e %}selected{% endif %}>{{ e }}</option>
             {% endfor %}
           </select>
           <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
@@ -568,15 +568,7 @@ button.processing {
     <h2 class="text-xl font-semibold">📊 Resumen del Tablero</h2>
     <div class="section-line"></div>
   </div>
-  <div class="flex flex-wrap items-center gap-2 mb-5">
-  <span class="text-sm font-medium text-[color:var(--text-secondary)]">Mostrar columnas:</span>
-  {% for estado in columnas.keys() %}
-  <label class="inline-flex items-center px-3 py-1.5 bg-[color:var(--bg-card)] text-sm rounded-lg border border-[color:var(--border-color)] cursor-pointer hover:bg-[color:var(--bg-card-hover)]">
-    <input type="checkbox" class="form-checkbox mr-2 toggle-column" data-estado="{{ estado }}" checked>
-    <span>{{ estado }}</span>
-  </label>
-  {% endfor %}
-</div>
+
 
   <!-- KPI -->
 <div id="summary-panel" class="mb-8 bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-highlight)] rounded-2xl shadow-lg border border-[color:var(--border-color)] overflow-hidden">
@@ -636,10 +628,10 @@ button.processing {
   <!-- Tablero Kanban -->
      <!-- Filtro y contador de validados antiguos -->
   <div class="flex items-center justify-between mb-4 px-4">
-    {% if total_validados_antiguos > 0 %}
+    {% if estadisticas.total_validados_antiguos > 0 %}
     <div class="text-xs text-[color:var(--text-secondary)] bg-[color:var(--bg-highlight)] px-3 py-1 rounded-full">
       {% if not filtros.mostrar_validados_antiguos %}
-        <span class="font-medium">{{ total_validados_antiguos }}</span> EDPs validados antiguos ocultos
+        <span class="font-medium">{{ estadisticas.total_validados_antiguos }}</span> EDPs validados antiguos ocultos
       {% else %}
         Mostrando todos los EDPs validados
       {% endif %}
@@ -665,7 +657,15 @@ button.processing {
     <h2 class="text-xl font-semibold">📋 Tablero Kanban</h2>
     <div class="section-line"></div>
   </div>
-  
+    <div class="flex flex-wrap items-center gap-2 mb-5">
+  <span class="text-sm font-medium text-[color:var(--text-secondary)]">Mostrar columnas:</span>
+  {% for estado in columnas.keys() %}
+  <label class="inline-flex items-center px-3 py-1.5 bg-[color:var(--bg-card)] text-sm rounded-lg border border-[color:var(--border-color)] cursor-pointer hover:bg-[color:var(--bg-card-hover)]">
+    <input type="checkbox" class="form-checkbox mr-2 toggle-column" data-estado="{{ estado }}" checked>
+    <span>{{ estado }}</span>
+  </label>
+  {% endfor %}
+</div>
   <div id="kanban-board" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
     {% for estado, edps in columnas.items() %}
     <div class="kanban-column column-toggle-transition bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)]"
@@ -695,55 +695,55 @@ button.processing {
         {% for edp in edps %}
         <div class="kanban-item bg-[color:var(--bg-secondary)] p-4 rounded-lg shadow-sm border border-[color:var(--border-color)] hover:shadow-md hover:ring-1 hover:ring-[color:var(--accent-blue)] hover:scale-[1.01] transition-all"
              draggable="true"
-             data-id="{{ edp['N° EDP'] }}">
+             data-id="{{ edp['n_edp'] }}">
 
           <!-- Cabecera de tarjeta -->
           <div class="flex justify-between items-start mb-2">
             <p class="font-bold text-sm">
-              EDP-{{ edp["N° EDP"] }}
+              EDP-{{ edp["n_edp"] }}
         
             </p>
             <p>
             <span class="text-xs px-2 py-1 rounded-full bg-[color:var(--bg-accent-subtle)] text-[color:var(--text-secondary)]"
-                  data-tooltip='Obs: {{ edp["Observaciones"] }}'>
-              ${{ "{:,.0f}".format(edp["Monto Aprobado"]|float).replace(",", ".") }}
+                  data-tooltip='Obs: {{ edp["observaciones"] }}'>
+              ${{ "{:,.0f}".format(edp["monto_aprobado"]|float).replace(",", ".") }}
             </span>
             </p>
       
           </div>
           
           <!-- Contenido de tarjeta -->
-          <h3 class="font-medium text-sm mb-2 text-[color:var(--text-primary)]">{{ edp["Proyecto"] }}</h3>
+          <h3 class="font-medium text-sm mb-2 text-[color:var(--text-primary)]">{{ edp["proyecto"] }}</h3>
           
           <div class="space-y-1 mb-3">
             <p class="text-xs flex items-center text-[color:var(--text-secondary)]">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
-              {{ edp["Cliente"] }}
+              {{ edp["cliente"] }}
             </p>
             <p class="text-xs flex items-center text-[color:var(--text-secondary)]">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              {{ edp["Jefe de Proyecto"] }}
+              {{ edp["jefe_proyecto"] }}
             </p>
             <p class="text-xs flex items-center text-[color:var(--text-secondary)]">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-   {% if edp.get('Fecha Envío al Cliente') is not none %}
-    {% if edp.get('Conformidad Enviada') == 'Sí' and edp.get('Fecha Conformidad') is not none %}
+   {% if edp.get('fecha_envio_cliente') is not none %}
+    {% if edp.get('conformidad_enviada') == 'Sí' and edp.get('fecha_conformidad') is not none %}
       <!-- Días hasta la conformidad -->
-      <span class="{% if edp['Días Espera']|int > 5 %}text-[color:var(--accent-amber)] font-bold{% endif %} {% if edp['Días Espera']|int > 10 %}text-[color:var(--accent-red)] font-bold{% endif %}">
-        {{ edp["Días Espera"] }} días (conf.)
-        {% if edp['Días Espera']|int > 10 %}⚠️{% endif %}
+      <span class="{% if edp['dias_espera']|int > 5 %}text-[color:var(--accent-amber)] font-bold{% endif %} {% if edp['dias_espera']|int > 10 %}text-[color:var(--accent-red)] font-bold{% endif %}">
+        {{ edp["dias_espera"] }} días (conf.)
+        {% if edp['dias_espera']|int > 10 %}⚠️{% endif %}
       </span>
     {% else %}
       <!-- Días hasta hoy (sin conformidad) -->
-      <span class="{% if edp['Días Espera']|int > 5 %}text-[color:var(--accent-amber)] font-bold{% endif %} {% if edp['Días Espera']|int > 10 %}text-[color:var(--accent-red)] font-bold{% endif %}">
-        {{ edp["Días Espera"] }} días
-        {% if edp['Días Espera']|int > 10 %}⚠️{% endif %}
+      <span class="{% if edp['dias_espera']|int > 5 %}text-[color:var(--accent-amber)] font-bold{% endif %} {% if edp['dias_espera']|int > 10 %}text-[color:var(--accent-red)] font-bold{% endif %}">
+        {{ edp["dias_espera"] }} días
+        {% if edp['dias_espera']|int > 10 %}⚠️{% endif %}
       </span>
     {% endif %}
   {% else %}
@@ -754,17 +754,17 @@ button.processing {
           </div>
           
           <!-- Información financiera -->
-          {% if edp.get('Monto Propuesto') is not none and edp['Monto Propuesto']|float > 0 %}
+          {% if edp.get('monto_propuesto') is not none and edp['monto_propuesto']|float > 0 %}
           <div class="border-t border-[color:var(--border-color-subtle)] pt-2 mb-2">
             <div class="flex justify-between items-center">
               <div class="text-xs">
                 <span class="font-medium text-[color:var(--text-secondary)]">Propuesto:</span>
-                <span>${{ "{:,.0f}".format(edp['Monto Propuesto']|float).replace(",", ".") }}</span>
+                <span>${{ "{:,.0f}".format(edp['monto_propuesto']|float).replace(",", ".") }}</span>
               </div>
               
-              {% if edp['Monto Propuesto']|float != edp['Monto Aprobado']|float %}
-                {% set diferencia = (edp['Monto Aprobado']|float - edp['Monto Propuesto']|float) %}
-                {% set porcentaje = (diferencia / edp['Monto Propuesto']|float * 100)|round %}
+              {% if edp['monto_propuesto']|float != edp['monto_aprobado']|float %}
+                {% set diferencia = (edp['monto_aprobado']|float - edp['monto_propuesto']|float) %}
+                {% set porcentaje = (diferencia / edp['monto_propuesto']|float * 100)|round %}
                 <div class="text-xs px-1.5 py-0.5 rounded {{ 'bg-green-100 text-green-700' if diferencia > 0 else 'bg-red-100 text-red-700' }}">
                   {{ "+" if diferencia > 0 else "" }}{{ porcentaje }}%
                 </div>
@@ -775,15 +775,14 @@ button.processing {
           
    <!-- Fechas importantes con información más detallada -->
 <div class="space-y-1 mb-2 text-xs">
-  {% if edp.get('Fecha Estimada de Pago') %}
-    {% set dias_para_pago = ((edp['Fecha Estimada de Pago'] - now).days if edp['Fecha Estimada de Pago'] is not none else 0) %}
+  {% if edp.get('fecha_estimada_pago') %}
     <div class="flex items-center justify-between">
       <span class="text-[color:var(--text-secondary)]">Pago estimado:</span>
-      <span class="{{ 'text-green-600' if dias_para_pago > 0 else 'text-red-600 font-medium' }}">
-        {{ edp['Fecha Estimada de Pago'].strftime('%d-%m-%Y') }}
-        {% if edp.get('Conformidad Enviada') == 'Sí' %}
-          <!-- Si tiene conformidad, mostrar días faltantes -->
-          <span class="ml-1 text-[0.65rem]">({{ "en " + dias_para_pago|string + " días" if dias_para_pago > 0 else "atrasado " + (-dias_para_pago)|string + " días" }})</span>
+      <span class="text-blue-600">
+        {{ edp['fecha_estimada_pago'] }}
+        {% if edp.get('conformidad_enviada') == 'Sí' %}
+          <!-- Si tiene conformidad, mostrar que está pendiente de pago -->
+          <span class="ml-1 text-[0.65rem] text-green-600">(conf. ok)</span>
         {% else %}
           <!-- Si no tiene conformidad, mostrar advertencia -->
           <span class="ml-1 text-[0.65rem] text-[color:var(--accent-amber)]">(pendiente conf.)</span>
@@ -791,19 +790,18 @@ button.processing {
       </span>
     </div>
   {% endif %}
-            
-      <!-- Mostrar información de conformidad -->
-  {% if edp.get('Conformidad Enviada') == 'Sí' %}
+         <!-- Mostrar información de conformidad -->
+  {% if edp.get('conformidad_enviada') == 'Sí' %}
     <div class="flex items-center">
       <svg class="h-3 w-3 text-green-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
       </svg>
       <span class="text-green-600">Conformidad enviada</span>
-      {% if edp['Fecha Conformidad'] and edp['Fecha Conformidad'] is not none and edp['Fecha Conformidad'] != 'NaT' %}
-  <span class="ml-1 text-[color:var(--text-secondary)]">({{ edp['Fecha Conformidad'].strftime('%d-%m-%Y') }})</span>
-{% endif %}
+      {% if edp.get('fecha_conformidad') and edp['fecha_conformidad'] not in ['', 'NaT', None] %}
+        <span class="ml-1 text-[color:var(--text-secondary)]">({{ edp['fecha_conformidad'] }})</span>
+      {% endif %}
     </div>
-  {% elif edp.get('Fecha Envío al Cliente') %}
+  {% elif edp.get('fecha_envio_cliente') %}
     <!-- Si hay fecha de envío pero no conformidad -->
     <div class="flex items-center">
       <svg class="h-3 w-3 text-[color:var(--accent-amber)] mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -813,11 +811,12 @@ button.processing {
     </div>
   {% endif %}
   
+  
   <!-- Información del número de conformidad si existe -->
-  {% if edp.get('N° Conformidad') %}
+  {% if edp.get('n_conformidad') %}
     <div class="flex items-center">
       <span class="text-[color:var(--text-secondary)]">N° Conf:</span>
-      <span class="ml-1 px-1.5 bg-[color:var(--bg-highlight)] rounded">{{ edp['N° Conformidad'] }}</span>
+      <span class="ml-1 px-1.5 bg-[color:var(--bg-highlight)] rounded">{{ edp['n_conformidad'] }}</span>
     </div>
   {% endif %}
 </div>
@@ -827,7 +826,7 @@ button.processing {
 <div class="flex justify-end pt-2 border-t border-[color:var(--border-color-subtle)]">
 <button 
   class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[color:var(--bg-card)] border border-transparent hover:border-[color:var(--accent-blue-light)] hover:bg-[color:var(--bg-highlight)] transition-all duration-150 shadow-sm hover:shadow"
-  onclick="openEdpModal('{{ edp['N° EDP'] }}')">
+  onclick="openEdpModal('{{ edp['n_edp'] }}')">
   <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-[color:var(--accent-blue)] group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
   </svg>

@@ -225,12 +225,12 @@
       </div>
 
       <div class="form-group">
-        <label for="encargado" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Encargado de Proyecto</label>
+        <label for="jefe_proyecto" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Encargado de Proyecto</label>
         <div class="relative">
-          <select name="encargado" id="encargado" class="form-select w-full pl-9">
+          <select name="jefe_proyecto" id="jefe_proyecto" class="form-select w-full pl-9">
             <option value="">Todos</option>
-            {% for j in encargados %}
-              <option value="{{ j }}" {% if filtros.encargado == j %}selected{% endif %}>{{ j }}</option>
+            {% for j in jefes_proyectos %}
+              <option value="{{ j }}" {% if filtros.jefe_proyecto == j %}selected{% endif %}>{{ j }}</option>
             {% endfor %}
           </select>
           <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-9 text-[color:var(--accent-blue)]">
@@ -291,15 +291,15 @@
   </form>
 
   <!-- Botón de acceso rápido a gestión por encargado -->
-  {% if filtros.encargado %}
+  {% if filtros.jefe_proyecto %}
     <div class="mb-6">
-      <a href="{{ url_for('controller.vista_encargado', nombre=filtros.encargado) }}"
+      <a href="{{ url_for('controller.vista_encargado', nombre=filtros.jefe_proyecto) }}"
          class="inline-flex items-center px-4 py-2 bg-[color:var(--accent-blue-dark)] bg-opacity-15 text-[color:var(--text-primary)] hover:bg-opacity-25 transition-all">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
           <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
           <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
         </svg>
-        Ver gestión detallada de {{ filtros.encargado }}
+        Ver gestión detallada de {{ filtros.jefe_proyecto }}
       </a>
     </div>
   {% endif %}
@@ -474,14 +474,14 @@
           <h5 class="text-xs font-medium text-[color:var(--text-secondary)] mb-2">Top 3 críticos</h5>
           <div class="space-y-1.5">
             {% for proyecto in top_dso_proyectos %}
-              <a href="{{ url_for('controller.vista_proyecto_de_encargado', nombre=proyecto.encargado, proyecto=proyecto.nombre) }}"
+              <a href="{{ url_for('controller.vista_proyecto_de_encargado', nombre=proyecto.jefe_proyecto, proyecto=proyecto.nombre) }}"
                  class="flex items-center justify-between py-1 px-2 rounded hover:bg-[color:var(--bg-highlight)] transition-colors text-xs">
                 <div class="flex items-center space-x-1 min-w-0">
                   <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-opacity-20 {% if proyecto.dias > 60 %}bg-[color:var(--accent-red)] text-[color:var(--accent-red)]{% elif proyecto.dias > 45 %}bg-[color:var(--accent-amber)] text-[color:var(--accent-amber)]{% else %}bg-[color:var(--accent-green)] text-[color:var(--accent-green)]{% endif %} flex-shrink-0">
                     {{ loop.index }}
                   </span>
                   <span class="truncate max-w-[80px] text-[color:var(--accent-blue)]" title="{{ proyecto.nombre }}">{{ proyecto.nombre|truncate(10) }}</span>
-                  <span class="text-[color:var(--text-tertiary)]" title="{{ proyecto.encargado }}">{{ proyecto.encargado }}</span>
+                  <span class="text-[color:var(--text-tertiary)]" title="{{ proyecto.jefe_proyecto }}">{{ proyecto.jefe_proyecto }}</span>
                 </div>
                 <div class="flex items-center">
                   <span class="font-medium {% if proyecto.dias > 60 %}text-[color:var(--accent-red)]{% elif proyecto.dias > 45 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-green)]{% endif %} mr-2">{{ proyecto.dias }}d</span>
@@ -929,7 +929,7 @@
       data-estado="{{ registro.get('estado', '') }}"
       data-dias="{{ registro.get('dias_espera', 0) }}"
       data-dias-habiles="{{ registro.get('dias_habiles', 0) }}"
-      data-monto-propuesto="{{ registro.get('Mmonto_propuesto', 0)|default(0) }}"
+      data-monto-propuesto="{{ registro.get('monto_propuesto', 0)|default(0) }}"
       data-monto-aprobado="{{ registro.get('monto_aprobado', 0)|default(0) }}"
       data-critico="{{ 1 if registro.get('critico', False) else 0 }}"
       class="{% if registro.get('critico', False) %}data-table-row-critical{% endif %}{% if registro.get('Estado', '') == 'validado' %}data-table-row-validated{% endif %}"
@@ -952,10 +952,10 @@
       </td>
       
       <td class="text-center">{{ registro.get('Días Hábiles', 0) }}</td>
-      <td class="text-right">${{ "{:,.0f}".format(registro.get('Mmonto_propuesto', 0)|default(0)).replace(",",".") }}</td>
+      <td class="text-right">${{ "{:,.0f}".format(registro.get('monto_propuesto', 0)|default(0)).replace(",",".") }}</td>
       <td class="text-right">${{ "{:,.0f}".format(registro.get('monto_aprobado', 0)|default(0)).replace(",",".") }}</td>
       <td class="text-center">
-        {% if registro.get('Crítico', False) %}
+        {% if registro.get('critico', False) %}
           <span class="text-[color:var(--accent-red)]">●</span>
         {% else %}
           <span class="text-[color:var(--text-secondary)]">○</span>
@@ -1061,6 +1061,14 @@ function showToast(message, type = 'info') {
     }, 500);
   }, 5000);
 }
+window.addEventListener("DOMContentLoaded", () => {
+  const btnPendientes = document.getElementById("filter-pendientes");
+
+  if (btnPendientes) {
+    btnPendientes.click(); // Ejecuta el filtro automáticamente al cargar
+  }
+});
+
     // Define essential variables first
     const detailPagePrefix = '/controller/detalle/';
     const table        = document.getElementById('edp-table');
@@ -1181,7 +1189,7 @@ function showToast(message, type = 'info') {
         showingCount.classList.remove('font-bold', 'text-[color:var(--accent-blue)]');
       }
     }
-    
+
     // Agregar eventos de clic a los encabezados para ordenar
   headers.forEach(header => {
     header.addEventListener('click', function () {

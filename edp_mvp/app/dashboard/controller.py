@@ -1536,20 +1536,14 @@ def actualizar_estado_kanban():
     df_actualizado = read_sheet("edp!A1:V")
     edp_actualizado = df_actualizado[df_actualizado["N° EDP"] == str(edp_id)].iloc[0].to_dict() 
     
-    if not edp.empty:
-        # Convertir a diccionario
-        edp_actualizado = edp.iloc[0].to_dict()
-        
-        # Formatear fechas para evitar problemas de serialización
-        for campo in ['Fecha Emisión', 'Fecha Envío al Cliente', 'Fecha Estimada de Pago', 'Fecha Conformidad']:
-            if campo in edp_actualizado and pd.notna(edp_actualizado[campo]):
-                try:
-                    fecha = pd.to_datetime(edp_actualizado[campo])
-                    edp_actualizado[campo] = fecha.strftime('%Y-%m-%d')
-                except:
-                    pass
-    else:
-        edp_actualizado = {}
+    # Formatear fechas para evitar problemas de serialización
+    for campo in ['Fecha Emisión', 'Fecha Envío al Cliente', 'Fecha Estimada de Pago', 'Fecha Conformidad']:
+        if campo in edp_actualizado and pd.notna(edp_actualizado[campo]):
+            try:
+                fecha = pd.to_datetime(edp_actualizado[campo])
+                edp_actualizado[campo] = fecha.strftime('%Y-%m-%d')
+            except:
+                pass
     # Emitir evento más completo
     socketio.emit("estado_actualizado", {
         "edp_id": edp_id,

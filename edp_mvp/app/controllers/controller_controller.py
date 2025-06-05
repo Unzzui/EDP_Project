@@ -15,6 +15,7 @@ from ..services.kpi_service import KPIService
 from ..utils.validation_utils import ValidationUtils
 from ..utils.format_utils import FormatUtils
 from ..utils.date_utils import DateUtils
+from ..utils.gsheet import update_row, log_cambio_edp
 from ..extensions import socketio
 import pandas as pd
 
@@ -89,6 +90,7 @@ def _parse_filters(request) -> Dict[str, Any]:
     
     return {
         **date_filters,
+        'mes': request.args.get('mes'),
         'departamento': request.args.get('departamento', 'todos'),
         'cliente': request.args.get('cliente', 'todos'),
         'estado': request.args.get('estado', 'todos'),
@@ -151,7 +153,7 @@ def dashboard_controller():
         
         datos_relacionados = datos_response.data
         print(f"✅ Datos relacionados cargados exitosamente")
-        print(f"🔍 Datos relacionados: {datos_relacionados.keys()}")
+       
         
         # Extract raw DataFrames
         df_edp_raw = pd.DataFrame(datos_relacionados.get('edps', []))
@@ -200,47 +202,69 @@ def dashboard_controller():
 def vista_kanban():
     """Kanban board view with filtering and real-time updates."""
     try:
-        # Get filters from request
-        filters = {
-            "mes": request.args.get("mes"),
-            "encargado": request.args.get("encargado"), 
-            "cliente": request.args.get("cliente"),
-            "estado_detallado": request.args.get("estado_detallado"),
-            "mostrar_validados_antiguos": request.args.get("mostrar_validados_antiguos", "false").lower() == "true"
-        }
+        # ===== PASO 1: OBTENER FILTROS =====
+        filters = _parse_filters(request)
+        print(f"📊 Filtros aplicados: {filters}")
         
-        # Get kanban data
-        kanban_response = kanban_service.get_kanban_board_data(filters)
         
+        
+        # ===== PASO 2: CARGAR DATOS CRUDOS =====
+        datos_response = controller_service.load_related_data()
+        # if not datos_response.success:
+        #     print(f"❌ Error cargando datos relacionados: {datos_response.message}")
+        #     return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
+        
+        datos_relacionados = datos_response.data
+        print(f"✅ Datos relacionados cargados exitosamente")
+       
+        
+        # Extract raw DataFrames
+        df_edp_raw = pd.DataFrame(datos_relacionados.get('edps', []))
+        
+        
+        kanban_response = kanban_service.get_kanban_board_data(df_edp_raw,filters)
+  
+        print(f"✅ Kanban Response Success: {kanban_response.success}")
         if not kanban_response.success:
-            flash(f"Error loading kanban: {kanban_response.message}", "error")
-            return redirect(url_for("controller.dashboard_controller"))
+            print(f"❌ Motivo fallo: {kanban_response.message}")
+            return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
+
         
         kanban_data = kanban_response.data
-        
+  
         return render_template(
             "controller/controller_kanban.html",
-            columnas=kanban_data.get('columns', {}),
+            columnas=kanban_data.get('columnas', {}),
             filtros=filters,
             meses=kanban_data.get('filter_options', {}).get('meses', []),
-            encargados=kanban_data.get('filter_options', {}).get('encargados', []),
+            jefe_proyectos=kanban_data.get('filter_options', {}).get('jefe_proyectos', []),
             clientes=kanban_data.get('filter_options', {}).get('clientes', []),
             estados_detallados=kanban_data.get('filter_options', {}).get('estados_detallados', []),
             now=datetime.now(),
-            total_validados_antiguos=kanban_data.get('stats', {}).get('total_validados_antiguos', 0),
-            estadisticas=kanban_data.get('stats', {})
+            estadisticas=kanban_data.get('estadisticas', {})
         )
     
     except Exception as e:
+        import traceback
+        print("🔥 Error atrapado en try-except de vista_kanban:")
+        print(traceback.format_exc())
         flash(f"Error al cargar tablero Kanban: {str(e)}", "error")
         return redirect(url_for("controller.dashboard_controller"))
+
 
 @controller_controller_bp.route("/kanban/update_estado", methods=["POST"])
 def actualizar_estado_kanban():
     """Update EDP status from kanban board."""
     try:
-        edp_id = request.form.get("edp_id")
-        nuevo_estado = request.form.get("nuevo_estado")
+        # Handle both JSON and form data
+        if request.is_json:
+            data = request.get_json()
+            edp_id = data.get("edp_id")
+            nuevo_estado = data.get("nuevo_estado")
+        else:
+            edp_id = request.form.get("edp_id")
+            nuevo_estado = request.form.get("nuevo_estado")
+            
         usuario = session.get("usuario", "Kanban User")
         
         if not edp_id or not nuevo_estado:
@@ -720,3 +744,101 @@ def api_analytics_summary():
             'success': False,
             'message': f"Error retrieving summary: {str(e)}"
         }), 500
+
+
+
+@controller_controller_bp.route("/api/edp-details/<n_edp>", methods=["GET"])
+def api_get_edp_details(n_edp):
+    """API para obtener detalles de un EDP en formato JSON"""
+    
+    datos_response = controller_service.load_related_data()
+    if not datos_response.success:
+        print(f"❌ Error cargando datos relacionados: {datos_response.message}")
+        return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
+    
+    datos_relacionados = datos_response.data
+    
+    # Extract raw DataFrames
+    df_edp_raw = pd.DataFrame(datos_relacionados.get('edps', []))
+    
+    
+    
+    edp = df_edp_raw[df_edp_raw["n_edp"] == n_edp]
+    
+    if edp.empty:
+        return jsonify({"error": "EDP no encontrado"}), 404
+        
+    edp_data = edp.iloc[0].to_dict()
+    
+    # Limpiar valores NaT/NaN y formatear fechas
+    for key, value in edp_data.items():
+        if pd.isna(value):
+            edp_data[key] = None
+        elif isinstance(value, pd.Timestamp):
+            edp_data[key] = value.strftime("%Y-%m-%d")
+    
+    return jsonify(edp_data)
+
+@controller_controller_bp.route("/api/update-edp/<n_edp>", methods=["POST"])
+def api_update_edp(n_edp):
+    """API para actualizar un EDP desde el modal"""
+    try:
+        # 1. Obtener datos del EDP
+        datos_response = controller_service.load_related_data()
+        if not datos_response.success:
+            print(f"❌ Error cargando datos relacionados: {datos_response.message}")
+            return jsonify({"success": False, "message": "Error cargando datos"}), 500
+        
+        datos_relacionados = datos_response.data
+        
+        # Extract raw DataFrames
+        df_edp_raw = pd.DataFrame(datos_relacionados.get('edps', []))
+        edp = df_edp_raw[df_edp_raw["n_edp"] == n_edp]
+    
+        if edp.empty:
+            return jsonify({"success": False, "message": "EDP no encontrado"}), 404
+        
+        row_idx = edp.index[0] + 2  # +1 por header, +1 porque Sheets arranca en 1
+        
+        # 2. Preparar actualizaciones - CORREGIDO: usar nombres de columnas correctos
+        updates = {
+            "estado": request.form.get("estado") or "",
+            "estado_detallado": request.form.get("estado_detallado") or "",
+            "conformidad_enviada": request.form.get("conformidad_enviada") or "",
+            "n_conformidad": request.form.get("n_conformidad") or "",
+            "monto_propuesto": request.form.get("monto_propuesto") or "",
+            "monto_aprobado": request.form.get("monto_aprobado") or "",
+            "fecha_estimada_pago": request.form.get("fecha_estimada_pago") or "",
+            "critico": request.form.get("critico") == "true",
+            "observaciones": request.form.get("observaciones") or "",
+        }
+        
+        # 3. Incluir campos condicionales
+        if updates["estado_detallado"] == "re-trabajo solicitado":
+            updates["motivo_no_aprobado"] = request.form.get("motivo_no_aprobado") or ""
+            updates["tipo_falla"] = request.form.get("tipo_falla") or ""
+        
+        # 4. Aplicar reglas automáticas
+        if updates["estado"] in ["pagado", "validado"]:
+            updates["conformidad_enviada"] = "Sí"
+        
+        # 5. Registrar cambios en log
+        usuario = session.get("usuario", "Sistema")
+        edp_data = edp.iloc[0].to_dict()
+        
+        for campo, nuevo in updates.items():
+            viejo = str(edp_data.get(campo, ""))
+            if nuevo != "" and nuevo != viejo:
+                log_cambio_edp(n_edp=n_edp, proyecto=edp_data.get('proyecto', ''), campo=campo, 
+                            antes=viejo, despues=nuevo, usuario=usuario)        
+        
+        # 6. CORREGIDO: Pasar correctamente los argumentos en el orden correcto
+        update_row(row_idx, updates, sheet_name="edp", usuario=usuario, force_update=True)
+        
+        return jsonify({"success": True, "message": "EDP actualizado correctamente"})
+        
+    except Exception as e:
+        import traceback
+        print(f"Error en api_update_edp: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500

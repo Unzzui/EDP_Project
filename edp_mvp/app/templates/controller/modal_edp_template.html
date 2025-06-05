@@ -113,7 +113,7 @@
                   name="jefe_proyecto"
                   class="form-input bg-[color:var(--bg-secondary)]"
                   readonly
-                  data-field="Jefe de Proyecto" />
+                  data-field="jefe_proyecto" />
               </div>
               <div class="form-group">
                 <label class="form-label">Mes</label>
@@ -122,7 +122,7 @@
                   name="mes"
                   class="form-input bg-[color:var(--bg-secondary)]"
                   readonly
-                  data-field="Mes" />
+                  data-field="mes" />
               </div>
             </div>
 
@@ -166,7 +166,7 @@
                   type="hidden"
                   id="monto_propuesto"
                   name="monto_propuesto"
-                  data-field="Monto Propuesto" />
+                  data-field="monto_propuesto" />
                 <!-- Mensaje de ayuda opcional -->
                 <div
                   id="monto_propuesto_formatted-format-hint"
@@ -192,7 +192,7 @@
                   type="hidden"
                   id="monto_aprobado"
                   name="monto_aprobado"
-                  data-field="Monto Aprobado" />
+                  data-field="monto_aprobado" />
                 <!-- Mensaje de ayuda opcional -->
                 <div
                   id="monto_aprobado_formatted-format-hint"
@@ -254,7 +254,7 @@
                     name="dias_espera"
                     class="form-input bg-[color:var(--bg-secondary)]"
                     readonly
-                    data-field="Días Espera" />
+                    data-field="dias_espera" />
                   <div
                     class="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-[color:var(--text-secondary)] font-medium">
                     días
@@ -269,7 +269,7 @@
                     name="dias_habiles"
                     class="form-input bg-[color:var(--bg-secondary)]"
                     readonly
-                    data-field="Días Hábiles" />
+                    data-field="dias_habiles" />
                   <div
                     class="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-[color:var(--text-secondary)] font-medium">
                     días
@@ -308,7 +308,7 @@
                 class="form-textarea"
                 rows="1"
                 placeholder="Agregar observaciones o notas relevantes..."
-                data-field="Observaciones"></textarea>
+                data-field="observaciones"></textarea>
             </div>
           </div>
         </div>
@@ -337,7 +337,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="form-group">
                 <label class="form-label">Estado</label>
-                <select name="estado" class="form-select" data-field="Estado">
+                <select name="estado" class="form-select" data-field="estado">
                   <option value="revisión">Revisión</option>
                   <option value="enviado">Enviado</option>
                   <option value="pagado">Pagado</option>
@@ -353,7 +353,7 @@
                   name="estado_detallado"
                   id="estado_detallado"
                   class="form-select"
-                  data-field="Estado Detallado">
+                  data-field="estado_detallado">
                   <option value="">Seleccionar</option>
                   <option value="creado">Creado</option>
                   <option value="revisión interna">Revisión Interna</option>
@@ -385,7 +385,7 @@
                   name="motivo_no_aprobado"
                   id="motivo_no_aprobado"
                   class="form-select"
-                  data-field="Motivo No-aprobado">
+                  data-field="motivo_no_aprobado">
                   <option value="">Seleccionar</option>
                   <option value="documentacion_incompleta">
                     Documentación incompleta o incorrecta
@@ -425,7 +425,7 @@
                     id="motivo_otro_detalle"
                     class="form-input"
                     placeholder="Especifique el motivo"
-                    data-field="Motivo Detalle" />
+                    data-field="motivo_detalle" />
                 </div>
               </div>
 
@@ -439,7 +439,7 @@
                   name="tipo_falla"
                   id="tipo_falla"
                   class="form-select"
-                  data-field="Tipo_falla">
+                  data-field="tipo_falla">
                   <option value="">Seleccionar</option>
                   <optgroup label="Errores de Proceso">
                     <option value="error_proceso_interno">
@@ -485,7 +485,7 @@
                     id="falla_otro_detalle"
                     class="form-input"
                     placeholder="Especifique el tipo de falla"
-                    data-field="Falla Detalle" />
+                    data-field="falla_detalle" />
                 </div>
               </div>
             </div>
@@ -520,7 +520,7 @@
                 name="conformidad_enviada"
                 id="conformidad_enviada"
                 class="form-select"
-                data-field="Conformidad Emitida">
+                data-field="conformidad_enviada">
                 <option value="No">No</option>
                 <option value="Sí">Sí</option>
               </select>
@@ -549,7 +549,7 @@
                     name="fecha_conformidad"
                     id="fecha_conformidad"
                     class="form-input pl-9"
-                    data-field="Fecha Conformidad" />
+                    data-field="fecha_conformidad" />
                 </div>
               </div>
 
@@ -576,7 +576,7 @@
                     id="n_conformidad"
                     class="form-input pl-9"
                     placeholder="Ej: CONF-2023-001"
-                    data-field="N° Conformidad" />
+                    data-field="n_conformidad" />
                 </div>
               </div>
             </div>
