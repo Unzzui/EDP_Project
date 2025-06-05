@@ -1170,7 +1170,7 @@ class ManagerService(BaseService):
         """Load all related data needed for manager dashboard."""
         try:
             # Get EDP data
-            edps_response = self.edp_repo.find_all()
+            edps_response = self.edp_repo.find_all_dataframe()
             
             # Check if the response has a success key (dictionary) 
             if isinstance(edps_response, dict) and not edps_response.get('success', False):

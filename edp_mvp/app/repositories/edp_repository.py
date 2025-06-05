@@ -197,10 +197,7 @@ class EDPRepository(BaseRepository):
             for col in date_cols:
                 if col in df.columns:
                     df[col] = pd.to_datetime(df[col], errors="coerce")
-            
-            # Calculate derived fields
-            if "estado" in df.columns and len(df) > 0:
-                df["validado"] = df["estado"] == "validado"
+     
             
             # Calculate waiting days
             if "fecha_envio_cliente" in df.columns and len(df) > 0:
@@ -213,10 +210,9 @@ class EDPRepository(BaseRepository):
             
             # Calculate critical status
             if "dias_espera" in df.columns and len(df) > 0:
-                df["critico"] = (
-                    (pd.to_numeric(df["dias_espera"], errors="coerce") > 30)
-                    & (~df["estado"].isin(["validado", "pagado"]))
-                )
+                dias_espera_numeric = pd.to_numeric(df["dias_espera"], errors="coerce")
+                estado_not_final = ~df["estado"].isin(["validado", "pagado"])
+                df["critico"] = (dias_espera_numeric > 30) & estado_not_final
             return df
     
         except Exception as e:
@@ -228,7 +224,9 @@ class EDPRepository(BaseRepository):
         """Convert DataFrame to list of EDP models."""
         models = []
         
-        for _, row in df.iterrows():
+
+        
+        for i, row in df.iterrows():
             model_data = {
                 'id': row.get('id'),
                 'n_edp': row.get('n_edp'),
@@ -247,27 +245,63 @@ class EDPRepository(BaseRepository):
                 'fecha_conformidad': row.get('fecha_conformidad'),
                 'conformidad_enviada': row.get('conformidad_enviada'),
                 'n_conformidad': row.get('n_conformidad'),
-                'registrado_po': row.get('registrado_po'),
+                'registrado_por': row.get('registrado_por'),
                 'fecha_registro': row.get('fecha_registro'),
                 'motivo_no_aprobado': row.get('motivo_no_aprobado'),
                 'tipo_falla': row.get('tipo_falla'),
-                'validado': row.get('validado'),
                 'critico': row.get('critico'),
                 'dias_espera': row.get('dias_espera'),
                 'dias_habiles': row.get('dias_habiles'),
                 'observaciones': row.get('observaciones')
             }
             
-            # Clean None values and convert types
+            # Clean None values and convert types properly
             cleaned_data = {}
             for k, v in model_data.items():
-                if pd.isna(v):
+                if pd.isna(v) or v is None:
                     cleaned_data[k] = None
+                elif isinstance(v, pd.Series):
+                    # Handle pandas Series objects
+                    if v.empty:
+                        cleaned_data[k] = None
+                    else:
+                        val = v.iloc[0] if len(v) > 0 else None
+                        cleaned_data[k] = None if pd.isna(val) else val
                 else:
-                    cleaned_data[k] = v
+                    # Convert scalar values, handle boolean conversion properly
+                    if k in ['critico'] and v is not None:
+                        # Handle different data types for boolean fields
+                        if isinstance(v, bool):
+                            cleaned_data[k] = v
+                        elif isinstance(v, (int, float)):
+                            cleaned_data[k] = bool(v)
+                        elif isinstance(v, str):
+                            cleaned_data[k] = str(v).lower() in ['true', '1', 'yes', 'sí', 'si', 'verdadero']
+                        else:
+                            # For any other type, try to convert to string first
+                            try:
+                                str_val = str(v)
+                                cleaned_data[k] = str_val.lower() in ['true', '1', 'yes', 'sí', 'si', 'verdadero']
+                            except:
+                                cleaned_data[k] = bool(v) if v is not None else False
+                    else:
+                        cleaned_data[k] = v
             
-            models.append(EDP.from_dict(cleaned_data))
+            print(f"DEBUG: Row {i} cleaned_data keys: {list(cleaned_data.keys())}")
+            print(f"DEBUG: Row {i} cleaned_data sample: {dict(list(cleaned_data.items())[:5])}")
+            
+            try:
+                model = EDP.from_dict(cleaned_data)
+                models.append(model)
+                print(f"DEBUG: Successfully created model for row {i}")
+            except Exception as e:
+                print(f"DEBUG: Error creating model for row {i}: {e}")
+                print(f"DEBUG: Problematic data: {cleaned_data}")
+                # Print detailed type information to debug further
+                for key, value in cleaned_data.items():
+                    print(f"DEBUG: {key}: {type(value)} = {value}")
         
+        print(f"DEBUG: Total models created: {len(models)}")
         return models
     
     def _model_to_row_values(self, edp: EDP, headers: Optional[List[str]] = None) -> List[str]:
@@ -294,7 +328,7 @@ class EDPRepository(BaseRepository):
             'fecha_conformidad': edp.fecha_conformidad.isoformat() if edp.fecha_conformidad else "",
             'conformidad_enviada': edp.conformidad_enviada,
             'n_conformidad': edp.n_conformidad,
-            'registrado_po': edp.registrado_po,
+            'registrado_por': edp.registrado_por,
             'fecha_registro': edp.fecha_registro.isoformat() if edp.fecha_registro else "",
             'motivo_no_aprobado': edp.motivo_no_aprobado,
             'tipo_falla': edp.tipo_falla,

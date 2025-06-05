@@ -48,7 +48,23 @@ class LogRepository(BaseRepository):
         df = self._apply_transformations(df)
         
         return df
-    
+    def find_all_dataframe(self, apply_filters: bool = True) -> Dict[str, Any]:
+        """Get all EDPs as DataFrame for analytics purposes."""
+        try:
+            df = self._read_sheet_with_transformations()
+            
+            return {
+                'success': True,
+                'data': df,
+                'message': f"Successfully retrieved {len(df)} EDPs as DataFrame"
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'data': pd.DataFrame(),
+                'message': f"Error retrieving EDPs DataFrame: {str(e)}"
+            }
+
     def _apply_transformations(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply necessary transformations to the DataFrame."""
         # Convert timestamp to datetime

@@ -100,6 +100,7 @@ class BaseRepository(ABC):
         
         df = pd.DataFrame(normalized_data, columns=headers)
         df = df.fillna("")
+      
         
         return df
 

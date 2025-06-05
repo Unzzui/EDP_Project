@@ -51,7 +51,7 @@ class EDP(BaseModel):
     estado: Optional[str] = None
     observaciones: Optional[str] = None
     estado_detallado: Optional[str] = None
-    registrado_po: Optional[str] = None
+    registrado_por: Optional[str] = None
     fecha_registro: Optional[datetime] = None
     motivo_no_aprobado: Optional[str] = None
     tipo_falla: Optional[str] = None
