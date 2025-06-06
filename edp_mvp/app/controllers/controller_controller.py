@@ -2,7 +2,18 @@
 Refactored Controller Dashboard using the new layered architecture.
 This controller replaces the monolithic dashboard/controller.py file.
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, make_response
+
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    jsonify,
+    session,
+    make_response,
+)
 from typing import Dict, Any, Optional, List
 import traceback
 from datetime import datetime, timedelta
@@ -19,14 +30,17 @@ from ..utils.gsheet import update_row, log_cambio_edp
 from ..extensions import socketio
 import pandas as pd
 
+
 class DictToObject:
     """Simple class to convert dictionaries to objects with dot notation access."""
+
     def __init__(self, dictionary):
         for key, value in dictionary.items():
             if isinstance(value, dict):
                 setattr(self, key, DictToObject(value))
             else:
                 setattr(self, key, value)
+
 
 # Create Blueprint
 controller_controller_bp = Blueprint("controller", __name__, url_prefix="/controller")
@@ -39,94 +53,96 @@ controller_service = ControllerService()
 kpi_service = KPIService()
 
 
-
 class ManagerControllerError(Exception):
     """Custom exception for manager controller errors"""
+
     pass
+
 
 def _handle_controller_error(error: Exception, context: str = "") -> Dict[str, Any]:
     """Handle controller errors consistently"""
-    error_msg = f"Error in manager controller{': ' + context if context else ''}: {str(error)}"
+    error_msg = (
+        f"Error in manager controller{': ' + context if context else ''}: {str(error)}"
+    )
     print(f"❌ {error_msg}")
     print(f"🔍 Traceback: {traceback.format_exc()}")
-    
-    return {
-        'error': True,
-        'message': error_msg,
-        'data': None
-    }
+
+    return {"error": True, "message": error_msg, "data": None}
+
 
 def _parse_date_filters(request) -> Dict[str, Any]:
     """Parse and validate date filters from request"""
     hoy = datetime.now()
-    fecha_inicio = request.args.get('fecha_inicio')
-    fecha_fin = request.args.get('fecha_fin')
-    periodo_rapido = request.args.get('periodo_rapido')
-    
+    fecha_inicio = request.args.get("fecha_inicio")
+    fecha_fin = request.args.get("fecha_fin")
+    periodo_rapido = request.args.get("periodo_rapido")
+
     # Procesar filtros de fecha rápidos
     if periodo_rapido:
-        if periodo_rapido == '7':
-            fecha_inicio = (hoy - timedelta(days=7)).strftime('%Y-%m-%d')
-            fecha_fin = hoy.strftime('%Y-%m-%d')
-        elif periodo_rapido == '30':
-            fecha_inicio = (hoy - timedelta(days=30)).strftime('%Y-%m-%d')
-            fecha_fin = hoy.strftime('%Y-%m-%d')
-        elif periodo_rapido == '90':
-            fecha_inicio = (hoy - timedelta(days=90)).strftime('%Y-%m-%d')
-            fecha_fin = hoy.strftime('%Y-%m-%d')
-        elif periodo_rapido == '365':
-            fecha_inicio = (hoy - timedelta(days=365)).strftime('%Y-%m-%d')
-            fecha_fin = hoy.strftime('%Y-%m-%d')
-    
+        if periodo_rapido == "7":
+            fecha_inicio = (hoy - timedelta(days=7)).strftime("%Y-%m-%d")
+            fecha_fin = hoy.strftime("%Y-%m-%d")
+        elif periodo_rapido == "30":
+            fecha_inicio = (hoy - timedelta(days=30)).strftime("%Y-%m-%d")
+            fecha_fin = hoy.strftime("%Y-%m-%d")
+        elif periodo_rapido == "90":
+            fecha_inicio = (hoy - timedelta(days=90)).strftime("%Y-%m-%d")
+            fecha_fin = hoy.strftime("%Y-%m-%d")
+        elif periodo_rapido == "365":
+            fecha_inicio = (hoy - timedelta(days=365)).strftime("%Y-%m-%d")
+            fecha_fin = hoy.strftime("%Y-%m-%d")
+
     return {
-        'fecha_inicio': fecha_inicio,
-        'fecha_fin': fecha_fin,
-        'periodo_rapido': periodo_rapido
+        "fecha_inicio": fecha_inicio,
+        "fecha_fin": fecha_fin,
+        "periodo_rapido": periodo_rapido,
     }
+
 
 def _parse_filters(request) -> Dict[str, Any]:
     """Parse all filters from request"""
     date_filters = _parse_date_filters(request)
-    
+
     return {
         **date_filters,
-        'mes': request.args.get('mes'),
-        'departamento': request.args.get('departamento', 'todos'),
-        'cliente': request.args.get('cliente', 'todos'),
-        'estado': request.args.get('estado', 'todos'),
-        'jefe_proyecto': request.args.get('jefe_proyecto', 'todos'),
-        'monto_min': request.args.get('monto_min'),
-        'monto_max': request.args.get('monto_max'),
-        'dias_min': request.args.get('dias_min')
+        "mes": request.args.get("mes"),
+        "departamento": request.args.get("departamento", "todos"),
+        "cliente": request.args.get("cliente", "todos"),
+        "estado": request.args.get("estado", "todos"),
+        "jefe_proyecto": request.args.get("jefe_proyecto", "todos"),
+        "monto_min": request.args.get("monto_min"),
+        "monto_max": request.args.get("monto_max"),
+        "dias_min": request.args.get("dias_min"),
     }
+
 
 def _get_empty_dashboard_data() -> Dict[str, Any]:
     """Get empty dashboard data for error cases"""
     empty_kpis_dict = controller_service.get_empty_kpis()
-    
+
     return {
-        'error': "Error al cargar datos",
-        'kpis': DictToObject(empty_kpis_dict),  # Convert to object for dot notation
-        'charts_json': "{}",
-        'charts': {},
-        'cash_forecast': {},
-        'alertas': [],
-        'fecha_inicio': None,
-        'fecha_fin': None,
-        'periodo_rapido': None,
-        'departamento': 'todos',
-        'cliente': 'todos',
-        'estado': 'todos',
-        'vista': 'general',
-        'monto_min': None,
-        'monto_max': None,
-        'dias_min': None,
-        'jefes_proyecto': [],
-        'clientes': [],
-        'rentabilidad_proyectos': [],
-        'rentabilidad_clientes': [],
-        'rentabilidad_gestores': [],
-        'top_edps': []
+        "error": "Error al cargar datos",
+        "kpis": DictToObject(empty_kpis_dict),  # Convert to object for dot notation
+        "charts_json": "{}",
+        "charts": {},
+        "cash_forecast": {},
+        "alertas": [],
+        "fecha_inicio": None,
+        "fecha_fin": None,
+        "periodo_rapido": None,
+        "departamento": "todos",
+        "cliente": "todos",
+        "estado": "todos",
+        "vista": "general",
+        "monto_min": None,
+        "monto_max": None,
+        "dias_min": None,
+        "jefes_proyecto": [],
+        "clientes": [],
+        "rentabilidad_proyectos": [],
+        "rentabilidad_clientes": [],
+        "rentabilidad_gestores": [],
+        "top_edps": [],
     }
 
 
@@ -138,66 +154,79 @@ def dashboard_controller():
     """
     try:
         print("🚀 Iniciando carga del dashboard de controller...")
-        
+
         # ===== PASO 1: OBTENER FILTROS =====
         filters = _parse_filters(request)
         print(f"📊 Filtros aplicados: {filters}")
-        
-        
-        
+
         # ===== PASO 2: CARGAR DATOS CRUDOS =====
         datos_response = controller_service.load_related_data()
         if not datos_response.success:
             print(f"❌ Error cargando datos relacionados: {datos_response.message}")
-            return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
-        
+            return render_template(
+                "controller/controller_dashboard.html", **_get_empty_dashboard_data()
+            )
+
         datos_relacionados = datos_response.data
         print(f"✅ Datos relacionados cargados exitosamente")
-       
-        
+
         # Extract raw DataFrames
-        df_edp_raw = pd.DataFrame(datos_relacionados.get('edps', []))
-        df_log_raw = pd.DataFrame(datos_relacionados.get('logs', []))
-        
+        df_edp_raw = pd.DataFrame(datos_relacionados.get("edps", []))
+        df_log_raw = pd.DataFrame(datos_relacionados.get("logs", []))
+
         # ===== PASO 3: Aplicar Filtros a df_edp_raw =====
-      
-        
+
         if df_edp_raw is None or df_edp_raw.empty:
             print("❌ Error: No se pudo cargar el DataFrame de EDP")
-            return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
-        
+            return render_template(
+                "controller/controller_dashboard.html", **_get_empty_dashboard_data()
+            )
+
         # ===== PASO 3: PROCESAR CON EL NUEVO SERVICIO =====
-        dashboard_response = controller_service.get_processed_dashboard_context(df_edp_raw, df_log_raw, filters)
-        
+        dashboard_response = controller_service.get_processed_dashboard_context(
+            df_edp_raw, df_log_raw, filters
+        )
+
         if not dashboard_response.success:
             print(f"❌ Error procesando dashboard: {dashboard_response.message}")
-            return render_template('controller/controller_dashboard.html', **dashboard_response.data)
-        
+            return render_template(
+                "controller/controller_dashboard.html", **dashboard_response.data
+            )
+
         dashboard_context = dashboard_response.data
         print(f"✅ Dashboard procesado exitosamente")
-        
+
         # ===== PASO 4: RENDERIZAR TEMPLATE =====
         print(f"🎯 Dashboard de controller cargado exitosamente")
-        return render_template('controller/controller_dashboard.html', **dashboard_context)
-        
+        return render_template(
+            "controller/controller_dashboard.html", **dashboard_context
+        )
+
     except Exception as e:
         error_info = _handle_controller_error(e, "dashboard")
         print(f"💥 Error crítico en dashboard de controller: {error_info}")
-        
+
         # Return default context on critical error
         try:
-            default_context = controller_service._get_default_processed_context(filters if 'filters' in locals() else {})
-            return render_template('controller/controller_dashboard.html', **default_context)
+            default_context = controller_service._get_default_processed_context(
+                filters if "filters" in locals() else {}
+            )
+            return render_template(
+                "controller/controller_dashboard.html", **default_context
+            )
         except:
-            return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
-  
-        
+            return render_template(
+                "controller/controller_dashboard.html", **_get_empty_dashboard_data()
+            )
+
     except Exception as e:
         error_info = _handle_controller_error(e, "dashboard")
         print(f"💥 Error crítico en dashboard de controller: {error_info}")
-        return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
-    
-    
+        return render_template(
+            "controller/controller_dashboard.html", **_get_empty_dashboard_data()
+        )
+
+
 @controller_controller_bp.route("/kanban")
 def vista_kanban():
     """Kanban board view with filtering and real-time updates."""
@@ -205,47 +234,49 @@ def vista_kanban():
         # ===== PASO 1: OBTENER FILTROS =====
         filters = _parse_filters(request)
         print(f"📊 Filtros aplicados: {filters}")
-        
-        
-        
+
         # ===== PASO 2: CARGAR DATOS CRUDOS =====
         datos_response = controller_service.load_related_data()
         # if not datos_response.success:
         #     print(f"❌ Error cargando datos relacionados: {datos_response.message}")
         #     return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
-        
+
         datos_relacionados = datos_response.data
         print(f"✅ Datos relacionados cargados exitosamente")
-       
-        
+
         # Extract raw DataFrames
-        df_edp_raw = pd.DataFrame(datos_relacionados.get('edps', []))
-        
-        
-        kanban_response = kanban_service.get_kanban_board_data(df_edp_raw,filters)
-  
+        df_edp_raw = pd.DataFrame(datos_relacionados.get("edps", []))
+
+        kanban_response = kanban_service.get_kanban_board_data(df_edp_raw, filters)
+
         print(f"✅ Kanban Response Success: {kanban_response.success}")
         if not kanban_response.success:
             print(f"❌ Motivo fallo: {kanban_response.message}")
-            return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
+            return render_template(
+                "controller/controller_dashboard.html", **_get_empty_dashboard_data()
+            )
 
-        
         kanban_data = kanban_response.data
-  
+
         return render_template(
             "controller/controller_kanban.html",
-            columnas=kanban_data.get('columnas', {}),
+            columnas=kanban_data.get("columnas", {}),
             filtros=filters,
-            meses=kanban_data.get('filter_options', {}).get('meses', []),
-            jefe_proyectos=kanban_data.get('filter_options', {}).get('jefe_proyectos', []),
-            clientes=kanban_data.get('filter_options', {}).get('clientes', []),
-            estados_detallados=kanban_data.get('filter_options', {}).get('estados_detallados', []),
+            meses=kanban_data.get("filter_options", {}).get("meses", []),
+            jefe_proyectos=kanban_data.get("filter_options", {}).get(
+                "jefe_proyectos", []
+            ),
+            clientes=kanban_data.get("filter_options", {}).get("clientes", []),
+            estados_detallados=kanban_data.get("filter_options", {}).get(
+                "estados_detallados", []
+            ),
             now=datetime.now(),
-            estadisticas=kanban_data.get('estadisticas', {})
+            estadisticas=kanban_data.get("estadisticas", {}),
         )
-    
+
     except Exception as e:
         import traceback
+
         print("🔥 Error atrapado en try-except de vista_kanban:")
         print(traceback.format_exc())
         flash(f"Error al cargar tablero Kanban: {str(e)}", "error")
@@ -255,99 +286,265 @@ def vista_kanban():
 @controller_controller_bp.route("/kanban/update_estado", methods=["POST"])
 def actualizar_estado_kanban():
     """Update EDP status from kanban board."""
+
     try:
-        # Handle both JSON and form data
-        if request.is_json:
-            data = request.get_json()
-            edp_id = data.get("edp_id")
-            nuevo_estado = data.get("nuevo_estado")
-        else:
-            edp_id = request.form.get("edp_id")
-            nuevo_estado = request.form.get("nuevo_estado")
-            
-        usuario = session.get("usuario", "Kanban User")
-        
+        data = request.get_json()
+        edp_id = data.get("edp_id")
+        nuevo_estado = data.get("nuevo_estado").lower()
+        conformidad_enviada = data.get("conformidad_enviada", False)
+
         if not edp_id or not nuevo_estado:
-            return jsonify({
-                "success": False,
-                "message": "EDP ID y nuevo estado son requeridos"
-            }), 400
-        
-        # Update using kanban service
-        update_response = kanban_service.update_edp_status(edp_id, nuevo_estado, usuario)
-        
-        if update_response.success:
-            # Emit socket event for real-time updates
-            socketio.emit("estado_actualizado", {
-                "edp_id": edp_id,
-                "nuevo_estado": nuevo_estado,
-                "cambios": update_response.data.get('changes', {})
-            })
-            
-            return jsonify({
-                "success": True,
-                "message": f"EDP {edp_id} actualizado correctamente",
-                "cambios": update_response.data.get('changes', {}),
-                "edp_data": update_response.data.get('edp_data', {})
-            })
-        else:
-            return jsonify({
-                "success": False,
-                "message": update_response.message
-            }, 400)
-    
+            return jsonify({"error": "Datos incompletos"}), 400
+
+        # Usar el mismo rango que en otras partes del código
+        df = controller_service.load_related_data()
+
+        datos_relacionados = df.data
+
+        df = pd.DataFrame(datos_relacionados.get("edps", []))
+
+        # Asegurarse que el EDP ID sea string para comparación correcta
+        edp = df[df["n_edp"] == str(edp_id)]
+
+        if edp.empty:
+            return jsonify({"error": f"EDP {edp_id} no encontrado"}), 404
+
+        row_idx = edp.index[0] + 2  # +2 por encabezado y 0-indexado
+        edp_data = edp.iloc[0].to_dict()
+
+        # Preparar cambios con estado mayor prioridad
+        cambios = {"estado": nuevo_estado + " "}  # Agregamos un espacio temporal
+
+        # Usar el valor enviado desde frontend si existe
+        if conformidad_enviada:
+            cambios["conformidad_enviada"] = "Sí"
+        # Mantener regla de negocio como respaldo
+        elif nuevo_estado == "pagado" or nuevo_estado == "validado":
+            cambios["conformidad_enviada"] = "Sí"
+
+        # Registrar todos los cambios
+        usuario = session.get("usuario", "Kanban")
+
+        if nuevo_estado != edp_data.get("estado"):
+            log_cambio_edp(
+                n_edp=edp_id,
+                proyecto=edp_data.get("proyecto", "Sin proyecto"),  # Añadir proyecto
+                campo="estado",
+                antes=edp_data.get("estado"),
+                despues=nuevo_estado,
+                usuario=usuario,
+            )
+
+        if (
+            cambios.get("conformidad_enviada") == "Sí"
+            and edp_data.get("conformidad_enviada") != "Sí"
+        ):
+            log_cambio_edp(
+                n_edp=edp_id,
+                proyecto=edp_data.get("Proyecto", "Sin proyecto"),  # Añadir proyecto
+                campo="conformidad_enviada",
+                antes=edp_data.get("conformidad_enviada"),
+                despues="Sí",
+                usuario=usuario,
+            )
+
+        # Hacer la actualización pasando el usuario para auditoría
+        update_row(row_idx, cambios, "edp", usuario, force_update=True)
+        # Leer los datos actualizados después de la modificación
+        df_actualizado = controller_service.load_related_data()
+        df_actualizado = pd.DataFrame(df_actualizado.data.get("edps", []))
+        edp_actualizado = (
+            df_actualizado[df_actualizado["n_edp"] == str(edp_id)].iloc[0].to_dict()
+        )
+
+        # Formatear fechas para evitar problemas de serialización
+        for campo in [
+            "fecha_emision",
+            "fecha_envio_cliente",
+            "fecha_estimada_pago",
+            "fecha_conformidad",
+        ]:
+            if campo in edp_actualizado and pd.notna(edp_actualizado[campo]):
+                try:
+                    fecha = pd.to_datetime(edp_actualizado[campo])
+                    edp_actualizado[campo] = fecha.strftime("%Y-%m-%d")
+                except:
+                    pass
+        # Emitir evento más completo
+        socketio.emit(
+            "estado_actualizado",
+            {"edp_id": edp_id, "nuevo_estado": nuevo_estado, "cambios": cambios},
+        )
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "message": f"EDP {edp_id} actualizado correctamente",
+                    "cambios": cambios,
+                    "edp_data": edp_actualizado,  # Devolver datos actuales del EDP
+                }
+            ),
+            200,
+        )
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": f"Error al actualizar: {str(e)}"
-        }), 500
+        print(f"🔥 Error al actualizar estado de EDP: {str(e)}")
+        print(traceback.format_exc())
+        return (
+            jsonify({"success": False, "message": f"Error al actualizar: {str(e)}"}),
+            500,
+        )
+
 
 @controller_controller_bp.route("/kanban/update_estado_detallado", methods=["POST"])
 def actualizar_estado_detallado():
-    """Update EDP status with detailed information."""
+    """
+    Procesa actualizaciones detalladas de estado con campos adicionales
+    específicos para cada transición de estado.
+    """
     try:
+        # Obtener datos del formulario
         edp_id = request.form.get("edp_id")
-        nuevo_estado = request.form.get("nuevo_estado")
-        usuario = session.get("usuario", "Kanban Modal User")
-        
-        # Collect additional fields
-        additional_data = {}
+        nuevo_estado = request.form.get("nuevo_estado", "").lower()
+
+        if not edp_id or not nuevo_estado:
+            return jsonify({"success": False, "message": "Datos incompletos"}), 400
+
+        # Leer datos actuales
+        df = controller_service.load_related_data()
+        datos_relacionados = df.data
+        df = pd.DataFrame(datos_relacionados.get("edps", []))
+
+        edp = df[df["n_edp"] == str(edp_id)]
+
+        if edp.empty:
+            return (
+                jsonify({"success": False, "message": f"EDP {edp_id} no encontrado"}),
+                404,
+            )
+
+        row_idx = edp.index[0] + 2  # +2 por encabezado y 0-indexado
+        edp_data = edp.iloc[0].to_dict()
+
+        # Preparar cambios base
+        cambios = {"estado": nuevo_estado}
+
+        # Procesar campos especiales según el estado
         if nuevo_estado == "pagado":
-            additional_data["Fecha Conformidad"] = request.form.get("fecha_pago")
-            additional_data["N° Conformidad"] = request.form.get("n_conformidad")
-            additional_data["Conformidad Enviada"] = "Sí"
+            cambios["fecha_conformidad"] = request.form.get("fecha_pago")
+            cambios["n_conformidad"] = request.form.get("n_conformidad")
+            cambios["conformidad_enviada"] = "Sí"
+
         elif nuevo_estado == "validado":
-            additional_data["Fecha Estimada de Pago"] = request.form.get("fecha_estimada_pago")
-            additional_data["Conformidad Enviada"] = "Sí"
-        
-        # Update using kanban service
-        update_response = kanban_service.update_edp_status_detailed(
-            edp_id, nuevo_estado, usuario, additional_data
+            cambios["fecha_estimada_pago"] = request.form.get("fecha_estimada_pago")
+            cambios["conformidad_enviada"] = "Sí"
+
+        elif nuevo_estado == "revision" and request.form.get("contacto_cliente"):
+            # Campos para revisión de cliente
+            # (opcional: estos campos no existen en el modelo original,
+            # puedes decidir si añadirlos o no)
+            # cambios["Contacto Cliente"] = request.form.get("contacto_cliente")
+            # cambios["Fecha Estimada Respuesta"] = request.form.get("fecha_estimada_respuesta")
+            pass
+
+        # Quitar campos vacíos
+        cambios = {k: v for k, v in cambios.items() if v is not None and v != ""}
+
+        # Registrar cambios en log
+        usuario = session.get("usuario", "Kanban Modal")
+        for campo, nuevo_valor in cambios.items():
+            valor_anterior = edp_data.get(campo)
+            if str(nuevo_valor) != str(valor_anterior):
+                log_cambio_edp(
+                    n_edp=edp_id,
+                    proyecto=edp_data.get(
+                        "proyecto", "Sin proyecto"
+                    ),  # Añadir proyecto
+                    campo=campo,
+                    antes=valor_anterior,
+                    despues=nuevo_valor,
+                    usuario=usuario,
+                )
+
+        # Actualizar en Google Sheets
+        update_row(row_idx, cambios, "edp", usuario, force_update=True)
+
+        # Notificar via Socket.IO
+        socketio.emit(
+            "estado_actualizado",
+            {"edp_id": edp_id, "nuevo_estado": nuevo_estado, "cambios": cambios},
         )
-        
-        if update_response.success:
-            # Emit socket event for real-time updates
-            socketio.emit("estado_actualizado", {
-                "edp_id": edp_id,
-                "nuevo_estado": nuevo_estado,
-                "cambios": update_response.data.get('changes', {})
-            })
-            
-            return jsonify({
+
+        return jsonify(
+            {
                 "success": True,
-                "message": f"EDP {edp_id} actualizado correctamente con detalles adicionales"
-            })
-        else:
-            return jsonify({
-                "success": False,
-                "message": update_response.message
-            }, 400)
-    
+                "message": f"EDP {edp_id} actualizado correctamente con detalles adicionales",
+            }
+        )
+
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": f"Error al actualizar: {str(e)}"
-        }), 500
+        import traceback
+
+        print(f"Error en actualizar_estado_detallado: {str(e)}")
+        print(traceback.format_exc())
+        return (
+            jsonify({"success": False, "message": f"Error al actualizar: {str(e)}"}),
+            500,
+        )
+
+
+@controller_controller_bp.route("api/get-edp/<edp_id>", methods=["GET"])
+def get_edp_data(edp_id):
+    """API endpoint to get EDP data by ID."""
+    try:
+        df = controller_service.load_related_data()
+        datos_relacionados = df.data
+        df = pd.DataFrame(datos_relacionados.get("edps", []))
+        edp = df[df["n_edp"] == str(edp_id)]
+
+        if edp.empty:
+            return jsonify({"error": f"EDP {edp_id} no encontrado"}), 404
+
+        # Convertir a diccionario para la respuesta JSON
+        edp_data = edp.iloc[0].to_dict()
+        print(f"EDP data for {edp_id}: {edp_data}")
+        # Asegurar que las fechas estén en formato YYYY-MM-DD para campos de fecha
+        # ...existing code...
+        # Asegurar que las fechas estén en formato YYYY-MM-DD para campos de fecha
+        for campo in [
+            "fecha_emision",
+            "fecha_envio_cliente",
+            "fecha_estimada_pago",
+            "fecha_conformidad",
+        ]:
+            if campo in edp_data:
+                # Primero verificar si es NaT o None
+                if pd.isna(edp_data[campo]) or edp_data[campo] is None:
+                    edp_data[campo] = (
+                        None  # Asignar None para que sea JSON serializable
+                    )
+                else:
+                    try:
+                        # Si ya es timestamp, usarlo directamente
+                        if isinstance(edp_data[campo], pd.Timestamp):
+                            edp_data[campo] = edp_data[campo].strftime("%Y-%m-%d")
+                        else:
+                            # Si es otro tipo, intentar convertir
+                            fecha = pd.to_datetime(edp_data[campo], errors="coerce")
+                            if pd.notna(fecha):
+                                edp_data[campo] = fecha.strftime("%Y-%m-%d")
+                            else:
+                                edp_data[campo] = None
+                    except Exception as ex:
+                        print(f"Error formateando {campo}: {str(ex)}")
+                        edp_data[campo] = None
+        # ...existing code...
+
+        return jsonify(edp_data)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @controller_controller_bp.route("/encargado/<nombre>")
 def vista_encargado(nombre):
@@ -355,46 +552,51 @@ def vista_encargado(nombre):
     try:
         # Get manager analytics
         analytics_response = analytics_service.get_manager_individual_view(nombre)
-        
+
         if not analytics_response.success:
             flash(f"Error loading manager data: {analytics_response.message}", "error")
             return redirect(url_for("controller.dashboard_controller"))
-        
+
         manager_data = analytics_response.data
-        
+
         return render_template(
-            "controller/controller_encargado.html",
-            nombre=nombre,
-            **manager_data
+            "controller/controller_encargado.html", nombre=nombre, **manager_data
         )
-    
+
     except Exception as e:
         flash(f"Error al cargar datos del encargado: {str(e)}", "error")
         return redirect(url_for("controller.dashboard_controller"))
+
 
 @controller_controller_bp.route("/encargado/<nombre>/<proyecto>")
 def vista_proyecto_de_encargado(nombre, proyecto):
     """Project-specific view for a manager."""
     try:
         # Get project analytics for manager
-        analytics_response = analytics_service.get_manager_project_view(nombre, proyecto)
-        
+        analytics_response = analytics_service.get_manager_project_view(
+            nombre, proyecto
+        )
+
         if not analytics_response.success:
-            flash(f"No hay EDP registrados para {nombre} en el proyecto {proyecto}", "warning")
+            flash(
+                f"No hay EDP registrados para {nombre} en el proyecto {proyecto}",
+                "warning",
+            )
             return redirect(url_for("controller.vista_encargado", nombre=nombre))
-        
+
         project_data = analytics_response.data
-        
+
         return render_template(
             "controller/controller_encargado_proyecto.html",
             nombre=nombre,
             proyecto=proyecto,
-            **project_data
+            **project_data,
         )
-    
+
     except Exception as e:
         flash(f"Error al cargar datos del proyecto: {str(e)}", "error")
         return redirect(url_for("controller.vista_encargado", nombre=nombre))
+
 
 @controller_controller_bp.route("/encargados")
 def vista_global_encargados():
@@ -404,28 +606,29 @@ def vista_global_encargados():
         filters = {
             "mes": request.args.get("mes"),
             "cliente": request.args.get("cliente"),
-            "ordenar_por": request.args.get("ordenar_por", "pagado_desc")
+            "ordenar_por": request.args.get("ordenar_por", "pagado_desc"),
         }
-        
+
         # Get global managers analytics
         analytics_response = analytics_service.get_managers_global_view(filters)
-        
+
         if not analytics_response.success:
             flash(f"Error loading managers data: {analytics_response.message}", "error")
             return redirect(url_for("controller.dashboard_controller"))
-        
+
         managers_data = analytics_response.data
-        
+
         return render_template(
             "controller/controller_encargados_global.html",
             **managers_data,
             filtros=filters,
-            now=datetime.now()
+            now=datetime.now(),
         )
-    
+
     except Exception as e:
         flash(f"Error al cargar datos de encargados: {str(e)}", "error")
         return redirect(url_for("controller.dashboard_controller"))
+
 
 @controller_controller_bp.route("/retrabajos")
 def analisis_retrabajos():
@@ -438,27 +641,29 @@ def analisis_retrabajos():
             "proyecto": request.args.get("proyecto"),
             "encargado": request.args.get("encargado"),
             "motivo": request.args.get("motivo"),
-            "tipo_falla": request.args.get("tipo_falla")
+            "tipo_falla": request.args.get("tipo_falla"),
         }
-        
+
         # Get rework analysis
         rework_response = analytics_service.get_rework_analysis(filters)
-        
+
         if not rework_response.success:
-            flash(f"Error al cargar análisis de re-trabajos: {rework_response.message}", "error")
+            flash(
+                f"Error al cargar análisis de re-trabajos: {rework_response.message}",
+                "error",
+            )
             return redirect(url_for("controller.dashboard_controller"))
-        
+
         rework_data = rework_response.data
-        
+
         return render_template(
-            "controller/controller_retrabajos.html",
-            **rework_data,
-            filtros=filters
+            "controller/controller_retrabajos.html", **rework_data, filtros=filters
         )
-    
+
     except Exception as e:
         flash(f"Error al cargar el análisis de re-trabajos: {str(e)}", "error")
         return redirect(url_for("controller.dashboard_controller"))
+
 
 @controller_controller_bp.route("/id/<n_edp>", methods=["GET", "POST"])
 def detalle_edp(n_edp):
@@ -467,40 +672,39 @@ def detalle_edp(n_edp):
         if request.method == "GET":
             # Get EDP details
             edp_response = edp_service.get_edp_by_id(n_edp)
-            
+
             if not edp_response.success:
                 flash(f"Error al cargar EDP: {edp_response.message}", "error")
                 return redirect(url_for("controller.dashboard_controller"))
-            
+
             edp_data = edp_response.data
-            
+
             return render_template(
                 "controller/controller_edp_detalle.html",
                 edp=edp_data,
-                row=edp_data.get('row_index', 0)
+                row=edp_data.get("row_index", 0),
             )
-        
+
         elif request.method == "POST":
             # Update EDP
             form_data = request.form.to_dict()
             usuario = session.get("usuario", "Sistema")
-            
+
             update_response = edp_service.update_edp(n_edp, form_data, usuario)
-            
+
             if update_response.success:
                 flash("EDP actualizado correctamente", "success")
                 return redirect(url_for("controller.detalle_edp", n_edp=n_edp))
             else:
                 flash(f"Error al actualizar EDP: {update_response.message}", "error")
                 return render_template(
-                    "controller/controller_edp_detalle.html",
-                    edp=form_data,
-                    row=0
+                    "controller/controller_edp_detalle.html", edp=form_data, row=0
                 )
-    
+
     except Exception as e:
         flash(f"Error inesperado: {str(e)}", "error")
         return redirect(url_for("controller.dashboard_controller"))
+
 
 @controller_controller_bp.route("/log/<n_edp>")
 def ver_log_edp(n_edp):
@@ -508,22 +712,21 @@ def ver_log_edp(n_edp):
     try:
         # Get EDP log
         log_response = analytics_service.get_edp_change_log(n_edp)
-        
+
         if not log_response.success:
             flash(f"Error al cargar historial: {log_response.message}", "error")
             return redirect(url_for("controller.dashboard_controller"))
-        
+
         log_data = log_response.data
-        
+
         return render_template(
-            "controller/controller_log_edp.html",
-            n_edp=n_edp,
-            **log_data
+            "controller/controller_log_edp.html", n_edp=n_edp, **log_data
         )
-    
+
     except Exception as e:
         flash(f"Error al cargar historial: {str(e)}", "error")
         return redirect(url_for("controller.dashboard_controller"))
+
 
 @controller_controller_bp.route("/log/<n_edp>/csv")
 def descargar_log_csv(n_edp):
@@ -531,23 +734,26 @@ def descargar_log_csv(n_edp):
     try:
         # Get CSV data
         csv_response = analytics_service.get_edp_log_csv(n_edp)
-        
+
         if not csv_response.success:
             flash(f"Error al generar CSV: {csv_response.message}", "error")
             return redirect(url_for("controller.ver_log_edp", n_edp=n_edp))
-        
+
         csv_data = csv_response.data
-        
+
         # Create response
         response = make_response(csv_data)
-        response.headers["Content-Disposition"] = f"attachment; filename=log_edp_{n_edp}.csv"
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename=log_edp_{n_edp}.csv"
+        )
         response.headers["Content-Type"] = "text/csv; charset=utf-8"
-        
+
         return response
-    
+
     except Exception as e:
         flash(f"Error al descargar CSV: {str(e)}", "error")
         return redirect(url_for("controller.ver_log_edp", n_edp=n_edp))
+
 
 @controller_controller_bp.route("/issues")
 def vista_issues():
@@ -559,28 +765,29 @@ def vista_issues():
             "tipo": request.args.get("tipo", "todos"),
             "proyecto": request.args.get("proyecto", "todos"),
             "fecha_inicio": request.args.get("fecha_inicio"),
-            "fecha_fin": request.args.get("fecha_fin")
+            "fecha_fin": request.args.get("fecha_fin"),
         }
-        
+
         # Get issues data using analytics service
         issues_response = analytics_service.get_issues_analysis(filters)
-        
+
         if not issues_response.success:
             flash(f"Error al cargar incidencias: {issues_response.message}", "error")
             return redirect(url_for("controller.dashboard_controller"))
-        
+
         issues_data = issues_response.data
-        
+
         return render_template(
             "controller/controller_issues.html",
             **issues_data,
             filtros=filters,
-            now=datetime.now()
+            now=datetime.now(),
         )
-    
+
     except Exception as e:
         flash(f"Error al cargar incidencias: {str(e)}", "error")
         return redirect(url_for("controller.dashboard_controller"))
+
 
 @controller_controller_bp.route("/issues/analisis")
 def analisis_issues():
@@ -588,23 +795,24 @@ def analisis_issues():
     try:
         # Get comprehensive issues analysis
         analysis_response = analytics_service.get_comprehensive_issues_analysis()
-        
+
         if not analysis_response.success:
             flash(f"Error al cargar análisis: {analysis_response.message}", "error")
             return redirect(url_for("controller.vista_issues"))
-        
+
         analysis_data = analysis_response.data
-        
+
         return render_template(
-            "controller/controller_issues_analisis.html",
-            **analysis_data
+            "controller/controller_issues_analisis.html", **analysis_data
         )
-    
+
     except Exception as e:
         flash(f"Error al cargar análisis: {str(e)}", "error")
         return redirect(url_for("controller.vista_issues"))
 
+
 # === HELPER FUNCTIONS ===
+
 
 def _calcular_dso_simple(registros):
     """
@@ -612,42 +820,50 @@ def _calcular_dso_simple(registros):
     """
     if not registros:
         return 0
-    
+
     registros_validos = []
     for r in registros:
-        if r.get("Fecha Emisión") and (r.get("Fecha Pago") or r.get("Fecha Conformidad")):
+        if r.get("Fecha Emisión") and (
+            r.get("Fecha Pago") or r.get("Fecha Conformidad")
+        ):
             try:
                 fecha_emision = datetime.strptime(str(r["Fecha Emisión"]), "%Y-%m-%d")
                 fecha_final = None
-                
+
                 if r.get("Fecha Pago"):
                     fecha_final = datetime.strptime(str(r["Fecha Pago"]), "%Y-%m-%d")
                 elif r.get("Fecha Conformidad"):
-                    fecha_final = datetime.strptime(str(r["Fecha Conformidad"]), "%Y-%m-%d")
-                
+                    fecha_final = datetime.strptime(
+                        str(r["Fecha Conformidad"]), "%Y-%m-%d"
+                    )
+
                 if fecha_final:
                     dias_cobro = (fecha_final - fecha_emision).days
                     if dias_cobro >= 0:
-                        registros_validos.append({
-                            'dias': dias_cobro,
-                            'monto': float(r.get("monto_aprobado", 0))
-                        })
+                        registros_validos.append(
+                            {
+                                "dias": dias_cobro,
+                                "monto": float(r.get("monto_aprobado", 0)),
+                            }
+                        )
             except:
                 continue
-    
+
     if not registros_validos:
         return 0
-    
+
     # Calculate weighted average
-    total_monto = sum(r['monto'] for r in registros_validos)
+    total_monto = sum(r["monto"] for r in registros_validos)
     if total_monto == 0:
         return 0
-    
-    dso = sum(r['dias'] * r['monto'] for r in registros_validos) / total_monto
+
+    dso = sum(r["dias"] * r["monto"] for r in registros_validos) / total_monto
     return round(dso, 1)
 
 
-def _calcular_variaciones_mensuales(df_full_dict, mes_actual_param, meses_disponibles, total_pagado_global, META_GLOBAL):
+def _calcular_variaciones_mensuales(
+    df_full_dict, mes_actual_param, meses_disponibles, total_pagado_global, META_GLOBAL
+):
     """
     Calcula las variaciones de métricas respecto al mes anterior.
     """
@@ -655,48 +871,79 @@ def _calcular_variaciones_mensuales(df_full_dict, mes_actual_param, meses_dispon
         "meta_var_porcentaje": 0,
         "pagado_var_porcentaje": 0,
         "pendiente_var_porcentaje": 0,
-        "avance_var_porcentaje": 0
+        "avance_var_porcentaje": 0,
     }
-    
+
     if not meses_disponibles or len(meses_disponibles) <= 1:
         return variaciones
-    
+
     mes_actual = mes_actual_param if mes_actual_param else max(meses_disponibles)
     mes_anterior = None
-    
+
     if mes_actual and len(meses_disponibles) > 1:
         try:
             idx_mes_actual = meses_disponibles.index(mes_actual)
-            mes_anterior = meses_disponibles[idx_mes_actual - 1] if idx_mes_actual > 0 else None
+            mes_anterior = (
+                meses_disponibles[idx_mes_actual - 1] if idx_mes_actual > 0 else None
+            )
         except ValueError:
             pass
-    
+
     if mes_anterior:
         # Filter records for previous month
-        registros_mes_anterior = [r for r in df_full_dict if r.get("Mes") == mes_anterior]
-        
+        registros_mes_anterior = [
+            r for r in df_full_dict if r.get("Mes") == mes_anterior
+        ]
+
         # Previous month metrics
         meta_mes_anterior = META_GLOBAL  # Assuming constant META_GLOBAL
-        pagado_mes_anterior = sum(float(r.get("monto_aprobado", 0)) for r in registros_mes_anterior if r.get("estado") == "pagado")
-        avance_mes_anterior = round(pagado_mes_anterior / meta_mes_anterior * 100, 1) if meta_mes_anterior > 0 else 0
-        
+        pagado_mes_anterior = sum(
+            float(r.get("monto_aprobado", 0))
+            for r in registros_mes_anterior
+            if r.get("estado") == "pagado"
+        )
+        avance_mes_anterior = (
+            round(pagado_mes_anterior / meta_mes_anterior * 100, 1)
+            if meta_mes_anterior > 0
+            else 0
+        )
+
         # Calculate variations
         variaciones["pagado_var_porcentaje"] = round(
-            ((total_pagado_global - pagado_mes_anterior) / pagado_mes_anterior * 100) if pagado_mes_anterior else 0, 1
+            (
+                (
+                    (total_pagado_global - pagado_mes_anterior)
+                    / pagado_mes_anterior
+                    * 100
+                )
+                if pagado_mes_anterior
+                else 0
+            ),
+            1,
         )
-        
+
         # Pending variations
         pendiente_actual = META_GLOBAL - total_pagado_global
         pendiente_anterior = meta_mes_anterior - pagado_mes_anterior
         variaciones["pendiente_var_porcentaje"] = round(
-            ((pendiente_actual - pendiente_anterior) / pendiente_anterior * 100) if pendiente_anterior else 0, 1
+            (
+                ((pendiente_actual - pendiente_anterior) / pendiente_anterior * 100)
+                if pendiente_anterior
+                else 0
+            ),
+            1,
         )
-        
+
         # Progress variation (in percentage points)
-        avance_global = round(total_pagado_global / META_GLOBAL * 100, 1) if META_GLOBAL > 0 else 0
-        variaciones["avance_var_porcentaje"] = round(avance_global - avance_mes_anterior, 1)
-    
+        avance_global = (
+            round(total_pagado_global / META_GLOBAL * 100, 1) if META_GLOBAL > 0 else 0
+        )
+        variaciones["avance_var_porcentaje"] = round(
+            avance_global - avance_mes_anterior, 1
+        )
+
     return variaciones
+
 
 # API endpoints for real-time data
 @controller_controller_bp.route("/api/kanban/stats")
@@ -704,80 +951,71 @@ def api_kanban_stats():
     """API endpoint for kanban statistics."""
     try:
         stats_response = kanban_service.get_kanban_statistics()
-        
+
         if stats_response.success:
-            return jsonify({
-                'success': True,
-                'data': stats_response.data
-            })
+            return jsonify({"success": True, "data": stats_response.data})
         else:
-            return jsonify({
-                'success': False,
-                'message': stats_response.message
-            }), 400
-    
+            return jsonify({"success": False, "message": stats_response.message}), 400
+
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f"Error retrieving stats: {str(e)}"
-        }), 500
+        return (
+            jsonify({"success": False, "message": f"Error retrieving stats: {str(e)}"}),
+            500,
+        )
+
 
 @controller_controller_bp.route("/api/analytics/summary")
 def api_analytics_summary():
     """API endpoint for analytics summary."""
     try:
         summary_response = analytics_service.get_analytics_summary()
-        
-        if summary_response.success:
-            return jsonify({
-                'success': True,
-                'data': summary_response.data
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': summary_response.message
-            }), 400
-    
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f"Error retrieving summary: {str(e)}"
-        }), 500
 
+        if summary_response.success:
+            return jsonify({"success": True, "data": summary_response.data})
+        else:
+            return jsonify({"success": False, "message": summary_response.message}), 400
+
+    except Exception as e:
+        return (
+            jsonify(
+                {"success": False, "message": f"Error retrieving summary: {str(e)}"}
+            ),
+            500,
+        )
 
 
 @controller_controller_bp.route("/api/edp-details/<n_edp>", methods=["GET"])
 def api_get_edp_details(n_edp):
     """API para obtener detalles de un EDP en formato JSON"""
-    
+
     datos_response = controller_service.load_related_data()
     if not datos_response.success:
         print(f"❌ Error cargando datos relacionados: {datos_response.message}")
-        return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
-    
+        return render_template(
+            "controller/controller_dashboard.html", **_get_empty_dashboard_data()
+        )
+
     datos_relacionados = datos_response.data
-    
+
     # Extract raw DataFrames
-    df_edp_raw = pd.DataFrame(datos_relacionados.get('edps', []))
-    
-    
-    
+    df_edp_raw = pd.DataFrame(datos_relacionados.get("edps", []))
+
     edp = df_edp_raw[df_edp_raw["n_edp"] == n_edp]
-    
+
     if edp.empty:
         return jsonify({"error": "EDP no encontrado"}), 404
-        
+
     edp_data = edp.iloc[0].to_dict()
-    
+
     # Limpiar valores NaT/NaN y formatear fechas
     for key, value in edp_data.items():
         if pd.isna(value):
             edp_data[key] = None
         elif isinstance(value, pd.Timestamp):
             edp_data[key] = value.strftime("%Y-%m-%d")
-    
+
     return jsonify(edp_data)
+
 
 @controller_controller_bp.route("/api/update-edp/<n_edp>", methods=["POST"])
 def api_update_edp(n_edp):
@@ -788,18 +1026,18 @@ def api_update_edp(n_edp):
         if not datos_response.success:
             print(f"❌ Error cargando datos relacionados: {datos_response.message}")
             return jsonify({"success": False, "message": "Error cargando datos"}), 500
-        
+
         datos_relacionados = datos_response.data
-        
+
         # Extract raw DataFrames
-        df_edp_raw = pd.DataFrame(datos_relacionados.get('edps', []))
+        df_edp_raw = pd.DataFrame(datos_relacionados.get("edps", []))
         edp = df_edp_raw[df_edp_raw["n_edp"] == n_edp]
-    
+
         if edp.empty:
             return jsonify({"success": False, "message": "EDP no encontrado"}), 404
-        
+
         row_idx = edp.index[0] + 2  # +1 por header, +1 porque Sheets arranca en 1
-        
+
         # 2. Preparar actualizaciones - CORREGIDO: usar nombres de columnas correctos
         updates = {
             "estado": request.form.get("estado") or "",
@@ -812,33 +1050,42 @@ def api_update_edp(n_edp):
             "critico": request.form.get("critico") == "true",
             "observaciones": request.form.get("observaciones") or "",
         }
-        
+
         # 3. Incluir campos condicionales
         if updates["estado_detallado"] == "re-trabajo solicitado":
             updates["motivo_no_aprobado"] = request.form.get("motivo_no_aprobado") or ""
             updates["tipo_falla"] = request.form.get("tipo_falla") or ""
-        
+
         # 4. Aplicar reglas automáticas
         if updates["estado"] in ["pagado", "validado"]:
             updates["conformidad_enviada"] = "Sí"
-        
+
         # 5. Registrar cambios en log
         usuario = session.get("usuario", "Sistema")
         edp_data = edp.iloc[0].to_dict()
-        
+
         for campo, nuevo in updates.items():
             viejo = str(edp_data.get(campo, ""))
             if nuevo != "" and nuevo != viejo:
-                log_cambio_edp(n_edp=n_edp, proyecto=edp_data.get('proyecto', ''), campo=campo, 
-                            antes=viejo, despues=nuevo, usuario=usuario)        
-        
+                log_cambio_edp(
+                    n_edp=n_edp,
+                    proyecto=edp_data.get("proyecto", ""),
+                    campo=campo,
+                    antes=viejo,
+                    despues=nuevo,
+                    usuario=usuario,
+                )
+
         # 6. CORREGIDO: Pasar correctamente los argumentos en el orden correcto
-        update_row(row_idx, updates, sheet_name="edp", usuario=usuario, force_update=True)
-        
+        update_row(
+            row_idx, updates, sheet_name="edp", usuario=usuario, force_update=True
+        )
+
         return jsonify({"success": True, "message": "EDP actualizado correctamente"})
-        
+
     except Exception as e:
         import traceback
+
         print(f"Error en api_update_edp: {str(e)}")
         print(traceback.format_exc())
         return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
