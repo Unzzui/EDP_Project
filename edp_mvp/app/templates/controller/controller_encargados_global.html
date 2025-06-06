@@ -57,32 +57,32 @@
   <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
     <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
       <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">Meta Global</p>
-      <p class="text-xl font-bold font-mono">${{ "{:,.0f}".format(resumen_global.total_meta).replace(",",".") }}</p>
+      <p class="text-xl font-bold font-mono">${{ "{:,.0f}".format(managers_data.total_meta).replace(",",".") }}</p>
     </div>
     
     <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
       <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">Total Pagado</p>
-      <p class="text-xl font-bold font-mono text-[color:var(--accent-green)]">${{ "{:,.0f}".format(resumen_global.total_pagado).replace(",",".") }}</p>
+      <p class="text-xl font-bold font-mono text-[color:var(--accent-green)]">${{ "{:,.0f}".format(managers_data.total_pagado).replace(",",".") }}</p>
     </div>
     
     <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
       <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">Total Pendiente</p>
-      <p class="text-xl font-bold font-mono text-[color:var(--accent-orange)]">${{ "{:,.0f}".format(resumen_global.total_pendiente).replace(",",".") }}</p>
+      <p class="text-xl font-bold font-mono text-[color:var(--accent-orange)]">${{ "{:,.0f}".format(managers_data.total_pendiente).replace(",",".") }}</p>
     </div>
     
     <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
       <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">Avance Global</p>
-      <p class="text-xl font-bold font-mono {% if resumen_global.avance_global > 70 %}text-[color:var(--accent-green)]{% elif resumen_global.avance_global > 50 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-orange)]{% endif %}">{{ resumen_global.avance_global }}%</p>
+      <p class="text-xl font-bold font-mono {% if managers_data.avance_global > 70 %}text-[color:var(--accent-green)]{% elif managers_data.avance_global > 50 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-orange)]{% endif %}">{{ managers_data.avance_global }}%</p>
     </div>
     
     <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
       <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">DSO Promedio</p>
-      <p class="text-xl font-bold font-mono {% if resumen_global.promedio_dso < 45 %}text-[color:var(--accent-green)]{% elif resumen_global.promedio_dso < 60 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-red)]{% endif %}">{{ resumen_global.promedio_dso }}</p>
+      <p class="text-xl font-bold font-mono {% if managers_data.promedio_dso < 45 %}text-[color:var(--accent-green)]{% elif managers_data.promedio_dso < 60 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-red)]{% endif %}">{{ managers_data.promedio_dso }}</p>
     </div>
     
     <div class="bg-[color:var(--bg-card)] p-4 rounded-xl border border-[color:var(--border-color)] shadow-sm hover:shadow transition-shadow">
       <p class="text-xs text-[color:var(--text-secondary)] font-medium mb-1">Aprobación Promedio</p>
-      <p class="text-xl font-bold font-mono {% if resumen_global.promedio_tasa_aprobacion > 80 %}text-[color:var(--accent-green)]{% elif resumen_global.promedio_tasa_aprobacion > 60 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-orange)]{% endif %}">{{ resumen_global.promedio_tasa_aprobacion }}%</p>
+      <p class="text-xl font-bold font-mono {% if managers_data.promedio_tasa_aprobacion > 80 %}text-[color:var(--accent-green)]{% elif managers_data.promedio_tasa_aprobacion > 60 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-orange)]{% endif %}">{{ managers_data.promedio_tasa_aprobacion }}%</p>
     </div>
   </div>
 
@@ -90,11 +90,11 @@
   <div class="mb-8">
     <div class="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
       <span>Progreso global</span>
-      <span>{{ resumen_global.avance_global }}% completado</span>
+      <span>{{ managers_data.avance_global }}% completado</span>
     </div>
     <div class="h-3 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
       <div class="h-full bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-green)]" 
-           style="width: {{ resumen_global.avance_global }}%"></div>
+           style="width: {{ managers_data.avance_global }}%"></div>
     </div>
   </div>
 
@@ -343,7 +343,7 @@
   const datosMensuales = {{ datos_mensuales|tojson }};
   
   // Meta mensual 
-  const metaMensual = {{ resumen_global.total_meta }};
+  const metaMensual = {{ managers_data.total_meta }};
   
   // Calcular meta mensual acumulada
   const metaAcumulada = datosMensuales.meses.map((_, i) => metaMensual * (i + 1));

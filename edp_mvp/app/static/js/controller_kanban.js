@@ -2456,8 +2456,7 @@ function mostrarModalContextual(
 			.then((response) => response.json())
 			.then((data) => {
 				if (data.success) {
-					showToast(`EDP-${edpId} actualizado correctamente`, "success");
-					cerrarModal(true);
+					// Mostrar estado de éxito en el botón
 					submitButton.innerHTML = `
         <div class="flex items-center">
           <svg class="h-4 w-4 text-white mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -2466,6 +2465,7 @@ function mostrarModalContextual(
           Guardado
         </div>
       `;
+					
 					// Esperar un momento para dar feedback visual antes de cerrar
 					setTimeout(() => {
 						showToast(`EDP-${edpId} actualizado correctamente`, "success");
@@ -2487,23 +2487,40 @@ function mostrarModalContextual(
         Error
       </div>
     `;
+
+				// Restaurar botones después de mostrar el error
+				setTimeout(() => {
+					submitButton.disabled = false;
+					cancelButton.disabled = false;
+					submitButton.innerHTML = originalHTML;
+					showToast(`Error: ${error.message}`, "error");
+				}, 1000);
 			});
-		// Restaurar botones
-		setTimeout(() => {
-			submitButton.disabled = false;
-			cancelButton.disabled = false;
-			submitButton.innerHTML = originalHTML;
-			showToast(`Error: ${error.message}`, "error");
-		}, 1000);
 	});
 
 	function cerrarModal(confirmado) {
+		if (!overlay) return;
+		
 		overlay.classList.add("animate__fadeOut");
-		overlay.querySelector("div").classList.add("animate__zoomOut");
+		const modalContent = overlay.querySelector("div");
+		if (modalContent) {
+			modalContent.classList.add("animate__zoomOut");
+		}
 
 		setTimeout(() => {
-			document.body.removeChild(overlay);
-			callback(confirmado);
+			try {
+				if (overlay && overlay.parentNode) {
+					overlay.parentNode.removeChild(overlay);
+				}
+				if (typeof callback === 'function') {
+					callback(confirmado);
+				}
+			} catch (e) {
+				console.warn("Error removing modal:", e);
+				if (typeof callback === 'function') {
+					callback(confirmado);
+				}
+			}
 		}, 300);
 	}
 }

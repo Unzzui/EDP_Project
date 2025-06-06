@@ -13,6 +13,7 @@ from ..utils.format_utils import FormatUtils
 from ..utils.validation_utils import ValidationUtils
 from . import ServiceResponse
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -164,18 +165,18 @@ class AnalyticsService:
             ServiceResponse con datos del encargado
         """
         try:
-            edps_response = self.edp_repository.get_all()
+            edps_response = self.edp_repository.find_all_dataframe()
             if not edps_response.success:
                 return ServiceResponse(
                     success=False,
                     message="Error al obtener datos de EDP"
                 )
-            
-            df_edp = edps_response.data if isinstance(edps_response.data, pd.DataFrame) else pd.DataFrame(edps_response.data)
+            df = edps_response.data
+            df_edp = pd.DataFrame(df.get('edps', []))
             
             # Filtrar por encargado
-            df_encargado = df_edp[df_edp["Jefe de Proyecto"] == nombre].copy()
-            
+            df_encargado = df_edp[df_edp["jefe_proyecto"] == nombre].copy()
+            print(df_encargado.head())  # Debugging line
             if df_encargado.empty:
                 return ServiceResponse(
                     success=False,
@@ -183,7 +184,6 @@ class AnalyticsService:
                 )
             
             # Limpiar y preparar datos
-            df_encargado = self._limpiar_datos_numericos(df_encargado)
             
             # Análisis financiero
             analisis_financiero = self._analizar_financiero_encargado(df_encargado, nombre)
@@ -230,15 +230,11 @@ class AnalyticsService:
             ServiceResponse con comparativa de encargados
         """
         try:
-            edps_response = self.edp_repository.get_all()
-            if not edps_response.success:
-                return ServiceResponse(
-                    success=False,
-                    message="Error al obtener datos de EDP"
-                )
-            
-            df_edp = edps_response.data if isinstance(edps_response.data, pd.DataFrame) else pd.DataFrame(edps_response.data)
-            
+            edps_response = self.edp_repository.find_all_dataframe()
+           # Debugging line
+            df_edp = pd.DataFrame(edps_response.get("data", []))
+        
+         
             # Aplicar filtros si existen
             filtros = filtros or {}
             df_filtrado = self._aplicar_filtros_analytics(df_edp, filtros)
@@ -270,10 +266,11 @@ class AnalyticsService:
             )
             
         except Exception as e:
-            logger.error(f"Error al obtener vista global de encargados: {str(e)}")
+            error_trace = traceback.format_exc()
+            logger.error(f"Error al obtener vista global de encargados:\n{error_trace}")
             return ServiceResponse(
                 success=False,
-                message=f"Error al obtener vista global: {str(e)}"
+                message=f"Error técnico al obtener vista global:\n{str(e)}"
             )
     
     # Métodos privados de apoyo
@@ -283,16 +280,16 @@ class AnalyticsService:
         df_filtrado = df.copy()
         
         if filtros.get('mes'):
-            df_filtrado = df_filtrado[df_filtrado['Mes'] == filtros['mes']]
+            df_filtrado = df_filtrado[df_filtrado['mes'] == filtros['mes']]
         
         if filtros.get('encargado'):
-            df_filtrado = df_filtrado[df_filtrado['Jefe de Proyecto'] == filtros['encargado']]
+            df_filtrado = df_filtrado[df_filtrado['jefe_proyecto'] == filtros['encargado']]
         
         if filtros.get('cliente'):
-            df_filtrado = df_filtrado[df_filtrado['Cliente'] == filtros['cliente']]
+            df_filtrado = df_filtrado[df_filtrado['cliente'] == filtros['cliente']]
         
         if filtros.get('estado'):
-            df_filtrado = df_filtrado[df_filtrado['Estado'] == filtros['estado']]
+            df_filtrado = df_filtrado[df_filtrado['estado'] == filtros['estado']]
         
         return df_filtrado
     
@@ -463,17 +460,7 @@ class AnalyticsService:
                 return tiempo_resolucion.mean()
         return None
     
-    def _limpiar_datos_numericos(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Limpia y convierte datos numéricos"""
-        df = df.copy()
-        for col in ["Monto Propuesto", "Monto Aprobado"]:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
-        
-        if "Crítico" in df.columns:
-            df["Crítico"] = df["Crítico"].astype(int)
-        
-        return df
+
     
     def _analizar_financiero_encargado(self, df_encargado: pd.DataFrame, nombre: str) -> Dict:
         """Análisis financiero del encargado"""
@@ -488,10 +475,10 @@ class AnalyticsService:
         meta_encargado = METAS_ENCARGADOS.get(nombre, 375_000_000)
         
         # EDPs pagados
-        df_pagados = df_encargado[df_encargado["Estado"].isin(["pagado", "validado"])]
+        df_pagados = df_encargado[df_encargado["estado"].isin(["pagado", "validado"])]
         
-        monto_pagado = df_pagados["Monto Aprobado"].sum()
-        monto_pendiente = df_encargado[~df_encargado["Estado"].isin(["pagado", "validado"])]["Monto Aprobado"].sum()
+        monto_pagado = df_pagados["monto_aprobado"].sum()
+        monto_pendiente = df_encargado[~df_encargado["estado"].isin(["pagado", "validado"])]["monto_propuesto"].sum()
         
         avance_meta = (monto_pagado / meta_encargado * 100) if meta_encargado > 0 else 0
         
@@ -511,7 +498,7 @@ class AnalyticsService:
         dso_global = self._calcular_dso_dataset(df_global)
         
         # Análisis de criticidad
-        edps_criticos = df_encargado[df_encargado["Crítico"] == 1]
+        edps_criticos = df_encargado[df_encargado["critico"] == 1]
         porcentaje_criticos = (len(edps_criticos) / len(df_encargado) * 100) if len(df_encargado) > 0 else 0
         
         return {
@@ -525,20 +512,20 @@ class AnalyticsService:
     def _generar_resumen_proyectos(self, df_encargado: pd.DataFrame) -> Dict:
         """Genera resumen por proyecto para el encargado"""
         resumen = df_encargado.groupby("Proyecto").agg({
-            "N° EDP": "count",
-            "Crítico": "sum",
-            "Monto Propuesto": "sum",
-            "Monto Aprobado": "sum"
+            "n_edp": "count",
+            "critico": "sum",
+            "monto_propuesto": "sum",
+            "monto_aprobado": "sum"
         }).rename(columns={
-            "N° EDP": "Total_EDP",
-            "Crítico": "Críticos",
-            "Monto Propuesto": "Monto_Propuesto_Total",
-            "Monto Aprobado": "Monto_Aprobado_Total"
+            "n_edp": "Total_EDP",
+            "critico": "Críticos",
+            "monto_propuesto": "Monto_Propuesto_Total",
+            "monto_aprobado": "Monto_Aprobado_Total"
         })
         
         # Calcular montos pagados por proyecto
-        df_pagados = df_encargado[df_encargado["Estado"].isin(["pagado", "validado"])]
-        monto_pagado_por_proyecto = df_pagados.groupby("Proyecto")["Monto Aprobado"].sum()
+        df_pagados = df_encargado[df_encargado["estado"].isin(["pagado", "validado"])]
+        monto_pagado_por_proyecto = df_pagados.groupby("proyecto")["monto_aprobado"].sum()
         
         resumen = resumen.merge(monto_pagado_por_proyecto.rename("Monto_Pagado"), 
                                left_index=True, right_index=True, how="left")
@@ -552,12 +539,12 @@ class AnalyticsService:
     def _analizar_tendencias_encargado(self, df_encargado: pd.DataFrame) -> Dict:
         """Analiza tendencias del encargado"""
         # Análisis por mes (últimos 3 meses)
-        meses_unicos = sorted(df_encargado["Mes"].unique())[-3:]
+        meses_unicos = sorted(df_encargado["mes"].unique())[-3:]
         
         tendencia_cobro = []
         for mes in meses_unicos:
-            df_mes = df_encargado[(df_encargado["Mes"] == mes) & (df_encargado["Estado"] == "pagado")]
-            monto_mes = df_mes["Monto Aprobado"].sum()
+            df_mes = df_encargado[(df_encargado["mes"] == mes) & (df_encargado["estado"] == "pagado")]
+            monto_mes = df_mes["monto_aprobado"].sum()
             tendencia_cobro.append({
                 'mes': mes,
                 'monto': monto_mes
@@ -569,44 +556,38 @@ class AnalyticsService:
         }
     
     def _calcular_dso_dataset(self, df: pd.DataFrame) -> float:
-        """Calcula DSO para un dataset específico"""
-        if df.empty:
+        """
+        Calcula DSO global (promedio de días en que los EDPs han estado abiertos),
+        considerando tanto los pagados como los pendientes. Se asume que la columna
+        'dias_espera' ya está calculada correctamente para cada estado.
+        """
+        if df.empty or 'dias_espera' not in df.columns:
             return 0
-        
-        # Filtrar EDPs pendientes
-        df_pendientes = df[~df["Estado"].isin(["pagado", "validado"])].copy()
-        
-        if df_pendientes.empty:
-            return 0
-        
-        # Calcular días pendientes
-        hoy = pd.Timestamp.now().normalize()
-        df_pendientes["Días Pendiente"] = (hoy - pd.to_datetime(df_pendientes["Fecha Emisión"])).dt.days
-        
-        return df_pendientes["Días Pendiente"].mean()
+        return df['dias_espera'].mean()
+
     
     def _analizar_todos_encargados(self, df: pd.DataFrame) -> Dict:
         """Analiza todos los encargados para vista comparativa"""
-        encargados = df["Jefe de Proyecto"].unique()
+        encargados = df["jefe_proyecto"].unique()
         analisis = {}
         
         for encargado in encargados:
             if pd.isna(encargado):
                 continue
                 
-            df_encargado = df[df["Jefe de Proyecto"] == encargado]
+            df_encargado = df[df["jefe_proyecto"] == encargado]
             
             # Cálculos básicos
             total_edps = len(df_encargado)
-            df_pagados = df_encargado[df_encargado["Estado"].isin(["pagado", "validado"])]
-            monto_pagado = df_pagados["Monto Aprobado"].sum()
-            monto_pendiente = df_encargado[~df_encargado["Estado"].isin(["pagado", "validado"])]["Monto Aprobado"].sum()
+            df_pagados = df_encargado[df_encargado["estado"].isin(["pagado", "validado"])]
+            monto_pagado = df_pagados["monto_aprobado"].sum()
+            monto_pendiente = df_encargado[~df_encargado["estado"].isin(["pagado", "validado"])]["monto_propuesto"].sum()
             
             # DSO
             dso = self._calcular_dso_dataset(df_encargado)
             
             # Criticidad
-            edps_criticos = len(df_encargado[df_encargado["Crítico"] == 1])
+            edps_criticos = len(df_encargado[df_encargado["critico"] == 1])
             
             analisis[encargado] = {
                 'total_edps': total_edps,
@@ -675,9 +656,9 @@ class AnalyticsService:
     def _generar_opciones_filtro(self, df: pd.DataFrame) -> Dict:
         """Genera opciones para filtros dinámicos"""
         return {
-            'meses': sorted(df["Mes"].dropna().unique()),
-            'encargados': sorted(df["Jefe de Proyecto"].dropna().unique()),
-            'clientes': sorted(df["Cliente"].dropna().unique()),
-            'estados': sorted(df["Estado"].dropna().unique()),
-            'proyectos': sorted(df["Proyecto"].dropna().unique())
+            'meses': sorted(df["mes"].dropna().unique()),
+            'encargados': sorted(df["jefe_proyecto"].dropna().unique()),
+            'clientes': sorted(df["cliente"].dropna().unique()),
+            'estados': sorted(df["estado"].dropna().unique()),
+            'proyectos': sorted(df["proyecto"].dropna().unique())
         }

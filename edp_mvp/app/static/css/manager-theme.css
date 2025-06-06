@@ -92,6 +92,20 @@ body {
   --info: #3b82f6;
   --info-bg: rgba(59, 130, 246, 0.08);
 
+  --state-pending-bg: rgba(253, 224, 71, 0.12);   /* Amarillo claro */
+  --state-warning-bg: rgba(234, 179, 8, 0.15);    /* Mostaza fuerte */
+  --state-success-bg: rgba(34, 197, 94, 0.12);    /* Verde medio */
+  --state-error-bg: rgba(220, 38, 38, 0.12);      /* Rojo vibrante */
+  --state-info-bg: rgba(59, 130, 246, 0.12);      /* Azul suave */
+
+  --state-pending-color: #b45309;
+  --state-warning-color: #92400e;
+  --state-success-color: #15803d;
+  --state-error-color: #b91c1c;
+  --state-info-color: #2563eb;  /* Azul claro, mantiene legibilidad */
+
+
+
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
 }
@@ -125,6 +139,19 @@ body {
   --danger-bg: rgba(255, 69, 58, 0.12);
   --info: #64d2ff;
   --info-bg: rgba(100, 210, 255, 0.12);
+
+  --state-pending-bg: rgba(202, 138, 4, 0.15);    /* Amarillo oscuro */
+  --state-warning-bg: rgba(202, 138, 4, 0.2);     /* Más intensidad */
+  --state-success-bg: rgba(22, 163, 74, 0.2);     /* Verde oscuro */
+  --state-error-bg: rgba(239, 68, 68, 0.2);       /* Rojo sangre */
+  --state-info-bg: rgba(96, 165, 250, 0.15);      /* Azul más tenue */
+
+  --state-pending-color: #facc15;
+  --state-warning-color: #f59e0b;
+  --state-success-color: #22c55e;
+  --state-error-color: #ef4444;
+  --state-info-color: #3b82f6;
+
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
@@ -380,4 +407,14 @@ select {
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
   padding-right: 2.5rem;
+}
+
+
+
+.estado-pill {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
