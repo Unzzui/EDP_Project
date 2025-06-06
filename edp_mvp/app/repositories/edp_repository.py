@@ -231,6 +231,12 @@ class EDPRepository(BaseRepository):
                 dias_espera_numeric = pd.to_numeric(df["dias_espera"], errors="coerce")
                 estado_not_final = ~df["estado"].isin(["validado", "pagado"])
                 df["critico"] = (dias_espera_numeric > 30) & estado_not_final
+            
+            # Calculate validation status
+            if "estado" in df.columns and "conformidad_enviada" in df.columns and len(df) > 0:
+                df["validado"] = (df["estado"].isin(["validado", "pagado"])) & (df["conformidad_enviada"] == "Sí")
+
+            
             return df
     
         except Exception as e:

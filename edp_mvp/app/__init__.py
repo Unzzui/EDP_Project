@@ -16,6 +16,7 @@ def create_app():
     from .edp.routes import edp_bp
     
     # New refactored controllers using layered architecture
+    from .controllers.main_controller import main_bp
     from .controllers.controller_controller import controller_controller_bp
     from .controllers.manager_controller import manager_controller_bp
     from .controllers.edp_controller import edp_controller_bp
@@ -26,6 +27,9 @@ def create_app():
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(edp_bp, url_prefix="/edp")
+    
+    # Register main blueprint (landing page)
+    app.register_blueprint(main_bp)
     
     # Register new refactored controllers
     app.register_blueprint(controller_controller_bp)

@@ -1,0 +1,515 @@
+{% extends "base.html" %} {% block title %}Centro de Ayuda - EDP Management
+System{% endblock %} {% block content %}
+<!-- Hero Section -->
+<div class="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 py-20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <div class="animate-fade-in-up">
+      <h1 class="text-5xl lg:text-6xl font-bold text-white mb-6">
+        Centro de
+        <span
+          class="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+          >Ayuda</span
+        >
+      </h1>
+      <p class="text-xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
+        Todo lo que necesitas saber para aprovechar al máximo el sistema EDP
+        Management
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Search Section -->
+<div class="bg-gray-50 py-12">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">
+        ¿En qué podemos ayudarte?
+      </h2>
+      <div class="relative">
+        <input
+          type="text"
+          placeholder="Buscar en la documentación..."
+          class="w-full px-6 py-4 text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        <button
+          class="absolute right-3 top-3 p-2 text-gray-400 hover:text-blue-600">
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Start Section -->
+<div class="py-20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <h2 class="text-4xl font-bold text-gray-900 mb-4">
+        Guía de Inicio Rápido
+      </h2>
+      <p class="text-xl text-gray-600">Empieza a usar el sistema en minutos</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Getting Started -->
+      <div
+        class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
+        <div
+          class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
+          <svg
+            class="w-6 h-6 text-blue-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Primeros Pasos</h3>
+        <p class="text-gray-600 mb-6">
+          Aprende los conceptos básicos y configura tu primera EDP
+        </p>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li class="flex items-center">
+            <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+            Configuración inicial del sistema
+          </li>
+          <li class="flex items-center">
+            <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+            Crear tu primera EDP
+          </li>
+          <li class="flex items-center">
+            <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+            Navegación básica del dashboard
+          </li>
+        </ul>
+      </div>
+
+      <!-- Dashboard Guide -->
+      <div
+        class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
+        <div
+          class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-6">
+          <svg
+            class="w-6 h-6 text-green-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Dashboard</h3>
+        <p class="text-gray-600 mb-6">
+          Domina el panel de control y sus métricas clave
+        </p>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li class="flex items-center">
+            <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+            Interpretación de KPIs
+          </li>
+          <li class="flex items-center">
+            <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+            Filtros y búsquedas avanzadas
+          </li>
+          <li class="flex items-center">
+            <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+            Reportes y exportación
+          </li>
+        </ul>
+      </div>
+
+      <!-- Kanban Guide -->
+      <div
+        class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
+        <div
+          class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
+          <svg
+            class="w-6 h-6 text-purple-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10z"></path>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Tablero Kanban</h3>
+        <p class="text-gray-600 mb-6">
+          Gestiona EDPs visualmente con drag & drop
+        </p>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li class="flex items-center">
+            <span class="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+            Estados y transiciones
+          </li>
+          <li class="flex items-center">
+            <span class="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+            Actualización en tiempo real
+          </li>
+          <li class="flex items-center">
+            <span class="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+            Filtros y vistas personalizadas
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ Section -->
+<div class="bg-gray-50 py-20">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <h2 class="text-4xl font-bold text-gray-900 mb-4">
+        Preguntas Frecuentes
+      </h2>
+      <p class="text-xl text-gray-600">Respuestas a las dudas más comunes</p>
+    </div>
+
+    <div class="space-y-8">
+      <!-- FAQ Item 1 -->
+      <div class="bg-white rounded-2xl p-8 shadow-lg">
+        <details class="group">
+          <summary
+            class="flex justify-between items-center cursor-pointer list-none">
+            <h3 class="text-xl font-semibold text-gray-900">
+              ¿Cómo creo una nueva EDP?
+            </h3>
+            <span class="transition group-open:rotate-180">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </span>
+          </summary>
+          <div class="mt-4 text-gray-600">
+            <p class="mb-4">Para crear una nueva EDP, sigue estos pasos:</p>
+            <ol class="list-decimal list-inside space-y-2">
+              <li>Navega al dashboard principal</li>
+              <li>Haz clic en el botón "Nueva EDP" en la parte superior</li>
+              <li>
+                Completa todos los campos obligatorios (Cliente, Proyecto,
+                Monto, etc.)
+              </li>
+              <li>Selecciona la fecha de emisión y estimada de pago</li>
+              <li>Guarda la EDP y será automáticamente sincronizada</li>
+            </ol>
+          </div>
+        </details>
+      </div>
+
+      <!-- FAQ Item 2 -->
+      <div class="bg-white rounded-2xl p-8 shadow-lg">
+        <details class="group">
+          <summary
+            class="flex justify-between items-center cursor-pointer list-none">
+            <h3 class="text-xl font-semibold text-gray-900">
+              ¿Cómo actualizo el estado de una EDP?
+            </h3>
+            <span class="transition group-open:rotate-180">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </span>
+          </summary>
+          <div class="mt-4 text-gray-600">
+            <p class="mb-4">
+              Puedes actualizar el estado de una EDP de varias formas:
+            </p>
+            <ul class="list-disc list-inside space-y-2">
+              <li>
+                <strong>Tablero Kanban:</strong> Arrastra y suelta las tarjetas
+                entre columnas
+              </li>
+              <li>
+                <strong>Vista detalle:</strong> Usa el botón "Editar" en la
+                página de detalles de la EDP
+              </li>
+              <li>
+                <strong>Dashboard:</strong> Haz clic en el estado actual en la
+                tabla principal
+              </li>
+            </ul>
+            <p class="mt-4">
+              Todos los cambios se sincronizan automáticamente con Google Sheets
+              y se registran en el log de auditoría.
+            </p>
+          </div>
+        </details>
+      </div>
+
+      <!-- FAQ Item 3 -->
+      <div class="bg-white rounded-2xl p-8 shadow-lg">
+        <details class="group">
+          <summary
+            class="flex justify-between items-center cursor-pointer list-none">
+            <h3 class="text-xl font-semibold text-gray-900">
+              ¿Qué significan los diferentes estados de una EDP?
+            </h3>
+            <span class="transition group-open:rotate-180">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </span>
+          </summary>
+          <div class="mt-4 text-gray-600">
+            <div class="space-y-3">
+              <div class="flex items-center">
+                <span class="w-3 h-3 bg-yellow-400 rounded-full mr-3"></span>
+                <span
+                  ><strong>Revisión:</strong> EDP en proceso de validación
+                  interna</span
+                >
+              </div>
+              <div class="flex items-center">
+                <span class="w-3 h-3 bg-blue-400 rounded-full mr-3"></span>
+                <span
+                  ><strong>Enviado:</strong> EDP enviada al cliente para
+                  aprobación</span
+                >
+              </div>
+              <div class="flex items-center">
+                <span class="w-3 h-3 bg-green-400 rounded-full mr-3"></span>
+                <span
+                  ><strong>Validado:</strong> EDP aprobada por el cliente,
+                  pendiente de pago</span
+                >
+              </div>
+              <div class="flex items-center">
+                <span class="w-3 h-3 bg-purple-400 rounded-full mr-3"></span>
+                <span
+                  ><strong>Pagado:</strong> EDP completamente procesada y
+                  cobrada</span
+                >
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- FAQ Item 4 -->
+      <div class="bg-white rounded-2xl p-8 shadow-lg">
+        <details class="group">
+          <summary
+            class="flex justify-between items-center cursor-pointer list-none">
+            <h3 class="text-xl font-semibold text-gray-900">
+              ¿Cómo interpreto las métricas del dashboard?
+            </h3>
+            <span class="transition group-open:rotate-180">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </span>
+          </summary>
+          <div class="mt-4 text-gray-600">
+            <p class="mb-4">Las principales métricas incluyen:</p>
+            <ul class="list-disc list-inside space-y-2">
+              <li>
+                <strong>DSO (Days Sales Outstanding):</strong> Días promedio
+                para cobrar una EDP
+              </li>
+              <li>
+                <strong>Tasa de Aprobación:</strong> Porcentaje de EDPs
+                aprobadas vs enviadas
+              </li>
+              <li>
+                <strong>Monto Total Pendiente:</strong> Valor total de EDPs por
+                cobrar
+              </li>
+              <li>
+                <strong>Tiempo de Conformidad:</strong> Días promedio desde
+                envío hasta conformidad
+              </li>
+              <li>
+                <strong>Eficiencia de Cobro:</strong> Velocidad de conversión de
+                validado a pagado
+              </li>
+            </ul>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Contact Support Section -->
+<div class="bg-blue-900 py-20">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-4xl font-bold text-white mb-6">¿Necesitas más ayuda?</h2>
+    <p class="text-xl text-blue-100 mb-8">
+      Nuestro equipo de soporte está aquí para ayudarte con cualquier pregunta o
+      problema técnico
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+      <!-- Email Support -->
+      <div class="text-center">
+        <div
+          class="w-16 h-16 bg-blue-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg
+            class="w-8 h-8 text-blue-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-white mb-2">Email</h3>
+        <p class="text-blue-200">soporte@edpmanagement.com</p>
+      </div>
+
+      <!-- Documentation -->
+      <div class="text-center">
+        <div
+          class="w-16 h-16 bg-blue-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg
+            class="w-8 h-8 text-blue-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-white mb-2">Documentación</h3>
+        <p class="text-blue-200">Guías detalladas y tutoriales</p>
+      </div>
+
+      <!-- Status -->
+      <div class="text-center">
+        <div
+          class="w-16 h-16 bg-blue-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg
+            class="w-8 h-8 text-blue-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-white mb-2">
+          Estado del Sistema
+        </h3>
+        <p class="text-blue-200">Monitoreo en tiempo real</p>
+      </div>
+    </div>
+
+    <a
+      href="mailto:soporte@edpmanagement.com"
+      class="inline-flex items-center px-8 py-4 text-lg font-semibold text-blue-900 bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+      <svg
+        class="w-5 h-5 mr-2"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+      </svg>
+      Contactar Soporte
+    </a>
+  </div>
+</div>
+
+<style>
+  /* Custom animations for help page */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Smooth details animation */
+  details[open] summary ~ * {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Enhanced hover effects */
+  .hover\:shadow-xl:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+</style>
+{% endblock %}

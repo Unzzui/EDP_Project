@@ -1,0 +1,369 @@
+{% extends "base.html" %} {% block title %}Acerca de - EDP Management System{%
+endblock %} {% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+  <!-- Header -->
+  <div class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="text-center">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+          Acerca del Sistema
+        </h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          Conoce más sobre EDP Management System y cómo está transformando la
+          gestión de estimaciones de pago
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20">
+      <div>
+        <h2 class="text-3xl font-bold text-gray-900 mb-6">
+          ¿Qué es EDP Management System?
+        </h2>
+        <p class="text-lg text-gray-600 mb-6 leading-relaxed">
+          EDP Management System es una solución integral diseñada para optimizar
+          la gestión de Estimaciones de Pago (EDPs) en organizaciones
+          empresariales. Nuestro sistema centraliza, automatiza y acelera todos
+          los procesos relacionados con el ciclo de vida de las estimaciones de
+          pago.
+        </p>
+        <p class="text-lg text-gray-600 mb-6 leading-relaxed">
+          Desde la creación inicial hasta el pago final, cada EDP es tracked en
+          tiempo real con métricas precisas, alertas inteligentes y análisis
+          predictivo que permiten tomar decisiones informadas y optimizar flujos
+          de caja.
+        </p>
+        <ul class="space-y-3 text-gray-600">
+          <li class="flex items-center">
+            <svg
+              class="w-5 h-5 text-green-500 mr-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7" />
+            </svg>
+            Gestión visual con tableros Kanban interactivos
+          </li>
+          <li class="flex items-center">
+            <svg
+              class="w-5 h-5 text-green-500 mr-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7" />
+            </svg>
+            Analytics avanzado con KPIs en tiempo real
+          </li>
+          <li class="flex items-center">
+            <svg
+              class="w-5 h-5 text-green-500 mr-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7" />
+            </svg>
+            Alertas automáticas y notificaciones inteligentes
+          </li>
+          <li class="flex items-center">
+            <svg
+              class="w-5 h-5 text-green-500 mr-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7" />
+            </svg>
+            Integración con Google Sheets para sincronización de datos
+          </li>
+        </ul>
+      </div>
+      <div class="bg-white rounded-2xl shadow-xl p-8">
+        <div class="text-center mb-8">
+          <div
+            class="w-20 h-20 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg
+              class="w-10 h-10 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">
+            Tecnología Moderna
+          </h3>
+        </div>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Frontend</span>
+            <span class="font-semibold text-blue-600">Flask + Jinja2</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Backend</span>
+            <span class="font-semibold text-blue-600">Python</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Base de Datos</span>
+            <span class="font-semibold text-blue-600">Google Sheets API</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Analytics</span>
+            <span class="font-semibold text-blue-600">Pandas + NumPy</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">UI/UX</span>
+            <span class="font-semibold text-blue-600">Tailwind CSS</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Real-time</span>
+            <span class="font-semibold text-blue-600">Socket.IO</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+      <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+        <div
+          class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <svg
+            class="w-8 h-8 text-blue-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">Velocidad</h3>
+        <p class="text-gray-600">
+          Procesos optimizados que reducen tiempo de gestión en un 60%
+        </p>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+        <div
+          class="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <svg
+            class="w-8 h-8 text-green-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">Precisión</h3>
+        <p class="text-gray-600">
+          Seguimiento exacto con métricas precisas y alertas automáticas
+        </p>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+        <div
+          class="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <svg
+            class="w-8 h-8 text-purple-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">Colaboración</h3>
+        <p class="text-gray-600">
+          Trabajo en equipo sincronizado con actualizaciones en tiempo real
+        </p>
+      </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="bg-white rounded-2xl shadow-xl p-12 mb-20">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">
+          Arquitectura del Sistema
+        </h2>
+        <p class="text-xl text-gray-600">
+          Diseño modular y escalable para máximo rendimiento
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center">
+          <div class="bg-blue-50 rounded-xl p-6 mb-4">
+            <svg
+              class="w-12 h-12 text-blue-600 mx-auto mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Frontend</h3>
+            <p class="text-gray-600">
+              Interfaz moderna y responsiva con componentes interactivos
+            </p>
+          </div>
+          <ul class="text-sm text-gray-500 space-y-1">
+            <li>• Tailwind CSS</li>
+            <li>• JavaScript ES6+</li>
+            <li>• Socket.IO Client</li>
+            <li>• Jinja2 Templates</li>
+          </ul>
+        </div>
+
+        <div class="text-center">
+          <div class="bg-green-50 rounded-xl p-6 mb-4">
+            <svg
+              class="w-12 h-12 text-green-600 mx-auto mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+            </svg>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Backend</h3>
+            <p class="text-gray-600">
+              API robusta con arquitectura de capas y servicios
+            </p>
+          </div>
+          <ul class="text-sm text-gray-500 space-y-1">
+            <li>• Flask Framework</li>
+            <li>• Repository Pattern</li>
+            <li>• Service Layer</li>
+            <li>• Event-driven Architecture</li>
+          </ul>
+        </div>
+
+        <div class="text-center">
+          <div class="bg-purple-50 rounded-xl p-6 mb-4">
+            <svg
+              class="w-12 h-12 text-purple-600 mx-auto mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+            </svg>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Data Layer</h3>
+            <p class="text-gray-600">
+              Gestión inteligente de datos con sincronización automática
+            </p>
+          </div>
+          <ul class="text-sm text-gray-500 space-y-1">
+            <li>• Google Sheets API</li>
+            <li>• Pandas Analytics</li>
+            <li>• Real-time Sync</li>
+            <li>• Data Validation</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="text-center">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">
+        ¿Listo para optimizar tu gestión de EDPs?
+      </h2>
+      <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        Únete a la revolución en gestión de estimaciones de pago
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        {% if user and user.is_authenticated %}
+        <a
+          href="{{ url_for('controller.dashboard_controller') }}"
+          class="inline-flex items-center px-8 py-4 text-lg font-semibold text-white bg-blue-600 rounded-xl shadow-lg hover:bg-blue-700 transform hover:-translate-y-1 transition-all duration-300">
+          <svg
+            class="w-5 h-5 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+          Ir al Dashboard
+        </a>
+        {% else %}
+        <a
+          href="{{ url_for('auth.login') }}"
+          class="inline-flex items-center px-8 py-4 text-lg font-semibold text-white bg-blue-600 rounded-xl shadow-lg hover:bg-blue-700 transform hover:-translate-y-1 transition-all duration-300">
+          <svg
+            class="w-5 h-5 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+          </svg>
+          Comenzar Ahora
+        </a>
+        {% endif %}
+        <a
+          href="{{ url_for('main.index') }}"
+          class="inline-flex items-center px-8 py-4 text-lg font-semibold text-blue-600 bg-blue-50 rounded-xl shadow-lg hover:bg-blue-100 transform hover:-translate-y-1 transition-all duration-300">
+          <svg
+            class="w-5 h-5 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Volver al Inicio
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
