@@ -339,7 +339,7 @@
               <h3 class="text-xl font-bold">${{ '{:,}'.format(impacto_financiero|int) }}</h3>
             </div>
             <p class="text-xs text-[color:var(--text-secondary)] mt-1">
-              Aprox. {{ '{:,}'.format((impacto_financiero / stats.total_retrabajos)|int|default(0)) }}$ por re-trabajo
+              Aprox. {{ '{:,}'.format((impacto_financiero / stats.total_retrabajos)|int) if stats.total_retrabajos > 0 else 0 }}$ por re-trabajo
             </p>
             <div class="mt-2 text-xs">
               <span class="inline-block px-1.5 py-0.5 rounded bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)]">
@@ -603,13 +603,13 @@
         <tbody class="divide-y divide-[color:var(--border-color-subtle)]">
           {% for reg in registros %}
           <tr class="hover:bg-[color:var(--bg-hover)]">
-            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">{{ reg["N° EDP"] }}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm">{{ reg["Proyecto"] }}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm">{{ reg["Jefe de Proyecto"] }}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm capitalize">{{ reg["Motivo No-aprobado"]|replace('_', ' ') }}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm capitalize">{{ reg["Tipo_falla"]|replace('_', ' ') }}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">{{ reg["n_edp"] }}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">{{ reg["proyecto"] }}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">{{ reg["jefe_proyecto"] }}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm capitalize">{{ reg["motivo_no_aprobado"]|replace('_', ' ') }}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm capitalize">{{ reg["tipo_falla"]|replace('_', ' ') }}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">
-              <a href="/controller/id/{{ reg['N° EDP'] }}" class="text-[color:var(--accent-blue)] hover:underline">Ver Detalles</a>
+              <a href="/controller/id/{{ reg['n_edp'] }}" class="text-[color:var(--accent-blue)] hover:underline">Ver Detalles</a>
             </td>
           </tr>
           {% endfor %}

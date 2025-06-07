@@ -28,57 +28,35 @@ class AnalyticsService:
         self.date_utils = DateUtils()
         self.format_utils = FormatUtils()
         self.validation_utils = ValidationUtils()
-    
-    def analizar_retrabajos(self, filtros: Optional[Dict] = None) -> ServiceResponse:
-        """
-        Análisis completo de retrabajos basado en histórico de logs
         
-        Args:
-            filtros: Filtros opcionales (mes, encargado, cliente, fechas, etc.)
-            
-        Returns:
-            ServiceResponse con análisis detallado de retrabajos
+    def _clean_nat_values(self, data):
         """
-        try:
-            # Obtener datos necesarios
-            edps_response = self.edp_repository.get_all()
-            logs_response = self.log_repository.get_all()
+        Limpia valores NaT (Not a Time) de pandas convirtiéndolos en None
+        para que puedan ser serializados a JSON.
+        
+        Funciona tanto con diccionarios como con listas de diccionarios.
+        """
+        if isinstance(data, list):
+            # Si recibimos una lista de diccionarios, procesarla iterativamente
+            return [self._clean_nat_values(item) for item in data]
+
+        # Caso base: data es un diccionario
+        if not isinstance(data, dict):
+            return data
             
-            if not edps_response.success or not logs_response.success:
-                return ServiceResponse(
-                    success=False,
-                    message="Error al obtener datos para análisis de retrabajos"
-                )
-            
-            # Convert to DataFrames if needed
-            df_edp = edps_response.data if isinstance(edps_response.data, pd.DataFrame) else pd.DataFrame(edps_response.data)
-            df_log = logs_response.data if isinstance(logs_response.data, pd.DataFrame) else pd.DataFrame(logs_response.data)
-            
-            # Aplicar filtros básicos
-            filtros = filtros or {}
-            df_filtrado = self._aplicar_filtros_analytics(df_edp, filtros)
-            
-            # Filtrar retrabajos del log
-            df_retrabajos = self._extraer_retrabajos_del_log(df_log, filtros)
-            
-            # Enriquecer log con datos de EDP
-            df_enriquecido = self._enriquecer_log_con_edp(df_retrabajos, df_filtrado)
-            
-            # Realizar análisis detallado
-            analisis = self._realizar_analisis_retrabajos(df_enriquecido, df_filtrado)
-            
-            return ServiceResponse(
-                success=True,
-                data=analisis,
-                message="Análisis de retrabajos completado exitosamente"
-            )
-            
-        except Exception as e:
-            logger.error(f"Error en análisis de retrabajos: {str(e)}")
-            return ServiceResponse(
-                success=False,
-                message=f"Error al realizar análisis de retrabajos: {str(e)}"
-            )
+        result = {}
+        for key, value in data.items():
+            if pd.isna(value) or value == 'NaT' or str(value) == 'NaT':
+                result[key] = None
+            elif isinstance(value, dict):
+                result[key] = self._clean_nat_values(value)  # Recursivamente para sub-diccionarios
+            elif isinstance(value, list):
+                result[key] = [self._clean_nat_values(item) if isinstance(item, dict) else item for item in value]
+            else:
+                result[key] = value
+        return result
+
+ 
     
     def analizar_issues(self, filtros: Optional[Dict] = None) -> ServiceResponse:
         """
@@ -194,12 +172,20 @@ class AnalyticsService:
             # Tendencias
             tendencias = self._analizar_tendencias_encargado(df_encargado)
             
+            # Tendencia semanal de cobranza
+            tendencia_semanal = self._generar_tendencia_semanal_cobro(df_encargado)
+            
+            # Top EDPs pendientes individuales
+            top_edps_pendientes = self._obtener_top_edps_pendientes(df_encargado, 10)
+            
             datos_encargado = {
                 'nombre': nombre,
                 'resumen_proyectos': resumen_proyectos,
                 'analisis_financiero': analisis_financiero,
                 'analisis_rendimiento': analisis_rendimiento,
                 'tendencias': tendencias,
+                'tendencia_semanal': tendencia_semanal,
+                'top_edps_pendientes': top_edps_pendientes,
                 'registros': df_encargado.to_dict('records')
             }
             
@@ -269,7 +255,117 @@ class AnalyticsService:
                 success=False,
                 message=f"Error técnico al obtener vista global:\n{str(e)}"
             )
+    def _calcular_metricas_comparativas(self, analisis_encargados: Dict) -> Dict:
+        """Calcula métricas comparativas entre encargados"""
+        if not analisis_encargados:
+            return {}
+        
+        # Extraer valores para comparación
+        montos_pagados = [data['monto_pagado'] for data in analisis_encargados.values()]
+        dsos = [data['dso'] for data in analisis_encargados.values()]
+        eficiencias = [data['eficiencia'] for data in analisis_encargados.values()]
+        
+        return {
+            'promedio_monto_pagado': np.mean(montos_pagados),
+            'mejor_monto_pagado': max(montos_pagados),
+            'peor_monto_pagado': min(montos_pagados),
+            'promedio_dso': np.mean(dsos),
+            'mejor_dso': min(dsos),  # Menor DSO es mejor
+            'peor_dso': max(dsos),
+            'promedio_eficiencia': np.mean(eficiencias),
+            'mejor_eficiencia': max(eficiencias),
+            'peor_eficiencia': min(eficiencias)
+        }
     
+    def _generar_ranking_encargados(self, analisis_encargados: Dict) -> List[Dict]:
+        """Genera ranking de encargados por rendimiento"""
+        ranking = []
+        
+        for encargado, data in analisis_encargados.items():
+            # Cálculo de score compuesto (ejemplo)
+            score_monto = data['monto_pagado'] / 1_000_000  # Normalizar a millones
+            score_eficiencia = data['eficiencia']
+            score_dso = max(0, 100 - data['dso'])  # Inverso del DSO
+            
+            score_total = (score_monto * 0.4) + (score_eficiencia * 0.3) + (score_dso * 0.3)
+            
+            ranking.append({
+                'encargado': encargado,
+                'score_total': round(score_total, 2),
+                'monto_pagado': data['monto_pagado'],
+                'eficiencia': data['eficiencia'],
+                'dso': data['dso']
+            })
+        
+        # Ordenar por score total descendente
+        ranking.sort(key=lambda x: x['score_total'], reverse=True)
+        
+        # Agregar posición
+        for i, item in enumerate(ranking):
+            item['posicion'] = i + 1
+        
+        return ranking
+    def _analizar_todos_encargados(self, df: pd.DataFrame) -> Dict:
+        """Analiza todos los encargados para vista comparativa"""
+        encargados = df["jefe_proyecto"].unique()
+        analisis = {}
+
+        for encargado in encargados:
+            if pd.isna(encargado):
+                continue
+                
+            df_encargado = df[df["jefe_proyecto"] == encargado]
+            
+            # Cálculos básicos
+            total_edps = len(df_encargado)
+            df_pagados = df_encargado[df_encargado["estado"].isin(["pagado", "validado"])]
+            monto_pagado = df_pagados["monto_aprobado"].sum()
+            monto_pendiente = df_encargado[~df_encargado["estado"].isin(["pagado", "validado"])]["monto_propuesto"].sum()
+            
+            # DSO
+            dso = self._calcular_dso_dataset(df_encargado)
+            
+            # Criticidad
+            edps_criticos = len(df_encargado[df_encargado["critico"] == 1])
+            
+            analisis[encargado] = {
+                'total_edps': total_edps,
+                'edps_pagados': len(df_pagados),
+                'monto_pagado': monto_pagado,
+                'monto_pendiente': monto_pendiente,
+                'dso': round(dso, 1),
+                'edps_criticos': edps_criticos,
+                'porcentaje_criticos': round((edps_criticos / total_edps * 100), 1) if total_edps > 0 else 0,
+                'eficiencia': round((len(df_pagados) / total_edps * 100), 1) if total_edps > 0 else 0
+            }
+
+        return analisis
+    def _calcular_dso_dataset(self, df: pd.DataFrame) -> float:
+        """
+        Calcula DSO ponderado por monto aprobado para mayor precisión.
+        Un DSO más alto indica más días promedio para cobrar, ponderado por el valor de cada EDP.
+        """
+        if df.empty or 'dias_espera' not in df.columns or 'monto_aprobado' not in df.columns:
+            return 0
+        
+        # Filter valid records with positive amounts and days
+        df_valid = df[
+            (df['dias_espera'].notna()) & 
+            (df['monto_aprobado'].notna()) &
+            (df['monto_aprobado'] > 0) &
+            (df['dias_espera'] >= 0)
+        ].copy()
+        
+        if df_valid.empty:
+            return 0
+        
+        # Calculate weighted average DSO
+        total_amount = df_valid['monto_aprobado'].sum()
+        if total_amount > 0:
+            weighted_dso = (df_valid['dias_espera'] * df_valid['monto_aprobado']).sum() / total_amount
+            return weighted_dso
+        
+        return df_valid['dias_espera'].mean()           
     def get_basic_stats(self) -> ServiceResponse:
         """
         Obtiene estadísticas básicas para la landing page
@@ -394,16 +490,16 @@ class AnalyticsService:
         ].copy()
         
         # Convertir fechas
-        df_retrabajos["Fecha y Hora"] = pd.to_datetime(df_retrabajos["Fecha y Hora"])
+        df_retrabajos["fecha_hora"] = pd.to_datetime(df_retrabajos["fecha_hora"])
         
         # Aplicar filtros temporales
-        if filtros.get('fecha_desde'):
-            fecha_desde = pd.to_datetime(filtros['fecha_desde'])
-            df_retrabajos = df_retrabajos[df_retrabajos["Fecha y Hora"] >= fecha_desde]
+        if filtros.get('fecha_inicio'):
+            fecha_inicio = pd.to_datetime(filtros['fecha_inicio'])
+            df_retrabajos = df_retrabajos[df_retrabajos["fecha_hora"] >= fecha_inicio]
         
-        if filtros.get('fecha_hasta'):
-            fecha_hasta = pd.to_datetime(filtros['fecha_hasta'])
-            df_retrabajos = df_retrabajos[df_retrabajos["Fecha y Hora"] <= fecha_hasta]
+        if filtros.get('fecha_fin'):
+            fecha_fin = pd.to_datetime(filtros['fecha_fin'])
+            df_retrabajos = df_retrabajos[df_retrabajos["fecha_hora"] <= fecha_fin]
         
         return df_retrabajos
     
@@ -424,83 +520,7 @@ class AnalyticsService:
         
         return df_enriquecido
     
-    def _realizar_analisis_retrabajos(self, df_enriquecido: pd.DataFrame, df_edp: pd.DataFrame) -> Dict:
-        """Realiza análisis detallado de retrabajos"""
-        # Estadísticas básicas
-        total_retrabajos = len(df_enriquecido)
-        edps_unicos = df_enriquecido["N° EDP"].nunique()
-        total_edps = len(df_edp)
-        
-        # Análisis por motivo
-        motivos_rechazo = df_enriquecido["Motivo No-aprobado"].value_counts().to_dict() if not df_enriquecido.empty else {}
-        
-        # Análisis por tipo de falla
-        tipos_falla = df_enriquecido["Tipo_falla"].value_counts().to_dict() if not df_enriquecido.empty else {}
-        
-        # Análisis por encargado
-        retrabajos_por_encargado = df_enriquecido["Jefe de Proyecto"].value_counts().to_dict() if not df_enriquecido.empty else {}
-        
-        # Tendencias temporales
-        if not df_enriquecido.empty:
-            df_enriquecido["mes"] = df_enriquecido["Fecha y Hora"].dt.strftime("%Y-%m")
-            tendencia_por_mes = df_enriquecido["mes"].value_counts().sort_index().to_dict()
-        else:
-            tendencia_por_mes = {}
-        
-        # Análisis por proyecto
-        if not df_enriquecido.empty:
-            proyectos_raw = df_enriquecido["Proyecto"].value_counts().to_dict()
-            proyectos_problematicos = {}
-            
-            for proyecto, cantidad in proyectos_raw.items():
-                total_edps_proyecto = len(df_edp[df_edp["Proyecto"] == proyecto])
-                porcentaje = round((cantidad / total_edps_proyecto * 100), 1) if total_edps_proyecto > 0 else 0
-                
-                proyectos_problematicos[proyecto] = {
-                    "total": total_edps_proyecto,
-                    "retrabajos": cantidad,
-                    "porcentaje": porcentaje
-                }
-        else:
-            proyectos_problematicos = {}
-        
-        # Calcular porcentajes
-        porcentaje_edps_afectados = round((edps_unicos / total_edps * 100), 1) if total_edps > 0 else 0
-        
-        porcentaje_motivos = {}
-        for motivo, cantidad in motivos_rechazo.items():
-            porcentaje_motivos[motivo] = round((cantidad / total_retrabajos * 100), 1) if total_retrabajos > 0 else 0
-        
-        porcentaje_tipos = {}
-        for tipo, cantidad in tipos_falla.items():
-            porcentaje_tipos[tipo] = round((cantidad / total_retrabajos * 100), 1) if total_retrabajos > 0 else 0
-        
-        return {
-            'stats': {
-                'total_retrabajos': total_retrabajos,
-                'edps_con_retrabajo': edps_unicos,
-                'porcentaje_edps_afectados': porcentaje_edps_afectados,
-                'promedio_retrabajos_por_edp': round(total_retrabajos / edps_unicos, 2) if edps_unicos > 0 else 0
-            },
-            'motivos_rechazo': motivos_rechazo,
-            'porcentaje_motivos': porcentaje_motivos,
-            'tipos_falla': tipos_falla,
-            'porcentaje_tipos': porcentaje_tipos,
-            'retrabajos_por_encargado': retrabajos_por_encargado,
-            'tendencia_por_mes': tendencia_por_mes,
-            'proyectos_problematicos': proyectos_problematicos,
-            'chart_data': {
-                'motivos_labels': list(motivos_rechazo.keys()),
-                'motivos_data': list(motivos_rechazo.values()),
-                'tipos_labels': list(tipos_falla.keys()),
-                'tipos_data': list(tipos_falla.values()),
-                'tendencia_meses': list(tendencia_por_mes.keys()),
-                'tendencia_valores': list(tendencia_por_mes.values()),
-                'encargados': list(retrabajos_por_encargado.keys()),
-                'retrabajos_encargado': list(retrabajos_por_encargado.values())
-            }
-        }
-    
+
     def _analizar_tipos_incidencia(self, df_issues: pd.DataFrame) -> Dict:
         """Analiza tipos de incidencia"""
         if 'Tipo' in df_issues.columns:
@@ -826,121 +846,70 @@ class AnalyticsService:
             'efficiency_score': round(efficiency_score, 1)
         }
     
-    def _calcular_dso_dataset(self, df: pd.DataFrame) -> float:
-        """
-        Calcula DSO ponderado por monto aprobado para mayor precisión.
-        Un DSO más alto indica más días promedio para cobrar, ponderado por el valor de cada EDP.
-        """
-        if df.empty or 'dias_espera' not in df.columns or 'monto_aprobado' not in df.columns:
-            return 0
-        
-        # Filter valid records with positive amounts and days
-        df_valid = df[
-            (df['dias_espera'].notna()) & 
-            (df['monto_aprobado'].notna()) &
-            (df['monto_aprobado'] > 0) &
-            (df['dias_espera'] >= 0)
-        ].copy()
-        
-        if df_valid.empty:
-            return 0
-        
-        # Calculate weighted average DSO
-        total_amount = df_valid['monto_aprobado'].sum()
-        if total_amount > 0:
-            weighted_dso = (df_valid['dias_espera'] * df_valid['monto_aprobado']).sum() / total_amount
-            return weighted_dso
-        
-        return df_valid['dias_espera'].mean()
-
     
-    def _analizar_todos_encargados(self, df: pd.DataFrame) -> Dict:
-        """Analiza todos los encargados para vista comparativa"""
-        encargados = df["jefe_proyecto"].unique()
-        analisis = {}
-        
-        for encargado in encargados:
-            if pd.isna(encargado):
-                continue
-                
-            df_encargado = df[df["jefe_proyecto"] == encargado]
-            
-            # Cálculos básicos
-            total_edps = len(df_encargado)
-            df_pagados = df_encargado[df_encargado["estado"].isin(["pagado", "validado"])]
-            monto_pagado = df_pagados["monto_aprobado"].sum()
-            monto_pendiente = df_encargado[~df_encargado["estado"].isin(["pagado", "validado"])]["monto_propuesto"].sum()
-            
-            # DSO
-            dso = self._calcular_dso_dataset(df_encargado)
-            
-            # Criticidad
-            edps_criticos = len(df_encargado[df_encargado["critico"] == 1])
-            
-            analisis[encargado] = {
-                'total_edps': total_edps,
-                'edps_pagados': len(df_pagados),
-                'monto_pagado': monto_pagado,
-                'monto_pendiente': monto_pendiente,
-                'dso': round(dso, 1),
-                'edps_criticos': edps_criticos,
-                'porcentaje_criticos': round((edps_criticos / total_edps * 100), 1) if total_edps > 0 else 0,
-                'eficiencia': round((len(df_pagados) / total_edps * 100), 1) if total_edps > 0 else 0
-            }
-        
-        return analisis
     
-    def _calcular_metricas_comparativas(self, analisis_encargados: Dict) -> Dict:
-        """Calcula métricas comparativas entre encargados"""
-        if not analisis_encargados:
-            return {}
+    def _generar_tendencia_semanal_cobro(self, df_encargado: pd.DataFrame) -> List[Dict]:
+        """Genera datos de tendencia semanal de cobranza para los últimos 12 semanas"""
+        from datetime import datetime, timedelta
+        import pandas as pd
         
-        # Extraer valores para comparación
-        montos_pagados = [data['monto_pagado'] for data in analisis_encargados.values()]
-        dsos = [data['dso'] for data in analisis_encargados.values()]
-        eficiencias = [data['eficiencia'] for data in analisis_encargados.values()]
+        # Filtrar solo EDPs pagados o validados
+        df_pagados = df_encargado[df_encargado["estado"].isin(["pagado", "validado"])].copy()
         
-        return {
-            'promedio_monto_pagado': np.mean(montos_pagados),
-            'mejor_monto_pagado': max(montos_pagados),
-            'peor_monto_pagado': min(montos_pagados),
-            'promedio_dso': np.mean(dsos),
-            'mejor_dso': min(dsos),  # Menor DSO es mejor
-            'peor_dso': max(dsos),
-            'promedio_eficiencia': np.mean(eficiencias),
-            'mejor_eficiencia': max(eficiencias),
-            'peor_eficiencia': min(eficiencias)
-        }
-    
-    def _generar_ranking_encargados(self, analisis_encargados: Dict) -> List[Dict]:
-        """Genera ranking de encargados por rendimiento"""
-        ranking = []
+        if df_pagados.empty:
+            # Si no hay datos, devolver lista vacía (no generar datos simulados)
+            return []
         
-        for encargado, data in analisis_encargados.items():
-            # Cálculo de score compuesto (ejemplo)
-            score_monto = data['monto_pagado'] / 1_000_000  # Normalizar a millones
-            score_eficiencia = data['eficiencia']
-            score_dso = max(0, 100 - data['dso'])  # Inverso del DSO
-            
-            score_total = (score_monto * 0.4) + (score_eficiencia * 0.3) + (score_dso * 0.3)
-            
-            ranking.append({
-                'encargado': encargado,
-                'score_total': round(score_total, 2),
-                'monto_pagado': data['monto_pagado'],
-                'eficiencia': data['eficiencia'],
-                'dso': data['dso']
+        # Si tenemos datos reales, procesarlos
+        # Agregar columna de semana si no existe
+        if 'fecha_pago' not in df_pagados.columns:
+            # Simular fechas de pago basadas en el mes
+            df_pagados['fecha_pago'] = pd.to_datetime(df_pagados['mes'].astype(str) + '-01')
+        else:
+            df_pagados['fecha_pago'] = pd.to_datetime(df_pagados['fecha_pago'])
+        
+        # Agrupar por semana
+        df_pagados['semana'] = df_pagados['fecha_pago'].dt.strftime('Sem %W')
+        df_pagados['año_semana'] = df_pagados['fecha_pago'].dt.strftime('%Y-Sem%W')
+        
+        # Calcular montos por semana
+        cobros_semanales = df_pagados.groupby(['año_semana', 'semana'])['monto_aprobado'].sum().reset_index()
+        
+        # Obtener las últimas 12 semanas
+        cobros_semanales = cobros_semanales.sort_values('año_semana').tail(12)
+        
+        # Formatear resultados
+        resultado = []
+        for _, row in cobros_semanales.iterrows():
+            resultado.append({
+                'semana': row['semana'],
+                'fecha': row['año_semana'],
+                'monto': float(row['monto_aprobado']),
+                'es_simulado': False
             })
         
-        # Ordenar por score total descendente
-        ranking.sort(key=lambda x: x['score_total'], reverse=True)
+        # Si tenemos menos de 12 semanas, completar con datos simulados
+        if len(resultado) < 12:
+            fecha_actual = datetime.now()
+            semanas_faltantes = 12 - len(resultado)
+            
+            for i in range(semanas_faltantes, 0, -1):
+                fecha_semana = fecha_actual - timedelta(weeks=i + len(resultado))
+                semana_str = f"Sem {fecha_semana.strftime('%W')}"
+                
+                # Usar promedio de datos reales para simular
+                promedio_real = sum(item['monto'] for item in resultado) / len(resultado) if resultado else 20_000_000
+                monto_simulado = promedio_real * (0.8 + (i * 0.05))  # Variación gradual
+                
+                resultado.insert(0, {
+                    'semana': semana_str,
+                    'fecha': fecha_semana.strftime('%Y-%m-%d'),
+                    'monto': float(monto_simulado),
+                    'es_simulado': True
+                })
         
-        # Agregar posición
-        for i, item in enumerate(ranking):
-            item['posicion'] = i + 1
-        
-        return ranking
-    
+        return resultado[-12:]  # Asegurar que solo devolvemos las últimas 12 semanas
+
     def _generar_opciones_filtro(self, df: pd.DataFrame) -> Dict:
         """Genera opciones para filtros dinámicos"""
         return {
@@ -950,3 +919,302 @@ class AnalyticsService:
             'estados': sorted(df["estado"].dropna().unique()),
             'proyectos': sorted(df["proyecto"].dropna().unique())
         }
+
+    def _obtener_top_edps_pendientes(self, df_encargado: pd.DataFrame, top_n: int = 10) -> List[Dict]:
+        """Obtiene los top N EDPs individuales con mayor monto pendiente"""
+        # Filtrar solo EDPs que no están pagados ni validados
+        df_pendientes = df_encargado[~df_encargado["estado"].isin(["pagado", "validado"])].copy()
+        
+        # Calcular monto pendiente por EDP (usar monto_aprobado si no hay monto_pagado)
+        df_pendientes["monto_pendiente"] = df_pendientes.get("monto_aprobado", 0)
+        
+        # Seleccionar columnas relevantes y ordenar por monto pendiente
+        columnas_necesarias = ["n_edp", "proyecto", "cliente", "estado", "critico", "monto_pendiente"]
+        
+        # Verificar que las columnas existan
+        for col in columnas_necesarias:
+            if col not in df_pendientes.columns:
+                if col == "monto_pendiente":
+                    df_pendientes[col] = df_pendientes.get("monto_aprobado", 0)
+                elif col == "cliente":
+                    df_pendientes[col] = "Cliente No Especificado"
+                elif col == "critico":
+                    df_pendientes[col] = 0
+                else:
+                    df_pendientes[col] = f"No especificado ({col})"
+        
+
+        # Ordenar por monto pendiente descendente y tomar top N
+        edps_pendientes = df_pendientes.nlargest(top_n, "monto_pendiente")
+        
+        # Convertir a lista de diccionarios con formato requerido
+        resultado = []
+        for _, row in edps_pendientes.iterrows():
+            resultado.append({
+                "n_edp": str(row["n_edp"]),
+                "proyecto": str(row["proyecto"]),
+                "cliente": str(row.get("cliente", "Cliente No Especificado")),
+                "estado": str(row["estado"]),
+                "es_critico": bool(row.get("critico", 0)),
+                "monto_pendiente": float(row["monto_pendiente"]),
+                "dias_espera": int(row.get("dias_espera", 30)),
+            })
+        
+        return resultado
+    
+    def get_rework_analysis(self, filters: Dict) -> Dict:
+        """Obtiene el análisis de re-trabajos"""
+        try:
+            # Obtener datos de EDP y LOG
+            filtros = filters
+            df_edp = self.edp_repository.find_all_dataframe()
+            df_log = self.log_repository.find_all_dataframe()
+
+            df_edp = df_edp.get('data', pd.DataFrame())
+            df_log = df_log.get('data', pd.DataFrame())
+
+            df_log_retrabajos = df_log[
+            (df_log["campo"] == "estado_detallado") & 
+            (df_log["despues"] == "re-trabajo solicitado")]
+            
+            # Convertir fechas para filtrado temporal
+            df_log_retrabajos = df_log_retrabajos.copy()
+
+            df_log_retrabajos.loc[:, "fecha_hora"] = pd.to_datetime(df_log_retrabajos["fecha_hora"])        
+            # Aplicar filtros temporales si existen
+            if filtros["fecha_inicio"]:
+                fecha_inicio = pd.to_datetime(filtros["fecha_inicio"])
+                df_log_retrabajos = df_log_retrabajos[df_log_retrabajos["fecha_hora"] >= fecha_inicio]
+            
+            if filtros["fecha_fin"]:
+                fecha_fin = pd.to_datetime(filtros["fecha_fin"])
+                df_log_retrabajos = df_log_retrabajos[df_log_retrabajos["fecha_hora"] <= fecha_fin]
+            
+            
+            if "proyecto" in df_log_retrabajos.columns:
+                df_log_retrabajos = df_log_retrabajos.drop(columns=["proyecto"], axis=1)
+            # Enriquecer log con información de EDP para poder filtrar por encargado y cliente
+            df_log_enriquecido = pd.merge(
+                df_log_retrabajos,
+                df_edp[["n_edp", "proyecto", "jefe_proyecto", "cliente", "mes", "tipo_falla", "motivo_no_aprobado","monto_aprobado"]],
+                on="n_edp",
+                how="left"
+            )
+            
+    
+            # Aplicar filtros de EDP también al log
+            if filtros["jefe_proyecto"]:
+                df_log_enriquecido = df_log_enriquecido[df_log_enriquecido["jefe_proyecto"] == filtros["jefe_proyecto"]]
+            
+            if filtros["cliente"]:
+                df_log_enriquecido = df_log_enriquecido[df_log_enriquecido["cliente"] == filtros["cliente"]]
+            
+            if filtros["mes"]:
+                df_log_enriquecido = df_log_enriquecido[df_log_enriquecido["mes"] == filtros["mes"]]
+            
+            if filtros["tipo_falla"]:
+                df_log_enriquecido = df_log_enriquecido[df_log_enriquecido["tipo_falla"] == filtros["tipo_falla"]]
+            
+            # Estadísticas basadas en el log
+            total_retrabajos_log = len(df_log_enriquecido)
+            edps_unicos_con_retrabajo = df_log_enriquecido["n_edp"].nunique()
+            
+            # Buscar motivos y tipos asociados a cada ocurrencia de re-trabajo
+            retrabajos_completos = []
+            
+            for _, row in df_log_enriquecido.iterrows():
+                edp_id = row["n_edp"]
+                fecha_cambio = row["fecha_hora"]
+                
+                # Buscar registros de motivo y tipo de falla cercanos (mismo día, mismo EDP)
+                fecha_inicio = fecha_cambio - pd.Timedelta(hours=1)
+                fecha_fin = fecha_cambio + pd.Timedelta(hours=1)
+                
+                # Buscar motivo cercano
+                motivo_cercano = df_log[
+                    (df_log["n_edp"] == edp_id) &
+                    (df_log["campo"] == "motivo_no_aprobado") &
+                    (pd.to_datetime(df_log["fecha_hora"]) >= fecha_inicio) &
+                    (pd.to_datetime(df_log["fecha_hora"]) <= fecha_fin)
+                ]
+                
+                # Buscar tipo de falla cercano
+                tipo_cercano = df_log[
+                    (df_log["n_edp"] == edp_id) &
+                    (df_log["campo"] == "tipo_falla") &
+                    (pd.to_datetime(df_log["fecha_hora"]) >= fecha_inicio) &
+                    (pd.to_datetime(df_log["fecha_hora"]) <= fecha_fin)
+                ]
+                
+                # Crear registro enriquecido
+                registro = {
+                    "n_edp": edp_id,
+                    "proyecto": row.get("proyecto", ""),
+                    "cliente": row.get("cliente", ""),
+                    "jefe_proyecto": row.get("jefe_proyecto", ""),
+                    "Fecha": fecha_cambio,
+                    "Estado Anterior": row["antes"],
+                    "motivo_no_aprobado": motivo_cercano["despues"].iloc[0] if not motivo_cercano.empty else row.get("motivo_no_aprobado", ""),
+                    "tipo_falla": tipo_cercano["despues"].iloc[0] if not tipo_cercano.empty else row.get("tipo_falla", ""),
+                    "usuario": row["usuario"]
+                }
+                
+                retrabajos_completos.append(registro)
+            
+            # Crear DataFrame para análisis detallado
+            df_analisis = pd.DataFrame(retrabajos_completos)
+            # ====== ANÁLISIS DETALLADO DE RETRABAJOS ======
+            # 1. Análisis por motivo de rechazo
+            if not df_analisis.empty and "motivo_no_aprobado" in df_analisis.columns:
+                motivos_rechazo = df_analisis["motivo_no_aprobado"].value_counts().to_dict()
+            else:
+                motivos_rechazo = {}
+            
+            # 2. Análisis por tipo de falla
+            if not df_analisis.empty and "tipo_falla" in df_analisis.columns:
+                tipos_falla = df_analisis["tipo_falla"].value_counts().to_dict()
+            else:
+                tipos_falla = {}
+            
+            # 3. Análisis por encargado
+            if not df_analisis.empty and "jefe_proyecto" in df_analisis.columns:
+                retrabajos_por_encargado = df_analisis["jefe_proyecto"].value_counts().to_dict()
+            else:
+                retrabajos_por_encargado = {}
+            
+            # 4. Análisis temporal
+            if not df_analisis.empty and "Fecha" in df_analisis.columns:
+                df_analisis["mes"] = df_analisis["Fecha"].dt.strftime("%Y-%m")
+                tendencia_por_mes = df_analisis["mes"].value_counts().sort_index().to_dict()
+            else:
+                tendencia_por_mes = {}
+                
+            # 5. Análisis por proyecto
+            if not df_analisis.empty and "proyecto" in df_analisis.columns:
+                retrabajos_por_proyecto_raw = df_analisis["proyecto"].value_counts().to_dict()
+                
+                # Estructura correcta para cada proyecto
+                proyectos_problematicos = {}
+                for proyecto, cantidad in retrabajos_por_proyecto_raw.items():
+                    # Buscar el total de EDPs para este proyecto
+                    total_edps_proyecto = len(df_edp[df_edp["proyecto"] == proyecto]) if "proyecto" in df_edp.columns else 0
+                    
+                    # Calcular el porcentaje
+                    porcentaje = round((cantidad / total_edps_proyecto * 100), 1) if total_edps_proyecto > 0 else 0
+                    
+                    # Crear estructura de datos correcta
+                    proyectos_problematicos[proyecto] = {
+                        "total": total_edps_proyecto,
+                        "retrabajos": cantidad,
+                        "porcentaje": porcentaje
+                    }
+            else:
+                proyectos_problematicos = {}
+            # 6. Análisis por usuario solicitante
+            if not df_analisis.empty and "usuario" in df_analisis.columns:
+                usuarios_solicitantes = df_analisis["usuario"].value_counts().to_dict()
+            else:
+                usuarios_solicitantes = {}
+            
+            # Calcular estadísticas globales
+            total_edps = len(df_edp)
+            porcentaje_edps_afectados = round((edps_unicos_con_retrabajo / total_edps * 100), 1) if total_edps > 0 else 0
+            
+            # ====== CALCULAR PORCENTAJES ======
+            porcentaje_motivos = {}
+            for motivo, cantidad in motivos_rechazo.items():
+                porcentaje_motivos[motivo] = round((cantidad / total_retrabajos_log * 100), 1) if total_retrabajos_log > 0 else 0
+                
+            porcentaje_tipos = {}  
+            for tipo, cantidad in tipos_falla.items():
+                porcentaje_tipos[tipo] = round((cantidad / total_retrabajos_log * 100), 1) if total_retrabajos_log > 0 else 0
+                
+            # ====== PREPARAR DATOS PARA GRÁFICOS ======
+            chart_data = {
+                "motivos_labels": list(motivos_rechazo.keys()),
+                "motivos_data": list(motivos_rechazo.values()),
+                "tipos_labels": list(tipos_falla.keys()),
+                "tipos_data": list(tipos_falla.values()),
+                "tendencia_meses": list(tendencia_por_mes.keys()),
+                "tendencia_valores": list(tendencia_por_mes.values()),
+                "encargados": list(retrabajos_por_encargado.keys()),
+                "retrabajos_encargado": list(retrabajos_por_encargado.values()),
+                # Add missing 'eficiencia' key to chart_data
+                "eficiencia": []  # Initialize with empty list
+            }
+            # Calculate efficiency metrics if we have data for encargados
+            if chart_data["encargados"]:
+                
+                for encargado in chart_data["encargados"]:
+                    # Find total EDPs for this encargado in the original dataset
+                    total_edps_encargado = len(df_edp[df_edp["jefe_proyecto"] == encargado]) 
+                    # Find retrabajos count for this encargado
+                    retrabajos_count = retrabajos_por_encargado.get(encargado, 0)
+                    
+                    if total_edps_encargado > 0:
+                        # Efficiency = 100 - (retrabajos/total_edps * 100)
+                        # Higher is better - fewer retrabajos per EDP means higher efficiency
+                        eficiencia = 100 - (retrabajos_count / total_edps_encargado * 100)
+                        # Cap at 0 to avoid negative efficiency
+                        eficiencia = max(0, round(eficiencia, 1))
+                    else:
+                        eficiencia = 0
+                        
+                    chart_data["eficiencia"].append(eficiencia)
+            # ====== Calcular Impacto Financiero ====== 
+            impacto_financiero = 0
+            # for _, row in df_log_enriquecido.iterrows():
+            #     impacto_financiero += row.get("monto_aprobado", 0)
+            
+    
+            
+            
+            # ====== PREPARAR DATOS PARA LA TABLA DE REGISTROS ======
+            registros = retrabajos_completos
+            registros = self._clean_nat_values(registros)
+            
+            # ====== OPCIONES PARA FILTROS ======
+            filter_options = {
+                "meses": sorted(df_edp["mes"].dropna().unique()),
+                "encargados": sorted(df_edp["jefe_proyecto"].dropna().unique()),
+                "clientes": sorted(df_edp["cliente"].dropna().unique()),
+                "tipos_falla": sorted(df_edp["tipo_falla"].dropna().unique()) if "tipo_falla" in df_edp.columns else []
+            }
+            
+            # ====== ESTADÍSTICAS RESUMEN ======
+            stats = {
+                "total_edps": total_edps,
+                "total_retrabajos": total_retrabajos_log,  # Total de ocurrencias de re-trabajo
+                "edps_con_retrabajo": edps_unicos_con_retrabajo,  # Número de EDPs únicos con re-trabajo
+                "porcentaje_edps_afectados": porcentaje_edps_afectados,
+                "porcentaje_retrabajos": porcentaje_edps_afectados,  # Añadir este campo para compatibilidad
+                "promedio_retrabajos_por_edp": round(total_retrabajos_log / edps_unicos_con_retrabajo, 2) if edps_unicos_con_retrabajo > 0 else 0
+            }
+            data = {
+                "stats":stats,
+                "motivos_rechazo":motivos_rechazo,
+                "porcentaje_motivos":porcentaje_motivos,
+                "tipos_falla":tipos_falla,
+                "porcentaje_tipos":porcentaje_tipos,
+                "retrabajos_por_encargado":retrabajos_por_encargado,
+                "tendencia_por_mes":tendencia_por_mes,
+                "proyectos_problematicos":proyectos_problematicos,
+                "registros":registros,
+                "chart_data":chart_data,
+                "filter_options":filter_options,
+                "usuarios_solicitantes":usuarios_solicitantes,
+                "impacto_financiero":impacto_financiero
+            }
+            # ====== RETORNAR TEMPLATE CON TODOS LOS DATOS ======
+            return data
+        except Exception as e:
+            import traceback
+            print(f"Error en analisis_retrabajos: {str(e)}")
+            print(traceback.format_exc())
+            return {
+                'success': False,
+                'data': [],
+                'message': f"Error retrieving EDPs DataFrame: {str(e)}"
+            }
+            
+            

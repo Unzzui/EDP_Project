@@ -1132,6 +1132,24 @@ def vista_encargado(nombre):
     ]
     
     
+    # Calcular métricas de control para KPI SLA Compliance
+    edps_dentro_sla = df_full[(df_full["Jefe de Proyecto"] == nombre) & (df_full["Días Espera"] <= 30)].shape[0]
+    total_edps_encargado = df_full[df_full["Jefe de Proyecto"] == nombre].shape[0]
+    cumplimiento_sla = (edps_dentro_sla / total_edps_encargado * 100) if total_edps_encargado > 0 else 0
+    
+    control_metrics = {
+        'cumplimiento_sla': round(cumplimiento_sla, 1)
+    }
+    
+    # Generar alertas
+    alertas = []
+    if cumplimiento_sla < 75:
+        alertas.append({'tipo': 'critico', 'mensaje': f'SLA crítico: {cumplimiento_sla:.1f}%'})
+    if cantidad_edp_criticos > 5:
+        alertas.append({'tipo': 'importante', 'mensaje': f'{cantidad_edp_criticos} EDPs críticos'})
+    if porcentaje_pendientes_criticos > 40:
+        alertas.append({'tipo': 'importante', 'mensaje': f'{porcentaje_pendientes_criticos:.1f}% pendientes críticos'})
+    
     return render_template(
         "controller/controller_encargado.html",
         nombre=nombre,
@@ -1143,7 +1161,12 @@ def vista_encargado(nombre):
         monto_aprobado_global=monto_aprobado_global,
         avance_global=round(avance_global, 1),
         now=datetime.now(),
-               # Nuevas variables para KPIs financieros
+        
+        # Variables para KPIs de control
+        control_metrics=control_metrics,
+        alertas=alertas,
+        
+        # Nuevas variables para KPIs financieros
         dso_encargado=dso_encargado,
         dso_global=dso_global,
         pagado_reciente=pagado_reciente, 

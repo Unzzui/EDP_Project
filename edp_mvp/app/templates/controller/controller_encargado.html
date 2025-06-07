@@ -5,906 +5,384 @@ Control{% endblock %} {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
-<div
-  class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn animate__faster">
-  
-  <!-- Encabezado con datos del encargado -->
-  <div
-    class="flex flex-col md:flex-row justify-between items-start mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
-    <div class="flex items-center mb-4 md:mb-0">
-      <div
-        class="mr-3 p-2 bg-[color:var(--bg-card)] rounded-lg relative overflow-hidden">
-        <div
-          class="absolute inset-0 bg-[color:var(--accent-blue)] opacity-10 rounded-lg"></div>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 text-[color:var(--accent-blue)] relative z-10"
-          viewBox="0 0 20 20"
-          fill="currentColor">
-          <path
-            fill-rule="evenodd"
-            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-            clip-rule="evenodd" />
+<!-- Header Simplificado -->
+<div class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-5 mb-6">
+  <div class="flex items-center justify-between">
+    <!-- Nombre y Rol -->
+    <div class="flex items-center">
+      <div class="mr-3 p-2 bg-[color:var(--accent-blue)] bg-opacity-10 rounded-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
         </svg>
       </div>
       <div>
-        <h1 class="text-2xl font-bold tracking-tight">{{ nombre }}</h1>
-        <div
-          class="flex items-center mt-1 text-sm text-[color:var(--text-secondary)]">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-3.5 w-3.5 mr-1"
-            viewBox="0 0 20 20"
-            fill="currentColor">
-            <path
-              d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-          </svg>
-          <span>Gestión de proyectos</span>
-          <span
-            class="mx-2 inline-flex h-1 w-1 rounded-full bg-[color:var(--text-secondary)] opacity-60"></span>
-          <span class="font-medium">{{ proyectos|length }} proyectos</span>
-        </div>
+        <h1 class="text-xl font-bold">{{ nombre }}</h1>
+        <p class="text-sm text-[color:var(--text-secondary)]">Controller • {{ proyectos|length }} proyectos</p>
       </div>
     </div>
-    <div class="flex flex-col sm:flex-row gap-3">
-      <a
-        href="{{ url_for('controller.dashboard_controller') }}"
-        class="flex items-center justify-center text-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-lg border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-all shadow-sm hover:shadow">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+
+    <!-- Alertas Prioritarias -->
+    {% if alertas and alertas|length > 0 %}
+    <div class="flex items-center space-x-2">
+      {% for alerta in alertas[:3] %}
+      <div class="flex items-center px-3 py-1 rounded-full text-xs
+        {% if alerta.tipo == 'critico' %}bg-[color:var(--accent-red)] bg-opacity-15 text-[color:var(--accent-red)]
+        {% elif alerta.tipo == 'importante' %}bg-[color:var(--accent-amber)] bg-opacity-15 text-[color:var(--accent-amber)]
+        {% else %}bg-[color:var(--accent-blue)] bg-opacity-15 text-[color:var(--accent-blue)]
+        {% endif %}">
+        <div class="w-1.5 h-1.5 rounded-full
+          {% if alerta.tipo == 'critico' %}bg-[color:var(--accent-red)]
+          {% elif alerta.tipo == 'importante' %}bg-[color:var(--accent-amber)]
+          {% else %}bg-[color:var(--accent-blue)]
+          {% endif %} mr-1"></div>
+        {{ alerta.mensaje|truncate(20) }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Botones de Acción -->
+    <div class="flex items-center space-x-2">
+      <a href="{{ url_for('controller.dashboard_controller') }}" 
+         class="p-2 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] rounded-lg transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-        Volver al Dashboard
       </a>
-      <button
-        id="exportarDatos"
-        class="flex items-center justify-center text-sm bg-[color:var(--accent-blue-dark)] bg-opacity-15 text-[color:var(--primary-text)] px-4 py-2 rounded-lg hover:bg-opacity-10 transition-all border border-transparent hover:border-[color:var(--accent-blue-dark)] hover:border-opacity-20 shadow-sm">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 mr-2"
-          viewBox="0 0 20 20"
-          fill="currentColor">
-          <path
-            fill-rule="evenodd"
-            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-            clip-rule="evenodd" />
+      <button id="exportarDatos" class="p-2 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] rounded-lg transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
         </svg>
-        Exportar Datos
       </button>
     </div>
   </div>
 
-  <!-- NUEVO: Panel de Alertas Inteligentes -->
-  {% if alertas and alertas|length > 0 %}
-  <div class="mb-6 animate__animated animate__fadeIn">
-    <div class="flex items-center mb-3">
-      <div class="relative mr-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[color:var(--accent-amber)]" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-        </svg>
-        <div class="absolute -top-1 -right-1 h-3 w-3 bg-[color:var(--accent-red)] rounded-full animate-pulse"></div>
-      </div>
-      <h3 class="text-lg font-semibold text-[color:var(--text-primary)]">Alertas Prioritarias</h3>
-      <span class="ml-2 px-2 py-1 text-xs font-medium bg-[color:var(--accent-amber)] bg-opacity-20 text-[color:var(--accent-amber)] rounded-full">
-        {{ alertas|length }} alerta{{ 's' if alertas|length != 1 else '' }}
-      </span>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-      {% for alerta in alertas[:6] %}
-      <div class="flex items-start p-3 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-card)] hover:shadow-md transition-all">
-        <div class="flex-shrink-0 mr-3 mt-0.5">
-          {% if alerta.tipo == 'critico' %}
-            <div class="h-2 w-2 bg-[color:var(--accent-red)] rounded-full"></div>
-          {% elif alerta.tipo == 'importante' %}
-            <div class="h-2 w-2 bg-[color:var(--accent-amber)] rounded-full"></div>
-          {% else %}
-            <div class="h-2 w-2 bg-[color:var(--accent-blue)] rounded-full"></div>
-          {% endif %}
-        </div>
-        <div class="flex-grow min-w-0">
-          <p class="text-sm font-medium text-[color:var(--text-primary)] leading-tight">{{ alerta.mensaje }}</p>
-          {% if alerta.valor %}
-          <p class="text-xs text-[color:var(--text-secondary)] mt-1">{{ alerta.valor }}</p>
-          {% endif %}
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Indicador de pagos realizados al encargado con mejoras visuales -->
-  <div
-    class="flex flex-col lg:flex-row gap-4 mb-6 animate__animated animate__fadeIn">
-    <div
-      class="bg-gradient-to-r from-[color:var(--accent-green)] to-[color:var(--accent-blue)] p-1 rounded-xl flex-grow">
-      <div
-        class="bg-[color:var(--bg-primary)] rounded-lg p-4 flex items-center justify-between backdrop-blur-sm">
-        <div>
-          <div class="flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 text-[color:var(--accent-green)]"
-              viewBox="0 0 20 20"
-              fill="currentColor">
-              <path
-                fill-rule="evenodd"
-                d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
-                clip-rule="evenodd" />
-            </svg>
-            <h2 class="text-lg font-semibold">Total Pagado</h2>
-            <!-- NUEVO: Indicador de Salud -->
-            <div class="ml-2">
-              {% if avance_global >= 80 %}
-                <div class="h-2 w-2 bg-[color:var(--accent-green)] rounded-full animate-pulse" title="Salud Excelente"></div>
-              {% elif avance_global >= 60 %}
-                <div class="h-2 w-2 bg-[color:var(--accent-amber)] rounded-full animate-pulse" title="Salud Buena"></div>
-              {% else %}
-                <div class="h-2 w-2 bg-[color:var(--accent-red)] rounded-full animate-pulse" title="Requiere Atención"></div>
-              {% endif %}
-            </div>
-          </div>
-          <p
-            class="text-3xl font-bold mt-2 font-mono text-[color:var(--accent-green)]">
-            ${{ "{:,.0f}".format(monto_pagado_global|int).replace(",",".") }}
-          </p>
-          <!-- NUEVO: Velocidad de cobro -->
-          {% if velocidad_cobro %}
-          <div class="flex items-center mt-2 text-xs">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-            <span class="text-[color:var(--text-secondary)]">Velocidad: </span>
-            <span class="font-medium text-[color:var(--accent-blue)]">${{ "{:,.0f}".format(velocidad_cobro|int).replace(",",".") }}/día</span>
-          </div>
-          {% endif %}
-        </div>
-        <div class="text-right">
-          <div class="text-sm text-[color:var(--text-secondary)]">
-            Avance de pagos
-          </div>
-          <div class="text-2xl font-bold">{{ avance_global }}%</div>
-          <!-- NUEVO: Proyección de tiempo restante -->
-          {% if tiempo_proyectado_restante %}
-          <div class="mt-2 text-xs">
-            <span class="text-[color:var(--text-secondary)]">Est. completion: </span>
-            <span class="font-medium">{{ tiempo_proyectado_restante }} días</span>
-          </div>
-          {% endif %}
-          <div class="mt-2 text-xs">
-            <span
-              class="{% if avance_global > 70 %}text-[color:var(--accent-green)]{% elif avance_global > 50 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-orange)]{% endif %}">
-              {{ avance_global }}% del total
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4 flex-grow">
-      <!-- Pendiente por cobrar con indicador de riesgo -->
-      <div
-        class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)] flex flex-col justify-between relative overflow-hidden">
-        <!-- NUEVO: Indicador de riesgo -->
-        {% if riesgo_score and riesgo_score > 70 %}
-        <div class="absolute top-2 right-2">
-          <div class="h-2 w-2 bg-[color:var(--accent-red)] rounded-full animate-pulse" title="Alto Riesgo"></div>
-        </div>
-        {% endif %}
-        
-        <div class="text-[color:var(--text-secondary)] text-sm font-medium">
-          Pendiente por cobrar
-        </div>
-        <div class="flex items-end justify-between">
-          <p
-            class="text-xl font-bold font-mono text-[color:var(--accent-orange)]">
-            ${{ "{:,.0f}".format(monto_pendiente_global|int).replace(",",".") }}
-          </p>
-          <div class="text-xs text-[color:var(--text-secondary)]">
-            {{ 100 - avance_global }}% del total
-          </div>
-        </div>
-        <!-- NUEVO: Aging breakdown mini -->
-        {% if distribucion_aging %}
-        <div class="mt-2 flex justify-between text-xs">
-          <span class="text-[color:var(--accent-green)]">≤30d: {{ distribucion_aging.reciente|round }}%</span>
-          <span class="text-[color:var(--accent-amber)]">31-60d: {{ distribucion_aging.medio|round }}%</span>
-          <span class="text-[color:var(--accent-red)]}">+60d: {{ distribucion_aging.critico|round }}%</span>
-        </div>
-        {% endif %}
-      </div>
-
-      <!-- Meta propuesta con progreso mejorado -->
-      <div
-        class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)] flex flex-col justify-between">
-        <div class="text-[color:var(--text-secondary)] text-sm font-medium">
-          Meta propuesta
-        </div>
-        <div class="flex items-end justify-between">
-          <p class="text-xl font-bold font-mono">
-            ${{ "{:,.0f}".format(meta_por_encargado|int).replace(",",".") }}
-          </p>
-          <div
-            class="text-xs {% if monto_pagado_global >= meta_por_encargado %}text-[color:var(--accent-green)]{% else %}text-[color:var(--text-secondary)]{% endif %}">
-            {{ (monto_pagado_global / meta_por_encargado * 100)|round|int if
-            meta_por_encargado > 0 else 0 }}% alcanzado
-          </div>
-        </div>
-        <!-- NUEVO: Proyección para alcanzar meta -->
-        {% if proyeccion_siguiente_mes and meta_por_encargado > monto_pagado_global %}
-        <div class="mt-2 text-xs">
-          <span class="text-[color:var(--text-secondary)]">Proyección: </span>
-          {% if proyeccion_siguiente_mes.monto_proyectado >= (meta_por_encargado - monto_pagado_global) %}
-            <span class="text-[color:var(--accent-green)] font-medium">Meta alcanzable</span>
-          {% else %}
-            <span class="text-[color:var(--accent-amber)] font-medium">Requiere impulso</span>
-          {% endif %}
-        </div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-  <!-- Barra de progreso visual para pagos mejorada -->
-  <div class="mb-8 animate__animated animate__fadeIn">
-    <div
-      class="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
-      <span>Progreso de pagos</span>
-      <span>{{ avance_global }}% completado</span>
-    </div>
-    <!-- NUEVO: Barra de progreso segmentada -->
-    <div class="h-4 bg-[color:var(--bg-input)] rounded-full overflow-hidden relative">
-      <div
-        class="h-full bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-green)] relative"
-        style="width: {{ avance_global }}%">
-        <!-- Indicador de meta -->
-        {% if meta_por_encargado > 0 %}
-        <div 
-          class="absolute top-0 h-full w-0.5 bg-white opacity-70"
-          style="left: {{ (meta_por_encargado / (monto_pagado_global + monto_pendiente_global) * 100) if (monto_pagado_global + monto_pendiente_global) > 0 else 0 }}%"
-          title="Meta objetivo"></div>
-        {% endif %}
-      </div>
-    </div>
-    <div class="flex justify-between text-xs mt-2">
-      <div class="flex items-center">
-        <div
-          class="w-3 h-3 rounded-full bg-[color:var(--accent-green)] opacity-70 mr-1"></div>
-        <span
-          >Pagado: ${{
-          "{:,.0f}".format(monto_pagado_global|int).replace(",",".") }}</span
-        >
-      </div>
-      <div class="flex items-center">
-        <div
-          class="w-3 h-3 rounded-full bg-[color:var(--accent-orange)] opacity-70 mr-1"></div>
-        <span
-          >Pendiente: ${{
-          "{:,.0f}".format(monto_pendiente_global|int).replace(",",".") }}</span
-        >
-      </div>
-    </div>
-  </div>
-
-  <!-- NUEVO: Dashboard de Rendimiento y Velocidad -->
-  <div class="section-title-modern mb-5 flex items-center justify-between">
-    <h2 class="text-xl font-semibold flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-purple)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-      </svg>
-      Dashboard de Rendimiento
-    </h2>
-    <div class="text-xs text-[color:var(--text-secondary)]">
-      Actualizado: <span class="font-medium">{{ now.strftime('%d/%m/%Y %H:%M') }}</span>
-    </div>
-  </div>
-
-  <!-- Grid de métricas de rendimiento -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-    <!-- Velocidad de Procesamiento -->
-    <div class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)] relative overflow-hidden group hover:shadow-lg transition-all">
-      <div class="absolute top-0 right-0 w-16 h-16 -mr-4 -mt-4 opacity-10 group-hover:opacity-20 transition-opacity">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-purple)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      </div>
-      <div class="flex items-center mb-2">
-        <h3 class="text-sm font-medium text-[color:var(--text-secondary)]">Velocidad Procesamiento</h3>
-      </div>
-      <div class="relative z-10">
-        <p class="text-2xl font-bold text-[color:var(--accent-purple)]">
-          {{ velocidad_procesamiento|round(1) if velocidad_procesamiento else 0 }}
-        </p>
-        <p class="text-xs text-[color:var(--text-secondary)]">EDPs/día</p>
-        {% if tendencia_mejora %}
-        <div class="flex items-center mt-1 text-xs">
-          {% if tendencia_mejora > 0 %}
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-[color:var(--accent-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17l9.2-9.2M17 17V7H7" />
-            </svg>
-            <span class="text-[color:var(--accent-green)] font-medium">+{{ tendencia_mejora|round(1) }}%</span>
-          {% elif tendencia_mejora < 0 %}
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-[color:var(--accent-red)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 7l-9.2 9.2M7 7v10h10" />
-            </svg>
-            <span class="text-[color:var(--accent-red)] font-medium">{{ tendencia_mejora|round(1) }}%</span>
-          {% else %}
-            <span class="text-[color:var(--text-secondary)]">Sin cambio</span>
-          {% endif %}
-          <span class="text-[color:var(--text-secondary)] ml-1">vs mes anterior</span>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- Tiempo Promedio de Resolución -->
-    <div class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)] relative overflow-hidden group hover:shadow-lg transition-all">
-      <div class="absolute top-0 right-0 w-16 h-16 -mr-4 -mt-4 opacity-10 group-hover:opacity-20 transition-opacity">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <div class="flex items-center mb-2">
-        <h3 class="text-sm font-medium text-[color:var(--text-secondary)]">Tiempo Resolución</h3>
-      </div>
-      <div class="relative z-10">
-        <p class="text-2xl font-bold text-[color:var(--accent-blue)]">
-          {{ tiempo_promedio_resolucion|round(1) if tiempo_promedio_resolucion else 0 }}
-        </p>
-        <p class="text-xs text-[color:var(--text-secondary)]">días promedio</p>
-        <div class="w-full bg-[color:var(--bg-input)] rounded-full h-1.5 mt-2">
-          {% set tiempo_max = 30 %}
-          {% set porcentaje_tiempo = (tiempo_promedio_resolucion / tiempo_max * 100) if tiempo_promedio_resolucion and tiempo_max else 0 %}
-          <div class="bg-[color:var(--accent-blue)] h-1.5 rounded-full" style="width: {{ porcentaje_tiempo if porcentaje_tiempo <= 100 else 100 }}%"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Efectividad Global -->
-    <div class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)] relative overflow-hidden group hover:shadow-lg transition-all">
-      <div class="absolute top-0 right-0 w-16 h-16 -mr-4 -mt-4 opacity-10 group-hover:opacity-20 transition-opacity">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <div class="flex items-center mb-2">
-        <h3 class="text-sm font-medium text-[color:var(--text-secondary)]">Effectiveness Score</h3>
-      </div>
-      <div class="relative z-10">
-        <p class="text-2xl font-bold text-[color:var(--accent-green)]">
-          {{ efficiency_score|round if efficiency_score else 0 }}
-        </p>
-        <p class="text-xs text-[color:var,--text-secondary)]">de 100 puntos</p>
-        <!-- Medidor circular -->
-        <div class="relative w-12 h-12 mx-auto mt-2">
-          <svg class="w-12 h-12 transform -rotate-90" viewBox="0 0 36 36">
-            <path
-              class="text-[color:var(--bg-input)]"
-              stroke="currentColor"
-              stroke-width="3"
-              fill="none"
-              d="M18 2.0845
-                 a 15.9155 15.9155 0 0 1 0 31.831
-                 a 15.9155 15.9155 0 0 1 0 -31.831"
-            />
-            <path
-              class="text-[color:var(--accent-green)]"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              fill="none"
-              stroke-dasharray="{{ efficiency_score if efficiency_score else 0 }}, 100"
-              d="M18 2.0845
-                 a 15.9155 15.9155 0 0 1 0 31.831
-                 a 15.9155 15.9155 0 0 1 0 -31.831"
-            />
-          </svg>
-        </div>
-      </div>
-    </div>
-
-    <!-- Riesgo Score -->
-    <div class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)] relative overflow-hidden group hover:shadow-lg transition-all">
-      <div class="absolute top-0 right-0 w-16 h-16 -mr-4 -mt-4 opacity-10 group-hover:opacity-20 transition-opacity">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full text-[color:var(--accent-amber)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-        </svg>
-      </div>
-      <div class="flex items-center mb-2">
-        <h3 class="text-sm font-medium text-[color:var(--text-secondary)]">Riesgo Score</h3>
-      </div>
-      <div class="relative z-10">
-        <p class="text-2xl font-bold {% if riesgo_score > 70 %}text-[color:var(--accent-red)]{% elif riesgo_score > 40 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-green)]{% endif %}">
-          {{ riesgo_score|round if riesgo_score else 0 }}
-        </p>
-        <p class="text-xs text-[color:var(--text-secondary)]">nivel de riesgo</p>
-        <div class="flex justify-center mt-2">
-          {% if riesgo_score > 70 %}
-            <span class="px-2 py-1 text-xs font-medium bg-[color:var(--accent-red)] bg-opacity-20 text-[color:var(--accent-red)] rounded-full">ALTO</span>
-          {% elif riesgo_score > 40 %}
-            <span class="px-2 py-1 text-xs font-medium bg-[color:var(--accent-amber)] bg-opacity-20 text-[color:var(--accent-amber)] rounded-full">MEDIO</span>
-          {% else %}
-            <span class="px-2 py-1 text-xs font-medium bg-[color:var(--accent-green)] bg-opacity-20 text-[color:var(--accent-green)] rounded-full">BAJO</span>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Después del grid principal de KPIs -->
-  <div class="section-title-modern mb-5 mt-8">
-    <h2 class="text-xl font-semibold flex items-center">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]"
-        viewBox="0 0 20 20"
-        fill="currentColor">
-        <path
-          d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-        <path
-          fill-rule="evenodd"
-          d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
-          clip-rule="evenodd" />
-      </svg>
-      KPIs Financieros Adicionales
-    </h2>
-    <div class="section-line"></div>
-  </div>
-
-  <!-- Nueva fila de KPIs financieros modernos -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-    <!-- DSO (Days Sales Outstanding) -->
-    <div
-      class="metric-card bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl overflow-hidden group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-      <div
-        class="h-2 bg-[color:{% if dso_encargado > 60 %}var(--accent-red){% elif dso_encargado > 45 %}var(--accent-amber){% else %}var(--accent-green){% endif %}]"></div>
-      <div class="p-5 relative">
-        <div
-          class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-full w-full text-[color:var(--accent-amber)]"
-            viewBox="0 0 20 20"
-            fill="currentColor">
-            <path
-              fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-              clip-rule="evenodd" />
-        </div>
-        <div class="flex items-center mb-3">
-          <p
-            class="metric-label font-medium text-[color:var(--text-secondary)]">
-            DSO Encargado
-          </p>
-          <span
-            class="ml-auto px-1.5 py-0.5 rounded text-xs font-medium bg-[color:{% if dso_encargado > 60 %}var(--accent-red){% elif dso_encargado > 45 %}var(--accent-amber){% else %}var(--accent-green){% endif %}] bg-opacity-15 text-[color:var(--text-on-accent)]">
-            {% if dso_encargado > 60 %}CRÍTICO {% elif dso_encargado > 45
-            %}ALERTA {% else %}ÓPTIMO{% endif %}
-          </span>
-        </div>
-        <div class="flex items-end">
-          <p
-            class="metric-value text-3xl font-bold {% if dso_encargado > 60 %}text-[color:var(--accent-red)]{% elif dso_encargado > 45 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-green)]{% endif %} animate__animated animate__fadeIn">
-            {{ dso_encargado|round(1) }}
-          </p>
-          <span class="text-xs text-[color:var(--text-secondary)] mb-1.5 ml-2"
-            >días promedio</span
-          >
-        </div>
-        <div class="relative mt-3">
-          <div class="flex items-center">
-            <div
-              class="h-2 flex-1 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
-              <div
-                class="h-full {% if dso_encargado > 60 %}bg-[color:var(--accent-red)]{% elif dso_encargado > 45 %}bg-[color:var(--accent-amber)]{% else %}bg-[color:var(--accent-green)]{% endif %} animate__animated animate__slideInLeft"
-                style="width: {{ (dso_encargado / 90 * 100) if dso_encargado < 90 else 100 }}%"></div>
-            </div>
-          </div>
-          <div
-            class="flex justify-between text-xs text-[color:var(--text-secondary)] mt-1.5">
-            <span>Meta: ≤45 días</span>
-            <span
-              class="{% if dso_encargado < dso_global %}text-[color:var(--accent-green)] font-medium{% endif %}">
-              {% if dso_encargado < dso_global %}{{ (dso_global -
-              dso_encargado)|round(1) }}d mejor que global{% endif %}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Distribución por edades de montos pendientes -->
-    <div
-      class="metric-card bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl overflow-hidden group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-      <div class="h-2 bg-[color:var(--accent-amber)]"></div>
-      <div class="p-5 relative">
-        <div
-          class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-full w-full text-[color:var(--accent-amber)]"
-            viewBox="0 0 20 20"
-            fill="currentColor">
-            <path
-              d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
-            <path
-              d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
-            <path
-              d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
-          </svg>
-        </div>
-        <div class="flex items-center mb-3">
-          <p
-            class="metric-label font-medium text-[color:var(--text-secondary)]">
-            Distribución de Pendientes
-          </p>
-        </div>
-        <div class="flex items-end mb-2">
-          <p class="text-xl font-semibold">
-            <span class="text-[color:var(--text-primary)]"
-              >{{ (pendiente_reciente / monto_pendiente_global * 100)|round(1)
-              if monto_pendiente_global > 0 else 0 }}%</span
-            >
-          </p>
-          <span class="text-xs text-[color:var(--text-secondary)] mb-0.5 ml-2"
-            >≤30 días</span
-          >
-        </div>
-        <div class="grid grid-cols-3 gap-2 mt-3">
-          <div class="text-center">
-            <div
-              class="w-full h-1.5 bg-[color:var(--accent-green)] rounded mb-1"></div>
-            <p class="text-xs text-[color:var(--accent-green)]">≤30d</p>
-            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
-              ${{ "{:,.1f}".format(pendiente_reciente/1000000).replace(",", ".")
-              }}M
-            </p>
-          </div>
-          <div class="text-center">
-            <div
-              class="w-full h-1.5 bg-[color:var(--accent-amber)] rounded mb-1"></div>
-            <p class="text-xs text-[color:var(--accent-amber)]">31-60d</p>
-            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
-              ${{ "{:,.1f}".format(pendiente_medio/1000000).replace(",", ".")
-              }}M
-            </p>
-          </div>
-          <div class="text-center">
-            <div
-              class="w-full h-1.5 bg-[color:var(--accent-red)] rounded mb-1"></div>
-            <p class="text-xs text-[color:var(--accent-red)]">+60d</p>
-            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
-              ${{ "{:,.1f}".format(pendiente_critico/1000000).replace(",", ".")
-              }}M
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Distribución por edades de montos pagados -->
-    <div
-      class="metric-card bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl overflow-hidden group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-      <div class="h-2 bg-[color:var(--accent-green)]"></div>
-      <div class="p-5 relative">
-        <div
-          class="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 opacity-10 group-hover:opacity-20 transition-opacity">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-full w-full text-[color:var(--accent-green)]"
-            viewBox="0 0 20 20"
-            fill="currentColor">
-            <path
-              fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clip-rule="evenodd" />
-          </svg>
-        </div>
-        <div class="flex items-center mb-3">
-          <p
-            class="metric-label font-medium text-[color:var(--text-secondary)]">
-            Distribución de Pagados
-          </p>
-        </div>
-        <div class="flex items-end mb-2">
-          <p class="text-xl font-semibold">
-            <span class="text-[color:var(--text-primary)]"
-              >{{ (pagado_reciente / monto_pagado_global * 100)|round(1) if
-              monto_pagado_global > 0 else 0 }}%</span
-            >
-          </p>
-          <span class="text-xs text-[color:var(--text-secondary)] mb-0.5 ml-2"
-            >≤30 días</span
-          >
-        </div>
-        <div class="grid grid-cols-3 gap-2 mt-3">
-          <div class="text-center">
-            <div
-              class="w-full h-1.5 bg-[color:var(--accent-green)] rounded mb-1"></div>
-            <p class="text-xs text-[color:var(--accent-green)]">≤30d</p>
-            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
-              ${{ "{:,.1f}".format(pagado_reciente/1000000).replace(",", ".")
-              }}M
-            </p>
-          </div>
-          <div class="text-center">
-            <div
-              class="w-full h-1.5 bg-[color:var(--accent-amber)] rounded mb-1"></div>
-            <p class="text-xs text-[color:var(--accent-amber)]">31-60d</p>
-            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
-              ${{ "{:,.1f}".format(pagado_medio/1000000).replace(",", ".") }}M
-            </p>
-          </div>
-          <div class="text-center">
-            <div
-              class="w-full h-1.5 bg-[color:var(--accent-red)] rounded mb-1"></div>
-            <p class="text-xs text-[color:var(--accent-red)]">+60d</p>
-            <p class="text-xs text-[color:var(--text-secondary)] mt-1">
-              ${{ "{:,.1f}".format(pagado_critico/1000000).replace(",", ".") }}M
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Advanced Analytics Dashboard Section -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Trend Analysis Chart -->
-    <div class="bg-[color:var(--bg-card)] p-6 rounded-xl border border-[color:var(--border-color)] shadow-sm">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-          </svg>
-          Tendencias de Cobranza
-        </h3>
-        <div class="flex items-center space-x-2 text-sm text-[color:var(--text-secondary)]">
-          <div class="flex items-center">
-            <div class="h-2 w-2 bg-[color:var(--accent-blue)] rounded-full mr-1"></div>
-            <span>Propuesto</span>
-          </div>
-          <div class="flex items-center ml-3">
-            <div class="h-2 w-2 bg-[color:var(--accent-green)] rounded-full mr-1"></div>
-            <span>Aprobado</span>
-          </div>
-        </div>
-      </div>
-      <div class="h-64">
-        <canvas id="trendChart"></canvas>
-      </div>
-      <div class="mt-4 grid grid-cols-3 gap-4 text-center">
-        <div>
-          <p class="text-sm text-[color:var(--text-secondary)]">Tiempo Proceso</p>
-          <p class="text-lg font-semibold text-[color:var(--accent-blue)]">{{ control_metrics.tiempo_promedio_proceso|round(1) }} días</p>
-        </div>
-        <div>
-          <p class="text-sm text-[color:var(--text-secondary)]">Compliance</p>
-          <p class="text-lg font-semibold text-[color:var(--accent-green)]">{{ control_metrics.cumplimiento_sla|round(1) }}%</p>
-        </div>
-        <div>
-          <p class="text-sm text-[color:var(--text-secondary)]">Validación</p>
-          <p class="text-lg font-semibold text-[color:var(--accent-purple)]">{{ control_metrics.tasa_validacion|round(1) }}%</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Aging Distribution Chart -->
-    <div class="bg-[color:var(--bg-card)] p-6 rounded-xl border border-[color:var(--border-color)] shadow-sm">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-amber)]" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-          </svg>
-          Distribución por Antigüedad
-        </h3>
-        <div class="text-sm text-[color:var(--text-secondary)]">
-          Total: ${{ "{:,.0f}".format(total_amounts.total/1000000).replace(",", ".") }}M
-        </div>
-      </div>
-      <div class="h-64">
-        <canvas id="agingChart"></canvas>
-      </div>
-      <div class="mt-4 grid grid-cols-2 gap-4">
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="h-3 w-3 bg-[color:var(--accent-green)] rounded-full mr-2"></div>
-              <span class="text-sm">0-30 días</span>
-            </div>
-            <span class="text-sm font-medium">{{ aging_distribution.recent_percent|round(1) }}%</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="h-3 w-3 bg-[color:var(--accent-amber)] rounded-full mr-2"></div>
-              <span class="text-sm">31-60 días</span>
-            </div>
-            <span class="text-sm font-medium">{{ aging_distribution.medium_percent|round(1) }}%</span>
-          </div>
-        </div>
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="h-3 w-3 bg-[color:var(--accent-red)] rounded-full mr-2"></div>
-              <span class="text-sm">+60 días</span>
-            </div>
-            <span class="text-sm font-medium">{{ aging_distribution.critical_percent|round(1) }}%</span>
-          </div>
-          <div class="text-xs text-[color:var(--text-secondary)] mt-2">
-            Riesgo promedio: {{ risk_metrics.avg_risk_score|round(1) }}/10
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Financial Projections & Risk Analysis -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <!-- Control Metrics Panel -->
-    <div class="bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-subtle)] p-6 rounded-xl border border-[color:var(--border-color)] shadow-sm">
-      <div class="flex items-center mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-        </svg>
-        <h3 class="text-lg font-semibold">Métricas de Control</h3>
-      </div>
-      <div class="space-y-4">
-        <div>
-          <p class="text-sm text-[color:var(--text-secondary)] mb-1">Cumplimiento SLA</p>
-          <p class="text-2xl font-bold text-[color:var(--accent-green)]">{{ control_metrics.cumplimiento_sla|round(1) }}%</p>
-          <div class="flex items-center mt-1">
-            <span class="text-xs px-2 py-1 bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] rounded-full">
-              Objetivo: ≥95%
-            </span>
-          </div>
-        </div>
-        <div>
-          <p class="text-sm text-[color:var(--text-secondary)] mb-1">Tasa de Validación</p>
-          <p class="text-xl font-semibold text-[color:var(--accent-blue)]">{{ control_metrics.tasa_validacion|round(1) }}%</p>
-        </div>
-        <div>
-          <p class="text-sm text-[color:var(--text-secondary)] mb-1">Eficiencia del Proceso</p>
-          <p class="text-xl font-semibold text-[color:var(--accent-purple)]">{{ control_metrics.eficiencia_proceso|round(1) }}%</p>
-        </div>
-        <div class="pt-3 border-t border-[color:var(--border-color-subtle)]">
-          <p class="text-xs text-[color:var(--text-secondary)]">
-            Basado en DSO objetivo de 25 días y procesos de validación
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Risk Analysis Dashboard -->
-    <div class="lg:col-span-2 bg-[color:var(--bg-card)] p-6 rounded-xl border border-[color:var(--border-color)] shadow-sm">
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-semibold flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-red)]" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-          </svg>
-          Análisis de Riesgo
-        </h3>
-        <div class="text-sm text-[color:var(--text-secondary)]">
-          Score Global: {{ risk_metrics.global_risk_score|round(1) }}/10
+  <!-- Selector de Período y Vista -->
+  <div class="flex items-center justify-between mt-4 pt-4 border-t border-[color:var(--border-color-subtle)]">
+    <div class="flex items-center space-x-4">
+      <!-- Selector de Período -->
+      <div class="flex items-center space-x-2">
+        <span class="text-sm text-[color:var(--text-secondary)]">Período:</span>
+        <div class="flex bg-[color:var(--bg-highlight)] rounded-lg p-1">
+          <button class="px-3 py-1 rounded-md text-sm font-medium bg-[color:var(--accent-blue)] text-white">Mes</button>
+          <button class="px-3 py-1 rounded-md text-sm font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]">Semana</button>
         </div>
       </div>
       
-      <div class="grid grid-cols-3 gap-6">
-        <!-- Risk Score Gauge -->
-        <div class="text-center">
-          <div class="relative w-24 h-24 mx-auto mb-3">
-            <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
-              <path class="text-[color:var(--bg-subtle)]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-              <path class="text-[color:var(--accent-red)]" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="{{ risk_metrics.global_risk_score * 10 }}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span class="text-lg font-bold">{{ risk_metrics.global_risk_score|round(1) }}</span>
-            </div>
-          </div>
-          <p class="text-sm text-[color:var(--text-secondary)]">Riesgo Global</p>
-        </div>
-
-        <!-- Aging Risk -->
-        <div class="text-center">
-          <div class="relative w-24 h-24 mx-auto mb-3">
-            <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
-              <path class="text-[color:var(--bg-subtle)]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-              <path class="text-[color:var(--accent-amber)]" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="{{ risk_metrics.aging_risk_score * 10 }}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span class="text-lg font-bold">{{ risk_metrics.aging_risk_score|round(1) }}</span>
-            </div>
-          </div>
-          <p class="text-sm text-[color:var(--text-secondary)]">Riesgo Antigüedad</p>
-        </div>
-
-        <!-- Volume Risk -->
-        <div class="text-center">
-          <div class="relative w-24 h-24 mx-auto mb-3">
-            <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
-              <path class="text-[color:var(--bg-subtle)]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-              <path class="text-[color:var(--accent-blue)]" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="{{ risk_metrics.volume_risk_score * 10 }}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span class="text-lg font-bold">{{ risk_metrics.volume_risk_score|round(1) }}</span>
-            </div>
-          </div>
-          <p class="text-sm text-[color:var(--text-secondary)]">Riesgo Volumen</p>
+      <!-- Switch de Vista -->
+      <div class="flex items-center space-x-2">
+        <span class="text-sm text-[color:var(--text-secondary)]">Vista:</span>
+        <div class="flex bg-[color:var(--bg-highlight)] rounded-lg p-1">
+          <button class="px-3 py-1 rounded-md text-sm font-medium bg-[color:var(--accent-blue)] text-white">Todo</button>
+          <button class="px-3 py-1 rounded-md text-sm font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]">Mi Portfolio</button>
         </div>
       </div>
+    </div>
+    
+    <div class="text-xs text-[color:var(--text-secondary)]">
+      Actualizado: {{ now.strftime('%d/%m/%Y %H:%M') }}
+    </div>
+  </div>
+</div>
 
-      <!-- Métricas de Rendimiento -->
-      <div class="mt-6 grid grid-cols-3 gap-4">
-        <!-- Velocidad de Procesamiento -->
-        <div class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center space-x-2">
-              <div class="p-1.5 bg-purple-500 rounded-md">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-              </div>
-              <span class="text-sm font-medium text-purple-700 dark:text-purple-300">Velocidad</span>
-            </div>
-            <div class="flex items-center space-x-1">
-              <span class="text-xs text-green-600 dark:text-green-400">↗</span>
-              <span class="text-xs text-green-600 dark:text-green-400">+12%</span>
-            </div>
-          </div>
-          <div class="text-2xl font-bold text-purple-800 dark:text-purple-200">{{ (velocidad_historica[-1].velocidad if velocidad_historica else 85)|round(1) }}%</div>
-          <div class="text-xs text-[color:var(--text-secondary)]">Procesamiento promedio</div>
+<!-- 4 KPIs Operacionales Principales -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <!-- 1. Pendiente - Monto y Cantidad con Gráfico -->
+  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-amber)] to-[color:var(--accent-orange)] rounded-xl shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 9.586V6z" clip-rule="evenodd" />
+          </svg>
         </div>
-
-        <!-- Tendencia de Riesgo -->
-        <div class="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 p-4 rounded-lg border border-red-200 dark:border-red-700">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center space-x-2">
-              <div class="p-1.5 bg-red-500 rounded-md">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
-              </div>
-              <span class="text-sm font-medium text-red-700 dark:text-red-300">Riesgo</span>
-            </div>
-            <div class="flex items-center space-x-1">
-              <span class="text-xs text-green-600 dark:text-green-400">↘</span>
-              <span class="text-xs text-green-600 dark:text-green-400">-8%</span>
-            </div>
-          </div>
-          <div class="text-2xl font-bold text-red-800 dark:text-red-200">{{ (risk_trend[-1].riesgo if risk_trend else 28)|round(1) }}%</div>
-          <div class="text-xs text-[color:var(--text-secondary)]">Nivel de riesgo actual</div>
+        <div class="ml-3">
+          <span class="text-xs font-bold text-[color:var(--accent-amber)] tracking-wider">PENDIENTE</span>
         </div>
-
-        <!-- Volumen de Trabajo -->
-        <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center space-x-2">
-              <div class="p-1.5 bg-green-500 rounded-md">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
-              </div>
-              <span class="text-sm font-medium text-green-700 dark:text-green-300">Volumen</span>
-            </div>
-            <div class="flex items-center space-x-1">
-              <span class="text-xs text-blue-600 dark:text-blue-400">↗</span>
-              <span class="text-xs text-blue-600 dark:text-blue-400">+25%</span>
-            </div>
-          </div>
-          <div class="text-2xl font-bold text-green-800 dark:text-green-200">{{ (volume_trend[-1].volumen if volume_trend else 85)|round(0) }}</div>
-          <div class="text-xs text-[color:var(--text-secondary)]">EDPs este mes</div>
+      </div>
+      <div class="text-right">
+        {% set pendiente_count = proyectos|selectattr("Monto_Pendiente", "gt", 0)|list|length %}
+        <div class="text-xs text-[color:var(--text-secondary)]">{{ pendiente_count }} proyectos</div>
+      </div>
+    </div>
+    
+    <div class="space-y-3">
+      <div class="flex items-end justify-between">
+        <div>
+          <p class="text-3xl font-bold text-[color:var(--text-primary)] tracking-tight">
+            ${{ "{:,.0f}".format((monto_pendiente_global or 0)/1000000).replace(",",".") }}M
+          </p>
+          <p class="text-sm text-[color:var(--text-secondary)] mt-1">
+            Total pendiente de cobro
+          </p>
+        </div>
+        <div class="text-right">
+          {% set variacion_pendiente = ((monto_pendiente_global - (monto_pendiente_global * 0.9)) / (monto_pendiente_global * 0.9) * 100) if monto_pendiente_global > 0 else 0 %}
+          <span class="text-xs px-2 py-1 rounded-full {% if variacion_pendiente < 0 %}bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)]{% else %}bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)]{% endif %}">
+            {{ "+" if variacion_pendiente > 0 else "" }}{{ variacion_pendiente|round(1) }}%
+          </span>
+        </div>
+      </div>
+      
+      <!-- Mini gráfico de progreso -->
+      <div class="mt-3">
+        <div class="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
+          <span>Distribución por criticidad</span>
+        </div>
+        <div class="flex h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden progress-bar-animated">
+          {% set total_pendiente = pendiente_reciente + pendiente_medio + pendiente_critico %}
+          {% if total_pendiente > 0 %}
+            <div class="bg-[color:var(--accent-green)] transition-all duration-1000" style="width: {{ (pendiente_reciente/total_pendiente*100) }}%"></div>
+            <div class="bg-[color:var(--accent-amber)] transition-all duration-1000" style="width: {{ (pendiente_medio/total_pendiente*100) }}%"></div>
+            <div class="bg-[color:var(--accent-red)] transition-all duration-1000" style="width: {{ (pendiente_critico/total_pendiente*100) }}%"></div>
+          {% endif %}
+        </div>
+        <div class="flex justify-between text-xs mt-1">
+          <span class="text-[color:var(--accent-green)]">0-30d</span>
+          <span class="text-[color:var(--accent-amber)]">31-60d</span>
+          <span class="text-[color:var(--accent-red)]">+60d</span>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- 2. DSO con Indicador Visual -->
+  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-blue-dark)] rounded-xl shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <span class="text-xs font-bold text-[color:var(--accent-blue)] tracking-wider">DSO</span>
+        </div>
+      </div>        <div class="text-right">
+          <div class="text-xs text-[color:var(--text-secondary)]">vs Global: {{ (dso_global or 0)|round(1) }}d</div>
+        </div>
+    </div>
+    
+    <div class="space-y-3">
+      <div class="flex items-end justify-between">
+        <div>
+          <p class="text-3xl font-bold tracking-tight
+            {% if (dso_encargado or 0) > 60 %}text-[color:var(--accent-red)]
+            {% elif (dso_encargado or 0) > 45 %}text-[color:var(--accent-amber)]
+            {% else %}text-[color:var(--accent-green)]
+            {% endif %}">{{ (dso_encargado or 0)|round(1) }}d</p>
+          <p class="text-sm text-[color:var(--text-secondary)] mt-1">Days Sales Outstanding</p>
+        </div>
+        <div class="text-right">
+          {% set dso_performance = ((45 - (dso_encargado or 0)) / 45 * 100) %}
+          <span class="confidence-indicator {% if (dso_encargado or 0) <= 45 %}confidence-high{% elif (dso_encargado or 0) <= 60 %}confidence-medium{% else %}confidence-low{% endif %}">
+            {% if (dso_encargado or 0) <= 45 %}Excelente{% elif (dso_encargado or 0) <= 60 %}Moderado{% else %}Crítico{% endif %}
+          </span>
+        </div>
+      </div>
+      
+      <!-- Medidor circular -->
+      <div class="flex items-center justify-center mt-4">
+        <div class="relative w-16 h-16">
+          <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+            <path class="text-[color:var(--bg-input)]" stroke="currentColor" stroke-width="3" fill="none"
+                  d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            <path class="{% if (dso_encargado or 0) <= 45 %}text-[color:var(--accent-green)]{% elif (dso_encargado or 0) <= 60 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-red)]{% endif %}" 
+                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"
+                  stroke-dasharray="{{ 100 - ((dso_encargado or 0)/90*100)|round(1) }}, 100"
+                  d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+          </svg>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <span class="text-xs font-bold">Meta: 45d</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Distribución por Antigüedad con Gráfico de Barras -->
+  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-purple)] to-[color:var(--accent-purple-dark)] rounded-xl shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+            <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <span class="text-xs font-bold text-[color:var(--accent-purple)] tracking-wider">DISTRIBUCIÓN</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="space-y-4">
+      {% set total_aging = pendiente_reciente + pendiente_medio + pendiente_critico %}
+      
+      <!-- 0-30 días -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-sm font-medium text-[color:var(--accent-green)]">0-30 días</span>
+          <span class="text-sm font-bold text-[color:var(--accent-green)]">${{ (pendiente_reciente/1000000)|round(1) }}M</span>
+        </div>
+        <div class="w-full bg-[color:var(--bg-input)] rounded-full h-2">
+          <div class="bg-[color:var(--accent-green)] h-2 rounded-full transition-all duration-500" 
+               style="width: {% if total_aging > 0 %}{{ (pendiente_reciente/total_aging*100)|round(1) }}%{% else %}0%{% endif %}"></div>
+        </div>
+      </div>
+      
+      <!-- 31-60 días -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-sm font-medium text-[color:var(--accent-amber)]">31-60 días</span>
+          <span class="text-sm font-bold text-[color:var(--accent-amber)]">${{ (pendiente_medio/1000000)|round(1) }}M</span>
+        </div>
+        <div class="w-full bg-[color:var(--bg-input)] rounded-full h-2">
+          <div class="bg-[color:var(--accent-amber)] h-2 rounded-full transition-all duration-500" 
+               style="width: {% if total_aging > 0 %}{{ (pendiente_medio/total_aging*100)|round(1) }}%{% else %}0%{% endif %}"></div>
+        </div>
+      </div>
+      
+      <!-- +60 días -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-sm font-medium text-[color:var(--accent-red)]">+60 días</span>
+          <span class="text-sm font-bold text-[color:var(--accent-red)]">${{ (pendiente_critico/1000000)|round(1) }}M</span>
+        </div>
+        <div class="w-full bg-[color:var(--bg-input)] rounded-full h-2">
+          <div class="bg-[color:var(--accent-red)] h-2 rounded-full transition-all duration-500" 
+               style="width: {% if total_aging > 0 %}{{ (pendiente_critico/total_aging*100)|round(1) }}%{% else %}0%{% endif %}"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. SLA Compliance con Indicador Avanzado -->
+  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-green)] to-[color:var(--accent-green-dark)] rounded-xl shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <span class="text-xs font-bold text-[color:var(--accent-green)] tracking-wider">SLA COMPLIANCE</span>
+        </div>
+      </div>
+      <div class="text-right">
+        {% set sla_status = "Excelente" if control_metrics.cumplimiento_sla >= 90 else "Bueno" if control_metrics.cumplimiento_sla >= 75 else "Crítico" %}
+        <span class="confidence-indicator {% if control_metrics.cumplimiento_sla >= 90 %}confidence-high{% elif control_metrics.cumplimiento_sla >= 75 %}confidence-medium{% else %}confidence-low{% endif %}">
+          {{ sla_status }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="space-y-3">
+      <div class="flex items-end justify-between">
+        <div>
+          <p class="text-3xl font-bold tracking-tight
+            {% if control_metrics.cumplimiento_sla >= 90 %}text-[color:var(--accent-green)]
+            {% elif control_metrics.cumplimiento_sla >= 75 %}text-[color:var(--accent-amber)]
+            {% else %}text-[color:var(--accent-red)]
+            {% endif %}">{{ control_metrics.cumplimiento_sla|round(1) }}%</p>
+          <p class="text-sm text-[color:var(--text-secondary)] mt-1">Cumplimiento de SLA</p>
+        </div>
+      </div>
+      
+      <!-- Indicador de progreso hacia meta -->
+      <div class="mt-4">
+        <div class="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
+          <span>Progreso hacia meta</span>
+          <span>Meta: 90%</span>
+        </div>
+        <div class="w-full bg-[color:var(--bg-input)] rounded-full h-3 overflow-hidden progress-bar-animated">
+          <div class="h-3 rounded-full transition-all duration-1000 {% if control_metrics.cumplimiento_sla >= 90 %}bg-gradient-to-r from-[color:var(--accent-green)] to-[color:var(--accent-green-dark)]{% elif control_metrics.cumplimiento_sla >= 75 %}bg-gradient-to-r from-[color:var(--accent-amber)] to-[color:var(--accent-orange)]{% else %}bg-gradient-to-r from-[color:var(--accent-red)] to-[color:var(--accent-red-dark)]{% endif %}" 
+               style="width: {{ (control_metrics.cumplimiento_sla)|round(1) }}%"></div>
+        </div>
+        <div class="flex justify-between text-xs mt-1">
+          <span class="text-[color:var(--accent-red)]">0%</span>
+          <span class="text-[color:var(--accent-amber)]">75%</span>
+          <span class="text-[color:var(--accent-green)]">90%</span>
+          <span class="text-[color:var(--text-secondary)]">100%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2 Gráficas de Apoyo -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+  <!-- Tendencia Semanal de Cobranza -->
+  <div class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6 chart-container">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+        </svg>
+        Tendencia Semanal de Cobranza
+      </h3>
+      <div class="text-xs text-[color:var(--text-secondary)] flex items-center">
+        <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full mr-1 animate-pulse"></div>
+        Últimas 12 semanas
+      </div>
+    </div>
+    <div class="h-64 relative">
+      <canvas id="tendenciaCobranzaChart"></canvas>
+    </div>
+    <div class="mt-3 flex items-center justify-between text-sm border-t border-[color:var(--border-color-subtle)] pt-3">
+      <div class="flex items-center">
+        <div class="w-3 h-3 bg-[color:var(--accent-green)] rounded-full mr-2"></div>
+        <span>Promedio semanal: ${{ "{:,.0f}".format(monto_cobrado_ultimo_mes/4/1000).replace(',','.') }}K</span>
+      </div>
+      <div class="text-[color:var(--text-secondary)] flex items-center">
+        {% if variacion_mensual_cobro > 0 %}
+          <svg class="w-3 h-3 text-[color:var(--accent-green)] mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L10 4.414 6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
+        {% else %}
+          <svg class="w-3 h-3 text-[color:var(--accent-red)] mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L10 15.586l3.293-3.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+        {% endif %}
+        {{ variacion_mensual_cobro|abs|round(1) }}%
+      </div>
+    </div>
+  </div>
+
+  <!-- Top 10 EDPs Pendientes -->
+  <div class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6 chart-container">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-amber)]" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" clip-rule="evenodd" />
+        </svg>
+        Top 10 EDPs Pendientes
+      </h3>
+      <div class="text-xs text-[color:var(--text-secondary)] flex items-center">
+        <div class="w-2 h-2 bg-[color:var(--accent-amber)] rounded-full mr-1 animate-pulse"></div>
+        Por monto
+      </div>
+    </div>
+    <div class="h-64 relative">
+      <canvas id="topEdpsPendientesChart"></canvas>
+    </div>
+    <div class="mt-3 flex items-center justify-between text-sm border-t border-[color:var(--border-color-subtle)] pt-3">
+      <div class="flex items-center">
+        <div class="w-3 h-3 bg-[color:var(--accent-amber)] rounded-full mr-2"></div>
+        <span>Total top 10: ${{ "{:,.1f}".format((proyectos|selectattr("estado", "eq", "pendiente")|map(attribute="monto_propuesto")|list|sort(reverse=true))[:10]|sum/1000000).replace(',','.') }}M</span>
+      </div>
+      <div class="text-[color:var(--text-secondary)] flex items-center">
+        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+        </svg>
+        {{ (proyectos|selectattr("estado", "eq", "pendiente")|list|length) }} EDPs pendientes
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
   <!-- Tabla de proyectos mejorada -->
   <div class="section-title-modern mb-5 flex items-center justify-between">
@@ -915,23 +393,38 @@ Control{% endblock %} {% block content %}
         viewBox="0 0 20 20"
         fill="currentColor">
         <path
-          d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+          d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 002-2h12a2 2 0 002 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
       </svg>
       Proyectos
       <span class="text-sm text-[color:var(--text-secondary)] ml-2 font-normal"
         >({{ proyectos|length }})</span
       >
     </h2>
-    <!-- Reemplazar la sección existente del selector de filtro por esto: -->
-    <select
-      id="filtroProyectos"
-      class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
-      <option value="todos">Todos</option>
-      <option value="criticos">Con críticos</option>
-      <option value="validados">Con validados</option>
-      <option value="pendientes">Pendientes</option>
-      <option value="pagados">Pagados</option>
-    </select>
+    <!-- Controles de búsqueda y filtrado -->
+    <div class="flex items-center space-x-3">
+      <!-- Input de búsqueda -->
+      <div class="relative">
+        <input
+          type="text"
+          id="buscarProyecto"
+          placeholder="Buscar proyecto..."
+          class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5 pl-8 w-64">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-2.5 top-2 text-[color:var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      
+      <!-- Selector de filtro -->
+      <select
+        id="filtroProyectos"
+        class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
+        <option value="todos">Todos</option>
+        <option value="criticos">Con críticos</option>
+        <option value="validados">Con validados</option>
+        <option value="pendientes">Pendientes</option>
+        <option value="pagados">Pagados</option>
+      </select>
+    </div>
   </div>
 
   <div
@@ -1396,33 +889,215 @@ Control{% endblock %} {% block content %}
       });
   });
 
-  // NUEVO: Inicializar gráficos dinámicos con Chart.js
-  initializeCharts();
+  // Inicializar gráficos dinámicos con Chart.js
+  document.addEventListener("DOMContentLoaded", function() {
+    initializeCharts();
+  });
 
   function initializeCharts() {
-    // Gráfico de tendencias de cobro
-    const tendenciaCtx = document.getElementById('trendChart');
-    if (tendenciaCtx && {{ tendencia_cobro|safe }}) {
-      new Chart(tendenciaCtx, {
-        type: 'line',
-        data: {
-          labels: {{ tendencia_cobro|map(attribute='0')|list|safe }},
-          datasets: [{
-            label: 'Monto Cobrado',
-            data: {{ tendencia_cobro|map(attribute='1')|list|safe }},
-            borderColor: 'rgb(59, 130, 246)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: 'rgb(59, 130, 246)',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 6,
-            pointHoverRadius: 8
-          }]
-        },
+    // Gráfico 1: Tendencia Semanal de Cobranza
+    const tendenciaCtx = document.getElementById('tendenciaCobranzaChart');
+    if (tendenciaCtx) {
+      // Usar datos reales de tendencia semanal desde el backend
+      const tendenciaSemanal = {{ tendencia_semanal|tojson|safe }};
+      const weeklyData = processWeeklyTrendData(tendenciaSemanal);
+      
+      if (weeklyData.hasData) {
+        new Chart(tendenciaCtx, {
+          type: 'line',
+          data: {
+            labels: weeklyData.labels,
+            datasets: [{
+              label: 'Cobranza Semanal',
+              data: weeklyData.values,
+              borderColor: 'var(--accent-green)',
+              backgroundColor: 'rgba(16, 185, 129, 0.08)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: 'var(--accent-green)',
+              pointBorderColor: 'var(--bg-card)',
+              pointBorderWidth: 3,
+              pointRadius: 6,
+              pointHoverRadius: 10,
+              pointHoverBackgroundColor: 'var(--accent-green)',
+              pointHoverBorderColor: 'var(--bg-card)',
+              pointHoverBorderWidth: 4,
+              shadowOffsetX: 0,
+              shadowOffsetY: 2,
+              shadowBlur: 8,
+              shadowColor: 'rgba(16, 185, 129, 0.3)'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false,
+            },
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                backgroundColor: 'rgba(28, 28, 30, 0.98)',
+                titleColor: 'var(--text-primary)',
+                bodyColor: 'var(--text-primary)',
+                borderColor: 'var(--accent-green)',
+                borderWidth: 2,
+                cornerRadius: 12,
+                displayColors: false,
+                padding: 12,
+                titleFont: {
+                  size: 14,
+                  weight: '600',
+                  family: 'Inter'
+                },
+                bodyFont: {
+                  size: 13,
+                  family: 'Inter'
+                },
+                caretPadding: 8,
+                caretSize: 6,
+                callbacks: {
+                  title: function(context) {
+                    return `📊 ${context[0].label}`;
+                  },
+                  label: function(context) {
+                    const value = context.parsed.y;
+                    return `💰 Cobranza: $${(value/1000000).toFixed(2)}M`;
+                  },
+                  afterLabel: function(context) {
+                    const dataIndex = context.dataIndex;
+                    const isSimulated = weeklyData.isSimulated && weeklyData.isSimulated[dataIndex];
+                    return isSimulated ? '⚠️ Datos simulados' : '✅ Datos reales';
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  color: 'var(--border-color-subtle)',
+                  lineWidth: 1,
+                  drawBorder: false
+                },
+                border: {
+                  display: false
+                },
+                ticks: {
+                  callback: function(value) {
+                    return '$' + (value / 1000000).toFixed(1) + 'M';
+                  },
+                  color: 'var(--text-tertiary)',
+                  font: {
+                    size: 12,
+                    family: 'Inter',
+                    weight: '500'
+                  },
+                  padding: 8
+                }
+              },
+              x: {
+                grid: {
+                  display: false
+                },
+                border: {
+                  color: 'var(--border-color-subtle)'
+                },
+                ticks: {
+                  color: 'var(--text-tertiary)',
+                  font: {
+                    size: 11,
+                    family: 'Inter',
+                    weight: '500'
+                  },
+                  maxTicksLimit: 8,
+                  padding: 8
+                }
+              }
+            },
+            elements: {
+              point: {
+                hoverRadius: 10
+              },
+              line: {
+                borderJoinStyle: 'round',
+                borderCapStyle: 'round'
+              }
+            },
+            animation: {
+              duration: 2000,
+              easing: 'easeInOutQuart'
+            }
+          }
+        });
+      } else {
+        // Mostrar mensaje profesional cuando no hay datos de tendencia semanal
+        tendenciaCtx.style.display = 'none';
+        const noDataMessage = document.createElement('div');
+        noDataMessage.className = 'flex flex-col items-center justify-center h-64 text-center bg-gradient-to-br from-transparent to-[color:var(--bg-subtle)] rounded-lg border-2 border-dashed border-[color:var(--border-color-subtle)]';
+        noDataMessage.innerHTML = `
+          <div class="text-[color:var(--text-secondary)] space-y-3">
+            <div class="relative">
+              <svg class="mx-auto h-16 w-16 text-[color:var(--accent-green)] opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+              <div class="absolute -top-1 -right-1 w-6 h-6 bg-[color:var(--accent-green)] rounded-full flex items-center justify-center">
+                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+            <div>
+              <p class="text-base font-semibold text-[color:var(--text-primary)] mb-1">Sin datos de tendencia semanal</p>
+              <p class="text-sm text-[color:var(--text-secondary)]">Los gráficos aparecerán cuando se registre información de cobranza</p>
+            </div>
+            <div class="flex items-center justify-center space-x-2 text-xs text-[color:var(--text-tertiary)]">
+              <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full animate-pulse"></div>
+              <span>Esperando datos reales</span>
+            </div>
+          </div>
+        `;
+        tendenciaCtx.parentNode.appendChild(noDataMessage);
+      }
+    }
+
+    // Gráfico 2: Top 10 EDPs Pendientes (Horizontal Bar)
+    const topEdpsCtx = document.getElementById('topEdpsPendientesChart');
+    if (topEdpsCtx) {
+      const topEdpsData = generateTopEdpsData();
+      
+      if (topEdpsData.hasData) {
+        new Chart(topEdpsCtx, {
+          type: 'bar',
+          data: {
+            labels: topEdpsData.labels,
+            datasets: [{
+              label: 'Monto Pendiente',
+              data: topEdpsData.values,
+              backgroundColor: [
+                '#f59e0b',
+                'rgba(245, 158, 11, 0.9)',
+                'rgba(245, 158, 11, 0.8)',
+                'rgba(245, 158, 11, 0.7)',
+                'rgba(245, 158, 11, 0.6)',
+                'rgba(245, 158, 11, 0.5)',
+                'rgba(245, 158, 11, 0.4)',
+                'rgba(245, 158, 11, 0.35)',
+                'rgba(245, 158, 11, 0.3)',
+                'rgba(245, 158, 11, 0.25)'
+              ],
+              borderColor: '#d97706',
+              borderWidth: 1,
+              borderRadius: 6,
+              borderSkipped: false
+            }]
+          },
         options: {
+          indexAxis: 'y', // Horizontal bars
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
@@ -1430,52 +1105,98 @@ Control{% endblock %} {% block content %}
               display: false
             },
             tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              titleColor: '#fff',
-              bodyColor: '#fff',
-              borderColor: 'rgb(59, 130, 246)',
+              backgroundColor: 'rgba(28, 28, 30, 0.95)',
+              titleColor: '#f5f5f7',
+              bodyColor: '#f5f5f7',
+              borderColor: '#f59e0b',
               borderWidth: 1,
               cornerRadius: 8,
               displayColors: false,
               callbacks: {
+                title: function(context) {
+                  const dataIndex = context[0].dataIndex;
+                  const edpData = topEdpsData.edpsInfo[dataIndex];
+                  return `EDP: ${edpData.n_edp}`;
+                },
+                beforeBody: function(context) {
+                  const dataIndex = context[0].dataIndex;
+                  const edpData = topEdpsData.edpsInfo[dataIndex];
+                  return [
+                    `Proyecto: ${edpData.proyecto}`,
+                    `Cliente: ${edpData.cliente}`,
+                    `Estado: ${edpData.estado}`,
+                    edpData.es_critico ? '⚠️ CRÍTICO' : ''
+                  ].filter(line => line);
+                },
                 label: function(context) {
-                  return '$' + context.parsed.y.toLocaleString('es-CL');
+                  return 'Pendiente: $' + (context.parsed.x/1000000).toFixed(1) + 'M';
                 }
               }
             }
           },
           scales: {
-            y: {
+            x: {
               beginAtZero: true,
               ticks: {
                 callback: function(value) {
-                  return '$' + (value / 1000000).toFixed(0) + 'M';
+                  return '$' + (value / 1000000).toFixed(1) + 'M';
                 },
-                color: 'rgba(107, 114, 128, 0.8)'
+                color: '#8e8e93',
+                font: {
+                  size: 11,
+                  family: 'Inter'
+                }
               },
               grid: {
-                color: 'rgba(107, 114, 128, 0.1)'
+                color: '#3a3a3c',
+                lineWidth: 1
+              },
+              border: {
+                color: '#3a3a3c'
               }
             },
-            x: {
+            y: {
               ticks: {
-                color: 'rgba(107, 114, 128, 0.8)'
+                color: '#8e8e93',
+                font: {
+                  size: 10,
+                  family: 'Inter'
+                }
               },
               grid: {
                 display: false
+              },
+              border: {
+                color: '#3a3a3c'
               }
             }
           },
           elements: {
-            point: {
-              hoverBackgroundColor: 'rgb(59, 130, 246)'
+            bar: {
+              borderRadius: 6
             }
           }
         }
       });
+      } else {
+        // Mostrar mensaje cuando no hay EDPs pendientes
+        topEdpsCtx.style.display = 'none';
+        const noDataMessage = document.createElement('div');
+        noDataMessage.className = 'flex items-center justify-center h-64 text-center';
+        noDataMessage.innerHTML = `
+          <div class="text-[color:var(--text-secondary)]">
+            <svg class="mx-auto h-12 w-12 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-sm font-medium">¡Excelente! No hay EDPs pendientes</p>
+            <p class="text-xs mt-1">Todos los EDPs están al día con sus pagos</p>
+          </div>
+        `;
+        topEdpsCtx.parentNode.appendChild(noDataMessage);
+      }
     }
 
-    // Gráfico de distribución de aging
+    // Gráfico de distribución de aging (mantener el existente si está presente)
     const agingCtx = document.getElementById('agingChart');
     if (agingCtx && {{ distribucion_aging|safe }}) {
       const agingData = {{ distribucion_aging|safe }};
@@ -1532,12 +1253,95 @@ Control{% endblock %} {% block content %}
           cutout: '60%'
         }
       });
-    }
-
-    // NUEVO: Inicializar indicadores circulares de riesgo
-    // Note: Risk indicators are now handled by SVG elements in HTML
-    // initializeRiskIndicators();
+    };
   }
+
+  // Helper function para generar datos de tendencia semanal
+  // Helper function para procesar datos de tendencia semanal real
+  function processWeeklyTrendData(tendenciaSemanal) {
+    console.log('🔍 Tendencia semanal recibida:', tendenciaSemanal);
+    
+    const labels = [];
+    const values = [];
+    const isSimulated = [];
+    
+    if (tendenciaSemanal && Array.isArray(tendenciaSemanal) && tendenciaSemanal.length > 0) {
+      // Usar solo datos reales del backend, filtrar datos simulados
+      tendenciaSemanal.forEach(semana => {
+        // Solo incluir datos que no sean simulados
+        if (!semana.es_simulado) {
+          labels.push(semana.semana);
+          values.push(semana.monto); // Usar datos tal como vienen del backend
+          isSimulated.push(false);
+        }
+      });
+    }
+    
+    return { 
+      labels: labels, 
+      values: values, 
+      isSimulated: isSimulated,
+      hasData: labels.length > 0
+    };
+  }
+
+  // Helper function para generar datos de Top 10 EDPs
+  function generateTopEdpsData() {
+    // Obtener datos de EDPs individuales desde el backend
+    const topEdpsPendientes = {{ top_edps_pendientes|tojson|safe }};
+    
+    // Debug: Mostrar estructura de datos
+    console.log('🔍 Top EDPs pendientes recibidos:', topEdpsPendientes);
+    
+    const edpsData = [];
+    
+    if (topEdpsPendientes && Array.isArray(topEdpsPendientes) && topEdpsPendientes.length > 0) {
+      // Usar datos reales de EDPs individuales
+      topEdpsPendientes.forEach(edp => {
+        const montoPendiente = edp.monto_pendiente || 0;
+        
+        console.log(`📊 EDP: ${edp.n_edp}, Monto Pendiente: ${montoPendiente}`);
+        
+        if (montoPendiente > 0) {
+          edpsData.push({
+            nombre: `EDP-${edp.n_edp}`,
+            monto: montoPendiente, // Usar datos tal como vienen del backend
+            proyecto: edp.proyecto || 'Sin Proyecto',
+            cliente: edp.cliente || 'Sin Cliente',
+            estado: edp.estado || 'pendiente',
+            esCritico: edp.es_critico || false
+          });
+        }
+      });
+    }
+    
+    console.log('✅ EDPs procesados:', edpsData);
+    
+    // Ordenar por monto descendente y tomar top 10
+    edpsData.sort((a, b) => b.monto - a.monto);
+    const top10Edps = edpsData.slice(0, 10);
+    
+    console.log('✅ Top 10 EDPs finales:', top10Edps);
+    
+    return {
+      labels: top10Edps.map(edp => {
+        // Truncar nombres largos para mejor visualización
+        const nombreCorto = edp.nombre.length > 18 ? edp.nombre.substring(0, 15) + '...' : edp.nombre;
+        return nombreCorto;
+      }),
+      values: top10Edps.map(edp => edp.monto),
+      edpsInfo: top10Edps.map(edp => ({
+        n_edp: edp.nombre,
+        proyecto: edp.proyecto,
+        cliente: edp.cliente || 'Cliente Confidencial',
+        estado: edp.estado,
+        es_critico: edp.esCritico
+      })),
+      hasData: top10Edps.length > 0
+    };
+  }
+
+
 
   // NUEVO: Función para inicializar indicadores circulares de riesgo
   function initializeRiskIndicators() {
@@ -1734,13 +1538,13 @@ Control{% endblock %} {% block content %}
     color: rgba(107, 114, 128, 1);
   }
 
-  /* Estilos para mini sparklines */
+  /* Estilos mejorados para mini sparklines y elementos visuales */
   .mini-chart {
     height: 40px;
     width: 100%;
   }
 
-  /* Animaciones para las nuevas métricas */
+  /* Animaciones mejoradas para métricas */
   .animate-pulse-slow {
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
@@ -1754,37 +1558,135 @@ Control{% endblock %} {% block content %}
     }
   }
 
-  /* Hover effects para las tarjetas de análisis */
-  .analysis-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease-in-out;
+  /* Efectos hover mejorados para tarjetas */
+  .analysis-card:hover, 
+  .bg-gradient-to-br:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Estilos para indicadores de confianza */
+  /* Efectos de glassmorphism para las tarjetas KPI */
+  .kpi-card {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .kpi-card {
+    background: rgba(17, 24, 39, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Indicadores de confianza mejorados */
   .confidence-indicator {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 2px 6px;
-    border-radius: 6px;
+    padding: 4px 8px;
+    border-radius: 8px;
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
   }
 
   .confidence-high {
-    background-color: rgba(34, 197, 94, 0.1);
+    background: rgba(34, 197, 94, 0.15);
     color: rgb(34, 197, 94);
+    border: 1px solid rgba(34, 197, 94, 0.2);
   }
 
   .confidence-medium {
-    background-color: rgba(245, 158, 11, 0.1);
+    background: rgba(245, 158, 11, 0.15);
     color: rgb(245, 158, 11);
+    border: 1px solid rgba(245, 158, 11, 0.2);
   }
 
   .confidence-low {
-    background-color: rgba(239, 68, 68, 0.1);
+    background: rgba(239, 68, 68, 0.15);
     color: rgb(239, 68, 68);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  /* Animaciones de entrada para KPIs */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .kpi-animate {
+    animation: slideInUp 0.6s ease-out forwards;
+    opacity: 0;
+  }
+
+  .kpi-animate:nth-child(1) { animation-delay: 0.1s; }
+  .kpi-animate:nth-child(2) { animation-delay: 0.2s; }
+  .kpi-animate:nth-child(3) { animation-delay: 0.3s; }
+  .kpi-animate:nth-child(4) { animation-delay: 0.4s; }
+
+  /* Mejoras para gráficos */
+  .chart-container {
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 4px;
+  }
+
+  .chart-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .chart-container:hover::before {
+    opacity: 1;
+  }
+
+  /* Efectos de progreso animados */
+  .progress-bar-animated {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-bar-animated::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  /* Responsive improvements */
+  @media (max-width: 768px) {
+    .kpi-card {
+      padding: 1rem;
+    }
+    
+    .analysis-card:hover {
+      transform: none;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
   }
 </style>
 {% endblock %}
