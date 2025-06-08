@@ -892,41 +892,110 @@ Control{% endblock %} {% block content %}
   // Inicializar gráficos dinámicos con Chart.js
   document.addEventListener("DOMContentLoaded", function() {
     initializeCharts();
+    setupThemeChangeListener();
+
   });
+  let chartInstances = {};
 
   function initializeCharts() {
     // Gráfico 1: Tendencia Semanal de Cobranza
-    const tendenciaCtx = document.getElementById('tendenciaCobranzaChart');
+    Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  
+  // Function to get CSS custom property values
+ function getCSSProperty(property) {
+      try {
+        const value = getComputedStyle(document.documentElement).getPropertyValue(property).trim();
+        return value.replace(/['"]/g, '') || getDefaultColor(property);
+      } catch (error) {
+        console.warn(`Failed to get CSS property ${property}:`, error);
+        return getDefaultColor(property);
+      }
+    }
+  
+  // Fallback colors for when CSS properties aren't available
+     function getDefaultColor(property) {
+      const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark' || 
+                        document.body.classList.contains('dark');
+      
+      const lightColors = {
+        '--text-primary': '#1f2937',
+        '--text-secondary': '#6b7280',
+        '--text-tertiary': '#9ca3af',
+        '--bg-card': '#ffffff',
+        '--bg-secondary': '#f9fafb',
+        '--border-color': '#e5e7eb',
+        '--border-color-subtle': '#f3f4f6',
+        '--accent-green': '#10b981',
+        '--accent-blue': '#3b82f6',
+        '--accent-amber': '#f59e0b'
+      };
+
+      const darkColors = {
+        '--text-primary': '#f9fafb',
+        '--text-secondary': '#d1d5db',
+        '--text-tertiary': '#9ca3af',
+        '--bg-card': '#1f2937',
+        '--bg-secondary': '#111827',
+        '--border-color': '#374151',
+        '--border-color-subtle': '#4b5563',
+        '--accent-green': '#34d399',
+        '--accent-blue': '#60a5fa',
+        '--accent-amber': '#fbbf24'
+      };
+
+      const colors = isDarkMode ? darkColors : lightColors;
+      return colors[property] || '#6b7280';
+    }
+ // Get theme colors
+    const colors = {
+      textPrimary: getCSSProperty('--text-primary'),
+      textSecondary: getCSSProperty('--text-secondary'),
+      textTertiary: getCSSProperty('--text-tertiary'),
+      bgCard: getCSSProperty('--bg-card'),
+      bgSecondary: getCSSProperty('--bg-secondary'),
+      borderColor: getCSSProperty('--border-color'),
+      borderColorSubtle: getCSSProperty('--border-color-subtle'),
+      accentGreen: getCSSProperty('--accent-green'),
+      accentBlue: getCSSProperty('--accent-blue'),
+      accentAmber: getCSSProperty('--accent-amber')
+    };
+    console.log('Theme colors loaded:', colors);
+  // Destroy existing charts before creating new ones
+    Object.values(chartInstances).forEach(chart => {
+      if (chart && typeof chart.destroy === 'function') {
+        chart.destroy();
+      }
+    });
+    chartInstances = {};
+
+  const tendenciaCtx = document.getElementById('tendenciaCobranzaChart');
+
     if (tendenciaCtx) {
       // Usar datos reales de tendencia semanal desde el backend
-      const tendenciaSemanal = {{ tendencia_semanal|tojson|safe }};
+     const tendenciaSemanal = {{ tendencia_semanal|tojson|safe }};
       const weeklyData = processWeeklyTrendData(tendenciaSemanal);
       
       if (weeklyData.hasData) {
-        new Chart(tendenciaCtx, {
+        chartInstances.tendencia = new Chart(tendenciaCtx, {
           type: 'line',
           data: {
             labels: weeklyData.labels,
             datasets: [{
               label: 'Cobranza Semanal',
               data: weeklyData.values,
-              borderColor: 'var(--accent-green)',
-              backgroundColor: 'rgba(16, 185, 129, 0.08)',
+              borderColor: colors.accentGreen,
+              backgroundColor: colors.accentGreen + '40',
               borderWidth: 3,
               fill: true,
               tension: 0.4,
-              pointBackgroundColor: 'var(--accent-green)',
-              pointBorderColor: 'var(--bg-card)',
+              pointBackgroundColor: colors.accentGreen,
+              pointBorderColor: colors.bgCard,
               pointBorderWidth: 3,
               pointRadius: 6,
               pointHoverRadius: 10,
-              pointHoverBackgroundColor: 'var(--accent-green)',
-              pointHoverBorderColor: 'var(--bg-card)',
-              pointHoverBorderWidth: 4,
-              shadowOffsetX: 0,
-              shadowOffsetY: 2,
-              shadowBlur: 8,
-              shadowColor: 'rgba(16, 185, 129, 0.3)'
+              pointHoverBackgroundColor: colors.accentGreen,
+              pointHoverBorderColor: colors.bgCard,
+              pointHoverBorderWidth: 4
             }]
           },
           options: {
@@ -936,15 +1005,13 @@ Control{% endblock %} {% block content %}
               mode: 'index',
               intersect: false,
             },
-            plugins: {
-              legend: {
-                display: false
-              },
+          plugins: {
+              legend: { display: false },
               tooltip: {
-                backgroundColor: 'rgba(28, 28, 30, 0.98)',
-                titleColor: 'var(--text-primary)',
-                bodyColor: 'var(--text-primary)',
-                borderColor: 'var(--accent-green)',
+                backgroundColor: colors.bgCard,
+                titleColor: colors.textPrimary,
+                bodyColor: colors.textPrimary,
+                borderColor: colors.accentGreen,
                 borderWidth: 2,
                 cornerRadius: 12,
                 displayColors: false,
@@ -952,14 +1019,12 @@ Control{% endblock %} {% block content %}
                 titleFont: {
                   size: 14,
                   weight: '600',
-                  family: 'Inter'
+                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
                 },
                 bodyFont: {
                   size: 13,
-                  family: 'Inter'
+                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
                 },
-                caretPadding: 8,
-                caretSize: 6,
                 callbacks: {
                   title: function(context) {
                     return `📊 ${context[0].label}`;
@@ -980,38 +1045,32 @@ Control{% endblock %} {% block content %}
               y: {
                 beginAtZero: true,
                 grid: {
-                  color: 'var(--border-color-subtle)',
+                  color: colors.borderColorSubtle,
                   lineWidth: 1,
                   drawBorder: false
                 },
-                border: {
-                  display: false
-                },
+                border: { display: false },
                 ticks: {
                   callback: function(value) {
                     return '$' + (value / 1000000).toFixed(1) + 'M';
                   },
-                  color: 'var(--text-tertiary)',
+                  color: colors.textSecondary,
                   font: {
                     size: 12,
-                    family: 'Inter',
+                    family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
                     weight: '500'
                   },
                   padding: 8
                 }
               },
               x: {
-                grid: {
-                  display: false
-                },
-                border: {
-                  color: 'var(--border-color-subtle)'
-                },
+                grid: { display: false },
+                border: { color: colors.borderColorSubtle },
                 ticks: {
-                  color: 'var(--text-tertiary)',
+                  color: colors.textSecondary,
                   font: {
                     size: 11,
-                    family: 'Inter',
+                    family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
                     weight: '500'
                   },
                   maxTicksLimit: 8,
@@ -1020,16 +1079,14 @@ Control{% endblock %} {% block content %}
               }
             },
             elements: {
-              point: {
-                hoverRadius: 10
-              },
+              point: { hoverRadius: 10 },
               line: {
                 borderJoinStyle: 'round',
                 borderCapStyle: 'round'
               }
             },
             animation: {
-              duration: 2000,
+              duration: 1000,
               easing: 'easeInOutQuart'
             }
           }
@@ -1055,7 +1112,7 @@ Control{% endblock %} {% block content %}
               <p class="text-base font-semibold text-[color:var(--text-primary)] mb-1">Sin datos de tendencia semanal</p>
               <p class="text-sm text-[color:var(--text-secondary)]">Los gráficos aparecerán cuando se registre información de cobranza</p>
             </div>
-            <div class="flex items-center justify-center space-x-2 text-xs text-[color:var(--text-tertiary)]">
+            <div class="flex items-center justify-center space-x-2 text-xs text-[color:var(--text-secondary)]">
               <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full animate-pulse"></div>
               <span>Esperando datos reales</span>
             </div>
@@ -1071,113 +1128,108 @@ Control{% endblock %} {% block content %}
       const topEdpsData = generateTopEdpsData();
       
       if (topEdpsData.hasData) {
-        new Chart(topEdpsCtx, {
-          type: 'bar',
+           const amberColors = [];
+        for (let i = 0; i < 10; i++) {
+          const opacity = 1 - (i * 0.075); // Decrease opacity gradually
+          amberColors.push(colors.accentAmber + Math.floor(opacity * 255).toString(16).padStart(2, '0'));
+        }
+
+         new Chart(topEdpsCtx, {
+        type: 'bar',
           data: {
             labels: topEdpsData.labels,
             datasets: [{
               label: 'Monto Pendiente',
               data: topEdpsData.values,
-              backgroundColor: [
-                '#f59e0b',
-                'rgba(245, 158, 11, 0.9)',
-                'rgba(245, 158, 11, 0.8)',
-                'rgba(245, 158, 11, 0.7)',
-                'rgba(245, 158, 11, 0.6)',
-                'rgba(245, 158, 11, 0.5)',
-                'rgba(245, 158, 11, 0.4)',
-                'rgba(245, 158, 11, 0.35)',
-                'rgba(245, 158, 11, 0.3)',
-                'rgba(245, 158, 11, 0.25)'
-              ],
-              borderColor: '#d97706',
+              backgroundColor: amberColors,
+              borderColor: colors.accentAmber,
               borderWidth: 1,
               borderRadius: 6,
               borderSkipped: false
             }]
-          },
-        options: {
-          indexAxis: 'y', // Horizontal bars
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            },
-            tooltip: {
-              backgroundColor: 'rgba(28, 28, 30, 0.95)',
-              titleColor: '#f5f5f7',
-              bodyColor: '#f5f5f7',
-              borderColor: '#f59e0b',
-              borderWidth: 1,
-              cornerRadius: 8,
-              displayColors: false,
-              callbacks: {
-                title: function(context) {
-                  const dataIndex = context[0].dataIndex;
-                  const edpData = topEdpsData.edpsInfo[dataIndex];
-                  return `EDP: ${edpData.n_edp}`;
+        },
+       options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: colors.bgCard,
+                titleColor: colors.textPrimary,
+                bodyColor: colors.textPrimary,
+                borderColor: colors.accentAmber,
+                borderWidth: 1,
+                cornerRadius: 8,
+                displayColors: false,
+                titleFont: {
+                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
                 },
-                beforeBody: function(context) {
-                  const dataIndex = context[0].dataIndex;
-                  const edpData = topEdpsData.edpsInfo[dataIndex];
-                  return [
-                    `Proyecto: ${edpData.proyecto}`,
-                    `Cliente: ${edpData.cliente}`,
-                    `Estado: ${edpData.estado}`,
-                    edpData.es_critico ? '⚠️ CRÍTICO' : ''
-                  ].filter(line => line);
+                bodyFont: {
+                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
                 },
-                label: function(context) {
-                  return 'Pendiente: $' + (context.parsed.x/1000000).toFixed(1) + 'M';
+                callbacks: {
+                  title: function(context) {
+                    const dataIndex = context[0].dataIndex;
+                    const edpData = topEdpsData.edpsInfo[dataIndex];
+                    return `EDP: ${edpData.n_edp}`;
+                  },
+                  beforeBody: function(context) {
+                    const dataIndex = context[0].dataIndex;
+                    const edpData = topEdpsData.edpsInfo[dataIndex];
+                    return [
+                      `Proyecto: ${edpData.proyecto}`,
+                      `Cliente: ${edpData.cliente}`,
+                      `Estado: ${edpData.estado}`,
+                      edpData.es_critico ? '⚠️ CRÍTICO' : ''
+                    ].filter(line => line);
+                  },
+                  label: function(context) {
+                    return 'Pendiente: $' + (context.parsed.x/1000000).toFixed(1) + 'M';
+                  }
                 }
-              }
-            }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              ticks: {
-                callback: function(value) {
-                  return '$' + (value / 1000000).toFixed(1) + 'M';
-                },
-                color: '#8e8e93',
-                font: {
-                  size: 11,
-                  family: 'Inter'
-                }
-              },
-              grid: {
-                color: '#3a3a3c',
-                lineWidth: 1
-              },
-              border: {
-                color: '#3a3a3c'
               }
             },
-            y: {
-              ticks: {
-                color: '#8e8e93',
-                font: {
-                  size: 10,
-                  family: 'Inter'
-                }
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return '$' + (value / 1000000).toFixed(1) + 'M';
+                  },
+                  color: colors.textSecondary,
+                  font: {
+                    size: 11,
+                    family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                  }
+                },
+                grid: {
+                  color: colors.borderColorSubtle,
+                  lineWidth: 1
+                },
+                border: { color: colors.borderColorSubtle }
               },
-              grid: {
-                display: false
-              },
-              border: {
-                color: '#3a3a3c'
+              y: {
+                ticks: {
+                  color: colors.textSecondary,
+                  font: {
+                    size: 10,
+                    family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                  }
+                },
+                grid: { display: false },
+                border: { color: colors.borderColorSubtle }
               }
-            }
-          },
-          elements: {
-            bar: {
-              borderRadius: 6
+            },
+            elements: {
+              bar: { borderRadius: 6 }
+            },
+            animation: {
+              duration: 1000,
+              easing: 'easeInOutQuart'
             }
           }
-        }
-      });
+        });
       } else {
         // Mostrar mensaje cuando no hay EDPs pendientes
         topEdpsCtx.style.display = 'none';
@@ -1256,7 +1308,6 @@ Control{% endblock %} {% block content %}
     };
   }
 
-  // Helper function para generar datos de tendencia semanal
   // Helper function para procesar datos de tendencia semanal real
   function processWeeklyTrendData(tendenciaSemanal) {
     console.log('🔍 Tendencia semanal recibida:', tendenciaSemanal);
@@ -1508,7 +1559,6 @@ Control{% endblock %} {% block content %}
     --index: 3;
   }
 
-  /* NUEVO: Estilos para indicadores circulares de riesgo */
   .progress-ring {
     transform: rotate(-90deg);
     width: 60px;
@@ -1574,7 +1624,7 @@ Control{% endblock %} {% block content %}
   }
 
   .dark .kpi-card {
-    background: rgba(17, 24, 39, 0.95);
+    background: #1c1c1e;
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
