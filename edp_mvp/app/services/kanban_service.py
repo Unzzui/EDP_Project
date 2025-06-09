@@ -267,9 +267,8 @@ class KanbanService(BaseService):
     def update_edp_status(
         self, edp_id: str, new_status: str, additional_data: Dict[str, Any] = None
     ) -> ServiceResponse:
-        """Update EDP status in Kanban board."""
+        """Update EDP status in Kanban board with minimal write."""
         try:
-            # Validate input
             if not edp_id or not new_status:
                 return ServiceResponse(
                     success=False,
@@ -277,27 +276,14 @@ class KanbanService(BaseService):
                     data=None,
                 )
 
-            # Get current EDP data
-            edp_response = self.edp_repo.get_by_id(edp_id)
-            if not edp_response.success:
-                return ServiceResponse(
-                    success=False, message=f"EDP {edp_id} not found", data=None
-                )
+            updates = {"estado": new_status}
 
-            current_edp = edp_response.data
-
-            # Prepare updates
-            updates = {"Estado": new_status}
-
-            # Apply business rules
             if new_status.lower() in ["pagado", "validado"]:
                 updates["conformidad_enviada"] = "Sí"
 
-            # Add additional data if provided
             if additional_data:
                 updates.update(additional_data)
 
-            # Validate updates
             validation_result = ValidationUtils.validate_edp_update(updates)
             if not validation_result["valid"]:
                 return ServiceResponse(
@@ -306,48 +292,21 @@ class KanbanService(BaseService):
                     data=None,
                 )
 
-            # Update EDP
-            update_response = self.edp_repo.update(edp_id, updates)
-            if not update_response.success:
+            success_write = self.edp_repo.update_fields(int(edp_id), updates)
+            if not success_write:
                 return ServiceResponse(
                     success=False,
-                    message=f"Failed to update EDP: {update_response.message}",
+                    message="Failed to update EDP",
                     data=None,
                 )
 
-            # Get updated EDP data
-            updated_edp_response = self.edp_repo.get_by_id(edp_id)
-            if not updated_edp_response.success:
-                return ServiceResponse(
-                    success=False,
-                    message=f"Failed to retrieve updated EDP data: {updated_edp_response.message}",
-                    data=None,
-                )
-
-            updated_edp = updated_edp_response.data
-
-            # Convert to dictionary for frontend compatibility
-            edp_data_dict = {}
-            if hasattr(updated_edp, "to_dict"):
-                edp_data_dict = updated_edp.to_dict()
-            else:
-                # Manual conversion if to_dict not available
-                for attr in dir(updated_edp):
-                    if not attr.startswith("_"):
-                        value = getattr(updated_edp, attr)
-                        if not callable(value):
-                            edp_data_dict[attr] = value
+            from ..repositories import _range_cache
+            _range_cache.clear()
 
             return ServiceResponse(
                 success=True,
                 message=f"EDP {edp_id} updated successfully",
-                data={
-                    "edp_id": edp_id,
-                    "old_status": current_edp.estado,
-                    "new_status": new_status,
-                    "updates": updates,
-                    "edp_data": edp_data_dict,
-                },
+                data={"edp_id": edp_id, "new_status": new_status, "updates": updates},
             )
 
         except Exception as e:

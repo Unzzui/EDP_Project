@@ -52,7 +52,7 @@ class AppConfig:
     max_page_size: int = 100
     
     # Cache settings
-    cache_timeout: int = 300  # 5 minutes
+    cache_timeout: int = 30  # 30 seconds default for faster refresh
     
     # File upload settings
     max_upload_size: int = 16 * 1024 * 1024  # 16MB
@@ -72,7 +72,7 @@ class AppConfig:
             log_file=os.getenv('LOG_FILE', 'app.log'),
             default_page_size=int(os.getenv('DEFAULT_PAGE_SIZE', '20')),
             max_page_size=int(os.getenv('MAX_PAGE_SIZE', '100')),
-            cache_timeout=int(os.getenv('CACHE_TIMEOUT', '300')),
+            cache_timeout=int(os.getenv('CACHE_TIMEOUT', '30')),
             max_upload_size=int(os.getenv('MAX_UPLOAD_SIZE', str(16 * 1024 * 1024)))
         )
 
