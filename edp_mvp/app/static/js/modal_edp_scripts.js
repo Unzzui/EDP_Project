@@ -1,5 +1,11 @@
 // Funciones para manejar el modal de EDP
 document.addEventListener('DOMContentLoaded', function() {
+  if (!window.edpSocket) {
+    window.edpSocket = io();
+    window.edpSocket.on('edp_actualizado', (data) => {
+      updateEdpRow(data.n_edp, data.updates, true);
+    });
+  }
   // Configurar botón de cierre del modal
   const closeButton = document.getElementById('closeEdpModal');
   if (closeButton) {
@@ -401,25 +407,18 @@ function renderEdpModalContent(data) {
     })
     .then(result => {
       if (result.success) {
-        // Mostrar mensaje de éxito
-        showNotification('Cambios guardados correctamente', 'success');
-        
-        // Cerrar modal después de breve delay
-        setTimeout(() => {
-          document.getElementById('edpModalOverlay').classList.add('hidden');
-          // Refrescar datos si es necesario
-          location.reload();
-        }, 1500);
+        // Actualizar fila inmediatamente y mostrar indicador de guardado
+        const payload = Object.fromEntries(formData.entries());
+        updateEdpRow(edpId, payload, false);
+        showNotification('Guardado en curso', 'info');
+        document.getElementById('edpModalOverlay').classList.add('hidden');
       } else {
         throw new Error(result.message || 'Error al guardar los cambios');
       }
     })
     .catch(error => {
-      // Restaurar botón
       submitButton.disabled = false;
       submitButton.innerHTML = originalText;
-      
-      // Mostrar error
       showNotification(error.message || 'Error al guardar los cambios', 'error');
       console.error('Error:', error);
     });
@@ -555,6 +554,62 @@ function showNotification(message, type = 'info') {
   }, 3000);
 }
 
+function updateEdpRow(edpId, updates, done = false) {
+  const row = document.querySelector(`tr[data-edp="${edpId}"]`);
+  if (!row) return;
+
+  if (updates['estado']) {
+    const estadoSpan = row.querySelector('.estado-pill');
+    if (estadoSpan) {
+      estadoSpan.textContent = updates['estado'];
+      estadoSpan.className = `estado-pill estado-${updates['estado']}`;
+    }
+    row.dataset.estado = updates['estado'];
+  }
+
+  if (updates['n_conformidad'] !== undefined) {
+    row.dataset.nConformidad = updates['n_conformidad'];
+    const cell = row.querySelectorAll('td')[5];
+    if (cell) cell.textContent = updates['n_conformidad'] || '-';
+  }
+
+  if (updates['monto_propuesto'] !== undefined) {
+    row.dataset.montoPropuesto = updates['monto_propuesto'];
+    const cell = row.querySelectorAll('td')[9];
+    if (cell) cell.textContent = formatCurrency(updates['monto_propuesto']);
+  }
+
+  if (updates['monto_aprobado'] !== undefined) {
+    row.dataset.montoAprobado = updates['monto_aprobado'];
+    const cell = row.querySelectorAll('td')[10];
+    if (cell) cell.textContent = formatCurrency(updates['monto_aprobado']);
+  }
+
+  if (updates['observaciones'] !== undefined) {
+    const cell = row.querySelectorAll('td')[12];
+    if (cell) {
+      const text = updates['observaciones'] || '-';
+      cell.textContent = text.length > 50 ? text.slice(0, 15) + '...' : text;
+      cell.setAttribute('title', text);
+    }
+  }
+
+  if (!done) {
+    row.classList.add('table-row-saving');
+    if (!row.querySelector('.saving-indicator')) {
+      const indicator = document.createElement('span');
+      indicator.className = 'saving-indicator inline-block ml-1';
+      indicator.innerHTML = '<svg class="animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+      const estadoCell = row.querySelectorAll('td')[6];
+      if (estadoCell) estadoCell.appendChild(indicator);
+    }
+  } else {
+    row.classList.remove('table-row-saving');
+    const ind = row.querySelector('.saving-indicator');
+    if (ind) ind.remove();
+  }
+}
+
 // Agregar a modal_edp_scripts.js
 function setupOtrosFields() {
   // Para motivo no aprobado
@@ -581,3 +636,4 @@ function setupOtrosFields() {
     fallaOtroWrap.classList.toggle('hidden', fallaSelect.value !== 'otros');
   }
 }
+
