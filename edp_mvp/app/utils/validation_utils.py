@@ -423,6 +423,42 @@ class ValidationUtils:
         }
         
         return ValidationUtils.validate_dict(data, rules)
+
+    @staticmethod
+    def validate_edp_update(data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate fields for a partial EDP update."""
+
+        rules: Dict[str, List[Validator]] = {}
+
+        if "estado" in data:
+            rules["estado"] = [
+                RequiredValidator(),
+                ChoiceValidator(["revisión", "enviado", "pagado", "validado"]),
+            ]
+
+        if "conformidad_enviada" in data:
+            rules["conformidad_enviada"] = [ChoiceValidator(["Sí", "No"])]
+
+        if "monto_propuesto" in data:
+            rules["monto_propuesto"] = [RangeValidator(min_value=0)]
+
+        if "monto_aprobado" in data:
+            rules["monto_aprobado"] = [RangeValidator(min_value=0)]
+
+        date_fields = [
+            "fecha_emision",
+            "fecha_envio_cliente",
+            "fecha_conformidad",
+            "fecha_estimada_pago",
+        ]
+        for field in date_fields:
+            if field in data:
+                rules[field] = [DateValidator()]
+
+        if not rules:
+            return {"valid": True, "errors": {}}
+
+        return ValidationUtils.validate_dict(data, rules)
     
     @staticmethod
     def validate_log_entry_data(data: Dict[str, Any]) -> Dict[str, Any]:
