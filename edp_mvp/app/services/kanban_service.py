@@ -6,6 +6,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
+import logging
 
 from . import BaseService, ServiceResponse, ValidationError
 from ..models import EDP
@@ -13,6 +14,8 @@ from ..repositories.edp_repository import EDPRepository
 from ..utils.date_utils import DateUtils
 from ..utils.format_utils import FormatUtils
 from ..utils.validation_utils import ValidationUtils
+
+logger = logging.getLogger(__name__)
 
 
 class KanbanService(BaseService):
@@ -162,7 +165,7 @@ class KanbanService(BaseService):
                             item["dias_para_pago"] = None
                     except Exception as e:
                         item["dias_para_pago"] = None
-                        print(f"Error calculando dias_para_pago: {e}")
+                        logger.error(f"Error calculando dias_para_pago: {e}")
 
                     # Format dates for template display
                     date_fields = [
@@ -199,7 +202,7 @@ class KanbanService(BaseService):
                     except Exception as e:
                         item["diferencia_montos"] = 0
                         item["porcentaje_diferencia"] = 0
-                        print(f"Error calculando diferencia_montos: {e}")
+                        logger.error(f"Error calculando diferencia_montos: {e}")
 
                     # Clasificación de validados antiguos vs nuevos (para destacar visualmente)
                     if estado == "validado" and not pd.isna(
@@ -253,8 +256,8 @@ class KanbanService(BaseService):
         except Exception as e:
             import traceback
 
-            print(f"Error in get_kanban_board_data: {str(e)}")
-            print(traceback.format_exc())
+            logger.error(f"Error in get_kanban_board_data: {str(e)}")
+            logger.error(traceback.format_exc())
             return ServiceResponse(
                 success=False,
                 message=f"Error loading Kanban board data: {str(e)}",

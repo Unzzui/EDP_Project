@@ -40,6 +40,7 @@ source venv/bin/activate  # En Windows: venv\Scripts\activate
 ```bash
 pip install -r requirements.txt
 ```
+Este proyecto utiliza [python-dotenv](https://pypi.org/project/python-dotenv/) para cargar automáticamente las variables definidas en tu archivo `.env`.
 
 ### 4. Configurar variables de entorno
 
@@ -55,13 +56,14 @@ set GOOGLE_CREDENTIALS=C:\ruta\a\tus\credenciales.json
 set SHEET_ID=tu_spreadsheet_id
 ```
 
-También puedes crear un archivo `.env` en la raíz del proyecto:
+También puedes crear un archivo `.env` en la raíz del proyecto o copiar el archivo `.env.example` incluido:
 
 ```
 SECRET_KEY=tu-clave-secreta
 GOOGLE_CREDENTIALS=/ruta/a/tus/credenciales.json
 SHEET_ID=tu_spreadsheet_id
 ```
+Asegúrate de definir `SECRET_KEY` con un valor seguro cuando ejecutes la aplicación en producción.
 
 ## Ejecución
 
