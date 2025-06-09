@@ -1849,12 +1849,7 @@ class ControllerService(BaseService):
                 elif pd.api.types.is_numeric_dtype(
                     df_prepared[col]
                 ):  # Handle 1/0 as int/float
-                    df_prepared[col] = (
-                        df_prepared[col].map({1: True, 0: False}).fillna(default_val)
-                    )
-
-                # Ensure it's boolean type, handling potential mixed types from map
-                df_prepared[col] = df_prepared[col].astype(bool)
+                    df_prepared[col] = df_prepared[col].map({1: True, 0: False}).fillna(default_val).astype(bool)
             else:
                 df_prepared[col] = default_val
 
@@ -2025,6 +2020,7 @@ class ControllerService(BaseService):
                 "cliente": request_filters.get("cliente"),
                 "estado": request_filters.get("estado"),
             }
+            print(filters)
 
             df = df_full.copy()
             if filters["mes"]:
@@ -2038,15 +2034,12 @@ class ControllerService(BaseService):
             if filters["estado"] == "pendientes":
                 # Filtro "Pendientes" - solo muestra estados de revisión y enviado
                 df = df[df["estado"].isin(["revisión", "enviado"])]
-            elif filters["estado"] == "todos":  # Nueva opción explícita para "Todos"
+            elif filters["estado"] == "todos" or not filters["estado"]:  
                 # No aplicar filtro de estado, mostrar todo
                 pass
-            elif filters["estado"]:
+            else:
                 # Filtro específico (validado, pagado, etc)
                 df = df[df["estado"] == filters["estado"]]
-            elif not filters["estado"] or filters["estado"] == "todos":
-                # Filtro predeterminado al cargar la página cuando estado es None o "todos"
-                df = df[df["estado"].isin(["revisión", "enviado"])]
 
             df_filtered = df.copy()  # Keep filtered DataFrame for later use
 
@@ -2135,7 +2128,7 @@ class ControllerService(BaseService):
             }
 
             # Métricas Financieras
-            total_pagado_global = df_full[df_full["estado"] == "pagado"][
+            total_pagado_global = df_full[df_full["estado"].isin(["pagado", "validado"])][
                 "monto_aprobado"
             ].sum()
             total_propuesto_global = df_full["monto_propuesto"].sum()

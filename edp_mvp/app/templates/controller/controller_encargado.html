@@ -4,83 +4,160 @@ Control{% endblock %} {% block content %}
 <!-- Agregar Chart.js para gráficos dinámicos -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.0/dist/chartjs-plugin-annotation.min.css">
-<!-- Header Simplificado -->
-<div class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-5 mb-6">
-  <div class="flex items-center justify-between">
-    <!-- Nombre y Rol -->
+<!-- Plugin de anotaciones para Chart.js (solo JavaScript, no tiene CSS) -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.0/dist/chartjs-plugin-annotation.min.js"></script>
+<!-- Header Moderno con Métricas Clave -->
+<div class="bg-gradient-to-r from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-5 mb-6 shadow-sm">
+  <!-- Sección superior con nombre y controles principales -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <!-- Nombre y Rol con Badge de Estatus -->
     <div class="flex items-center">
-      <div class="mr-3 p-2 bg-[color:var(--accent-blue)] bg-opacity-10 rounded-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-        </svg>
+      <div class="relative">
+        <div class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-blue-dark)] rounded-xl shadow-md">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-7 md:w-7 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <!-- Indicador de estado online -->
+        <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-[color:var(--accent-green)] border-2 border-[color:var(--bg-card)] rounded-full"></div>
       </div>
-      <div>
-        <h1 class="text-xl font-bold">{{ nombre }}</h1>
-        <p class="text-sm text-[color:var(--text-secondary)]">Controller • {{ proyectos|length }} proyectos</p>
+      
+      <div class="ml-3">
+        <div class="flex items-center">
+          <h1 class="text-xl md:text-2xl font-bold">{{ nombre }}</h1>
+          <span class="ml-2 px-2 py-0.5 bg-[color:var(--accent-blue)] bg-opacity-10 text-[color:var(--accent-white)] text-xs font-semibold rounded-md">Jefe Proyecto</span>
+        </div>
+        <div class="flex items-center mt-1">
+          <span class="text-sm text-[color:var(--text-secondary)] mr-3">{{ proyectos|length }} proyectos activos</span>
+          <!-- Indicadores de salud -->
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] text-xs font-medium">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              DSO: {{ (dso_encargado or 0)|round(1) }}d
+            </span>
+            
+            {% if stats and stats.porcentaje_retrabajos %}
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md {% if stats.porcentaje_retrabajos > 10 %}bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)]{% else %}bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)]{% endif %} text-xs font-medium">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Re-trabajos: {{ stats.porcentaje_retrabajos|round(1) }}%
+            </span>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Alertas Prioritarias -->
-    {% if alertas and alertas|length > 0 %}
-    <div class="flex items-center space-x-2">
-      {% for alerta in alertas[:3] %}
-      <div class="flex items-center px-3 py-1 rounded-full text-xs
-        {% if alerta.tipo == 'critico' %}bg-[color:var(--accent-red)] bg-opacity-15 text-[color:var(--accent-red)]
-        {% elif alerta.tipo == 'importante' %}bg-[color:var(--accent-amber)] bg-opacity-15 text-[color:var(--accent-amber)]
-        {% else %}bg-[color:var(--accent-blue)] bg-opacity-15 text-[color:var(--accent-blue)]
-        {% endif %}">
-        <div class="w-1.5 h-1.5 rounded-full
-          {% if alerta.tipo == 'critico' %}bg-[color:var(--accent-red)]
-          {% elif alerta.tipo == 'importante' %}bg-[color:var(--accent-amber)]
-          {% else %}bg-[color:var(--accent-blue)]
-          {% endif %} mr-1"></div>
-        {{ alerta.mensaje|truncate(20) }}
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Botones de Acción -->
-    <div class="flex items-center space-x-2">
-      <a href="{{ url_for('controller.dashboard_controller') }}" 
-         class="p-2 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] rounded-lg transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-      </a>
-      <button id="exportarDatos" class="p-2 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] rounded-lg transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- Selector de Período y Vista -->
-  <div class="flex items-center justify-between mt-4 pt-4 border-t border-[color:var(--border-color-subtle)]">
-    <div class="flex items-center space-x-4">
-      <!-- Selector de Período -->
-      <div class="flex items-center space-x-2">
-        <span class="text-sm text-[color:var(--text-secondary)]">Período:</span>
-        <div class="flex bg-[color:var(--bg-highlight)] rounded-lg p-1">
-          <button class="px-3 py-1 rounded-md text-sm font-medium bg-[color:var(--accent-blue)] text-white">Mes</button>
-          <button class="px-3 py-1 rounded-md text-sm font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]">Semana</button>
+    <!-- Bloque derecho con estadísticas y acciones -->
+    <div class="flex flex-col gap-3">
+      <!-- Métricas clave en tarjetas pequeñas -->
+      <div class="flex items-center gap-3">
+        <!-- Métrica 1: Pendiente -->
+        <div class="px-3 py-2 bg-[color:var(--bg-card)] rounded-lg border border-[color:var(--border-color-subtle)] shadow-sm">
+          <div class="flex items-center gap-2">
+            <div class="p-1.5 bg-[color:var(--accent-amber)] bg-opacity-15 rounded-md">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-amber)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <div class="text-xs text-[color:var(--text-secondary)]">Pendiente</div>
+              <div class="text-sm font-bold">${{ "{:,.1f}".format((monto_pendiente_global or 0)/1000000).replace(",",".") }}M</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Métrica 2: Aprobado -->
+        <div class="px-3 py-2 bg-[color:var(--bg-card)] rounded-lg border border-[color:var(--border-color-subtle)] shadow-sm">
+          <div class="flex items-center gap-2">
+            <div class="p-1.5 bg-[color:var(--accent-blue)] bg-opacity-15 rounded-md">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <div class="text-xs text-[color:var(--text-secondary)]">Aprobado</div>
+              <div class="text-sm font-bold">${{ "{:,.1f}".format((monto_aprobado_global or 0)/1000000).replace(",",".") }}M</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Métrica 3: SLA -->
+        <div class="px-3 py-2 bg-[color:var(--bg-card)] rounded-lg border border-[color:var(--border-color-subtle)] shadow-sm">
+          <div class="flex items-center gap-2">
+            <div class="p-1.5 bg-[color:var(--accent-green)] bg-opacity-15 rounded-md">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <div class="text-xs text-[color:var(--text-secondary)]">SLA</div>
+              <div class="text-sm font-bold">{{ control_metrics.cumplimiento_sla|round(1) }}%</div>
+            </div>
+          </div>
         </div>
       </div>
       
-      <!-- Switch de Vista -->
-      <div class="flex items-center space-x-2">
-        <span class="text-sm text-[color:var(--text-secondary)]">Vista:</span>
-        <div class="flex bg-[color:var(--bg-highlight)] rounded-lg p-1">
-          <button class="px-3 py-1 rounded-md text-sm font-medium bg-[color:var(--accent-blue)] text-white">Todo</button>
-          <button class="px-3 py-1 rounded-md text-sm font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]">Mi Portfolio</button>
-        </div>
+      <!-- Botones de acción -->
+      <div class="flex justify-end items-center gap-2">
+        <a href="{{ url_for('controller.dashboard_controller') }}" 
+           class="inline-flex items-center px-3 py-1.5 text-sm border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-highlight)] transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Dashboard
+        </a>
+        <button id="exportarDatos" class="inline-flex items-center px-3 py-1.5 text-sm border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-highlight)] transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+          </svg>
+          Exportar
+        </button>
       </div>
     </div>
+  </div>
+
+  <!-- Barra inferior con controles y fecha de actualización -->
+  <div class="flex flex-wrap items-center justify-between mt-4 pt-4 border-t border-[color:var(--border-color-subtle)]">
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Selector de Período con estilo mejorado -->
+      <div class="flex items-center space-x-2">
+        <span class="text-xs font-medium text-[color:var(--text-tertiary)]">PERÍODO:</span>
+        <div class="flex bg-[color:var(--bg-highlight)] rounded-lg p-1 shadow-sm">
+          <button class="px-3 py-1 rounded-md text-xs font-semibold bg-[color:var(--accent-blue)] text-white shadow-sm">Mes</button>
+          <button class="px-3 py-1 rounded-md text-xs font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]">Semana</button>
+        </div>
+      </div>
+      
+      <!-- Switch de Vista con estilo mejorado -->
+      <div class="flex items-center space-x-2">
+        <span class="text-xs font-medium text-[color:var(--text-tertiary)]">VISTA:</span>
+        <div class="flex bg-[color:var(--bg-highlight)] rounded-lg p-1 shadow-sm">
+          <button class="px-3 py-1 rounded-md text-xs font-semibold bg-[color:var(--accent-blue)] text-white shadow-sm">Todo</button>
+          <button class="px-3 py-1 rounded-md text-xs font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]">Mi Portfolio</button>
+        </div>
+      </div>
+      
+      <!-- Alertas (versión compacta) -->
+      {% if alertas and alertas|length > 0 %}
+      <div class="flex items-center">
+        <span class="inline-flex items-center px-2 py-1 rounded-md bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] text-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1 text-[color:var(--accent-amber)]" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <span>{{ alertas|length }} {{ 'alerta' if alertas|length == 1 else 'alertas' }}</span>
+        </span>
+      </div>
+      {% endif %}
+    </div>
     
-    <div class="text-xs text-[color:var(--text-secondary)]">
-      Actualizado: {{ now.strftime('%d/%m/%Y %H:%M') }}
+    <!-- Indicador de actualización con animación -->
+    <div class="flex items-center gap-1.5">
+      <div class="animate-pulse w-1.5 h-1.5 rounded-full bg-[color:var(--accent-green)]"></div>
+      <span class="text-xs text-[color:var(--text-secondary)]">Actualizado: {{ now.strftime('%d/%m/%Y %H:%M') }}</span>
     </div>
   </div>
 </div>
@@ -91,8 +168,8 @@ Control{% endblock %} {% block content %}
   <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center">
-        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-amber)] to-[color:var(--accent-orange)] rounded-xl shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+                  <div class="p-3 bg-gradient-to-br from-[color:var(--accent-amber)] to-[color:var(--accent-orange)] rounded-xl shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black dark:text-white" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 9.586V6z" clip-rule="evenodd" />
           </svg>
         </div>
@@ -147,11 +224,11 @@ Control{% endblock %} {% block content %}
   </div>
 
   <!-- 2. DSO con Indicador Visual -->
-  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--background)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center">
-        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-blue-dark)] rounded-xl shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+          <div class="p-3 bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-blue-dark)] rounded-xl shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black dark:text-white" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
           </svg>
         </div>
@@ -201,11 +278,11 @@ Control{% endblock %} {% block content %}
   </div>
 
   <!-- 3. Distribución por Antigüedad con Gráfico de Barras -->
-  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--background)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center">
-        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-purple)] to-[color:var(--accent-purple-dark)] rounded-xl shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+                  <div class="p-3 bg-gradient-to-br from-[color:var(--accent-purple)] to-[color:var(--accent-purple-dark)] rounded-xl shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black dark:text-white" viewBox="0 0 20 20" fill="currentColor">
             <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
             <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
           </svg>
@@ -261,8 +338,8 @@ Control{% endblock %} {% block content %}
   <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center">
-        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-green)] to-[color:var(--accent-green-dark)] rounded-xl shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+                  <div class="p-3 bg-gradient-to-br from-[color:var(--accent-green)] to-[color:var(--accent-green-dark)] rounded-xl shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black dark:text-white" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
           </svg>
         </div>
@@ -893,8 +970,42 @@ Control{% endblock %} {% block content %}
   document.addEventListener("DOMContentLoaded", function() {
     initializeCharts();
     setupThemeChangeListener();
-
   });
+
+  // Setup theme change listener
+  function setupThemeChangeListener() {
+    const themeObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && 
+            (mutation.attributeName === 'data-theme' || mutation.attributeName === 'class')) {
+          console.log('Theme changed, reinitializing charts...');
+          setTimeout(() => {
+            initializeCharts();
+          }, 100); // Small delay to ensure theme transition completes
+        }
+      });
+    });
+
+    // Observe theme changes on html element
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'class']
+    });
+
+    // Also observe body for class changes
+    themeObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      console.log('System theme changed, reinitializing charts...');
+      setTimeout(() => {
+        initializeCharts();
+      }, 100);
+    });
+  }
   let chartInstances = {};
 
   function initializeCharts() {
@@ -902,50 +1013,55 @@ Control{% endblock %} {% block content %}
     Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
   
   // Function to get CSS custom property values
- function getCSSProperty(property) {
-      try {
-        const value = getComputedStyle(document.documentElement).getPropertyValue(property).trim();
-        return value.replace(/['"]/g, '') || getDefaultColor(property);
-      } catch (error) {
-        console.warn(`Failed to get CSS property ${property}:`, error);
-        return getDefaultColor(property);
-      }
+  function getCSSProperty(property) {
+    try {
+      const value = getComputedStyle(document.documentElement).getPropertyValue(property).trim();
+      return value.replace(/['"]/g, '') || getDefaultColor(property);
+    } catch (error) {
+      console.warn(`Failed to get CSS property ${property}:`, error);
+      return getDefaultColor(property);
     }
+  }
   
-  // Fallback colors for when CSS properties aren't available
-     function getDefaultColor(property) {
-      const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark' || 
-                        document.body.classList.contains('dark');
-      
-      const lightColors = {
-        '--text-primary': '#1f2937',
-        '--text-secondary': '#6b7280',
-        '--text-tertiary': '#9ca3af',
-        '--bg-card': '#ffffff',
-        '--bg-secondary': '#f9fafb',
-        '--border-color': '#e5e7eb',
-        '--border-color-subtle': '#f3f4f6',
-        '--accent-green': '#10b981',
-        '--accent-blue': '#3b82f6',
-        '--accent-amber': '#f59e0b'
-      };
+  // Improved fallback colors with better contrast for both themes
+  function getDefaultColor(property) {
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark' || 
+                      document.body.classList.contains('dark') ||
+                      window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    const lightColors = {
+      '--text-primary': '#111827',
+      '--text-secondary': '#4b5563',
+      '--text-tertiary': '#6b7280',
+      '--bg-card': '#f9f9f7',
+      '--bg-secondary': '#ff0f4f8',
+      '--border-color': '#d1d5db',
+      '--border-color-subtle': '#f3f4f6',
+      '--accent-green': '#059669',
+      '--accent-blue': '#2563eb',
+      '--accent-amber': '#d97706',
+      '--accent-purple': '#7c3aed',
+      '--accent-red': '#dc2626'
+    };
 
-      const darkColors = {
-        '--text-primary': '#f9fafb',
-        '--text-secondary': '#d1d5db',
-        '--text-tertiary': '#9ca3af',
-        '--bg-card': '#1f2937',
-        '--bg-secondary': '#111827',
-        '--border-color': '#374151',
-        '--border-color-subtle': '#4b5563',
-        '--accent-green': '#34d399',
-        '--accent-blue': '#60a5fa',
-        '--accent-amber': '#fbbf24'
-      };
+    const darkColors = {
+      '--text-primary': '#f9fafb',
+      '--text-secondary': '#d1d5db',
+      '--text-tertiary': '#9ca3af',
+      '--bg-card': '#1f2937',
+      '--bg-secondary': '#111827',
+      '--border-color': '#374151',
+      '--border-color-subtle': '#4b5563',
+      '--accent-green': '#10b981',
+      '--accent-blue': '#3b82f6',
+      '--accent-amber': '#f59e0b',
+      '--accent-purple': '#8b5cf6',
+      '--accent-red': '#ef4444'
+    };
 
-      const colors = isDarkMode ? darkColors : lightColors;
-      return colors[property] || '#6b7280';
-    }
+    const colors = isDarkMode ? darkColors : lightColors;
+    return colors[property] || (isDarkMode ? '#9ca3af' : '#6b7280');
+  }
  // Get theme colors
     const colors = {
       textPrimary: getCSSProperty('--text-primary'),
@@ -1045,8 +1161,8 @@ Control{% endblock %} {% block content %}
               y: {
                 beginAtZero: true,
                 grid: {
-                  color: colors.borderColorSubtle,
-                  lineWidth: 1,
+                  color: colors.borderColorSubtle + '80', // Add transparency for softer lines
+                  lineWidth: 0.5,
                   drawBorder: false
                 },
                 border: { display: false },
@@ -1065,7 +1181,7 @@ Control{% endblock %} {% block content %}
               },
               x: {
                 grid: { display: false },
-                border: { color: colors.borderColorSubtle },
+                border: { color: colors.borderColorSubtle + '40' }, // Even more transparent for x-axis
                 ticks: {
                   color: colors.textSecondary,
                   font: {
@@ -1134,7 +1250,7 @@ Control{% endblock %} {% block content %}
           amberColors.push(colors.accentAmber + Math.floor(opacity * 255).toString(16).padStart(2, '0'));
         }
 
-         new Chart(topEdpsCtx, {
+         chartInstances.topEdps = new Chart(topEdpsCtx, {
         type: 'bar',
           data: {
             labels: topEdpsData.labels,
@@ -1163,29 +1279,32 @@ Control{% endblock %} {% block content %}
                 cornerRadius: 8,
                 displayColors: false,
                 titleFont: {
-                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                  size: 14,
+                  weight: '600'
                 },
                 bodyFont: {
-                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                  size: 13
                 },
                 callbacks: {
                   title: function(context) {
                     const dataIndex = context[0].dataIndex;
                     const edpData = topEdpsData.edpsInfo[dataIndex];
-                    return `EDP: ${edpData.n_edp}`;
+                    return `📊 EDP: ${edpData.n_edp}`;
                   },
                   beforeBody: function(context) {
                     const dataIndex = context[0].dataIndex;
                     const edpData = topEdpsData.edpsInfo[dataIndex];
                     return [
-                      `Proyecto: ${edpData.proyecto}`,
-                      `Cliente: ${edpData.cliente}`,
-                      `Estado: ${edpData.estado}`,
-                      edpData.es_critico ? '⚠️ CRÍTICO' : ''
-                    ].filter(line => line);
+                      `🏗️ Proyecto: ${edpData.proyecto}`,
+                      `👥 Cliente: ${edpData.cliente}`,
+                      `🔄 Estado: ${edpData.estado}`,
+                      edpData.es_critico ? '⚠️ CRÍTICO' : '✅ Normal'
+                    ];
                   },
                   label: function(context) {
-                    return 'Pendiente: $' + (context.parsed.x/1000000).toFixed(1) + 'M';
+                    return '💰 Pendiente: $' + (context.parsed.x/1000000).toFixed(1) + 'M';
                   }
                 }
               }
@@ -1200,33 +1319,44 @@ Control{% endblock %} {% block content %}
                   color: colors.textSecondary,
                   font: {
                     size: 11,
+                    weight: '500',
                     family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                  }
+                  },
+                  padding: 8
                 },
                 grid: {
-                  color: colors.borderColorSubtle,
-                  lineWidth: 1
+                  color: colors.borderColorSubtle + '40', // Softer grid lines
+                  lineWidth: 0.5,
+                  drawBorder: false
                 },
-                border: { color: colors.borderColorSubtle }
+                border: { color: colors.borderColorSubtle + '30' } // More transparent border
               },
               y: {
                 ticks: {
                   color: colors.textSecondary,
                   font: {
                     size: 10,
+                    weight: '500',
                     family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                  }
+                  },
+                  padding: 8
                 },
                 grid: { display: false },
-                border: { color: colors.borderColorSubtle }
+                border: { color: colors.borderColorSubtle + '30' } // More transparent border
+              }
+                          },
+            elements: {
+              bar: { 
+                borderRadius: 6,
+                borderSkipped: false
               }
             },
-            elements: {
-              bar: { borderRadius: 6 }
-            },
             animation: {
+              delay: function(context) {
+                return context.dataIndex * 100;
+              },
               duration: 1000,
-              easing: 'easeInOutQuart'
+              easing: 'easeOutQuart'
             }
           }
         });
@@ -1619,13 +1749,7 @@ Control{% endblock %} {% block content %}
   /* Efectos de glassmorphism para las tarjetas KPI */
   .kpi-card {
     backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .dark .kpi-card {
-    background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Removidos los estilos de background hardcodeados para usar variables CSS */
   }
 
   /* Indicadores de confianza mejorados */
@@ -1740,3 +1864,4 @@ Control{% endblock %} {% block content %}
   }
 </style>
 {% endblock %}
+

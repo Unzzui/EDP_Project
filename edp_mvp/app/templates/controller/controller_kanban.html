@@ -34,13 +34,7 @@
     </div>
     
     <div class="flex space-x-3">
-      <button id="toggleEmptyColumns" class="flex items-center bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-xl text-sm border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-        Ocultar columnas vacías
-      </button>
+     
       
       <a href="{{ url_for('controller.dashboard_controller') }}" 
          class="flex items-center bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-xl text-sm border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
@@ -124,39 +118,7 @@
       </button>
     </div>
   </form>
-<!-- Después de la sección de filtros y antes del panel de resumen -->
-<div class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)] mb-6">
-  <div class="flex flex-col space-y-3">
-    <div class="flex items-center">
-      <div class="relative flex-grow max-w-md">
-        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-[color:var(--accent-blue)]">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        <input type="search" id="buscar-edp" class="form-input ps-10" 
-               placeholder="Buscar por N° EDP, Cliente, Proyecto, Jefe..." 
-               autocomplete="off">
-        <div class="absolute inset-y-0 end-0 flex items-center pe-3 text-[color:var(--text-secondary)]">
-          <kbd class="px-2 py-1 text-xs font-semibold text-[color:var(--text-secondary)] bg-[color:var(--bg-highlight)] rounded">Ctrl+F</kbd>
-        </div>
-      </div>
-      <div class="ml-4">
-        <button id="limpiar-busqueda" class="btn-primary text-sm">Limpiar</button>
-      </div>
-    </div>
-    
-    <!-- Contador de resultados -->
-    <div id="resultados-busqueda" class="text-sm text-[color:var(--text-secondary)] hidden bg-[color:var(--bg-highlight)] px-3 py-1 rounded-md"></div>
-    
-    <!-- Tips de búsqueda -->
-    <div class="text-xs text-[color:var(--text-secondary)] flex flex-wrap gap-2">
-      <span class="px-2 py-1 bg-[color:var(--bg-highlight)] rounded">Tip: También busca en Observaciones</span>
-      <span class="px-2 py-1 bg-[color:var(--bg-highlight)] rounded">Enter = Navegar resultados</span>
-      <span class="px-2 py-1 bg-[color:var(--bg-highlight)] rounded">Esc = Limpiar búsqueda</span>
-    </div>
-  </div>
-</div>
+
   <!-- Panel de resumen mejorado -->
   <div class="section-title-modern mb-5">
     <h2 class="text-xl font-semibold">📊 Resumen del Tablero</h2>
@@ -165,51 +127,73 @@
 
 
   <!-- KPI -->
-<div id="summary-panel" class="mb-8 bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-highlight)] rounded-2xl shadow-lg border border-[color:var(--border-color)] overflow-hidden">
-  <!-- Encabezado del panel -->
-  <div class="p-5 border-b border-[color:var(--border-color-subtle)] flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-      <h2 class="text-lg font-bold">Dashboard Financiero</h2>
+<div id="summary-panel" class="mb-8 bg-gradient-to-br from-[color:var(--bg-card)] via-[color:var(--bg-highlight)] to-[color:var(--bg-secondary)] rounded-2xl shadow-xl border border-[color:var(--border-color)] overflow-hidden backdrop-blur-sm">
+  <!-- Encabezado del panel con gradiente superior -->
+  <div class="p-6 bg-gradient-to-r from-[color:var(--accent-blue)]/10 to-[color:var(--accent-purple)]/10 border-b border-[color:var(--border-color-subtle)] flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="p-2 bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] rounded-xl shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold bg-gradient-to-r from-[color:var(--text-primary)] to-[color:var(--accent-blue)] bg-clip-text text-transparent">Dashboard Financiero</h2>
+        <p class="text-sm text-[color:var(--text-secondary)]">Vista consolidada de EDPs</p>
+      </div>
     </div>
     <div class="flex items-center gap-4">
-      <span id="last-updated-date" class="text-xs text-[color:var(--text-secondary)]"></span>
-      <button id="refresh-metrics" class="p-2 hover:bg-[color:var(--bg-highlight)] rounded-full transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="flex items-center gap-2 px-3 py-1.5 bg-[color:var(--bg-card)] rounded-lg border border-[color:var(--border-color-subtle)]">
+        <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full animate-pulse"></div>
+        <span id="last-updated-date" class="text-xs text-[color:var(--text-secondary)]">Actualizando...</span>
+      </div>
+      <button id="refresh-metrics" class="p-2.5 hover:bg-[color:var(--bg-highlight)] rounded-xl transition-all duration-200 hover:scale-105 group">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[color:var(--accent-blue)] group-hover:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
       </button>
     </div>
   </div>
   
-  <!-- Grid de métricas principales -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0">
+  <!-- Grid de métricas principales con animaciones -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0 divide-x divide-[color:var(--border-color-subtle)]">
     <!-- Las tarjetas se llenarán con JavaScript -->
   </div>
   
-  <!-- Sección inferior con métricas adicionales -->
-  <div class="border-t border-[color:var(--border-color-subtle)] bg-[color:var(--bg-subtle)] px-5 py-3 grid grid-cols-2 sm:grid-cols-4 gap-8">
-    <div class="flex flex-col items-center">
-      <span class="text-xs text-[color:var(--text-secondary)]">EDPs Críticos</span>
-      <span id="edps-criticos" class="text-lg font-bold text-[color:var(--accent-red)]">0</span>
-    </div>
-    <div class="flex flex-col items-center">
-      <span class="text-xs text-[color:var(--text-secondary)]">Días Promedio</span>
-      <span id="dias-promedio" class="text-lg font-bold">0</span>
-    </div>
-    <div class="flex flex-col items-center">
-      <span class="text-xs text-[color:var(--text-secondary)]">Meta Mensual</span>
-      <span id="meta-mensual" class="text-lg font-bold">$0</span>
-    </div>
-    <div class="flex flex-col items-center">
-      <span class="text-xs text-[color:var(--text-secondary)]">Proyección</span>
-      <div class="flex items-center gap-1 mt-0.5">
-        <span id="proyeccion-tendencia" class="text-lg font-bold text-[color:var(--accent-green)]">+5%</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-        </svg>
+  <!-- Sección inferior con métricas adicionales mejorada -->
+  <div class="border-t border-[color:var(--border-color-subtle)] bg-gradient-to-r from-[color:var(--bg-subtle)] to-[color:var(--bg-card)] px-6 py-4">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-8">
+      <div class="flex flex-col items-center group hover:scale-105 transition-transform duration-200">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-2 h-2 bg-[color:var(--accent-red)] rounded-full"></div>
+          <span class="text-xs font-medium text-[color:var(--text-secondary)]">EDPs Críticos</span>
+        </div>
+        <span id="edps-criticos" class="text-xl font-bold text-[color:var(--accent-red)] group-hover:text-[color:var(--accent-red-dark)] transition-colors">0</span>
+      </div>
+      <div class="flex flex-col items-center group hover:scale-105 transition-transform duration-200">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-2 h-2 bg-[color:var(--accent-amber)] rounded-full"></div>
+          <span class="text-xs font-medium text-[color:var(--text-secondary)]">Días Promedio</span>
+        </div>
+        <span id="dias-promedio" class="text-xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-blue)] transition-colors">0</span>
+      </div>
+      <div class="flex flex-col items-center group hover:scale-105 transition-transform duration-200">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-2 h-2 bg-[color:var(--accent-purple)] rounded-full"></div>
+          <span class="text-xs font-medium text-[color:var(--text-secondary)]">Meta Mensual</span>
+        </div>
+        <span id="meta-mensual" class="text-xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-purple)] transition-colors">$0</span>
+      </div>
+      <div class="flex flex-col items-center group hover:scale-105 transition-transform duration-200">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full"></div>
+          <span class="text-xs font-medium text-[color:var(--text-secondary)]">Proyección</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span id="proyeccion-tendencia" class="text-xl font-bold text-[color:var(--accent-green)] group-hover:text-[color:var(--accent-green-dark)] transition-colors">+5%</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-green)] group-hover:translate-y-[-2px] transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        </div>
       </div>
     </div>
   </div>
@@ -247,6 +231,39 @@
     </button>
     {% endif %}
   </div>
+  <!-- Después de la sección de filtros y antes del panel de resumen -->
+<div class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)] mb-6">
+  <div class="flex flex-col space-y-3">
+    <div class="flex items-center">
+      <div class="relative flex-grow max-w-md">
+        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-[color:var(--accent-blue)]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input type="search" id="buscar-edp" class="form-input ps-10" 
+               placeholder="Buscar por N° EDP, Cliente, Proyecto, Jefe..." 
+               autocomplete="off">
+        <div class="absolute inset-y-0 end-0 flex items-center pe-3 text-[color:var(--text-secondary)]">
+          <kbd class="px-2 py-1 text-xs font-semibold text-[color:var(--text-secondary)] bg-[color:var(--bg-highlight)] rounded">Ctrl+F</kbd>
+        </div>
+      </div>
+      <div class="ml-4">
+        <button id="limpiar-busqueda" class="btn-primary text-sm">Limpiar</button>
+      </div>
+    </div>
+    
+    <!-- Contador de resultados -->
+    <div id="resultados-busqueda" class="text-sm text-[color:var(--text-secondary)] hidden bg-[color:var(--bg-highlight)] px-3 py-1 rounded-md"></div>
+    
+    <!-- Tips de búsqueda -->
+    <div class="text-xs text-[color:var(--text-secondary)] flex flex-wrap gap-2">
+      <span class="px-2 py-1 bg-[color:var(--bg-highlight)] rounded">Tip: También busca en Observaciones</span>
+      <span class="px-2 py-1 bg-[color:var(--bg-highlight)] rounded">Enter = Navegar resultados</span>
+      <span class="px-2 py-1 bg-[color:var(--bg-highlight)] rounded">Esc = Limpiar búsqueda</span>
+    </div>
+  </div>
+</div>
   <div class="section-title-modern mb-5">
     <h2 class="text-xl font-semibold">📋 Tablero Kanban</h2>
     <div class="section-line"></div>
@@ -262,89 +279,109 @@
 </div>
   <div id="kanban-board" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
     {% for estado, edps in columnas.items() %}
-    <div class="kanban-column column-toggle-transition bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)]"
+    <div class="kanban-column column-toggle-transition bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-highlight)] rounded-2xl p-5 border border-[color:var(--border-color)] shadow-sm hover:shadow-lg transition-all duration-300 backdrop-blur-sm"
          data-estado="{{ estado }}"
          data-empty="{{ edps|length == 0 }}"
          id="columna-{{ estado }}">
  
-   <!-- Cabecera de columna -->
-<div class="flex flex-col mb-3 pb-2 border-b border-[color:var(--border-color-subtle)]">
-  <div class="flex items-center justify-between">
-    <h2 class="text-lg font-semibold capitalize flex items-center">
-      {{ estado }}
-      <span class="estado-pill estado-{{ estado|lower }} ml-2">{{ edps|length }}</span>
-    </h2>
+   <!-- Cabecera de columna mejorada -->
+<div class="flex flex-col mb-4 pb-3 border-b border-[color:var(--border-color-subtle)]">
+  <div class="flex items-center justify-between mb-2">
+    <div class="flex items-center gap-2">
+      <h2 class="text-lg font-bold capitalize bg-gradient-to-r from-[color:var(--text-primary)] to-[color:var(--accent-blue)] bg-clip-text text-transparent">
+        {{ estado }}
+      </h2>
+      <span class="estado-pill estado-{{ estado|lower }} px-3 py-1 rounded-full bg-gradient-to-r from-[color:var(--accent-blue)]/20 to-[color:var(--accent-purple)]/20 text-[color:var(--text-primary)] font-semibold border border-[color:var(--border-color-subtle)] shadow-sm">{{ edps|length }}</span>
+    </div>
   </div>
-  <div class="flex flex-wrap mt-2 gap-2">
-    <span class="text-s font-semibold text-[color:var(--text-primary)] bg-[color:var(--bg-highlight)] px-2 py-0.5 rounded" data-columna-total="{{ estado }}">
-      $0
-    </span>
-    <span class="text-s text-[color:var(--text-primary)] bg-[color:var(--bg-highlight)] px-2 py-0.5 rounded" data-columna-dias="{{ estado }}">
-      0 días prom.
-    </span>
+  <div class="grid grid-cols-1 gap-2">
+    <div class="group bg-gradient-to-r from-[color:var(--accent-green)]/10 to-[color:var(--accent-blue)]/10 px-3 py-2 rounded-lg border border-[color:var(--border-color-subtle)] hover:scale-105 transition-transform duration-200">
+      <div class="flex items-center gap-1 mb-1">
+        <div class="w-1.5 h-1.5 bg-[color:var(--accent-green)] rounded-full"></div>
+        <span class="text-xs text-[color:var(--text-secondary)] font-medium">Monto</span>
+      </div>
+      <span class="text-sm font-bold text-[color:var(--text-primary)]" data-columna-total="{{ estado }}">$0</span>
+    </div>
+    
   </div>
 </div>
             <!-- Lista de tarjetas -->
       <div class="kanban-list space-y-3 min-h-[150px]" id="list-{{ estado }}">
         {% for edp in edps %}
-        <div class="kanban-item bg-[color:var(--bg-secondary)] p-4 rounded-lg shadow-sm border border-[color:var(--border-color)] hover:shadow-md hover:ring-1 hover:ring-[color:var(--accent-blue)] hover:scale-[1.01] transition-all"
+        <div class="kanban-item bg-gradient-to-br from-[color:var(--bg-secondary)] to-[color:var(--bg-card)] p-5 rounded-xl shadow-sm border border-[color:var(--border-color)] hover:shadow-xl hover:ring-2 hover:ring-[color:var(--accent-blue)]/50 hover:scale-[1.02] transition-all duration-300 cursor-grab active:cursor-grabbing backdrop-blur-sm"
              draggable="true"
              data-id="{{ edp['n_edp'] }}">
 
-          <!-- Cabecera de tarjeta -->
-          <div class="flex justify-between items-start mb-2">
-            <p class="font-bold text-sm">
-              EDP-{{ edp["n_edp"] }}
-        
-            </p>
-            <p>
-            <span class="text-xs px-2 py-1 rounded-full bg-[color:var(--bg-accent-subtle)] text-[color:var(--text-secondary)]"
-                  data-tooltip='Obs: {{ edp["observaciones"] }}'>
-              ${{ "{:,.0f}".format(edp["monto_aprobado"]|float).replace(",", ".") }}
-            </span>
-            </p>
-      
+          <!-- Cabecera de tarjeta mejorada -->
+          <div class="flex justify-between items-start mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 bg-[color:var(--accent-blue)] rounded-full animate-pulse"></div>
+              <p class="font-bold text-sm bg-gradient-to-r from-[color:var(--text-primary)] to-[color:var(--accent-blue)] bg-clip-text text-transparent">
+                EDP-{{ edp["n_edp"] }}
+              </p>
+            </div>
+            <div class="group relative">
+              <span class="text-xs px-3 py-1.5 rounded-full bg-gradient-to-r from-[color:var(--accent-green)]/20 to-[color:var(--accent-blue)]/20 text-[color:var(--text-primary)] font-semibold border border-[color:var(--border-color-subtle)] backdrop-blur-sm hover:scale-105 transition-transform duration-200"
+                    data-tooltip='Obs: {{ edp["observaciones"] }}'>
+                ${{ "{:,.0f}".format(edp["monto_aprobado"]|float).replace(",", ".") }}
+              </span>
+              <!-- Tooltip hover -->
+              <div class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-[color:var(--bg-card)] text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap border border-[color:var(--border-color)]">
+                Monto aprobado
+              </div>
+            </div>
           </div>
           
-          <!-- Contenido de tarjeta -->
-          <h3 class="font-medium text-sm mb-2 text-[color:var(--text-primary)]">{{ edp["proyecto"] }}</h3>
-          
-          <div class="space-y-1 mb-3">
-            <p class="text-xs flex items-center text-[color:var(--text-secondary)]">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              {{ edp["cliente"] }}
-            </p>
-            <p class="text-xs flex items-center text-[color:var(--text-secondary)]">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              {{ edp["jefe_proyecto"] }}
-            </p>
-            <p class="text-xs flex items-center text-[color:var(--text-secondary)]">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-   {% if edp.get('fecha_envio_cliente') is not none %}
-    {% if edp.get('conformidad_enviada') == 'Sí' and edp.get('fecha_conformidad') is not none %}
-      <!-- Días hasta la conformidad -->
-      <span class="{% if edp['dias_espera']|int > 5 %}text-[color:var(--accent-amber)] font-bold{% endif %} {% if edp['dias_espera']|int > 10 %}text-[color:var(--accent-red)] font-bold{% endif %}">
-        {{ edp["dias_espera"] }} días (conf.)
-        {% if edp['dias_espera']|int > 10 %}⚠️{% endif %}
-      </span>
-    {% else %}
-      <!-- Días hasta hoy (sin conformidad) -->
-      <span class="{% if edp['dias_espera']|int > 5 %}text-[color:var(--accent-amber)] font-bold{% endif %} {% if edp['dias_espera']|int > 10 %}text-[color:var(--accent-red)] font-bold{% endif %}">
-        {{ edp["dias_espera"] }} días
-        {% if edp['dias_espera']|int > 10 %}⚠️{% endif %}
-      </span>
-    {% endif %}
-  {% else %}
-    <span>—</span>
-  {% endif %}
-</p>
-
+          <!-- Contenido de tarjeta mejorado -->
+          <div class="mb-3">
+            <h3 class="font-semibold text-sm mb-2 text-[color:var(--text-primary)] line-clamp-1" title="{{ edp['proyecto'] }}">{{ edp["proyecto"] }}</h3>
+            
+            <div class="space-y-2">
+              <div class="flex items-center gap-2 group">
+                <div class="p-1 bg-[color:var(--accent-purple)]/10 rounded-md group-hover:bg-[color:var(--accent-purple)]/20 transition-colors duration-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-[color:var(--accent-purple)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <span class="text-xs font-medium text-[color:var(--text-secondary)] truncate">{{ edp["cliente"] }}</span>
+              </div>
+              
+              <div class="flex items-center gap-2 group">
+                <div class="p-1 bg-[color:var(--accent-amber)]/10 rounded-md group-hover:bg-[color:var(--accent-amber)]/20 transition-colors duration-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-[color:var(--accent-amber)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <span class="text-xs font-medium text-[color:var(--text-secondary)] truncate">{{ edp["jefe_proyecto"] }}</span>
+              </div>
+              
+              <div class="flex items-center gap-2 group">
+                <div class="p-1 bg-[color:var(--accent-blue)]/10 rounded-md group-hover:bg-[color:var(--accent-blue)]/20 transition-colors duration-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div class="flex items-center gap-1">
+                  {% if edp.get('fecha_envio_cliente') is not none %}
+                    {% if edp.get('conformidad_enviada') == 'Sí' and edp.get('fecha_conformidad') is not none %}
+                      <!-- Días hasta la conformidad -->
+                      <span class="text-xs font-medium px-2 py-1 rounded-full {% if edp['dias_espera']|int > 10 %}bg-[color:var(--accent-red)]/20 text-[color:var(--accent-red)]{% elif edp['dias_espera']|int > 5 %}bg-[color:var(--accent-amber)]/20 text-[color:var(--accent-amber)]{% else %}bg-[color:var(--accent-green)]/20 text-[color:var(--accent-green)]{% endif %}">
+                        {{ edp["dias_espera"] }} días (conf.)
+                        {% if edp['dias_espera']|int > 10 %}⚠️{% endif %}
+                      </span>
+                    {% else %}
+                      <!-- Días hasta hoy (sin conformidad) -->
+                      <span class="text-xs font-medium px-2 py-1 rounded-full {% if edp['dias_espera']|int > 10 %}bg-[color:var(--accent-red)]/20 text-[color:var(--accent-red)]{% elif edp['dias_espera']|int > 5 %}bg-[color:var(--accent-amber)]/20 text-[color:var(--accent-amber)]{% else %}bg-[color:var(--accent-green)]/20 text-[color:var(--accent-green)]{% endif %}">
+                        {{ edp["dias_espera"] }} días
+                        {% if edp['dias_espera']|int > 10 %}⚠️{% endif %}
+                      </span>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-xs font-medium px-2 py-1 rounded-full bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)]">—</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
           </div>
           
           <!-- Información financiera -->
@@ -416,18 +453,33 @@
 </div>
           
 
-<!-- Footer de tarjeta -->
-<div class="flex justify-end pt-2 border-t border-[color:var(--border-color-subtle)]">
-<button 
-  class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[color:var(--bg-card)] border border-transparent hover:border-[color:var(--accent-blue-light)] hover:bg-[color:var(--bg-highlight)] transition-all duration-150 shadow-sm hover:shadow"
-  onclick="openEdpModal('{{ edp['n_edp'] }}')">
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-[color:var(--accent-blue)] group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-  </svg>
-  <span class="text-xs font-medium text-[color:var(--text-secondary)] group-hover:text-[color:var(--accent-blue)] transition-colors">
-    Editar
-  </span>
-</button>
+<!-- Footer de tarjeta mejorado -->
+<div class="flex justify-between items-center pt-3 border-t border-[color:var(--border-color-subtle)] mt-3">
+  <!-- Estado visual -->
+  <div class="flex items-center gap-1">
+    {% if edp.get('conformidad_enviada') == 'Sí' %}
+      <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full animate-pulse"></div>
+      <span class="text-xs text-[color:var(--accent-green)] font-medium">Conforme</span>
+    {% elif edp.get('fecha_envio_cliente') %}
+      <div class="w-2 h-2 bg-[color:var(--accent-amber)] rounded-full animate-pulse"></div>
+      <span class="text-xs text-[color:var(--accent-amber)] font-medium">Esperando</span>
+    {% else %}
+      <div class="w-2 h-2 bg-[color:var(--text-secondary)] rounded-full"></div>
+      <span class="text-xs text-[color:var(--text-secondary)] font-medium">Pendiente</span>
+    {% endif %}
+  </div>
+  
+  <!-- Botón de acción mejorado -->
+  <button 
+    class="group inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[color:var(--accent-blue)]/10 to-[color:var(--accent-purple)]/10 border border-[color:var(--border-color-subtle)] hover:from-[color:var(--accent-blue)]/20 hover:to-[color:var(--accent-purple)]/20 hover:border-[color:var(--accent-blue)]/50 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md backdrop-blur-sm"
+    onclick="openEdpModal('{{ edp['n_edp'] }}')">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-blue)] group-hover:rotate-12 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+    <span class="text-xs font-semibold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-blue)] transition-colors">
+      Editar
+    </span>
+  </button>
 </div>
         </div>
         {% endfor %}
@@ -477,5 +529,241 @@
   </div>
 </div>
 
+<style>
+/* Mejoras visuales adicionales para el Kanban */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+/* Animaciones de entrada para tarjetas */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.kanban-item {
+  animation: slideInUp 0.3s ease-out forwards;
+  animation-delay: calc(var(--item-index, 0) * 0.05s);
+}
+
+.kanban-column {
+  animation: fadeInScale 0.4s ease-out forwards;
+  animation-delay: calc(var(--column-index, 0) * 0.1s);
+}
+
+/* Efectos de drag & drop mejorados */
+.kanban-item.sortable-ghost {
+  opacity: 0.3;
+  transform: scale(1.05);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  border: 2px dashed var(--accent-blue);
+}
+
+.kanban-item.sortable-chosen {
+  transform: rotate(3deg) scale(1.02);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+
+.kanban-item.sortable-drag {
+  opacity: 0.8;
+  transform: rotate(5deg);
+}
+
+/* Efectos hover para columnas */
+.kanban-column:hover {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-highlight));
+}
+
+.kanban-column:hover .estado-pill {
+  transform: scale(1.1);
+}
+
+/* Indicadores de estado mejorados */
+.estado-pill {
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.estado-pendiente { background: linear-gradient(135deg, var(--accent-amber), var(--accent-orange)); }
+.estado-revisión { background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark)); }
+.estado-enviado { background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple-dark)); }
+.estado-validado { background: linear-gradient(135deg, var(--accent-green), var(--accent-green-dark)); }
+.estado-pagado { background: linear-gradient(135deg, var(--accent-green-dark), var(--accent-green)); }
+
+/* Efectos de shimmer para carga */
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+.loading-shimmer {
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255,255,255,0.4), 
+    transparent
+  );
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Micro-interacciones */
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.metric-card:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* Efectos de foco mejorados */
+.kanban-item:focus-within {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* Transiciones suaves para el panel KPI */
+#summary-panel .grid > div {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#summary-panel .grid > div:hover {
+  background: linear-gradient(135deg, var(--bg-highlight), var(--bg-card));
+}
+
+/* Efectos de gradiente de texto */
+.gradient-text {
+  background: linear-gradient(135deg, var(--text-primary), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Responsividad mejorada */
+@media (max-width: 768px) {
+  .kanban-item {
+    transform: none !important;
+  }
+  
+  .kanban-item:hover {
+    transform: scale(1.01) !important;
+  }
+  
+  .kanban-column {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Estados de búsqueda */
+.kanban-item.search-highlight {
+  animation: searchPulse 2s infinite;
+  border: 2px solid var(--accent-blue);
+}
+
+@keyframes searchPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+}
+
+/* Efectos de carga para métricas */
+.metric-loading {
+  background: linear-gradient(90deg, var(--bg-highlight), var(--bg-card), var(--bg-highlight));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Animación para cuando se actualiza el contenido de una tarjeta */
+.contenido-actualizado {
+  animation: contenidoActualizado 2s ease-out;
+  border: 2px solid var(--accent-blue);
+}
+
+@keyframes contenidoActualizado {
+  0% {
+    background: var(--accent-blue);
+    color: white;
+    transform: scale(1.02);
+  }
+  50% {
+    background: var(--bg-highlight);
+    transform: scale(1.01);
+  }
+  100% {
+    background: transparent;
+    color: var(--text-primary);
+    transform: scale(1);
+  }
+}
+
+/* Mejoras para tooltips */
+.custom-tooltip {
+  position: relative;
+}
+
+.custom-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+}
+
+.custom-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 114%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--border-color);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1001;
+}
+
+.custom-tooltip:hover::after,
+.custom-tooltip:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+</style>
 
 {% endblock %}

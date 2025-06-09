@@ -234,7 +234,7 @@ def dashboard_controller():
         "mes": request.args.get("mes"),
         "encargado": request.args.get("encargado"),
         "cliente": request.args.get("cliente"),
-        "estado": request.args.get("estado"),
+        "estado": request.args.get("estado", "todos"),  # Default to "todos" instead of None
         "estado_detallado": request.args.get("estado_detallado")
     }
     
@@ -257,9 +257,7 @@ def dashboard_controller():
     elif filters["estado"]:
         # Filtro específico (validado, pagado, etc)
         df = df[df["Estado"] == filters["estado"]]
-    elif not filters["estado_detallado"]:
-        # Filtro predeterminado al cargar la página
-        df = df[df["Estado"].isin(["revisión", "enviado"])]
+    # No necesitamos el caso "elif not filters["estado"]" porque ahora usamos "todos" como valor predeterminado
     
     # === KPIs GLOBALES ===
     kpis_globales = {

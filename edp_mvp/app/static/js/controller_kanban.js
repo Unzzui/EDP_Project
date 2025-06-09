@@ -6,24 +6,97 @@
 // Esperar a que el DOM esté completamente cargado
 document.addEventListener("DOMContentLoaded", function () {
 
-	// Inicializar todas las funcionalidades
+	// Inicializar todas las funcionalidades con manejo de errores
 
-	initSocketIO();
-	setupColumnVisibility();
-	animateColumns();
-	initKanbanBoard();
-	actualizarContadoresTablero();
-	setupKPIPanel();
-	calcularTotalesColumna();
-	setupColumnToggle();
-	setupBuscador();
-	observarCambiosTablero();
-	setupSocketConnection();
-	actualizarContenidoTarjeta();
-	setupEnhancedToast();
-	setupProgressIndicator();
-	initLazyLoading();
-	setupValidadosToggle();
+	try {
+		setupEnhancedToast();
+	} catch (e) {
+		console.log("Error inicializando toast:", e);
+	}
+
+	try {
+		initSocketIO();
+	} catch (e) {
+		console.log("Error inicializando Socket.IO:", e);
+	}
+
+	try {
+		setupColumnVisibility();
+	} catch (e) {
+		console.log("Error configurando visibilidad de columnas:", e);
+	}
+
+	try {
+		animateColumns();
+	} catch (e) {
+		console.log("Error animando columnas:", e);
+	}
+
+	try {
+		initKanbanBoard();
+	} catch (e) {
+		console.log("Error inicializando Kanban:", e);
+	}
+
+	try {
+		actualizarContadoresTablero();
+	} catch (e) {
+		console.log("Error actualizando contadores:", e);
+	}
+
+	try {
+		setupKPIPanel();
+	} catch (e) {
+		console.log("Error configurando KPI:", e);
+	}
+
+	try {
+		calcularTotalesColumna();
+	} catch (e) {
+		console.log("Error calculando totales:", e);
+	}
+
+	try {
+		setupColumnToggle();
+	} catch (e) {
+		console.log("Error configurando toggle:", e);
+	}
+
+	try {
+		setupBuscador();
+	} catch (e) {
+		console.log("Error configurando buscador:", e);
+	}
+
+	try {
+		observarCambiosTablero();
+	} catch (e) {
+		console.log("Error configurando observador:", e);
+	}
+
+	try {
+		setupSocketConnection();
+	} catch (e) {
+		console.log("Error configurando Socket connection:", e);
+	}
+
+	try {
+		setupProgressIndicator();
+	} catch (e) {
+		console.log("Error configurando indicador de progreso:", e);
+	}
+
+	try {
+		initLazyLoading();
+	} catch (e) {
+		console.log("Error inicializando lazy loading:", e);
+	}
+
+	try {
+		setupValidadosToggle();
+	} catch (e) {
+		console.log("Error configurando toggle de validados:", e);
+	}
 	// setupBatchLoading();
 	// Función para inicializar el lazy loading
 	function initLazyLoading() {
@@ -100,9 +173,14 @@ document.addEventListener("DOMContentLoaded", function () {
 	});
 
 	function setupValidadosToggle() {
-		const toggleBtn = document.getElementById("toggle-validados-antiguos");
+	const toggleBtn = document.getElementById("toggle-validados-antiguos");
 
-		if (toggleBtn) {
+	if (!toggleBtn) {
+		console.log("Botón toggle-validados-antiguos no encontrado, omitiendo configuración");
+		return;
+	}
+
+	if (toggleBtn) {
 			// Agregar tooltip más descriptivo
 			toggleBtn.setAttribute(
 				"title",
@@ -318,68 +396,93 @@ document.addEventListener("DOMContentLoaded", function () {
 			window.location.href = url.toString();
 		});
 	}
-	// Sistema de notificaciones globales
-	window.showToast = function (message, type = "success") {
-		const toast = document.getElementById("toast-notification");
-		const toastText = document.getElementById("toast-text");
-		const toastIcon = document.getElementById("toast-icon");
+	// Verificar si showToast ya está definido por setupEnhancedToast
+	if (!window.showToast) {
+		// Sistema de notificaciones globales como fallback
+		window.showToast = function (message, type = "success") {
+			const toast = document.getElementById("toast-notification");
+			const toastText = document.getElementById("toast-text");
+			const toastIcon = document.getElementById("toast-icon");
 
-		// Configurar contenido
-		toastText.textContent = message;
+			// Verificar que los elementos existan
+			if (!toast || !toastText || !toastIcon) {
+				console.log("Elementos de toast no encontrados, usando console.log:", message);
+				return;
+			}
 
-		// Configurar icono y colores según tipo
-		if (type === "success") {
-			toastIcon.className =
-				"inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-[color:var(--accent-green)] bg-[color:var(--state-success-bg)] rounded-lg";
-			toastIcon.innerHTML =
-				'<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/></svg>';
-		} else if (type === "error") {
-			toastIcon.className =
-				"inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-[color:var(--accent-red)] bg-[color:var(--state-error-bg)] rounded-lg";
-			toastIcon.innerHTML =
-				'<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.5 11.793-2.293 2.293a1 1 0 0 1-1.414 0L7.5 12.293a1 1 0 1 1 1.414-1.414L10 11.965l1.086-1.086a1 1 0 0 1 1.414 1.414Z"/></svg>';
-		} else if (type === "info") {
-			toastIcon.className =
-				"inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-[color:var(--accent-blue)] bg-[color:var(--state-info-bg)] rounded-lg";
-			toastIcon.innerHTML =
-				'<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm1 13.5a1 1 0 0 1-2 0V7.5a1 1 0 0 1 2 0v6.5Zm-1-8.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>';
-		}
+			// Configurar contenido
+			toastText.textContent = message;
 
-		// Mostrar notificación
-		toast.classList.remove("hidden");
-		toast.classList.add("animate__fadeInUp");
+			// Configurar icono y colores según tipo
+			if (type === "success") {
+				toastIcon.className =
+					"inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-[color:var(--accent-green)] bg-[color:var(--state-success-bg)] rounded-lg";
+				toastIcon.innerHTML =
+					'<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/></svg>';
+			} else if (type === "error") {
+				toastIcon.className =
+					"inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-[color:var(--accent-red)] bg-[color:var(--state-error-bg)] rounded-lg";
+				toastIcon.innerHTML =
+					'<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.5 11.793-2.293 2.293a1 1 0 0 1-1.414 0L7.5 12.293a1 1 0 1 1 1.414-1.414L10 11.965l1.086-1.086a1 1 0 0 1 1.414 1.414Z"/></svg>';
+			} else if (type === "info") {
+				toastIcon.className =
+					"inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-[color:var(--accent-blue)] bg-[color:var(--state-info-bg)] rounded-lg";
+				toastIcon.innerHTML =
+					'<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm1 13.5a1 1 0 0 1-2 0V7.5a1 1 0 0 1 2 0v6.5Zm-1-8.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>';
+			}
 
-		// Ocultar después de 3 segundos
-		setTimeout(() => {
-			hideToast();
-		}, 3000);
-	};
+			// Mostrar notificación
+			toast.classList.remove("hidden");
+			toast.classList.add("animate__fadeInUp");
 
-	window.hideToast = function () {
-		const toast = document.getElementById("toast-notification");
-		toast.classList.remove("animate__fadeInUp");
-		toast.classList.add("animate__fadeOutDown");
-		setTimeout(() => {
-			toast.classList.add("hidden");
-			toast.classList.remove("animate__fadeOutDown");
-		}, 500);
-	};
+			// Ocultar después de 3 segundos
+			setTimeout(() => {
+				if (window.hideToast) {
+					window.hideToast();
+				}
+			}, 3000);
+		};
+	}
+
+	if (!window.hideToast) {
+		window.hideToast = function () {
+			const toast = document.getElementById("toast-notification");
+			if (toast) {
+				toast.classList.remove("animate__fadeInUp");
+				toast.classList.add("animate__fadeOutDown");
+				setTimeout(() => {
+					toast.classList.add("hidden");
+					toast.classList.remove("animate__fadeOutDown");
+				}, 500);
+			}
+		};
+	}
 });
 
 // -------------------------------------------------------------
 // Iniciaclizacion del SOCKET.IO
 // -------------------------------------------------------------
 function initSocketIO() {
+	// Verificar que Socket.IO esté disponible
+	if (typeof io === 'undefined') {
+		console.log("Socket.IO no está disponible");
+		return;
+	}
+	
 	// Crear conexión
 	const socket = io();
 
 	// Gestionar estados de conexión
 	socket.on("connect", () => {
-		showToast("Conexión en tiempo real establecida", "info");
+		if (window.showToast) {
+			showToast("Conexión en tiempo real establecida", "info");
+		}
 	});
 
 	socket.on("disconnect", () => {
-		showToast("Se perdió la conexión en tiempo real", "error");
+		if (window.showToast) {
+			showToast("Se perdió la conexión en tiempo real", "error");
+		}
 	});
 
 	// Escuchar actualizaciones
@@ -399,7 +502,9 @@ function initSocketIO() {
 		actualizarContadoresTablero();
 
 		// Mostrar notificación
-		showToast(`EDP actualizado: ${data.edp_id || "desconocido"}`, "info");
+		if (window.showToast) {
+			showToast(`EDP actualizado: ${data.edp_id || "desconocido"}`, "info");
+		}
 	});
 }
 
@@ -497,15 +602,15 @@ function actualizarContenidoTarjeta(item, nuevosDatos, estadoDestino) {
 		elementosAEliminar.forEach((el) => el.remove());
 
 		// 3. RECREAR elementos de fecha estimada de pago (siguiendo estructura exacta)
-		if (nuevosDatos["Fecha Estimada de Pago"]) {
-			const fechaPago = new Date(nuevosDatos["Fecha Estimada de Pago"]);
+		if (nuevosDatos.fecha_estimada_pago) {
+			const fechaPago = new Date(nuevosDatos.fecha_estimada_pago);
 			const hoy = new Date();
 			const diasParaPago = Math.round(
 				(fechaPago - hoy) / (1000 * 60 * 60 * 24)
 			);
 
 			const fechaFormateada = formatFechaVisual(
-				nuevosDatos["Fecha Estimada de Pago"]
+				nuevosDatos.fecha_estimada_pago
 			);
 
 			// Crear div con estructura idéntica al template original
@@ -514,7 +619,7 @@ function actualizarContenidoTarjeta(item, nuevosDatos, estadoDestino) {
 
 			// Decisión de mostrar pendiente o atrasado según conformidad
 			let estadoTexto = "";
-			if (nuevosDatos["Conformidad Enviada"] === "Sí") {
+			if (nuevosDatos.conformidad_enviada === "Sí") {
 				estadoTexto =
 					diasParaPago > 0
 						? `(en ${diasParaPago} días)`
@@ -530,7 +635,7 @@ function actualizarContenidoTarjeta(item, nuevosDatos, estadoDestino) {
 				}">
           ${fechaFormateada}
           <span class="ml-1 text-[0.65rem] ${
-						nuevosDatos["Conformidad Enviada"] !== "Sí"
+						nuevosDatos.conformidad_enviada !== "Sí"
 							? "text-[color:var(--accent-amber)]"
 							: ""
 					}">${estadoTexto}</span>
@@ -541,14 +646,14 @@ function actualizarContenidoTarjeta(item, nuevosDatos, estadoDestino) {
 		}
 
 		// 4. RECREAR elemento de conformidad enviada
-		if (nuevosDatos["Conformidad Enviada"] === "Sí") {
+		if (nuevosDatos.conformidad_enviada === "Sí") {
 			const divConformidad = document.createElement("div");
 			divConformidad.className = "flex items-center";
 
 			// Formato idéntico al template
-			const fechaConformidadStr = nuevosDatos["Fecha Conformidad"]
+			const fechaConformidadStr = nuevosDatos.fecha_conformidad
 				? `<span class="ml-1 text-[color:var(--text-secondary)]">(${formatFechaVisual(
-						nuevosDatos["Fecha Conformidad"]
+						nuevosDatos.fecha_conformidad
 				  )})</span>`
 				: "";
 
@@ -563,7 +668,7 @@ function actualizarContenidoTarjeta(item, nuevosDatos, estadoDestino) {
 			seccionDetalle.appendChild(divConformidad);
 		}
 		// Si tiene fecha de envío pero no conformidad
-		else if (nuevosDatos["Fecha Envío al Cliente"]) {
+		else if (nuevosDatos.fecha_envio_cliente) {
 			const divEsperaConformidad = document.createElement("div");
 			divEsperaConformidad.className = "flex items-center";
 			divEsperaConformidad.innerHTML = `
@@ -577,12 +682,12 @@ function actualizarContenidoTarjeta(item, nuevosDatos, estadoDestino) {
 		}
 
 		// 5. RECREAR N° de conformidad si existe
-		if (nuevosDatos["N° Conformidad"]) {
+		if (nuevosDatos.n_conformidad) {
 			const divNumConformidad = document.createElement("div");
 			divNumConformidad.className = "flex items-center";
 			divNumConformidad.innerHTML = `
         <span class="text-[color:var(--text-secondary)]">N° Conf:</span>
-        <span class="ml-1 px-1.5 bg-[color:var(--bg-highlight)] rounded">${nuevosDatos["N° Conformidad"]}</span>
+        <span class="ml-1 px-1.5 bg-[color:var(--bg-highlight)] rounded">${nuevosDatos.n_conformidad}</span>
       `;
 
 			seccionDetalle.appendChild(divNumConformidad);
@@ -593,11 +698,11 @@ function actualizarContenidoTarjeta(item, nuevosDatos, estadoDestino) {
 	const diasElement = item.querySelector(
 		'p:has(svg[stroke-linecap="round"][stroke-linejoin="round"][d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"]) span'
 	);
-	if (diasElement && nuevosDatos["Días Espera"]) {
-		const diasEspera = parseInt(nuevosDatos["Días Espera"]);
+	if (diasElement && nuevosDatos.dias_espera) {
+		const diasEspera = parseInt(nuevosDatos.dias_espera);
 		const tieneConformidad =
-			nuevosDatos["Conformidad Enviada"] === "Sí" &&
-			nuevosDatos["Fecha Conformidad"];
+			nuevosDatos.conformidad_enviada === "Sí" &&
+			nuevosDatos.fecha_conformidad;
 
 		// Actualizar clases según cantidad de días
 		diasElement.className = "";
@@ -616,7 +721,34 @@ function actualizarContenidoTarjeta(item, nuevosDatos, estadoDestino) {
     `;
 	}
 
-	// 7. Efecto de actualización para feedback visual
+	// 7. Actualizar el footer con el estado visual
+	const footerEstado = item.querySelector('.flex.justify-between.items-center .flex.items-center.gap-1');
+	if (footerEstado) {
+		let estadoDot = '';
+		let estadoTexto = '';
+		let estadoClase = '';
+		
+		if (nuevosDatos.conformidad_enviada === 'Sí') {
+			estadoDot = '<div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full animate-pulse"></div>';
+			estadoTexto = 'Conforme';
+			estadoClase = 'text-[color:var(--accent-green)]';
+		} else if (nuevosDatos.fecha_envio_cliente) {
+			estadoDot = '<div class="w-2 h-2 bg-[color:var(--accent-amber)] rounded-full animate-pulse"></div>';
+			estadoTexto = 'Esperando';
+			estadoClase = 'text-[color:var(--accent-amber)]';
+		} else {
+			estadoDot = '<div class="w-2 h-2 bg-[color:var(--text-secondary)] rounded-full"></div>';
+			estadoTexto = 'Pendiente';
+			estadoClase = 'text-[color:var(--text-secondary)]';
+		}
+		
+		footerEstado.innerHTML = `
+			${estadoDot}
+			<span class="text-xs ${estadoClase} font-medium">${estadoTexto}</span>
+		`;
+	}
+
+	// 8. Efecto de actualización para feedback visual
 	item.classList.add("contenido-actualizado");
 	setTimeout(() => {
 		item.classList.remove("contenido-actualizado");
@@ -1038,27 +1170,47 @@ function setupKPIPanel() {
     const tendenciaMes = Math.random() > 0.5 ? '+5%' : '-3%'; 
     const esTendenciaPositiva = tendenciaMes.startsWith('+');
     
-    // Actualizar métricas adicionales
-    document.getElementById('edps-criticos').textContent = edpsCriticos;
-    document.getElementById('dias-promedio').textContent = diasPromedio;
-    document.getElementById('meta-mensual').textContent = formatCurrency_Kanban(1200000000); // Meta 20% superior
+    // Actualizar métricas adicionales con verificación de elementos
+    const edpsCriticosEl = document.getElementById('edps-criticos');
+    if (edpsCriticosEl) edpsCriticosEl.textContent = edpsCriticos;
+    
+    const diasPromedioEl = document.getElementById('dias-promedio');
+    if (diasPromedioEl) diasPromedioEl.textContent = diasPromedio;
+    
+    const metaMensualEl = document.getElementById('meta-mensual');
+    if (metaMensualEl) metaMensualEl.textContent = formatCurrency_Kanban(1200000000); // Meta 20% superior
     
     const proyeccionElement = document.getElementById('proyeccion-tendencia');
-    proyeccionElement.textContent = tendenciaMes;
-    proyeccionElement.className = `text-lg font-bold ${esTendenciaPositiva ? 'text-[color:var(--accent-green)]' : 'text-[color:var(--accent-red)]'}`;
-    
-    // Actualizar icono de tendencia
-    const iconoTendencia = proyeccionElement.nextElementSibling;
-    if (esTendenciaPositiva) {
-        iconoTendencia.classList.replace('text-[color:var(--accent-red)]', 'text-[color:var(--accent-green)]');
-        iconoTendencia.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />';
-    } else {
-        iconoTendencia.classList.replace('text-[color:var(--accent-green)]', 'text-[color:var(--accent-red)]');
-        iconoTendencia.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" />';
+    if (proyeccionElement) {
+        proyeccionElement.textContent = tendenciaMes;
+        proyeccionElement.className = `text-lg font-bold ${esTendenciaPositiva ? 'text-[color:var(--accent-green)]' : 'text-[color:var(--accent-red)]'}`;
+        
+        // Actualizar icono de tendencia
+        const iconoTendencia = proyeccionElement.nextElementSibling;
+        if (iconoTendencia) {
+            if (esTendenciaPositiva) {
+                iconoTendencia.classList.replace('text-[color:var(--accent-red)]', 'text-[color:var(--accent-green)]');
+                iconoTendencia.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />';
+            } else {
+                iconoTendencia.classList.replace('text-[color:var(--accent-green)]', 'text-[color:var(--accent-red)]');
+                iconoTendencia.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" />';
+            }
+        }
     }
 
     // Actualizar HTML del panel de KPIs
-    const summaryPanel = document.getElementById("summary-panel").querySelector(".grid");
+    const summaryPanelContainer = document.getElementById("summary-panel");
+    if (!summaryPanelContainer) {
+        console.log("Panel de resumen no encontrado");
+        return;
+    }
+    
+    const summaryPanel = summaryPanelContainer.querySelector(".grid");
+    if (!summaryPanel) {
+        console.log("Grid del panel de resumen no encontrado");
+        return;
+    }
+    
     const lastUpdated = document.getElementById("last-updated-date");
     if (lastUpdated) {
         const now = new Date();
@@ -1453,6 +1605,13 @@ function setupColumnVisibility() {
  */
 function setupColumnToggle() {
 	const toggleBtn = document.getElementById("toggleEmptyColumns");
+	
+	// Si el botón no existe, no configurar evento
+	if (!toggleBtn) {
+		console.log("Botón toggleEmptyColumns no encontrado, omitiendo configuración");
+		return;
+	}
+	
 	let columnsHidden = false;
 
 	toggleBtn.addEventListener("click", function () {
@@ -1497,6 +1656,13 @@ function setupBuscador() {
 	const inputBuscar = document.getElementById("buscar-edp");
 	const botonLimpiar = document.getElementById("limpiar-busqueda");
 	const resultadosContainer = document.getElementById("resultados-busqueda");
+	
+	// Si los elementos no existen, no configurar el buscador
+	if (!inputBuscar) {
+		console.log("Elemento de búsqueda no encontrado, omitiendo configuración");
+		return;
+	}
+	
 	let timeoutId = null;
 
 	// Función debounced para evitar búsquedas excesivas mientras se escribe
@@ -1636,6 +1802,14 @@ function setupBuscador() {
 		buscarDebounced(this.value);
 	});
 
+	// Configurar botón limpiar si existe
+	if (botonLimpiar) {
+		botonLimpiar.addEventListener("click", function () {
+			inputBuscar.value = "";
+			realizarBusqueda("");
+		});
+	}
+
 	// Eventos de teclado para navegación
 	inputBuscar.addEventListener("keydown", function (e) {
 		if (e.key === "Enter") {
@@ -1701,6 +1875,83 @@ function resetCardPositions() {
 		item.style.cssText =
 			"position: relative !important; left: 0 !important; margin: 0 !important; width: 100% !important;";
 	});
+}
+
+/**
+ * Limpia todos los efectos visuales de drag and drop de un item
+ */
+function limpiarEfectosDragDrop(item) {
+	// Remover todas las clases de animación
+	item.classList.remove(
+		"animate__animated", 
+		"animate__pulse", 
+		"sortable-ghost", 
+		"sortable-chosen", 
+		"sortable-drag",
+		"sortable-fallback"
+	);
+
+	// Eliminar efectos de brillo de manera segura
+	const efectos = item.querySelectorAll(".absolute, .glow-effect, [class*='glow']");
+	efectos.forEach(efecto => {
+		if (efecto && item.contains(efecto)) {
+			try {
+				item.removeChild(efecto);
+			} catch (e) {
+				console.log("Error al remover efecto:", e);
+			}
+		}
+	});
+
+	// Restaurar estilos iniciales
+	item.style.zIndex = "";
+	item.style.transform = "";
+	item.style.boxShadow = "";
+	item.style.transition = "";
+}
+
+/**
+ * Limpia completamente todos los estilos de un item después de las animaciones
+ */
+function limpiarCompletamenteItem(item) {
+	// Remover todos los estilos inline relacionados con drag & drop
+	item.style.position = "";
+	item.style.left = "";
+	item.style.top = "";
+	item.style.transform = "";
+	item.style.zIndex = "";
+	item.style.boxShadow = "";
+	item.style.backgroundColor = "";
+	item.style.color = "";
+	item.style.transition = "";
+	item.style.opacity = "";
+	item.style.width = "";
+	item.style.height = "";
+
+	// Asegurar que no queden clases de animación
+	item.classList.remove(
+		"animate__animated", 
+		"animate__pulse", 
+		"animate__bounce",
+		"animate__fadeIn",
+		"animate__fadeOut",
+		"sortable-ghost", 
+		"sortable-chosen", 
+		"sortable-drag",
+		"sortable-fallback",
+		"highlight-update",
+		"search-highlight"
+	);
+
+	// Remover cualquier overlay de loading
+	const loadingOverlay = item.querySelector('.absolute.bg-black\\/20');
+	if (loadingOverlay && item.contains(loadingOverlay)) {
+		try {
+			item.removeChild(loadingOverlay);
+		} catch (e) {
+			console.log("Error al remover loading overlay:", e);
+		}
+	}
 }
 
 function initKanbanBoard() {
@@ -1773,8 +2024,12 @@ function initKanbanBoard() {
 			// Cuando termina el arrastre pero no hay cambio de columna
 			onEnd: function (evt) {
 				const dragContainer = document.querySelector(".drag-container");
-				if (dragContainer) {
-					document.body.removeChild(dragContainer);
+				if (dragContainer && document.body.contains(dragContainer)) {
+					try {
+						document.body.removeChild(dragContainer);
+					} catch (e) {
+						console.log("Error al remover drag container:", e);
+					}
 				}
 				document.body.classList.remove("sorting");
 
@@ -1788,19 +2043,9 @@ function initKanbanBoard() {
 				});
 
 				const item = evt.item;
-				// Remover clase de animación
-				item.classList.remove("animate__animated", "animate__pulse");
-
-				// Eliminar efecto de brillo
-				const glowEffect = item.querySelector(".absolute");
-				if (glowEffect) {
-					item.removeChild(glowEffect);
-				}
-
-				// Restaurar estilos originales con animación suave
-				item.style.zIndex = "";
-				item.style.transform = "";
-				item.style.boxShadow = "";
+				
+				// Limpiar todas las animaciones y efectos de manera segura
+				limpiarEfectosDragDrop(item);
 
 				// Efecto de "aterrizaje" suave
 				item.animate(
@@ -1814,12 +2059,10 @@ function initKanbanBoard() {
 					}
 				);
 
+				// Limpiar completamente después de la animación
 				setTimeout(() => {
-					item.style.position = "static";
-					item.style.left = "auto";
-					item.style.top = "auto";
-					item.style.transform = "none";
-				}, 10);
+					limpiarCompletamenteItem(item);
+				}, 350);
 			},
 
 			// Verificar si es permitido el movimiento
@@ -1857,8 +2100,12 @@ function initKanbanBoard() {
 				// Limpiar efectos del arrastre
 				item.classList.remove("animate__animated", "animate__pulse");
 				const glowEffect = item.querySelector(".absolute");
-				if (glowEffect) {
-					item.removeChild(glowEffect);
+				if (glowEffect && item.contains(glowEffect)) {
+					try {
+						item.removeChild(glowEffect);
+					} catch (e) {
+						console.log("Error al remover glow effect:", e);
+					}
 				}
 
 				// Determinar si necesitamos mostrar un modal basado en el estado destino
@@ -1932,15 +2179,14 @@ function initKanbanBoard() {
 										// Cancelado, devolver la tarjeta a su posición original
 										fromList.appendChild(item);
 
-										// Restaurar estilos
-										item.style.transform = "scale(1)";
-										item.style.boxShadow = "";
-										item.style.zIndex = "";
+										// Limpiar completamente todos los estilos
+										limpiarCompletamenteItem(item);
 
 										// Refrescar la UI
 										actualizarContadoresTablero();
 									}
-								}
+								},
+								item
 							);
 						})
 						.catch((error) => {
@@ -1966,15 +2212,14 @@ function initKanbanBoard() {
 										// Cancelado, devolver la tarjeta a su posición original
 										fromList.appendChild(item);
 
-										// Restaurar estilos
-										item.style.transform = "scale(1)";
-										item.style.boxShadow = "";
-										item.style.zIndex = "";
+										// Limpiar completamente todos los estilos
+										limpiarCompletamenteItem(item);
 
 										// Refrescar la UI
 										actualizarContadoresTablero();
 									}
-								}
+								},
+								item
 							);
 						});
 				} else {
@@ -2066,6 +2311,183 @@ function openEdpModal(edpId) {
     });
 }
 /**
+ * Extrae datos básicos del DOM actual de la tarjeta como fallback
+ * @param {HTMLElement} item - Elemento de la tarjeta
+ * @returns {Object} Datos básicos extraídos
+ */
+function extraerDatosDelDOM(item) {
+	const datos = {};
+	
+	try {
+		// Extraer información básica del encabezado
+		const edpNumber = item.querySelector('p[class*="font-bold"]');
+		if (edpNumber) {
+			const match = edpNumber.textContent.match(/EDP-(\d+)/);
+			if (match) {
+				datos.n_edp = match[1];
+			}
+		}
+		
+		// Extraer proyecto
+		const proyecto = item.querySelector('h3[class*="font-semibold"]');
+		if (proyecto) {
+			datos.proyecto = proyecto.textContent.trim();
+		}
+		
+		// Extraer monto
+		const monto = item.querySelector('span[data-tooltip]');
+		if (monto) {
+			const montoTexto = monto.textContent.replace(/[$.,]/g, '');
+			if (montoTexto) {
+				datos.monto_aprobado = montoTexto;
+			}
+		}
+		
+		// Buscar información de días y estado
+		const textos = item.querySelectorAll('span, div');
+		
+		textos.forEach(elemento => {
+			const texto = elemento.textContent.trim();
+			
+			// Buscar patrones específicos
+			if (texto.includes('días') && !texto.includes('Días Promedio')) {
+				datos.dias_espera = texto;
+			}
+			
+			// Estados de conformidad
+			if (texto === 'Conforme' || texto.includes('Conformidad enviada')) {
+				datos.conformidad_enviada = 'Sí';
+			}
+			if (texto === 'Esperando' || texto.includes('Esperando conformidad')) {
+				datos.conformidad_enviada = 'No';
+			}
+			if (texto === 'Pendiente') {
+				datos.conformidad_enviada = 'No';
+			}
+			
+			// Fechas
+			if (texto.includes('Pago estimado:')) {
+				const fechaMatch = elemento.parentElement?.textContent.match(/(\d{4}-\d{2}-\d{2})/);
+				if (fechaMatch) {
+					datos.fecha_estimada_pago = fechaMatch[1];
+				}
+			}
+			
+			// Número de conformidad
+			if (texto.includes('N° Conf:')) {
+				const confMatch = elemento.parentElement?.textContent.match(/N° Conf:\s*(\w+)/);
+				if (confMatch) {
+					datos.n_conformidad = confMatch[1];
+				}
+			}
+		});
+		
+		// Extraer cliente y jefe de proyecto de los iconos
+		const iconItems = item.querySelectorAll('.group');
+		iconItems.forEach(iconItem => {
+			const texto = iconItem.textContent.trim();
+			const icono = iconItem.querySelector('svg');
+			
+			if (icono && texto) {
+				// Identificar por tipo de icono (esto es aproximado)
+				const pathD = icono.querySelector('path')?.getAttribute('d');
+				if (pathD) {
+					// Icono de edificio (cliente)
+					if (pathD.includes('M19 21V5a2 2 0 00-2-2H7')) {
+						datos.cliente = texto;
+					}
+					// Icono de usuario (jefe de proyecto)
+					else if (pathD.includes('M16 7a4 4 0 11-8 0')) {
+						datos.jefe_proyecto = texto;
+					}
+				}
+			}
+		});
+		
+		console.log('📊 Datos extraídos del DOM:', datos);
+	} catch (error) {
+		console.log('⚠️ Error al extraer datos del DOM:', error);
+	}
+	
+	return datos;
+}
+
+/**
+ * Obtiene los datos actualizados del EDP desde el servidor y actualiza la tarjeta
+ */
+function obtenerYActualizarDatosEDP(edpId, item, estadoDestino) {
+	// Obtener datos actualizados del EDP en segundo plano de forma silenciosa
+	console.log(`🔄 Intentando actualización silenciosa de datos para EDP ${edpId}...`);
+	
+	// Crear el controller signal para timeout
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundo timeout
+	
+	fetch(`/controller/api/edp-details/${edpId}`, {
+		signal: controller.signal,
+		headers: {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+		}
+	})
+		.then(response => {
+			clearTimeout(timeoutId);
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status}`);
+			}
+			return response.json();
+		})
+		.then(datosActualizados => {
+			console.log('✅ Datos actualizados obtenidos silenciosamente:', datosActualizados);
+			
+			// Mapear los datos al formato snake_case esperado
+			const datosFormateados = {
+				fecha_estimada_pago: datosActualizados.fecha_estimada_pago,
+				conformidad_enviada: datosActualizados.conformidad_enviada,
+				fecha_conformidad: datosActualizados.fecha_conformidad,
+				n_conformidad: datosActualizados.n_conformidad,
+				fecha_envio_cliente: datosActualizados.fecha_envio_cliente,
+				dias_espera: datosActualizados.dias_espera,
+				estado: datosActualizados.estado,
+				proyecto: datosActualizados.proyecto,
+				cliente: datosActualizados.cliente,
+				jefe_proyecto: datosActualizados.jefe_proyecto,
+				monto_aprobado: datosActualizados.monto_aprobado,
+				monto_propuesto: datosActualizados.monto_propuesto,
+				observaciones: datosActualizados.observaciones
+			};
+			
+			console.log('📋 Datos formateados para actualizar tarjeta:', datosFormateados);
+			
+			// Solo actualizar si hay datos nuevos que valga la pena mostrar
+			const hayDatosNuevos = Object.values(datosFormateados).some(valor => valor !== null && valor !== undefined && valor !== '');
+			
+			if (hayDatosNuevos) {
+				console.log('📤 Aplicando actualización silenciosa a la tarjeta...');
+				actualizarContenidoTarjeta(item, datosFormateados, estadoDestino);
+				
+				// Añadir clase temporal para indicar actualización
+				item.classList.add('contenido-actualizado');
+				setTimeout(() => {
+					item.classList.remove('contenido-actualizado');
+				}, 2000);
+			}
+		})
+		.catch(error => {
+			clearTimeout(timeoutId);
+			
+			// Manejo silencioso de errores - no mostrar al usuario
+			if (error.name === 'AbortError') {
+				console.log('⏱️ Timeout en actualización silenciosa - continuando sin datos adicionales');
+			} else {
+				console.log('⚠️ Error silencioso en actualización de datos (no crítico):', error.message);
+			}
+			
+			// No hacer nada más - la tarjeta ya fue actualizada con información básica
+		});
+}
+
+/**
  * Función para actualizar estado en la API
  */
 function actualizarEstadoEDP(
@@ -2125,6 +2547,8 @@ function actualizarEstadoEDP(
 			return response.json();
 		})
 		.then((data) => {
+                        console.log('Respuesta del servidor al actualizar estado:', data);
+                        
                         // Éxito - animación de transición con ondas
                         item.style.backgroundColor = "var(--accent-green)";
                         item.style.color = "white";
@@ -2154,18 +2578,45 @@ function actualizarEstadoEDP(
 					},
 				],
 				{
-					duration: 2500,
+					duration: 2000,
 					easing: "cubic-bezier(0.4, 0, 0.2, 1)",
 				}
 			);
 
-			actualizarContenidoTarjeta(item, data.edp_data || {}, estadoDestino);
+			// Verificar si la respuesta incluye datos actualizados
+			if (data.edp_data && Object.keys(data.edp_data).length > 0) {
+				console.log('Usando datos de la respuesta de actualización');
+				actualizarContenidoTarjeta(item, data.edp_data, estadoDestino);
+			} else {
+				console.log('Actualizando tarjeta con información básica disponible...');
+				// Extraer datos básicos del DOM y actualizar la tarjeta
+				const datosBasicos = extraerDatosDelDOM(item);
+				
+				// Agregar información del estado destino
+				const datosConEstado = {
+					...datosBasicos,
+					estado: estadoDestino,
+					ultima_actualizacion: new Date().toLocaleDateString('es-ES')
+				};
+				
+				// Actualizar la tarjeta con los datos disponibles
+				actualizarContenidoTarjeta(item, datosConEstado, estadoDestino);
+				
+				// Intentar obtener datos actualizados en segundo plano sin bloquear la UI
+				setTimeout(() => {
+					obtenerYActualizarDatosEDP(edpId, item, estadoDestino);
+				}, 1000);
+			}
 
 			// Después restaurar y normalizar con una animación más elegante
 			setTimeout(() => {
 				// Eliminar el efecto de onda
-				if (item.contains(rippleEffect)) {
-					item.removeChild(rippleEffect);
+				if (rippleEffect && item.contains(rippleEffect)) {
+					try {
+						item.removeChild(rippleEffect);
+					} catch (e) {
+						console.log("Error al remover ripple effect:", e);
+					}
 				}
 
 				// Transición de vuelta a normal
@@ -2188,12 +2639,10 @@ function actualizarEstadoEDP(
 					}
 				);
 
-				// Restaurar estilos originales
-				item.style.backgroundColor = "";
-				item.style.color = "";
-				item.style.transform = "scale(1)";
-				item.style.boxShadow = "";
-                                item.style.zIndex = "";
+				// Limpiar completamente después de la animación de éxito
+				setTimeout(() => {
+					limpiarCompletamenteItem(item);
+				}, 1600);
 			}, 600);
 
                 })
@@ -2218,11 +2667,9 @@ function actualizarEstadoEDP(
 				iterations: 1,
 			});
 
-			// Restaurar
+			// Restaurar usando la función de limpieza
 			setTimeout(() => {
-				item.style.backgroundColor = "";
-				item.style.color = "";
-				item.style.boxShadow = "";
+				limpiarCompletamenteItem(item);
 			}, 800);
 
                         showToast(`Error al actualizar el estado`, "error");
@@ -2239,7 +2686,8 @@ function mostrarModalContextual(
 	estadoOrigen,
 	estadoDestino,
 	edpData,
-	callback
+	callback,
+	item = null
 ) {
 	// Crear overlay para el modal
 	const overlay = document.createElement("div");
@@ -2295,7 +2743,7 @@ function mostrarModalContextual(
             <label class="form-label">N° de Conformidad</label>
             <div class="relative">
               <input type="text" name="n_conformidad" class="form-input pl-9" value="${
-								edpData["N° Conformidad"] || ""
+								edpData["n_conformidad"] || ""
 							}" required>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -2308,7 +2756,7 @@ function mostrarModalContextual(
             <label class="form-label">Fecha de Conformidad</label>
             <div class="relative">
               <input type="date" name="fecha_conformidad" class="form-input pl-9" value="${formatFecha(
-								edpData["Fecha Conformidad"] || ""
+								edpData["fecha_conformidad"] || ""
 							)}" required>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -2321,7 +2769,7 @@ function mostrarModalContextual(
             <label class="form-label">Fecha Estimada de Pago</label>
             <div class="relative">
               <input type="date" name="fecha_estimada_pago" class="form-input pl-9" value="${formatFecha(
-								edpData["Fecha Estimada de Pago"] || ""
+								edpData["fecha_estimada_pago"] || ""
 							)}" required>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -2401,11 +2849,11 @@ function mostrarModalContextual(
 
 	// Configurar eventos
 	document.getElementById("cancelar-modal").addEventListener("click", () => {
-		cerrarModal(false);
+		cerrarModal(false, item, estadoDestino);
 	});
 
 	document.getElementById("cancelar-cambio").addEventListener("click", () => {
-		cerrarModal(false);
+		cerrarModal(false, item, estadoDestino);
 	});
 
 	const form = document.getElementById("modal-contextual-form");
@@ -2459,7 +2907,7 @@ function mostrarModalContextual(
 					// Esperar un momento para dar feedback visual antes de cerrar
 					setTimeout(() => {
 						showToast(`EDP-${edpId} actualizado correctamente`, "success");
-						cerrarModal(true);
+						cerrarModal(true, item, estadoDestino);
 					}, 500);
 				} else {
 					throw new Error(data.message || "Error al actualizar");
@@ -2488,7 +2936,7 @@ function mostrarModalContextual(
 			});
 	});
 
-	function cerrarModal(confirmado) {
+	function cerrarModal(confirmado, item = null, estadoDestino = null) {
 		if (!overlay) return;
 		
 		overlay.classList.add("animate__fadeOut");
@@ -2502,6 +2950,13 @@ function mostrarModalContextual(
 				if (overlay && overlay.parentNode) {
 					overlay.parentNode.removeChild(overlay);
 				}
+				
+				// Si se confirmó y tenemos item, actualizar datos
+				if (confirmado && item && estadoDestino) {
+					console.log('Modal confirmado, actualizando datos del EDP...');
+					obtenerYActualizarDatosEDP(edpId, item, estadoDestino);
+				}
+				
 				if (typeof callback === 'function') {
 					callback(confirmado);
 				}
@@ -2517,39 +2972,12 @@ function mostrarModalContextual(
 
 /**
  * Configura la conexión con Socket.IO para actualizaciones en tiempo real
+ * (Esta función es redundante con initSocketIO, mantenida por compatibilidad)
  */
 function setupSocketConnection() {
-	// Crear conexión
-	const socket = io();
-
-	// Gestionar estados de conexión
-	socket.on("connect", () => {
-		showToast("Conexión en tiempo real establecida", "info");
-	});
-
-	socket.on("disconnect", () => {
-		showToast("Se perdió la conexión en tiempo real", "error");
-	});
-
-	// Escuchar actualizaciones
-	socket.on("estado_actualizado", (data) => {
-		// Destacar visualmente el cambio si se puede identificar la tarjeta
-		if (data.edp_id) {
-			const tarjeta = document.querySelector(
-				`.kanban-item[data-id="${data.edp_id}"]`
-			);
-			if (tarjeta) {
-				tarjeta.classList.add("highlight-update");
-				setTimeout(() => tarjeta.classList.remove("highlight-update"), 2000);
-			}
-		}
-
-		// Actualizar todos los contadores
-		actualizarContadoresTablero();
-
-		// Mostrar notificación
-		showToast(`EDP actualizado: ${data.edp_id || "desconocido"}`, "info");
-	});
+	// Delegar a initSocketIO para evitar duplicación
+	console.log("setupSocketConnection llamado, delegando a initSocketIO");
+	// No hacer nada aquí ya que initSocketIO maneja todo
 }
 
 
