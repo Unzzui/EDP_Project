@@ -33,6 +33,9 @@ from ..extensions import socketio
 import pandas as pd
 import traceback
 import logging
+from time import time
+
+_kanban_cache = {"ts": 0, "data": None}
 
 logger = logging.getLogger(__name__)
 class DictToObject:
@@ -395,7 +398,13 @@ def vista_kanban():
       
 
         # ===== PASO 2: CARGAR DATOS CRUDOS =====
-        datos_response = controller_service.load_related_data()
+        now_ts = time()
+        global _kanban_cache
+        if _kanban_cache["data"] and now_ts - _kanban_cache["ts"] < 30:
+            datos_response = _kanban_cache["data"]
+        else:
+            datos_response = controller_service.load_related_data()
+            _kanban_cache = {"ts": now_ts, "data": datos_response}
         # if not datos_response.success:
         #     print(f"❌ Error cargando datos relacionados: {datos_response.message}")
         #     return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
@@ -455,97 +464,16 @@ def actualizar_estado_kanban():
         if not edp_id or not nuevo_estado:
             return jsonify({"error": "Datos incompletos"}), 400
 
-        # Usar el mismo rango que en otras partes del código
-        df = controller_service.load_related_data()
-
-        datos_relacionados = df.data
-
-        df = pd.DataFrame(datos_relacionados.get("edps", []))
-
-        # Asegurarse que el EDP ID sea string para comparación correcta
-        edp = df[df["n_edp"] == str(edp_id)]
-
-        if edp.empty:
-            return jsonify({"error": f"EDP {edp_id} no encontrado"}), 404
-
-        row_idx = edp.index[0] + 2  # +2 por encabezado y 0-indexado
-        edp_data = edp.iloc[0].to_dict()
-
-        # Preparar cambios con estado mayor prioridad
-        cambios = {"estado": nuevo_estado + " "}  # Agregamos un espacio temporal
-
-        # Usar el valor enviado desde frontend si existe
-        if conformidad_enviada:
-            cambios["conformidad_enviada"] = "Sí"
-        # Mantener regla de negocio como respaldo
-        elif nuevo_estado == "pagado" or nuevo_estado == "validado":
-            cambios["conformidad_enviada"] = "Sí"
-
-        # Registrar todos los cambios
         usuario = session.get("usuario", "Kanban")
-
-        if nuevo_estado != edp_data.get("estado"):
-            log_cambio_edp(
-                n_edp=edp_id,
-                proyecto=edp_data.get("proyecto", "Sin proyecto"),  # Añadir proyecto
-                campo="estado",
-                antes=edp_data.get("estado"),
-                despues=nuevo_estado,
-                usuario=usuario,
-            )
-
-        if (
-            cambios.get("conformidad_enviada") == "Sí"
-            and edp_data.get("conformidad_enviada") != "Sí"
-        ):
-            log_cambio_edp(
-                n_edp=edp_id,
-                proyecto=edp_data.get("Proyecto", "Sin proyecto"),  # Añadir proyecto
-                campo="conformidad_enviada",
-                antes=edp_data.get("conformidad_enviada"),
-                despues="Sí",
-                usuario=usuario,
-            )
-
-        # Hacer la actualización pasando el usuario para auditoría
-        update_row(row_idx, cambios, "edp", usuario, force_update=True)
-        # Leer los datos actualizados después de la modificación
-        df_actualizado = controller_service.load_related_data()
-        df_actualizado = pd.DataFrame(df_actualizado.data.get("edps", []))
-        edp_actualizado = (
-            df_actualizado[df_actualizado["n_edp"] == str(edp_id)].iloc[0].to_dict()
+        socketio.start_background_task(
+            _procesar_actualizacion_estado,
+            edp_id,
+            nuevo_estado,
+            conformidad_enviada,
+            usuario,
         )
 
-        # Formatear fechas para evitar problemas de serialización
-        for campo in [
-            "fecha_emision",
-            "fecha_envio_cliente",
-            "fecha_estimada_pago",
-            "fecha_conformidad",
-        ]:
-            if campo in edp_actualizado and pd.notna(edp_actualizado[campo]):
-                try:
-                    fecha = pd.to_datetime(edp_actualizado[campo])
-                    edp_actualizado[campo] = fecha.strftime("%Y-%m-%d")
-                except:
-                    pass
-        # Emitir evento más completo
-        socketio.emit(
-            "estado_actualizado",
-            {"edp_id": edp_id, "nuevo_estado": nuevo_estado, "cambios": cambios},
-        )
-
-        return (
-            jsonify(
-                {
-                    "success": True,
-                    "message": f"EDP {edp_id} actualizado correctamente",
-                    "cambios": cambios,
-                    "edp_data": edp_actualizado,  # Devolver datos actuales del EDP
-                }
-            ),
-            200,
-        )
+        return jsonify({"success": True, "queued": True}), 202
     except Exception as e:
         print(f"🔥 Error al actualizar estado de EDP: {str(e)}")
         print(traceback.format_exc())
@@ -553,6 +481,25 @@ def actualizar_estado_kanban():
             jsonify({"success": False, "message": f"Error al actualizar: {str(e)}"}),
             500,
         )
+
+
+def _procesar_actualizacion_estado(edp_id: str, nuevo_estado: str, conformidad: bool, usuario: str):
+    """Tarea en segundo plano para persistir el cambio de estado."""
+    global _kanban_cache
+    try:
+        additional = {"conformidad_enviada": "Sí"} if conformidad else None
+        resp = kanban_service.update_edp_status(edp_id, nuevo_estado, additional)
+        if resp.success:
+            _kanban_cache["ts"] = 0
+            socketio.emit(
+                "estado_actualizado",
+                {"edp_id": edp_id, "nuevo_estado": nuevo_estado, "cambios": resp.data.get("updates", {})},
+            )
+        else:
+            logger.error(f"Error en background update: {resp.message}")
+    except Exception as exc:
+        logger.error(f"Excepción en tarea de actualización: {exc}")
+        logger.error(traceback.format_exc())
 
 
 @controller_controller_bp.route("/kanban/update_estado_detallado", methods=["POST"])

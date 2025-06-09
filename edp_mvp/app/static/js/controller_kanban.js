@@ -2076,10 +2076,10 @@ function actualizarEstadoEDP(
 	toList,
 	conformidadEnviada = false
 ) {
-	const loadingOverlay = document.createElement("div");
-	loadingOverlay.className =
-		"absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center z-10";
-	loadingOverlay.innerHTML = `
+        const loadingOverlay = document.createElement("div");
+        loadingOverlay.className =
+                "absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center z-10";
+        loadingOverlay.innerHTML = `
     <div class="bg-white/90 rounded-lg p-2 shadow-lg flex items-center">
       <svg class="animate-spin h-4 w-4 text-blue-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -2088,11 +2088,24 @@ function actualizarEstadoEDP(
       <span class="text-xs font-medium">Actualizando...</span>
     </div>
   `;
+        item.style.position = "relative";
+        item.appendChild(loadingOverlay);
+        setTimeout(() => {
+                if (item.contains(loadingOverlay)) item.removeChild(loadingOverlay);
+        }, 300);
 
-	// Asegurarse de que la tarjeta tiene position relative para el overlay absoluto
-	item.style.position = "relative";
-	item.appendChild(loadingOverlay);
-	// Enviar solicitud al servidor
+        // Actualizaciones optimistas de la UI
+        ordenarTarjetasPorDias(toList);
+        col.setAttribute(
+                "data-empty",
+                toList.querySelectorAll(".kanban-item").length === 0
+        );
+        updateSummaryPanel();
+        calcularTotalesColumna();
+        setupKPIPanel();
+        showToast(`EDP-${edpId} movido a ${estadoDestino}`, "success");
+
+        // Enviar solicitud al servidor de forma asíncrona
 	fetch("/controller/kanban/update_estado", {
 		method: "POST",
 		headers: {
@@ -2112,12 +2125,9 @@ function actualizarEstadoEDP(
 			return response.json();
 		})
 		.then((data) => {
-			if (item.contains(loadingOverlay)) {
-				item.removeChild(loadingOverlay);
-			}
-			// Éxito - animación de transición con ondas
-			item.style.backgroundColor = "var(--accent-green)";
-			item.style.color = "white";
+                        // Éxito - animación de transición con ondas
+                        item.style.backgroundColor = "var(--accent-green)";
+                        item.style.color = "white";
 
 			// Crear efecto de onda concéntrica
 			const rippleEffect = document.createElement("div");
@@ -2183,28 +2193,11 @@ function actualizarEstadoEDP(
 				item.style.color = "";
 				item.style.transform = "scale(1)";
 				item.style.boxShadow = "";
-				item.style.zIndex = "";
-
-				// Ordenar las tarjetas después de insertar
-				setTimeout(() => {
-					ordenarTarjetasPorDias(toList);
-
-					// Actualizar columna vacía/no-vacía
-					col.setAttribute(
-						"data-empty",
-						toList.querySelectorAll(".kanban-item").length === 0
-					);
-
-					// Actualizar resumen y totales de columnas
-					updateSummaryPanel();
-					calcularTotalesColumna();
-					setupKPIPanel();
-				}, 300);
+                                item.style.zIndex = "";
 			}, 600);
 
-			showToast(`EDP-${edpId} movido a ${estadoDestino}`, "success");
-		})
-		.catch((error) => {
+                })
+                .catch((error) => {
 			console.error("Error:", error);
 
 			// Error - hacer destello rojo y agitar
@@ -2232,11 +2225,8 @@ function actualizarEstadoEDP(
 				item.style.boxShadow = "";
 			}, 800);
 
-			showToast(`Error al actualizar el estado`, "error");
-
-			// Recargar para restaurar el estado
-			setTimeout(() => location.reload(), 1500);
-		});
+                        showToast(`Error al actualizar el estado`, "error");
+                });
 }
 
 
