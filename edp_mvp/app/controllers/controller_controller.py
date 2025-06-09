@@ -356,7 +356,7 @@ def dashboard_controller():
             )
 
         dashboard_context = dashboard_response.data
- 
+        registros = dashboard_context.get('registros', [])
 
         # ===== PASO 4: RENDERIZAR TEMPLATE =====
         print(f"🎯 Dashboard de controller cargado exitosamente")

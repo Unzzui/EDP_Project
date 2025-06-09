@@ -1021,7 +1021,7 @@
       data-monto-propuesto="{{ registro.get('monto_propuesto', 0)|default(0) }}"
       data-monto-aprobado="{{ registro.get('monto_aprobado', 0)|default(0) }}"
       data-critico="{{ 1 if registro.get('critico', False) else 0 }}"
-      class="{% if registro.get('critico', False) %}data-table-row-critical{% endif %}{% if registro.get('Estado', '') == 'validado' %}data-table-row-validated{% endif %}"
+      class="{% if registro.get('critico', False) %}data-table-row-critical{% endif %}{% if registro.get('estado', '') == 'validado' %}data-table-row-validated{% endif %}"
     >
       <td class="font-medium">{{ registro.get('proyecto', '-') }}</td>
       <td>{{ registro.get('jefe_proyecto', '-') }}</td>
@@ -1040,7 +1040,7 @@
         {{ dias }}
       </td>
       
-      <td class="text-center">{{ registro.get('Días Hábiles', 0) }}</td>
+      <td class="text-center">{{ registro.get('dias_habiles', 0) }}</td>
       <td class="text-right">${{ "{:,.0f}".format(registro.get('monto_propuesto', 0)|default(0)).replace(",",".") }}</td>
       <td class="text-right">${{ "{:,.0f}".format(registro.get('monto_aprobado', 0)|default(0)).replace(",",".") }}</td>
       <td class="text-center">
@@ -1298,6 +1298,7 @@
       criticalEdps.forEach(row => {
         const proyecto = row.getAttribute('data-proyecto') || '-';
         const edpNumber = row.getAttribute('data-edp') || '-';
+        const jefe_proyecto = row.getAttribute('data-jefe') || '-';
         const estado = row.getAttribute('data-estado') || '-';
         const dias = parseInt(row.getAttribute('data-dias')) || 0;
         const monto = parseFloat(row.getAttribute('data-monto-aprobado')) || 0;
@@ -1317,13 +1318,16 @@
           <div class="flex items-start space-x-3">
             <div class="w-3 h-3 rounded-full ${indicatorColor} mt-1 flex-shrink-0"></div>
             <div class="min-w-0 flex-1">
-              <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-medium text-[color:var(--text-primary)] truncate pr-2">EDP #${edpNumber}</span>
                 <span class="text-xs text-[color:var(--accent-red)] font-bold whitespace-nowrap">${dias}d</span>
               </div>
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-1 sm:space-y-0">
-                <span class="text-xs text-[color:var(--text-secondary)] truncate pr-2">${proyecto}</span>
-                <span class="text-xs px-2 py-1 rounded self-start ${estado === 'revisión' ? 'bg-[color:var(--accent-blue)] text-white' : 'bg-[color:var(--accent-purple)] text-white'} whitespace-nowrap">
+              <div class="flex items-start justify-between">
+                <div class="flex flex-col space-y-1 min-w-0 flex-1 pr-2">
+                  <span class="text-xs text-[color:var(--text-secondary)] truncate" title="${proyecto}">📁 ${proyecto}</span>
+                  <span class="text-xs text-[color:var(--text-secondary)] truncate" title="${jefe_proyecto}">👤 ${jefe_proyecto}</span>
+                </div>
+                <span class="text-xs px-2 py-1 rounded flex-shrink-0 ${estado === 'revisión' ? 'bg-[color:var(--accent-blue)] text-white' : 'bg-[color:var(--accent-purple)] text-white'} whitespace-nowrap">
                   ${estado}
                 </span>
               </div>

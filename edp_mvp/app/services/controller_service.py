@@ -1860,25 +1860,7 @@ class ControllerService(BaseService):
                 "conformidad_enviada"
             ].fillna("No")
 
-        df_prepared = self._calcular_dias_espera(df_prepared)
 
-        if (
-            "fecha_envio_cliente" in df_prepared.columns
-            and "fecha_conformidad" in df_prepared.columns
-        ):
-            df_prepared["Días Hábiles"] = df_prepared.apply(
-                lambda row: self._calcular_dias_habiles(
-                    row.get("fecha_envio_cliente"), row.get("fecha_conformidad")
-                ),
-                axis=1,
-            )
-        else:  # Ensure column exists even if calculation can't be done
-            df_prepared["Días Hábiles"] = np.nan
-
-        # Ensure 'Días Hábiles' is numeric after apply (it should be due to _calcular_dias_habiles returning float/nan)
-        df_prepared["Días Hábiles"] = pd.to_numeric(
-            df_prepared["Días Hábiles"], errors="coerce"
-        )
 
         ensure_cols_with_defaults = {
             "estado": "",
@@ -2110,7 +2092,7 @@ class ControllerService(BaseService):
             )
 
             dias_habiles_promedio_filtrado_raw = df_filtered[
-                "Días Hábiles"
+                "dias_habiles"
             ].mean()  # Días Hábiles is float/np.nan
             dias_habiles_promedio_filtrado = round(
                 (
@@ -2344,8 +2326,11 @@ class ControllerService(BaseService):
 
             # 5. Registros
             registros_raw = df_filtered.to_dict(orient="records")
+            # debug dias_habiles en dict
+            
             registros = self._clean_nat_values(registros_raw)
 
+       
             total_edps_criticos_global = df_full[
                 df_full["estado"].isin(["enviado", "pendiente", "revisión"])
                 & (df_full["dias_espera"] >= 30)
