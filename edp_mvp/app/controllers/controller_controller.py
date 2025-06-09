@@ -683,26 +683,9 @@ def api_get_edp_details(n_edp):
 
 @controller_controller_bp.route("/api/update-edp/<n_edp>", methods=["POST"])
 def api_update_edp(n_edp):
-    """API para actualizar un EDP desde el modal"""
+    """API para actualizar un EDP desde el modal de forma asíncrona"""
     try:
-        # 1. Obtener datos del EDP
-        datos_response = controller_service.load_related_data()
-        if not datos_response.success:
-            print(f"❌ Error cargando datos relacionados: {datos_response.message}")
-            return jsonify({"success": False, "message": "Error cargando datos"}), 500
-
-        datos_relacionados = datos_response.data
-
-        # Extract raw DataFrames
-        df_edp_raw = pd.DataFrame(datos_relacionados.get("edps", []))
-        edp = df_edp_raw[df_edp_raw["n_edp"] == n_edp]
-
-        if edp.empty:
-            return jsonify({"success": False, "message": "EDP no encontrado"}), 404
-
-        row_idx = edp.index[0] + 2  # +1 por header, +1 porque Sheets arranca en 1
-
-        # 2. Preparar actualizaciones - CORREGIDO: usar nombres de columnas correctos
+        # Validar y preparar payload mínimo
         updates = {
             "estado": request.form.get("estado") or "",
             "estado_detallado": request.form.get("estado_detallado") or "",
@@ -715,22 +698,50 @@ def api_update_edp(n_edp):
             "observaciones": request.form.get("observaciones") or "",
         }
 
-        # 3. Incluir campos condicionales
         if updates["estado_detallado"] == "re-trabajo solicitado":
             updates["motivo_no_aprobado"] = request.form.get("motivo_no_aprobado") or ""
             updates["tipo_falla"] = request.form.get("tipo_falla") or ""
 
-        # 4. Aplicar reglas automáticas
         if updates["estado"] in ["pagado", "validado"]:
             updates["conformidad_enviada"] = "Sí"
 
-        # 5. Registrar cambios en log
         usuario = session.get("usuario", "Sistema")
+
+        socketio.start_background_task(_background_update_edp, n_edp, updates, usuario)
+
+        return jsonify({"success": True, "queued": True}), 202
+
+    except Exception as e:
+        import traceback
+
+        print(f"Error en api_update_edp: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
+
+
+def _background_update_edp(n_edp: str, updates: Dict[str, Any], usuario: str):
+    """Procesa la actualización de un EDP en un hilo de fondo."""
+    from ..repositories import _range_cache
+
+    try:
+        datos_response = controller_service.load_related_data()
+        if not datos_response.success:
+            logger.error(f"Error cargando datos: {datos_response.message}")
+            return
+
+        datos_relacionados = datos_response.data
+        df_edp_raw = pd.DataFrame(datos_relacionados.get("edps", []))
+        edp = df_edp_raw[df_edp_raw["n_edp"] == n_edp]
+        if edp.empty:
+            logger.error(f"EDP {n_edp} no encontrado")
+            return
+
+        row_idx = edp.index[0] + 2
         edp_data = edp.iloc[0].to_dict()
 
         for campo, nuevo in updates.items():
             viejo = str(edp_data.get(campo, ""))
-            if nuevo != "" and nuevo != viejo:
+            if nuevo != "" and str(nuevo) != viejo:
                 log_cambio_edp(
                     n_edp=n_edp,
                     proyecto=edp_data.get("proyecto", ""),
@@ -740,19 +751,12 @@ def api_update_edp(n_edp):
                     usuario=usuario,
                 )
 
-        # 6. CORREGIDO: Pasar correctamente los argumentos en el orden correcto
-        update_row(
-            row_idx, updates, sheet_name="edp", usuario=usuario, force_update=True
-        )
-
-        return jsonify({"success": True, "message": "EDP actualizado correctamente"})
-
-    except Exception as e:
-        import traceback
-
-        print(f"Error en api_update_edp: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
+        update_row(row_idx, updates, sheet_name="edp", usuario=usuario, force_update=True)
+        _range_cache.clear()
+        socketio.emit("edp_actualizado", {"n_edp": n_edp, "updates": updates})
+    except Exception as exc:
+        logger.error(f"Error en background update: {exc}")
+        logger.error(traceback.format_exc())
 
 
 def _prepare_manager_template_data(nombre: str, manager_data: Dict) -> Dict[str, Any]:

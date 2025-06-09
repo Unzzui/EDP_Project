@@ -318,6 +318,15 @@ body {
   border-left-color: rgba(14, 203, 140, 0.5) !important;
 }
 
+/* Indicador de fila en proceso de guardado */
+.table-row-saving {
+  opacity: 0.6;
+}
+.saving-indicator svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
 /* Botones de acción dentro de tablas */
 .data-table .action-link {
   display: inline-flex;
