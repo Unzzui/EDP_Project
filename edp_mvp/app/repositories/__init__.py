@@ -6,6 +6,10 @@ from typing import List, Optional, Dict, Any
 import pandas as pd
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+from time import time
+
+# Simple in-memory cache for Google Sheets ranges
+_range_cache: Dict[str, tuple] = {}
 
 from ..config import Config, get_config
 
@@ -34,14 +38,25 @@ class BaseRepository(ABC):
         return build('sheets', 'v4', credentials=creds)
     
     def _read_range(self, range_name: str) -> List[List[str]]:
-        """Read data from Google Sheets range."""
+        """Read data from Google Sheets range with simple caching."""
         try:
             config = get_config()
+            timeout = getattr(config.app, "cache_timeout", 0)
+            now = time()
+
+            # Check cache first
+            if range_name in _range_cache:
+                ts, values = _range_cache[range_name]
+                if now - ts < timeout:
+                    return values
+
             result = self.service.spreadsheets().values().get(
                 spreadsheetId=config.SHEET_ID,
                 range=range_name
             ).execute()
-            return result.get('values', [])
+            values = result.get("values", [])
+            _range_cache[range_name] = (now, values)
+            return values
         except Exception as e:
             print(f"Error reading range {range_name}: {str(e)}")
             return []
@@ -57,6 +72,7 @@ class BaseRepository(ABC):
                 valueInputOption=value_input_option,
                 body={"values": values}
             ).execute()
+            _range_cache.clear()  # invalidate cache after write
             return True
         except Exception as e:
             print(f"Error writing to range {range_name}: {str(e)}")
@@ -73,6 +89,7 @@ class BaseRepository(ABC):
                 insertDataOption="INSERT_ROWS",
                 body={"values": values}
             ).execute()
+            _range_cache.clear()  # invalidate cache after append
             return True
         except Exception as e:
             print(f"Error appending to sheet {sheet_name}: {str(e)}")
