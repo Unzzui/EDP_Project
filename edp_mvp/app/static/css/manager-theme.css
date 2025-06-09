@@ -7,9 +7,8 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-
-  
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body {
@@ -69,7 +68,8 @@ body {
 }
 
 
-.light {
+.light,
+[data-theme="light"] {
   --background: #f9f9f7;               /* Fondo general más suave */
   --bg-card: #f9f9f7;                  /* Tarjetas con contraste limpio */
   --bg-subtle: #f0f4f8;                /* Fondo de inputs o secciones */
@@ -129,8 +129,7 @@ body {
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-/* Class for forcing dark mode */
-.dark {
+[data-theme="dark"] {
   --background: #1c1c1e;              /* Fondo base */
   --bg-card: #1c1c1e;                 /* Tarjetas / secciones elevadas */
   --bg-subtle: #29292b;              /* Hover y fondos secundarios */
@@ -403,25 +402,25 @@ select {
 /* Add this at the end of your file */
 
 /* Form inputs dark mode fix */
-.dark input[type="date"],
-.dark input[type="datetime-local"],
-.dark input[type="month"],
-.dark input[type="time"],
-.dark select {
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="datetime-local"],
+[data-theme="dark"] input[type="month"],
+[data-theme="dark"] input[type="time"],
+[data-theme="dark"] select {
   color-scheme: dark;
   background-color: var(--bg-card);
   color: var(--text-primary);
 }
 
-.dark input[type="date"]::-webkit-calendar-picker-indicator,
-.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
-.dark input[type="month"]::-webkit-calendar-picker-indicator,
-.dark input[type="time"]::-webkit-calendar-picker-indicator {
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
 
 /* Select arrow in dark mode */
-.dark select {
+[data-theme="dark"] select {
   background-position: right 0.5rem center;
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
