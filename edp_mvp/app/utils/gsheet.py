@@ -3,6 +3,7 @@ from datetime import datetime, timezone, timedelta
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from ..config import get_config
+from ..repositories import _range_cache
 import pandas as pd
 import re
 import traceback
@@ -503,6 +504,7 @@ def append_row(row_values, sheet_name="edp"):
         insertDataOption= "INSERT_ROWS",
         body            = {"values": [row_values]}
     ).execute()
+    _range_cache.clear()
 
 
 def update_edp_by_id(edp_id, updates, usuario="Sistema"):
@@ -617,6 +619,7 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema", force_u
                 valueInputOption="USER_ENTERED",
                 body=body
             ).execute()
+            _range_cache.clear()
             print(f"Actualización enviada a Sheets: {len(cambios_reales)} cambios")
             
             # --- 5. Registrar solo los cambios reales en el log ---
@@ -745,6 +748,7 @@ def log_cambio_edp(n_edp: str,
         insertDataOption= "INSERT_ROWS",
         body            = {"values": [valores]}
     ).execute()
+    _range_cache.clear()
     
 def read_log(n_edp=None, proyecto=None, usuario=None, range_name="log!A1:G"):
     """
@@ -865,7 +869,8 @@ def crear_incidencia(tipo: str,
         insertDataOption="INSERT_ROWS",
         body={"values": [nueva_fila]}
     ).execute()
-    
+    _range_cache.clear()
+
     return next_id
 
 
@@ -987,7 +992,9 @@ def actualizar_incidencia(id_incidencia, actualizaciones, usuario="Sistema"):
                     valueInputOption="USER_ENTERED",
                     body={"values": [[valor]]}
                 ).execute()
-        
+
+        _range_cache.clear()
+
         return True
     
     except Exception as e:
@@ -1048,7 +1055,9 @@ def agregar_comentario_incidencia(id_incidencia, comentario, usuario="Sistema"):
             valueInputOption="USER_ENTERED",
             body={"values": [[timestamp]]}
         ).execute()
-        
+
+        _range_cache.clear()
+
         return True
         
     except Exception as e:
