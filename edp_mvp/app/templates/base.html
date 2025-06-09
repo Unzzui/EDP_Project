@@ -4,6 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <script>
+      (function () {
+        const saved = localStorage.getItem("managerTheme");
+        if (saved) {
+          document.documentElement.setAttribute("data-theme", saved);
+        }
+      })();
+    </script>
+
     <title>{% block title %}EDP Control{% endblock %}</title>
     <link
       rel="icon"
@@ -65,89 +74,38 @@
   </div>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const themeToggle = document.getElementById("themeToggle");
-      const htmlElement = document.documentElement;
+      const root = document.documentElement;
+      const toggle = document.getElementById("themeToggle");
       const moonIcon = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>`;
       const sunIcon = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>`;
 
-      if (!themeToggle) {
-        console.error("Theme toggle button not found!");
-        return;
-      }
-
-      // Function to update icon based on current theme
-      function updateThemeIcon(isDark) {
-        if (isDark) {
-          themeToggle.querySelector("svg").innerHTML = sunIcon;
-          themeToggle.setAttribute("title", "Cambiar a modo claro");
+      function setIcon(theme) {
+        const svg = toggle.querySelector("svg");
+        if (!svg) return;
+        if (theme === "dark") {
+          svg.innerHTML = sunIcon;
+          toggle.title = "Cambiar a modo claro";
         } else {
-          themeToggle.querySelector("svg").innerHTML = moonIcon;
-          themeToggle.setAttribute("title", "Cambiar a modo oscuro");
+          svg.innerHTML = moonIcon;
+          toggle.title = "Cambiar a modo oscuro";
         }
       }
 
-      // Initialize theme from localStorage
-      function initializeTheme() {
-        const savedTheme = localStorage.getItem("managerTheme");
-        const isDark = savedTheme === "dark";
-
-        if (savedTheme) {
-          htmlElement.classList.toggle("dark", isDark);
-          htmlElement.classList.toggle("light", !isDark);
-        } else {
-          // Check system preference
-          const prefersDark = window.matchMedia(
-            "(prefers-color-scheme: dark)"
-          ).matches;
-          htmlElement.classList.toggle("dark", prefersDark);
-          htmlElement.classList.toggle("light", !prefersDark);
-          localStorage.setItem("managerTheme", prefersDark ? "dark" : "light");
-        }
-
-        updateThemeIcon(htmlElement.classList.contains("dark"));
-
-        console.log(
-          "Theme initialized:",
-          htmlElement.classList.contains("dark") ? "dark" : "light"
-        );
+      function applyTheme(theme) {
+        window.requestAnimationFrame(() => {
+          root.setAttribute("data-theme", theme);
+          localStorage.setItem("managerTheme", theme);
+          setIcon(theme);
+        });
       }
 
-      // Toggle between themes
-      themeToggle.addEventListener("click", function () {
-        console.log("Theme toggle clicked");
-        const isDark = htmlElement.classList.contains("dark");
-
-        // Toggle classes
-        htmlElement.classList.toggle("dark", !isDark);
-        htmlElement.classList.toggle("light", isDark);
-
-        // Save preference
-        localStorage.setItem("managerTheme", isDark ? "light" : "dark");
-
-        // Add transition class for smooth theme change
-        htmlElement.classList.add("theme-transition");
-        setTimeout(() => {
-          htmlElement.classList.remove("theme-transition");
-        }, 300);
-
-        updateThemeIcon(!isDark);
-
-        console.log("Theme toggled to:", isDark ? "light" : "dark");
+      toggle.addEventListener("click", () => {
+        const current = root.getAttribute("data-theme") || "dark";
+        const next = current === "dark" ? "light" : "dark";
+        applyTheme(next);
       });
 
-      // Initialize theme on page load
-      initializeTheme();
+      setIcon(root.getAttribute("data-theme") || "dark");
     });
   </script>
-
-  <!-- Add theme transition styles -->
-  <style>
-    .theme-transition,
-    .theme-transition *,
-    .theme-transition *:before,
-    .theme-transition *:after {
-      transition: all 0.25s ease-out !important;
-      transition-delay: 0 !important;
-    }
-  </style>
 </html>
