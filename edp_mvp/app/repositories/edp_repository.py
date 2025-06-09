@@ -157,6 +157,36 @@ class EDPRepository(BaseRepository):
         # Write back
         return self.sheets_repo._write_range(range_name, [row_values])
 
+    def update_fields_by_n_edp(self, n_edp: str, updates: Dict[str, Any]) -> bool:
+        """Update fields by using the N° EDP column to locate the row."""
+        headers = self.sheets_repo._get_headers(self.sheet_name)
+        if "n_edp" not in headers:
+            return False
+
+        # Determine column letter for n_edp
+        col_index = headers.index("n_edp") + 1  # 1-based index
+        id_column = self._get_last_column(col_index)
+
+        row_number = self.sheets_repo.find_row_by_id(
+            self.sheet_name, str(n_edp), id_column=id_column
+        )
+        if not row_number:
+            return False
+
+        range_name = f"{self.sheet_name}!A{row_number}:{self._get_last_column(len(headers))}{row_number}"
+        current_values = self.sheets_repo._read_range(range_name)
+        if not current_values:
+            return False
+
+        row_values = current_values[0]
+        for field_name, new_value in updates.items():
+            if field_name in headers:
+                idx = headers.index(field_name)
+                if idx < len(row_values):
+                    row_values[idx] = str(new_value) if new_value is not None else ""
+
+        return self.sheets_repo._write_range(range_name, [row_values])
+
     def _read_sheet_with_transformations(self) -> pd.DataFrame:
         """Read EDP sheet with all transformations applied."""
         values = self._read_range(self.range_name)

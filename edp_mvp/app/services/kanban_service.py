@@ -292,7 +292,7 @@ class KanbanService(BaseService):
                     data=None,
                 )
 
-            success_write = self.edp_repo.update_fields(int(edp_id), updates)
+            success_write = self.edp_repo.update_fields_by_n_edp(edp_id, updates)
             if not success_write:
                 return ServiceResponse(
                     success=False,
