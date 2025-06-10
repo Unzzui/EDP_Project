@@ -503,7 +503,9 @@ def _procesar_actualizacion_estado(edp_id: str, nuevo_estado: str, conformidad: 
             # Emit events for both manager dashboard and kanban board
             socketio.emit("edp_actualizado", {
                 "edp_id": edp_id, 
-                "updates": {"estado": nuevo_estado, **resp.data.get("updates", {})}
+                "updates": {"estado": nuevo_estado, **resp.data.get("updates", {})},
+                "usuario": usuario,
+                "timestamp": datetime.now().isoformat()
             })
             socketio.emit("estado_actualizado", {
                 "edp_id": edp_id, 
@@ -604,7 +606,9 @@ def actualizar_estado_detallado():
         # Notificar via Socket.IO - emitir ambos eventos para compatibilidad
         socketio.emit("edp_actualizado", {
             "edp_id": edp_id, 
-            "updates": cambios
+            "updates": cambios,
+            "usuario": usuario,
+            "timestamp": datetime.now().isoformat()
         })
         socketio.emit("estado_actualizado", {
             "edp_id": edp_id, 
@@ -802,7 +806,12 @@ def _background_update_edp(n_edp: str, updates: Dict[str, Any], usuario: str):
                                                   {'updated_fields': list(updates.keys())})
         
         # Emit both EDP update and cache invalidation events
-        socketio.emit("edp_actualizado", {"edp_id": n_edp, "updates": updates})
+        socketio.emit("edp_actualizado", {
+            "edp_id": n_edp, 
+            "updates": updates,
+            "usuario": usuario,
+            "timestamp": datetime.now().isoformat()
+        })
         socketio.emit("cache_invalidated", {
             "type": "edp_state_changed" if 'estado' in updates else "edp_updated",
             "affected_ids": [n_edp],

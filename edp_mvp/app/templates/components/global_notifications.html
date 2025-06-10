@@ -83,19 +83,19 @@
     function getGlobalNotificationIcon(type) {
       switch (type) {
         case "warning":
-          return "⚠️";
+          return "⚠";
         case "error":
-          return "❌";
+          return "✕";
         case "success":
-          return "✅";
+          return "✓";
         case "payment":
-          return "💰";
+          return "$";
         case "status_change":
-          return "🔄";
+          return "•";
         case "urgent":
-          return "🚨";
+          return "!";
         default:
-          return "ℹ️";
+          return "i";
       }
     }
 
@@ -114,16 +114,28 @@
         let message = "";
         let isImportant = false;
 
+        // Get user info for more detailed notifications
+        const usuario = data.usuario || "Usuario desconocido";
+        const timestamp = data.timestamp
+          ? new Date(data.timestamp).toLocaleTimeString()
+          : new Date().toLocaleTimeString();
+
         if (data.updates) {
           // Handle the 4 main EDP states: revisión, enviado, pagado, validado
           if (data.updates.estado === "pagado") {
             // PAGADO - Most important state (payment completed)
             notificationType = "payment";
-            message = `💰 EDP ${data.edp_id} marcado como PAGADO`;
+            message = `EDP ${data.edp_id} marcado como PAGADO`;
             if (data.updates.monto_aprobado) {
-              message += ` - Monto: $${data.updates.monto_aprobado}M`;
+              // Format amount with proper thousands separators - Chilean format
+              const montoFormateado = new Intl.NumberFormat("es-CL", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              }).format(data.updates.monto_aprobado);
+              message += ` - Monto: $${montoFormateado}`;
             }
-            isImportant = true;
+            message += ` (${usuario})`;
+            isImportant = false; // Changed to false so it auto-hides after 8 seconds
 
             // Play notification sound for payment
             if (window.Audio) {
@@ -140,89 +152,81 @@
           } else if (data.updates.estado === "validado") {
             // VALIDADO - Final approval state
             notificationType = "success";
-            message = `✅ EDP ${data.edp_id} VALIDADO correctamente`;
+            message = `EDP ${data.edp_id} VALIDADO correctamente por ${usuario}`;
             isImportant = true;
           } else if (data.updates.estado === "enviado") {
             // ENVIADO - Submitted for review
             notificationType = "status_change";
-            message = `📤 EDP ${data.edp_id} ENVIADO para revisión`;
+            message = `EDP ${data.edp_id} ENVIADO para revisión por ${usuario}`;
           } else if (data.updates.estado === "revisión") {
             // REVISIÓN - Under review
             notificationType = "warning";
-            message = `🔍 EDP ${data.edp_id} en REVISIÓN`;
+            message = `EDP ${data.edp_id} en REVISIÓN por ${usuario}`;
           } else if (data.updates.monto_aprobado) {
             // Amount update
             notificationType = "status_change";
-            message = `💵 Monto actualizado para EDP ${data.edp_id}: $${data.updates.monto_aprobado}M`;
+            const montoFormateado = new Intl.NumberFormat("es-CL", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            }).format(data.updates.monto_aprobado);
+            message = `EDP ${data.edp_id}: Monto actualizado a $${montoFormateado} (${usuario})`;
           } else if (data.updates.fecha_conformidad) {
             // Conformity date update
             notificationType = "status_change";
-            message = `📅 Fecha de conformidad actualizada para EDP ${data.edp_id}`;
+            message = `EDP ${data.edp_id}: Fecha de conformidad actualizada por ${usuario}`;
           } else {
-            // General update
-            notificationType = "status_change";
-            message = `🔄 EDP ${data.edp_id} actualizado`;
+            // General update - show specific fields that were updated
+            const updatedFields = Object.keys(data.updates).filter(
+              (key) =>
+                data.updates[key] !== null &&
+                data.updates[key] !== undefined &&
+                data.updates[key] !== ""
+            );
+
+            if (updatedFields.length > 0) {
+              notificationType = "status_change";
+              message = `EDP ${data.edp_id}: ${updatedFields.join(
+                ", "
+              )} actualizado por ${usuario}`;
+            } else {
+              notificationType = "status_change";
+              message = `EDP ${data.edp_id} actualizado por ${usuario}`;
+            }
           }
         } else {
-          message = `📋 EDP ${data.edp_id || "desconocido"} modificado`;
+          message = `EDP ${
+            data.edp_id || "desconocido"
+          } modificado por ${usuario}`;
         }
 
         // Show global notification
         showGlobalNotification(
           message,
           notificationType,
-          isImportant ? 10000 : 5000,
+          notificationType === "payment" ? 8000 : 5000, // 8 seconds for payments, 5 for others
           isImportant
         );
       });
 
       socket.on("cache_invalidated", function (data) {
         console.log("📢 Global notification - Cache invalidated:", data);
-
-        let cacheMessage = "💾 Cache actualizado automáticamente";
-
-        // Provide more specific cache invalidation info
-        if (data.cache_types && data.cache_types.length > 0) {
-          cacheMessage += ` (${data.cache_types.join(", ")})`;
-        }
-
-        showGlobalNotification(cacheMessage, "success", 3000);
+        // Cache notifications are not shown to users, only logged
       });
 
-      // Connection status notifications
+      // Connection status notifications (only log to console)
       socket.on("connect", function () {
         console.log("✅ Global Socket.IO connected for real-time updates");
-        showGlobalNotification(
-          "🔗 Conexión en tiempo real establecida",
-          "success",
-          2000
-        );
       });
 
       socket.on("disconnect", function () {
         console.log("⚠️ Global Socket.IO disconnected");
-        showGlobalNotification(
-          "⚠️ Se perdió la conexión en tiempo real",
-          "warning",
-          5000
-        );
       });
 
       socket.on("reconnect", function () {
         console.log("🔄 Global Socket.IO reconnected");
-        showGlobalNotification(
-          "🔄 Conexión en tiempo real restablecida",
-          "success",
-          3000
-        );
       });
     } else {
       console.log("⚠️ Socket.IO not available for global notifications");
-      showGlobalNotification(
-        "⚠️ Actualizaciones en tiempo real no disponibles",
-        "warning",
-        5000
-      );
     }
   });
 </script>
