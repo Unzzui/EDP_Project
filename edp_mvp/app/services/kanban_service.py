@@ -7,6 +7,15 @@ from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 import logging
+import os
+import json
+
+try:  # pragma: no cover - optional redis cache
+    import redis
+    redis_url = os.getenv("REDIS_URL")
+    redis_client = redis.from_url(redis_url) if redis_url else None
+except Exception:
+    redis_client = None
 
 from . import BaseService, ServiceResponse, ValidationError
 from ..models import EDP
@@ -28,6 +37,13 @@ class KanbanService(BaseService):
     def get_kanban_data(self, filters: Dict[str, Any] = None) -> ServiceResponse:
         """Get data for Kanban board view."""
         try:
+            cache_key = f"kanban:{json.dumps(filters, sort_keys=True)}"
+            if redis_client:
+                cached = redis_client.get(cache_key)
+                if cached:
+                    data = json.loads(cached)
+                    return ServiceResponse(success=True, data=data)
+
             # Get EDPs data
             edps_response = self.edp_repo.get_all()
             if not edps_response.success:
@@ -54,15 +70,15 @@ class KanbanService(BaseService):
             # Get filter options
             filter_options = self._get_filter_options(df)
 
-            return ServiceResponse(
-                success=True,
-                data={
-                    "columns": columns,
-                    "statistics": statistics,
-                    "filter_options": filter_options,
-                    "filters": filters or {},
-                },
-            )
+            result_data = {
+                "columns": columns,
+                "statistics": statistics,
+                "filter_options": filter_options,
+                "filters": filters or {},
+            }
+            if redis_client:
+                redis_client.setex(cache_key, 300, json.dumps(result_data))
+            return ServiceResponse(success=True, data=result_data)
 
         except Exception as e:
             return ServiceResponse(

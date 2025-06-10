@@ -7,9 +7,20 @@ import pandas as pd
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from time import time
+import os
+import json
 
-# Simple in-memory cache for Google Sheets ranges
+# Simple in-memory cache with optional Redis backend
 _range_cache: Dict[str, tuple] = {}
+_redis_client = None
+try:  # pragma: no cover - optional dependency
+    import redis
+
+    redis_url = os.getenv("REDIS_URL")
+    if redis_url:
+        _redis_client = redis.from_url(redis_url)
+except Exception:
+    _redis_client = None
 
 from ..config import Config, get_config
 
@@ -38,13 +49,18 @@ class BaseRepository(ABC):
         return build('sheets', 'v4', credentials=creds)
     
     def _read_range(self, range_name: str) -> List[List[str]]:
-        """Read data from Google Sheets range with simple caching."""
+        """Read data from Google Sheets range with caching (Redis if available)."""
         try:
             config = get_config()
             timeout = getattr(config.app, "cache_timeout", 0)
             now = time()
 
-            # Check cache first
+            # Redis cache
+            if _redis_client:
+                cached = _redis_client.get(range_name)
+                if cached:
+                    return json.loads(cached)
+
             if range_name in _range_cache:
                 ts, values = _range_cache[range_name]
                 if now - ts < timeout:
@@ -56,10 +72,54 @@ class BaseRepository(ABC):
             ).execute()
             values = result.get("values", [])
             _range_cache[range_name] = (now, values)
+            if _redis_client:
+                _redis_client.setex(range_name, timeout, json.dumps(values))
             return values
         except Exception as e:
             print(f"Error reading range {range_name}: {str(e)}")
             return []
+
+    def _read_ranges(self, range_names: List[str]) -> Dict[str, List[List[str]]]:
+        """Batch read multiple ranges using Google Sheets batchGet."""
+        result_dict: Dict[str, List[List[str]]] = {}
+        try:
+            config = get_config()
+            timeout = getattr(config.app, "cache_timeout", 0)
+            now = time()
+
+            to_fetch = []
+            for r in range_names:
+                if _redis_client:
+                    cached = _redis_client.get(r)
+                    if cached:
+                        result_dict[r] = json.loads(cached)
+                        continue
+                if r in _range_cache:
+                    ts, values = _range_cache[r]
+                    if now - ts < timeout:
+                        result_dict[r] = values
+                        continue
+                to_fetch.append(r)
+
+            if to_fetch:
+                response = (
+                    self.service.spreadsheets()
+                    .values()
+                    .batchGet(spreadsheetId=config.SHEET_ID, ranges=to_fetch)
+                    .execute()
+                )
+                for item in response.get("valueRanges", []):
+                    values = item.get("values", [])
+                    r = item.get("range", to_fetch[0])
+                    _range_cache[r] = (now, values)
+                    if _redis_client:
+                        _redis_client.setex(r, timeout, json.dumps(values))
+                    result_dict[r] = values
+
+            return result_dict
+        except Exception as e:
+            print(f"Error reading ranges {range_names}: {str(e)}")
+            return result_dict
     
     def _write_range(self, range_name: str, values: List[List[str]], 
                     value_input_option: str = "USER_ENTERED") -> bool:
@@ -73,6 +133,8 @@ class BaseRepository(ABC):
                 body={"values": values}
             ).execute()
             _range_cache.clear()  # invalidate cache after write
+            if _redis_client:
+                _redis_client.flushdb()
             return True
         except Exception as e:
             print(f"Error writing to range {range_name}: {str(e)}")
@@ -90,6 +152,8 @@ class BaseRepository(ABC):
                 body={"values": values}
             ).execute()
             _range_cache.clear()  # invalidate cache after append
+            if _redis_client:
+                _redis_client.flushdb()
             return True
         except Exception as e:
             print(f"Error appending to sheet {sheet_name}: {str(e)}")
