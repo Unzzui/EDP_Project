@@ -26,19 +26,43 @@
       var(--bg-card) 0%,
       var(--bg-subtle) 100%
     );
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 32px;
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 40px;
     border: 1px solid var(--border-color);
-    box-shadow: var(--shadow);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .command-header::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
   }
 
   .header-title {
-    font-size: 28px;
-    font-weight: 800;
-    margin-bottom: 8px;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 12px;
     text-align: center;
     color: var(--text-primary);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
   }
 
   .kpi-grid {
@@ -56,6 +80,11 @@
     border: 1px solid var(--border-color);
     position: relative;
     overflow: hidden;
+  }
+
+  .kpi-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
   }
 
   .kpi-card::before {
@@ -146,9 +175,34 @@
   .chart-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: var(--shadow-sm);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06),
+      0 0 0 1px rgba(255, 255, 255, 0.02);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chart-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.08),
+      transparent
+    );
+  }
+
+  .chart-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
   }
 
   .chart-header {
@@ -271,88 +325,160 @@
     color: var(--danger);
   }
 
-  /* MATRIZ DE RENDIMIENTO */
+  /* MATRIZ DE RENDIMIENTO 2x2 */
   .performance-matrix {
     margin-bottom: 32px;
   }
 
-  .matrix-grid {
+  .matrix-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 12px;
+    grid-template-columns: 100px 1fr 1fr;
+    grid-template-rows: 60px 1fr 1fr;
+    gap: 2px;
     margin-top: 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--border-color);
+    min-height: 400px;
   }
 
-  .matrix-cell {
-    aspect-ratio: 1;
-    border-radius: 8px;
+  .axis-label {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
+    background: var(--bg-subtle);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
     text-align: center;
-    padding: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
   }
 
-  .matrix-cell:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow);
+  .axis-label.corner {
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 12px;
   }
 
-  .matrix-cell.excellent {
-    background: var(--success-bg);
-    border-color: var(--success);
+  .axis-label.x-axis {
+    writing-mode: horizontal-tb;
   }
 
-  .matrix-cell.good {
+  .axis-label.y-axis {
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+  }
+
+  .matrix-quadrant {
+    background: var(--bg-card);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    overflow-y: auto;
+    max-height: 180px;
+  }
+
+  .matrix-quadrant.excellent {
     background: linear-gradient(
       135deg,
       var(--success-bg),
-      rgba(34, 197, 94, 0.05)
+      rgba(34, 197, 94, 0.03)
     );
   }
 
-  .matrix-cell.warning {
-    background: var(--warning-bg);
-    border-color: var(--warning);
+  .matrix-quadrant.good {
+    background: linear-gradient(
+      135deg,
+      var(--warning-bg),
+      rgba(245, 158, 11, 0.03)
+    );
   }
 
-  .matrix-cell.critical {
-    background: var(--danger-bg);
-    border-color: var(--danger);
-    animation: pulse 2s infinite;
+  .matrix-quadrant.attention {
+    background: linear-gradient(
+      135deg,
+      rgba(251, 146, 60, 0.1),
+      rgba(251, 146, 60, 0.03)
+    );
   }
 
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.8;
-    }
+  .matrix-quadrant.critical {
+    background: linear-gradient(
+      135deg,
+      var(--danger-bg),
+      rgba(239, 68, 68, 0.03)
+    );
   }
 
-  .matrix-name {
+  .quadrant-title {
     font-size: 12px;
-    font-weight: 600;
-    margin-bottom: 4px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
     color: var(--text-primary);
   }
 
-  .matrix-dso {
-    font-size: 14px;
-    font-weight: 700;
-    margin-bottom: 2px;
-    font-family: "JetBrains Mono", monospace;
+  .excellent .quadrant-title {
+    background: var(--success);
+    color: white;
   }
 
-  .matrix-amount {
-    font-size: 10px;
+  .good .quadrant-title {
+    background: var(--warning);
+    color: white;
+  }
+
+  .attention .quadrant-title {
+    background: rgb(251, 146, 60);
+    color: white;
+  }
+
+  .critical .quadrant-title {
+    background: var(--danger);
+    color: white;
+  }
+
+  .jp-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 11px;
+  }
+
+  .jp-item:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--accent-blue);
+  }
+
+  .jp-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    font-size: 12px;
+  }
+
+  .jp-metrics {
+    display: flex;
+    justify-content: space-between;
     color: var(--text-secondary);
+  }
+
+  .jp-dso {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 600;
+  }
+
+  .jp-avance {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 600;
   }
 
   /* ANÁLISIS COMPARATIVO */
@@ -499,7 +625,18 @@
   <div class="container mx-auto max-w-7xl">
     <!-- HEADER CON MÉTRICAS EJECUTIVAS -->
     <div class="command-header">
-      <h1 class="header-title">📊 Centro de Comando JP - Analytics</h1>
+      <h1 class="header-title">
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          style="margin-right: 12px; vertical-align: middle">
+          <path
+            d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+        </svg>
+        Centro de Comando JP - Analytics
+      </h1>
 
       <div class="kpi-grid">
         {% set criticos_count = encargados|selectattr('dso', '>',
@@ -578,7 +715,15 @@
     <div class="alerts-section">
       <div class="alert-banner">
         <div class="alert-title">
-          🚨 {{ jp_criticos|length }} JP requieren acción inmediata
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            style="margin-right: 8px; vertical-align: middle">
+            <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
+          </svg>
+          {{ jp_criticos|length }} JP requieren acción inmediata
         </div>
         <div class="alert-subtitle">
           ${{
@@ -595,7 +740,17 @@
       <!-- DISTRIBUCIÓN DSO -->
       <div class="chart-card">
         <div class="chart-header">
-          <div class="chart-title">📈 Distribución DSO por JP</div>
+          <div class="chart-title">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style="margin-right: 8px; vertical-align: middle">
+              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
+            </svg>
+            Distribución DSO por JP
+          </div>
           <div class="chart-subtitle">Análisis de días de venta pendientes</div>
         </div>
         <div class="chart-container">
@@ -606,7 +761,18 @@
       <!-- ANÁLISIS DE RIESGO POR JP -->
       <div class="chart-card">
         <div class="chart-header">
-          <div class="chart-title">⚠️ Análisis de Riesgo por JP</div>
+          <div class="chart-title">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style="margin-right: 8px; vertical-align: middle">
+              <path
+                d="M12,2L13.09,8.26L22,9L13.09,9.74L12,16L10.91,9.74L2,9L10.91,8.26L12,2Z" />
+            </svg>
+            Análisis de Riesgo por JP
+          </div>
           <div class="chart-subtitle">JP clasificados por nivel de riesgo</div>
         </div>
         <div class="chart-container">
@@ -617,7 +783,18 @@
       <!-- CORRELACIÓN DSO-MONTO -->
       <div class="chart-card">
         <div class="chart-header">
-          <div class="chart-title">💰 DSO vs Monto Pendiente</div>
+          <div class="chart-title">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style="margin-right: 8px; vertical-align: middle">
+              <path
+                d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z" />
+            </svg>
+            DSO vs Monto Pendiente
+          </div>
           <div class="chart-subtitle">Identificación de casos críticos</div>
         </div>
         <div class="chart-container">
@@ -628,7 +805,18 @@
       <!-- EVOLUCIÓN TEMPORAL -->
       <div class="chart-card">
         <div class="chart-header">
-          <div class="chart-title">📅 Evolución Últimos 6 Meses</div>
+          <div class="chart-title">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style="margin-right: 8px; vertical-align: middle">
+              <path
+                d="M9,10V12H7V10H9M13,10V12H11V10H13M17,10V12H15V10H17M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5C3.89,21 3,20.1 3,19V5A2,2 0 0,1 5,3H6V1H8V3H16V1H18V3H19M19,19V8H5V19H19M9,14V16H7V14H9M13,14V16H11V14H13M17,14V16H15V14H17Z" />
+            </svg>
+            Evolución Últimos 6 Meses
+          </div>
           <div class="chart-subtitle">Tendencia de cobros y DSO</div>
         </div>
         <div class="chart-container">
@@ -646,8 +834,20 @@
             font-weight: 700;
             color: var(--text-primary);
             margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           ">
-          🏆 Rankings de Rendimiento
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            style="margin-right: 12px">
+            <path
+              d="M5,16L3,5H5.5L7,13L8.5,5H11L9,16H5M15,16L13,5H15.5L17,13L18.5,5H21L19,16H15M12,1L14.5,6L20.5,6.75L16.25,11L17.25,17L12,14.25L6.75,17L7.75,11L3.5,6.75L9.5,6L12,1Z" />
+          </svg>
+          Rankings de Rendimiento
         </h2>
         <p style="color: var(--text-secondary); margin: 0">
           Comparativa de JP por diferentes métricas clave
@@ -658,8 +858,32 @@
         <!-- TOP PERFORMERS -->
         <div class="ranking-card">
           <div class="chart-header">
-            <div class="chart-title">⭐ Mejores DSO</div>
-            <div class="chart-subtitle">Menor tiempo de cobro</div>
+            <div
+              class="chart-title"
+              title="DSO = Days Sales Outstanding. Mide cuántos días en promedio tarda en cobrarse una factura. Menor es mejor.">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style="margin-right: 6px; vertical-align: middle">
+                <path
+                  d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.46,13.97L5.82,21L12,17.27Z" />
+              </svg>
+              Mejores DSO
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="var(--text-tertiary)"
+                style="margin-left: 6px; cursor: help; vertical-align: middle">
+                <path
+                  d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z" />
+              </svg>
+            </div>
+            <div class="chart-subtitle">
+              Menor tiempo de cobro (mejor performance)
+            </div>
           </div>
           {% set sorted_by_dso = encargados|sort(attribute='dso') if encargados
           else [] %} {% for jp in sorted_by_dso[:5] %}
@@ -685,8 +909,32 @@
         <!-- MAYORES MONTOS -->
         <div class="ranking-card">
           <div class="chart-header">
-            <div class="chart-title">💰 Mayores Pendientes</div>
-            <div class="chart-subtitle">Montos más altos por cobrar</div>
+            <div
+              class="chart-title"
+              title="Ranking por montos pendientes de cobro. Identifica carteras de mayor volumen que requieren seguimiento prioritario.">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style="margin-right: 6px; vertical-align: middle">
+                <path
+                  d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z" />
+              </svg>
+              Mayores Pendientes
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="var(--text-tertiary)"
+                style="margin-left: 6px; cursor: help; vertical-align: middle">
+                <path
+                  d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z" />
+              </svg>
+            </div>
+            <div class="chart-subtitle">
+              Carteras de mayor volumen pendiente
+            </div>
           </div>
           {% set sorted_by_amount = encargados|sort(attribute='monto_pendiente',
           reverse=true) if encargados else [] %} {% for jp in
@@ -714,61 +962,70 @@
       </div>
     </div>
 
-    <!-- MATRIZ DE RENDIMIENTO -->
-    <div class="performance-matrix">
-      <div style="text-align: center; margin-bottom: 16px">
-        <h2
-          style="
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-          ">
-          🎯 Matriz de Rendimiento
-        </h2>
-        <p style="color: var(--text-secondary); margin: 0">
-          Vista rápida del estado de cada JP • Click para ver detalle
-        </p>
-      </div>
-
-      <div class="matrix-grid">
-        {% for jp in encargados|default([]) %} {% set dso = jp.dso|default(0) %}
-        {% set avance = jp.avance|default(0) %} {% set monto =
-        jp.monto_pendiente|default(0) %}
-
-        <div
-          class="matrix-cell {% if dso < 45 and avance > 80 %}excellent{% elif dso < 60 and avance > 60 %}good{% elif dso >= 60 or avance < 50 %}critical{% else %}warning{% endif %}"
-          onclick="window.open('/controller/encargado/{{ jp.nombre|default('') }}', '_blank')">
-          <div class="matrix-name">
-            {{ (jp.nombre|default('Sin Nombre'))[:8] }}{% if
-            (jp.nombre|default('Sin Nombre'))|length > 8 %}...{% endif %}
-          </div>
-          <div class="matrix-dso">{{ dso }}d</div>
-          <div class="matrix-amount">
-            ${{ "{:,.0f}".format(monto/1000000).replace(",",".") }}M
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
     <!-- TABLA COMPARATIVA DETALLADA -->
     <div class="comparison-section">
       <div class="comparison-table">
         <div class="table-header">
-          <div class="table-title">📋 Análisis Comparativo Detallado</div>
+          <div class="table-title">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style="margin-right: 8px; vertical-align: middle">
+              <path
+                d="M3,3H21V5H3V3M3,7H21V9H3V7M3,11H21V13H3V11M3,15H21V17H3V15M3,19H21V21H3V19Z" />
+            </svg>
+            Análisis Comparativo Detallado
+          </div>
           <div class="table-controls">
             <button class="filter-btn active" onclick="sortTable('dso')">
-              🕒 Por DSO
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style="margin-right: 4px">
+                <path
+                  d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+              </svg>
+              Por DSO
             </button>
             <button class="filter-btn" onclick="sortTable('amount')">
-              💰 Por Monto
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style="margin-right: 4px">
+                <path
+                  d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z" />
+              </svg>
+              Por Monto
             </button>
             <button class="filter-btn" onclick="sortTable('progress')">
-              📈 Por Avance
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style="margin-right: 4px">
+                <path
+                  d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z" />
+              </svg>
+              Por Avance
             </button>
             <button class="filter-btn" onclick="sortTable('critical')">
-              🚨 Críticos
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style="margin-right: 4px">
+                <path
+                  d="M12,2L13.09,8.26L22,9L13.09,9.74L12,16L10.91,9.74L2,9L10.91,8.26L12,2Z" />
+              </svg>
+              Críticos
             </button>
           </div>
         </div>
@@ -1137,10 +1394,31 @@
           tooltip: {
             callbacks: {
               label: function(context) {
+                const index = context.dataIndex;
                 if (context.datasetIndex === 0) {
-                  return 'DSO: ' + Math.round(context.parsed.y) + ' días';
+                  // DSO con % de cambio
+                  const currentValue = Math.round(context.parsed.y);
+                  let changeText = '';
+                  if (index > 0) {
+                    const prevValue = dsoData[index - 1];
+                    const change = ((currentValue - prevValue) / prevValue * 100);
+                    const changeStr = change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`;
+                    const arrow = change > 0 ? '↗' : change < 0 ? '↘' : '→';
+                    changeText = ` (${arrow} ${changeStr} vs mes ant.)`;
+                  }
+                  return `DSO: ${currentValue} días${changeText}`;
                 } else {
-                  return 'Cobros: $' + context.parsed.y.toFixed(1) + 'M';
+                  // Cobros con % de cambio
+                  const currentValue = context.parsed.y.toFixed(1);
+                  let changeText = '';
+                  if (index > 0) {
+                    const prevValue = cobrosData[index - 1];
+                    const change = ((context.parsed.y - prevValue) / prevValue * 100);
+                    const changeStr = change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`;
+                    const arrow = change > 0 ? '↗' : change < 0 ? '↘' : '→';
+                    changeText = ` (${arrow} ${changeStr} vs mes ant.)`;
+                  }
+                  return `Cobros: $${currentValue}M${changeText}`;
                 }
               }
             }
