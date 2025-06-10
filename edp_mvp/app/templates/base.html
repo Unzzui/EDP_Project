@@ -35,6 +35,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet" />
@@ -109,4 +113,7 @@
       setIcon(root.getAttribute("data-theme") || "dark");
     });
   </script>
+
+  <!-- Global Notifications Component -->
+  {% include 'components/global_notifications.html' %}
 </html>

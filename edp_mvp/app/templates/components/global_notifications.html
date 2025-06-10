@@ -1,0 +1,246 @@
+<!-- Global Real-time Notifications System -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Global notification system for all views
+    function showGlobalNotification(
+      message,
+      type = "info",
+      duration = 5000,
+      isImportant = false
+    ) {
+      // Remove existing notification
+      const existing = document.getElementById("global-notification");
+      if (existing) existing.remove();
+
+      const alertClass =
+        type === "warning"
+          ? "bg-amber-50 border-amber-200 text-amber-800"
+          : type === "error"
+          ? "bg-red-50 border-red-200 text-red-800"
+          : type === "success"
+          ? "bg-green-50 border-green-200 text-green-800"
+          : type === "payment"
+          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+          : type === "status_change"
+          ? "bg-blue-50 border-blue-200 text-blue-800"
+          : "bg-blue-50 border-blue-200 text-blue-800";
+
+      const notification = document.createElement("div");
+      notification.id = "global-notification";
+      notification.className = `fixed top-4 right-4 z-[9999] ${alertClass} border rounded-lg p-4 shadow-lg max-w-md ${
+        isImportant ? "ring-2 ring-blue-300" : ""
+      }`;
+      notification.innerHTML = `
+            <div class="flex items-start justify-between">
+                <div class="flex items-start">
+                    <span class="mr-3 text-lg">${getGlobalNotificationIcon(
+                      type
+                    )}</span>
+                    <div>
+                        <div class="font-medium">${message}</div>
+                        <div class="text-xs mt-1 opacity-75">
+                            ${new Date().toLocaleTimeString()} - Sistema automático
+                        </div>
+                    </div>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="text-current hover:opacity-70 ml-4">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        `;
+
+      // Add to body with animation
+      document.body.appendChild(notification);
+
+      // Animation
+      notification.style.transform = "translateX(100%)";
+      notification.style.opacity = "0";
+      setTimeout(() => {
+        notification.style.transition = "all 0.3s ease-out";
+        notification.style.transform = "translateX(0)";
+        notification.style.opacity = "1";
+      }, 10);
+
+      // Auto-hide (unless it's an important payment notification)
+      if (!isImportant) {
+        setTimeout(() => {
+          if (notification && notification.parentElement) {
+            notification.style.transition = "all 0.3s ease-in";
+            notification.style.transform = "translateX(100%)";
+            notification.style.opacity = "0";
+            setTimeout(() => {
+              if (notification.parentElement) {
+                notification.remove();
+              }
+            }, 300);
+          }
+        }, duration);
+      }
+    }
+
+    function getGlobalNotificationIcon(type) {
+      switch (type) {
+        case "warning":
+          return "⚠️";
+        case "error":
+          return "❌";
+        case "success":
+          return "✅";
+        case "payment":
+          return "💰";
+        case "status_change":
+          return "🔄";
+        case "urgent":
+          return "🚨";
+        default:
+          return "ℹ️";
+      }
+    }
+
+    // Make function globally available
+    window.showGlobalNotification = showGlobalNotification;
+
+    // Setup Socket.IO listeners for global notifications
+    if (window.io && typeof window.io === "function") {
+      const socket = window.io();
+
+      socket.on("edp_actualizado", function (data) {
+        console.log("📢 Global notification - EDP updated:", data);
+
+        // Determine notification type based on the change
+        let notificationType = "status_change";
+        let message = "";
+        let isImportant = false;
+
+        if (data.updates) {
+          // Handle the 4 main EDP states: revisión, enviado, pagado, validado
+          if (data.updates.estado === "pagado") {
+            // PAGADO - Most important state (payment completed)
+            notificationType = "payment";
+            message = `💰 EDP ${data.edp_id} marcado como PAGADO`;
+            if (data.updates.monto_aprobado) {
+              message += ` - Monto: $${data.updates.monto_aprobado}M`;
+            }
+            isImportant = true;
+
+            // Play notification sound for payment
+            if (window.Audio) {
+              try {
+                const audio = new Audio(
+                  "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IAAAAAAQAAABAAAAQBYAAEA2AABoAgAQAEAAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSts4Oty"
+                );
+                audio.volume = 0.4;
+                audio.play();
+              } catch (e) {
+                console.log("No se pudo reproducir sonido de notificación");
+              }
+            }
+          } else if (data.updates.estado === "validado") {
+            // VALIDADO - Final approval state
+            notificationType = "success";
+            message = `✅ EDP ${data.edp_id} VALIDADO correctamente`;
+            isImportant = true;
+          } else if (data.updates.estado === "enviado") {
+            // ENVIADO - Submitted for review
+            notificationType = "status_change";
+            message = `📤 EDP ${data.edp_id} ENVIADO para revisión`;
+          } else if (data.updates.estado === "revisión") {
+            // REVISIÓN - Under review
+            notificationType = "warning";
+            message = `🔍 EDP ${data.edp_id} en REVISIÓN`;
+          } else if (data.updates.monto_aprobado) {
+            // Amount update
+            notificationType = "status_change";
+            message = `💵 Monto actualizado para EDP ${data.edp_id}: $${data.updates.monto_aprobado}M`;
+          } else if (data.updates.fecha_conformidad) {
+            // Conformity date update
+            notificationType = "status_change";
+            message = `📅 Fecha de conformidad actualizada para EDP ${data.edp_id}`;
+          } else {
+            // General update
+            notificationType = "status_change";
+            message = `🔄 EDP ${data.edp_id} actualizado`;
+          }
+        } else {
+          message = `📋 EDP ${data.edp_id || "desconocido"} modificado`;
+        }
+
+        // Show global notification
+        showGlobalNotification(
+          message,
+          notificationType,
+          isImportant ? 10000 : 5000,
+          isImportant
+        );
+      });
+
+      socket.on("cache_invalidated", function (data) {
+        console.log("📢 Global notification - Cache invalidated:", data);
+
+        let cacheMessage = "💾 Cache actualizado automáticamente";
+
+        // Provide more specific cache invalidation info
+        if (data.cache_types && data.cache_types.length > 0) {
+          cacheMessage += ` (${data.cache_types.join(", ")})`;
+        }
+
+        showGlobalNotification(cacheMessage, "success", 3000);
+      });
+
+      // Connection status notifications
+      socket.on("connect", function () {
+        console.log("✅ Global Socket.IO connected for real-time updates");
+        showGlobalNotification(
+          "🔗 Conexión en tiempo real establecida",
+          "success",
+          2000
+        );
+      });
+
+      socket.on("disconnect", function () {
+        console.log("⚠️ Global Socket.IO disconnected");
+        showGlobalNotification(
+          "⚠️ Se perdió la conexión en tiempo real",
+          "warning",
+          5000
+        );
+      });
+
+      socket.on("reconnect", function () {
+        console.log("🔄 Global Socket.IO reconnected");
+        showGlobalNotification(
+          "🔄 Conexión en tiempo real restablecida",
+          "success",
+          3000
+        );
+      });
+    } else {
+      console.log("⚠️ Socket.IO not available for global notifications");
+      showGlobalNotification(
+        "⚠️ Actualizaciones en tiempo real no disponibles",
+        "warning",
+        5000
+      );
+    }
+  });
+</script>
+
+<style>
+  /* Global notification styles */
+  #global-notification {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+</style>

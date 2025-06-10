@@ -13,6 +13,7 @@ from ..utils.date_utils import parse_date_safe
 from ..utils.format_utils import clean_numeric_value
 from ..utils.gsheet import update_row, log_cambio_edp
 import numpy as np
+from ..services.cache_invalidation_service import invalidate_cache_on_change
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,7 @@ class EDPRepository(BaseRepository):
         else:
             raise Exception("Failed to create EDP")
 
+    @invalidate_cache_on_change('edp_updated', ['edps'])
     def update(self, edp: EDP) -> bool:
         """Update existing EDP."""
         if not edp.id:
@@ -129,6 +131,7 @@ class EDPRepository(BaseRepository):
         range_name = f"{self.sheet_name}!A{row_number}:{self._get_last_column(len(headers))}{row_number}"
         return self.sheets_repo._write_range(range_name, [row_values])
 
+    @invalidate_cache_on_change('edp_updated', ['edps'])
     def update_fields(self, edp_id: int, updates: Dict[str, Any]) -> bool:
         """Update specific fields of an EDP."""
         # Find the row
@@ -158,6 +161,7 @@ class EDPRepository(BaseRepository):
         # Write back
         return self.sheets_repo._write_range(range_name, [row_values])
 
+    @invalidate_cache_on_change('edp_updated', ['edps'])
     def update_by_edp_id(self, n_edp: str, form_data: Dict[str, Any], user: str = "Sistema") -> Dict[str, Any]:
         """Update EDP by n_edp using form data and log changes."""
         try:

@@ -13,12 +13,20 @@ celery = Celery(
     backend=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
 )
 
+# Configure task imports
+celery.conf.imports = [
+    'edp_mvp.app.tasks.metrics',
+]
+
 
 def init_celery(app: Flask) -> Celery:
     """Initialize Celery with Flask context."""
 
     celery.conf.update(app.config)
-
+    celery.conf.broker_connection_retry_on_startup = True
+    celery.conf.worker_send_task_events = True
+    celery.conf.worker_enable_remote_control = True
+    
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):
             with app.app_context():
@@ -43,18 +51,6 @@ def create_app():
     if os.getenv("ENABLE_PROFILER") == "1" and ProfilerMiddleware:
         app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
 
-    # if Profiler:
-    #     app.config.setdefault(
-    #         "flask_profiler",
-    #         {
-    #             "enabled": True,
-    #             "storage": {"engine": "sqlite"},
-    #             "basicAuth": {"enabled": False},
-    #             "ignore": ["^/static/.*"],
-    #         },
-    #     )
-    #     Profiler(app)
-
 
     # Usar imports relativos (con punto) o absolutos
     from .auth.routes import auth_bp
@@ -65,10 +61,6 @@ def create_app():
     from .controllers.controller_controller import controller_controller_bp
     from .controllers.manager_controller import manager_controller_bp
     from .controllers.edp_controller import edp_controller_bp
-
-    # Keep old imports as fallback during migration (comment out when fully migrated)
-    # from .dashboard.controller import controller_bp
-    # from .dashboard.manager import manager_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(edp_bp, url_prefix="/edp")
@@ -89,16 +81,31 @@ def create_app():
     celery.conf.beat_schedule = {
         "refresh-kpis": {
             "task": "edp_mvp.app.tasks.metrics.refresh_executive_kpis",
-            "schedule": 900,
+            "schedule": 600,  # Every 10 minutes
         },
         "refresh-kanban": {
             "task": "edp_mvp.app.tasks.metrics.refresh_kanban_metrics",
-            "schedule": 300,
+            "schedule": 300,  # Every 5 minutes
         },
         "refresh-cashflow": {
             "task": "edp_mvp.app.tasks.metrics.refresh_cashflow",
-            "schedule": 3600,
+            "schedule": 3600,  # Every hour
+        },
+        "refresh-global-analytics": {
+            "task": "edp_mvp.app.tasks.metrics.refresh_global_analytics",
+            "schedule": 900,  # Every 15 minutes
+        },
+        "precompute-dashboards": {
+            "task": "edp_mvp.app.tasks.metrics.precompute_dashboard_variants",
+            "schedule": 1800,  # Every 30 minutes
+        },
+        "cleanup-cache": {
+            "task": "edp_mvp.app.tasks.metrics.cleanup_stale_cache", 
+            "schedule": 3600,  # Every hour
         },
     }
 
+    # Import tasks to ensure they are registered with Celery
+    from . import tasks
+    
     return app

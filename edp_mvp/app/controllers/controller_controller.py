@@ -15,6 +15,7 @@ from flask import (
     make_response,
 )
 from typing import Dict, Any, Optional, List
+from datetime import datetime
 import traceback
 import logging
 import numpy as np
@@ -487,14 +488,33 @@ def _procesar_actualizacion_estado(edp_id: str, nuevo_estado: str, conformidad: 
     """Tarea en segundo plano para persistir el cambio de estado."""
     global _kanban_cache
     try:
+        from ..services.cache_invalidation_service import CacheInvalidationService
+        
         additional = {"conformidad_enviada": "Sí"} if conformidad else None
         resp = kanban_service.update_edp_status(edp_id, nuevo_estado, additional)
         if resp.success:
             _kanban_cache["ts"] = 0
-            socketio.emit(
-                "estado_actualizado",
-                {"edp_id": edp_id, "nuevo_estado": nuevo_estado, "cambios": resp.data.get("updates", {})},
-            )
+            
+            # Invalidar cache automáticamente
+            cache_invalidation = CacheInvalidationService()
+            cache_invalidation.register_data_change('edp_state_changed', [edp_id], 
+                                                  {'updated_fields': ['estado']})
+            
+            # Emit events for both manager dashboard and kanban board
+            socketio.emit("edp_actualizado", {
+                "edp_id": edp_id, 
+                "updates": {"estado": nuevo_estado, **resp.data.get("updates", {})}
+            })
+            socketio.emit("estado_actualizado", {
+                "edp_id": edp_id, 
+                "nuevo_estado": nuevo_estado, 
+                "cambios": resp.data.get("updates", {})
+            })
+            socketio.emit("cache_invalidated", {
+                "type": "edp_state_changed",
+                "affected_ids": [edp_id],
+                "timestamp": datetime.now().isoformat()
+            })
         else:
             logger.error(f"Error en background update: {resp.message}")
     except Exception as exc:
@@ -575,11 +595,27 @@ def actualizar_estado_detallado():
         # Actualizar en Google Sheets
         update_row(row_idx, cambios, "edp", usuario, force_update=True)
 
-        # Notificar via Socket.IO
-        socketio.emit(
-            "estado_actualizado",
-            {"edp_id": edp_id, "nuevo_estado": nuevo_estado, "cambios": cambios},
-        )
+        # Invalidar cache automáticamente
+        from ..services.cache_invalidation_service import CacheInvalidationService
+        cache_invalidation = CacheInvalidationService()
+        cache_invalidation.register_data_change('edp_state_changed', [edp_id], 
+                                              {'updated_fields': list(cambios.keys())})
+
+        # Notificar via Socket.IO - emitir ambos eventos para compatibilidad
+        socketio.emit("edp_actualizado", {
+            "edp_id": edp_id, 
+            "updates": cambios
+        })
+        socketio.emit("estado_actualizado", {
+            "edp_id": edp_id, 
+            "nuevo_estado": nuevo_estado, 
+            "cambios": cambios
+        })
+        socketio.emit("cache_invalidated", {
+            "type": "edp_state_changed",
+            "affected_ids": [edp_id],
+            "timestamp": datetime.now().isoformat()
+        })
 
         return jsonify(
             {
@@ -690,6 +726,7 @@ def api_update_edp(n_edp):
             "estado": request.form.get("estado") or "",
             "estado_detallado": request.form.get("estado_detallado") or "",
             "conformidad_enviada": request.form.get("conformidad_enviada") or "",
+            "fecha_conformidad": request.form.get("fecha_conformidad") or "",
             "n_conformidad": request.form.get("n_conformidad") or "",
             "monto_propuesto": request.form.get("monto_propuesto") or "",
             "monto_aprobado": request.form.get("monto_aprobado") or "",
@@ -722,6 +759,7 @@ def api_update_edp(n_edp):
 def _background_update_edp(n_edp: str, updates: Dict[str, Any], usuario: str):
     """Procesa la actualización de un EDP en un hilo de fondo."""
     from ..repositories import _range_cache
+    from ..services.cache_invalidation_service import CacheInvalidationService
 
     try:
         datos_response = controller_service.load_related_data()
@@ -753,7 +791,23 @@ def _background_update_edp(n_edp: str, updates: Dict[str, Any], usuario: str):
 
         update_row(row_idx, updates, sheet_name="edp", usuario=usuario, force_update=True)
         _range_cache.clear()
-        socketio.emit("edp_actualizado", {"n_edp": n_edp, "updates": updates})
+        
+        # Invalidar cache automáticamente basado en cambios reales
+        cache_invalidation = CacheInvalidationService()
+        if 'estado' in updates:
+            cache_invalidation.register_data_change('edp_state_changed', [n_edp], 
+                                                  {'updated_fields': list(updates.keys())})
+        else:
+            cache_invalidation.register_data_change('edp_updated', [n_edp], 
+                                                  {'updated_fields': list(updates.keys())})
+        
+        # Emit both EDP update and cache invalidation events
+        socketio.emit("edp_actualizado", {"edp_id": n_edp, "updates": updates})
+        socketio.emit("cache_invalidated", {
+            "type": "edp_state_changed" if 'estado' in updates else "edp_updated",
+            "affected_ids": [n_edp],
+            "timestamp": datetime.now().isoformat()
+        })
     except Exception as exc:
         logger.error(f"Error en background update: {exc}")
         logger.error(traceback.format_exc())
