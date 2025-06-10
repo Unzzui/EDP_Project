@@ -2,11 +2,12 @@ from flask import Flask
 from .config import get_config
 from flask_login import LoginManager
 from .extensions import socketio, login_manager
+import os
 
 try:
-    from flask_profiler import Profiler
+    from werkzeug.middleware.profiler import ProfilerMiddleware
 except Exception:  # pragma: no cover - optional dependency
-    Profiler = None
+    ProfilerMiddleware = None
 
 
 def create_app():
@@ -17,17 +18,8 @@ def create_app():
     login_manager.init_app(app)
     socketio.init_app(app)
 
-    if Profiler:
-        app.config.setdefault(
-            "flask_profiler",
-            {
-                "enabled": True,
-                "storage": {"engine": "sqlite"},
-                "basicAuth": {"enabled": False},
-                "ignore": ["^/static/.*"],
-            },
-        )
-        Profiler(app)
+    if os.getenv("ENABLE_PROFILER") == "1" and ProfilerMiddleware:
+        app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
 
     # Usar imports relativos (con punto) o absolutos
     from .auth.routes import auth_bp
