@@ -73,6 +73,17 @@ python run.py
 
 La aplicación estará disponible en `http://127.0.0.1:5000/login`
 
+### Trabajos en segundo plano (Celery)
+
+Para ejecutar las tareas asíncronas y el scheduler utiliza:
+
+```bash
+celery -A edp_mvp.app.celery worker --loglevel=info
+celery -A edp_mvp.app.celery beat   --loglevel=info
+```
+
+Puedes supervisar las colas con **Flower** accediendo a `http://localhost:5555` una vez iniciado con `celery --broker=$REDIS_URL flower`.
+
 ## Profiling inicial
 
 Al ejecutar la aplicación por primera vez se activa **Flask‑Profiler** para
