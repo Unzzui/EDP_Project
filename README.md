@@ -73,6 +73,13 @@ python run.py
 
 La aplicación estará disponible en `http://127.0.0.1:5000/login`
 
+## Profiling inicial
+
+Al ejecutar la aplicación por primera vez se activa **Flask‑Profiler** para
+registrar los tiempos de cada endpoint. Visita `/flask-profiler` para ver los
+resultados y capturar la línea base de latencia antes de aplicar
+optimizaciones.
+
 ## Estructura del proyecto
 
 ```

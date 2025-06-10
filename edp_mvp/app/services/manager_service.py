@@ -8,6 +8,15 @@ import pandas as pd
 import numpy as np
 import re
 import logging
+import os
+import json
+
+try:  # pragma: no cover - optional redis cache
+    import redis
+    redis_url = os.getenv("REDIS_URL")
+    redis_client = redis.from_url(redis_url) if redis_url else None
+except Exception:
+    redis_client = None
 
 from . import BaseService, ServiceResponse, ValidationError
 from ..models import EDP, KPI
@@ -35,6 +44,13 @@ class ManagerService(BaseService):
     ) -> ServiceResponse:
         """Get comprehensive dashboard data for managers."""
         try:
+            cache_key = f"manager_dashboard:{json.dumps(filters, sort_keys=True)}"
+            if redis_client:
+                cached = redis_client.get(cache_key)
+                if cached:
+                    data = json.loads(cached)
+                    return ServiceResponse(success=True, data=data)
+
             # Load base data as DataFrame for analytics
             edps_response = self.edp_repo.find_all_dataframe()
 
@@ -80,9 +96,7 @@ class ManagerService(BaseService):
             # Get filter options
             filter_options = self._get_manager_filter_options(df_edp)
 
-            return ServiceResponse(
-                success=True,
-                data={
+            result_data = {
                     "executive_kpis": executive_kpis,
                     "financial_metrics": financial_metrics,
                     "chart_data": chart_data,
@@ -96,8 +110,10 @@ class ManagerService(BaseService):
                         "filtered_records": len(df_filtered),
                         "last_updated": datetime.now(),
                     },
-                },
-            )
+            }
+            if redis_client:
+                redis_client.setex(cache_key, 300, json.dumps(result_data))
+            return ServiceResponse(success=True, data=result_data)
 
         except Exception as e:
             return ServiceResponse(
