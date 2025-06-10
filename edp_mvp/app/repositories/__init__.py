@@ -9,17 +9,20 @@ from googleapiclient.discovery import build
 from time import time
 import os
 import json
+import redis
 
 # Simple in-memory cache with optional Redis backend
 _range_cache: Dict[str, tuple] = {}
 _redis_client = None
 try:  # pragma: no cover - optional dependency
-    import redis
 
     redis_url = os.getenv("REDIS_URL")
     if redis_url:
+        print(f"🔗 Conectando a Redis en {redis_url}")
         _redis_client = redis.from_url(redis_url)
-except Exception:
+        print("✅ Conexión a Redis exitosa")
+except Exception as e:
+    print(f"⚠️ Error conectando a Redis: {e}")
     _redis_client = None
 
 from ..config import Config, get_config
