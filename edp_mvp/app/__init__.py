@@ -9,6 +9,11 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     ProfilerMiddleware = None
 
+try:
+    from flask_profiler import Profiler
+except Exception:  # pragma: no cover - optional dependency
+    Profiler = None
+
 
 def create_app():
     app = Flask(__name__)
@@ -20,6 +25,19 @@ def create_app():
 
     if os.getenv("ENABLE_PROFILER") == "1" and ProfilerMiddleware:
         app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
+
+    if Profiler:
+        app.config.setdefault(
+            "flask_profiler",
+            {
+                "enabled": True,
+                "storage": {"engine": "sqlite"},
+                "basicAuth": {"enabled": False},
+                "ignore": ["^/static/.*"],
+            },
+        )
+        Profiler(app)
+
 
     # Usar imports relativos (con punto) o absolutos
     from .auth.routes import auth_bp
