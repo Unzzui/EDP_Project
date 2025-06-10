@@ -11,6 +11,7 @@ from . import BaseRepository, SheetsRepository
 from ..models import EDP
 from ..utils.date_utils import parse_date_safe
 from ..utils.format_utils import clean_numeric_value
+from ..utils.gsheet import update_row, log_cambio_edp
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -156,6 +157,152 @@ class EDPRepository(BaseRepository):
 
         # Write back
         return self.sheets_repo._write_range(range_name, [row_values])
+
+    def update_by_edp_id(self, n_edp: str, form_data: Dict[str, Any], user: str = "Sistema") -> Dict[str, Any]:
+        """Update EDP by n_edp using form data and log changes."""
+        try:
+            
+            # Get all EDPs to find the specific one
+            edps_response = self.find_all_dataframe()
+            
+            if not edps_response.get("success", True):
+                return {
+                    "success": False,
+                    "message": f"Error retrieving EDPs: {edps_response.get('message', 'Unknown error')}"
+                }
+            
+            df_edps = edps_response.get("data", pd.DataFrame())
+            
+            if df_edps.empty:
+                return {
+                    "success": False,
+                    "message": "No EDPs found in the system"
+                }
+            
+            # Find EDP by n_edp
+            edp_found = df_edps[df_edps["n_edp"] == str(n_edp)]
+            
+            if edp_found.empty:
+                return {
+                    "success": False,
+                    "message": f"EDP with ID {n_edp} not found"
+                }
+            
+            # Get row number (add 2 for header and 0-based indexing)
+            row_index = edp_found.index[0]
+            row_number = row_index + 2
+            
+            # Get current EDP data
+            current_edp = edp_found.iloc[0].to_dict()
+        
+            
+            # Prepare updates dictionary
+            updates = {}
+            
+            # Map form fields to database fields
+            field_mapping = {
+                'estado': 'estado',
+                'estado_detallado': 'estado_detallado',
+                'conformidad_enviada': 'conformidad_enviada',
+                'fecha_conformidad': 'fecha_conformidad',
+                'motivo_no_aprobado': 'motivo_no_aprobado',
+                'tipo_falla': 'tipo_falla',
+                'observaciones': 'observaciones',
+                'monto_propuesto': 'monto_propuesto',
+                'monto_aprobado': 'monto_aprobado',
+                'n_conformidad': 'n_conformidad',
+                'fecha_estimada_pago': 'fecha_estimada_pago',
+                'fecha_emision': 'fecha_emision'
+            }
+            
+            # Process form data and track changes
+            changes = []
+            
+            for form_field, db_field in field_mapping.items():
+                if form_field in form_data:
+                    new_value = form_data[form_field]
+                    
+                    # Clean and format the new value
+                    if new_value == "":
+                        new_value = None
+                    
+                    # Get current value
+                    current_value = current_edp.get(db_field)
+                    
+                    # Convert current value for comparison
+                    if pd.isna(current_value):
+                        current_value = None
+                    elif isinstance(current_value, str):
+                        current_value = current_value.strip()
+                    
+
+                    
+                    # Improved comparison logic
+                    values_different = False
+                    
+                    # Handle None values
+                    if current_value is None and new_value is None:
+                        values_different = False
+                    elif current_value is None or new_value is None:
+                        values_different = True
+                    else:
+                        # Both values are not None, compare as strings
+                        current_str = str(current_value).strip()
+                        new_str = str(new_value).strip()
+                        values_different = current_str != new_str
+                    
+                    if values_different:
+                        updates[db_field] = new_value
+                        changes.append({
+                            'campo': db_field,
+                            'antes': current_value,
+                            'despues': new_value
+                        })
+            
+            # If there are no changes, return success
+            if not updates:
+                return {
+                    "success": True,
+                    "message": "No changes detected"
+                }
+            
+            # Update the sheet using gsheet utility
+            success = update_row(row_number, updates, sheet_name="edp")
+            
+            if success:
+                # Log changes
+                for change in changes:
+                    log_cambio_edp(
+                        n_edp=n_edp,
+                        proyecto=current_edp.get('proyecto', ''),
+                        campo=change['campo'],
+                        antes=change['antes'],
+                        despues=change['despues'],
+                        usuario=user
+                    )
+                
+                return {
+                    "success": True,
+                    "message": f"EDP {n_edp} updated successfully",
+                    "data": {
+                        "updated_fields": list(updates.keys()),
+                        "changes_count": len(changes)
+                    }
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Failed to update EDP in Google Sheets"
+                }
+                
+        except Exception as e:
+            import traceback
+            print(f"Error in update_by_edp_id: {str(e)}")
+            print(traceback.format_exc())
+            return {
+                "success": False,
+                "message": f"Error updating EDP: {str(e)}"
+            }
 
     def _read_sheet_with_transformations(self) -> pd.DataFrame:
         """Read EDP sheet with all transformations applied."""

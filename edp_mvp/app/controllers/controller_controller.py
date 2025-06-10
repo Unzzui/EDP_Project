@@ -28,7 +28,7 @@ from ..services.kpi_service import KPIService
 from ..utils.validation_utils import ValidationUtils
 from ..utils.format_utils import FormatUtils
 from ..utils.date_utils import DateUtils
-from ..utils.gsheet import update_row, log_cambio_edp
+from ..utils.gsheet import update_row, log_cambio_edp, read_log
 from ..extensions import socketio
 import pandas as pd
 import traceback
@@ -1611,6 +1611,7 @@ def detalle_edp(n_edp):
             form_data = request.form.to_dict()
             usuario = session.get("usuario", "Sistema")
 
+
             update_response = edp_service.update_edp(n_edp, form_data, usuario)
 
             if update_response.success:
@@ -1623,6 +1624,8 @@ def detalle_edp(n_edp):
                 )
 
     except Exception as e:
+        import traceback
+        print(traceback.format_exc())
         flash(f"Error inesperado: {str(e)}", "error")
         return redirect(url_for("controller.dashboard_controller"))
 
@@ -1631,17 +1634,124 @@ def detalle_edp(n_edp):
 def ver_log_edp(n_edp):
     """View EDP change log."""
     try:
-        # Get EDP log
-        log_response = analytics_service.get_edp_change_log(n_edp)
-
-        if not log_response.success:
-            flash(f"Error al cargar historial: {log_response.message}", "error")
-            return redirect(url_for("controller.dashboard_controller"))
-
-        log_data = log_response.data
-
+        # Get EDP log DataFrame from read_log
+        log_df = read_log(n_edp)
+        
+        # Process and group data for better visualization
+        registros_agrupados = {}
+        resumen_stats = {
+            'total_cambios': 0,
+            'ultimo_cambio': None,
+            'usuarios_unicos': set(),
+            'tipos_cambios': {}
+        }
+        
+        if not log_df.empty:
+            # Sort by date descending
+            log_df = log_df.sort_values('fecha_hora', ascending=False)
+            
+            for _, row in log_df.iterrows():
+                fecha_hora = row.get('fecha_hora')
+                fecha_key = fecha_hora.strftime('%Y-%m-%d');
+                
+                # Classify change type
+                campo = row.get('campo', '')
+                tipo_cambio = 'informacion'  # default
+                if 'estado' in campo.lower():
+                    tipo_cambio = 'estado'
+                elif 'monto' in campo.lower() or 'valor' in campo.lower():
+                    tipo_cambio = 'monto'
+                elif 'fecha' in campo.lower():
+                    tipo_cambio = 'fecha'
+                elif 'conformidad' in campo.lower():
+                    tipo_cambio = 'conformidad'
+                
+                # Determine change importance
+                es_importante = tipo_cambio in ['estado', 'monto', 'conformidad']
+                
+                # Format values
+                antes_formateado = format_log_value(row.get('antes'), campo)
+                despues_formateado = format_log_value(row.get('despues'), campo)
+                
+                registro = {
+                    'fecha_hora': fecha_hora,
+                    'hora_display': fecha_hora.strftime('%H:%M'),
+                    'n_edp': row.get('n_edp'),
+                    'proyecto': row.get('proyecto', ''),
+                    'campo': campo,
+                    'campo_display': format_field_name(campo),
+                    'antes': row.get('antes'),
+                    'despues': row.get('despues'),
+                    'antes_formateado': antes_formateado,
+                    'despues_formateado': despues_formateado,
+                    'usuario': row.get('usuario'),
+                    'tipo_cambio': tipo_cambio,
+                    'es_importante': es_importante,
+                    'icono': get_change_icon(tipo_cambio),
+                    'color_clase': get_change_color_class(tipo_cambio, row.get('despues'))
+                }
+                
+                # Group by date
+                if fecha_key not in registros_agrupados:
+                    registros_agrupados[fecha_key] = {
+                        'fecha': fecha_hora.date(),
+                        'fecha_display': format_date_display(fecha_hora.date()),
+                        'registros': []
+                    }
+                
+                registros_agrupados[fecha_key]['registros'].append(registro)
+                
+                # Update stats
+                resumen_stats['total_cambios'] += 1
+                resumen_stats['usuarios_unicos'].add(row.get('usuario', 'Desconocido'))
+                resumen_stats['tipos_cambios'][tipo_cambio] = resumen_stats['tipos_cambios'].get(tipo_cambio, 0) + 1
+                
+                if resumen_stats['ultimo_cambio'] is None:
+                    resumen_stats['ultimo_cambio'] = fecha_hora
+        
+        # Convert sets to lists and sort groups
+        resumen_stats['usuarios_unicos'] = list(resumen_stats['usuarios_unicos'])
+        registros_ordenados = dict(sorted(registros_agrupados.items(), reverse=True))
+        
+        # Add time_ago function to template context
+        def time_ago(fecha_datetime):
+            """Calculate time ago string for template"""
+            if not fecha_datetime:
+                return "desconocido"
+            
+            from datetime import datetime
+            now = datetime.now()
+            
+            # Handle timezone-naive datetime objects
+            if hasattr(fecha_datetime, 'tzinfo') and fecha_datetime.tzinfo is None and hasattr(now, 'tzinfo'):
+                if now.tzinfo is not None:
+                    fecha_datetime = fecha_datetime.replace(tzinfo=now.tzinfo)
+                    
+            diff = now - fecha_datetime
+            
+            if diff.days > 365:
+                years = diff.days // 365
+                return f"{years} año{'s' if years > 1 else ''}"
+            elif diff.days > 30:
+                months = diff.days // 30
+                return f"{months} mes{'es' if months > 1 else ''}"
+            elif diff.days > 0:
+                return f"{diff.days} día{'s' if diff.days > 1 else ''}"
+            elif diff.seconds > 3600:
+                hours = diff.seconds // 3600
+                return f"{hours} hora{'s' if hours > 1 else ''}"
+            elif diff.seconds > 60:
+                minutes = diff.seconds // 60
+                return f"{minutes} minuto{'s' if minutes > 1 else ''}"
+            else:
+                return "hace un momento"
+        
         return render_template(
-            "controller/controller_log_edp.html", n_edp=n_edp, **log_data
+            "controller/controller_log_edp.html", 
+            n_edp=n_edp, 
+            registros_agrupados=registros_ordenados,
+            resumen_stats=resumen_stats,
+            time_ago=time_ago
         )
 
     except Exception as e:
@@ -1649,18 +1759,105 @@ def ver_log_edp(n_edp):
         return redirect(url_for("controller.dashboard_controller"))
 
 
+def format_log_value(value, campo):
+    """Format log values for better display"""
+    if not value or str(value).lower() in ['nan', 'none', 'null']:
+        return "Sin valor"
+    
+    if 'monto' in campo.lower() or 'valor' in campo.lower():
+        try:
+            num_value = float(str(value).replace(',', '').replace('.', ''))
+            return f"${num_value:,.0f}".replace(',', '.')
+        except:
+            return str(value)
+    
+    if 'fecha' in campo.lower() and len(str(value)) == 8:
+        # Convert DDMMYYYY to DD/MM/YYYY
+        try:
+            date_str = str(value)
+            return f"{date_str[:2]}/{date_str[2:4]}/{date_str[4:]}"
+        except:
+            return str(value)
+    
+    return str(value)
+
+
+def format_field_name(campo):
+    """Format field names for better display"""
+    field_names = {
+        'estado': 'Estado',
+        'estado_detallado': 'Estado Detallado',
+        'monto_propuesto': 'Monto Propuesto',
+        'monto_aprobado': 'Monto Aprobado',
+        'fecha_estimada_pago': 'Fecha Estimada de Pago',
+        'conformidad_enviada': 'Conformidad Enviada',
+        'n_conformidad': 'Número de Conformidad',
+        'observaciones': 'Observaciones',
+        'rf_conformidad': 'RF Conformidad'
+    }
+    return field_names.get(campo, campo.replace('_', ' ').title())
+
+
+def get_change_icon(tipo_cambio):
+    """Get icon for change type"""
+    icons = {
+        'estado': '📋',
+        'monto': '💰',
+        'fecha': '📅',
+        'conformidad': '✅',
+        'informacion': '📝'
+    }
+    return icons.get(tipo_cambio, '📝')
+
+
+def get_change_color_class(tipo_cambio, nuevo_valor):
+    """Get color class based on change type and value"""
+    if tipo_cambio == 'estado':
+        if nuevo_valor and 'pagado' in str(nuevo_valor).lower():
+            return 'change-positive'
+        elif nuevo_valor and any(word in str(nuevo_valor).lower() for word in ['aprobado', 'confirmado']):
+            return 'change-positive'
+        elif nuevo_valor and any(word in str(nuevo_valor).lower() for word in ['pendiente', 'revision']):
+            return 'change-warning'
+        else:
+            return 'change-neutral'
+    elif tipo_cambio == 'monto':
+        return 'change-neutral'
+    elif tipo_cambio == 'conformidad':
+        return 'change-positive'
+    else:
+        return 'change-info'
+
+
+def format_date_display(fecha):
+    """Format date for display with relative time"""
+    from datetime import date, timedelta
+    
+    hoy = date.today()
+    ayer = hoy - timedelta(days=1)
+    
+    if fecha == hoy:
+        return "Hoy"
+    elif fecha == ayer:
+        return "Ayer"
+    elif (hoy - fecha).days < 7:
+        dias = (hoy - fecha).days
+        return f"Hace {dias} días"
+    else:
+        return fecha.strftime("%d/%m/%Y")
+
+
 @controller_controller_bp.route("/log/<n_edp>/csv")
 def descargar_log_csv(n_edp):
     """Download EDP change log as CSV."""
     try:
-        # Get CSV data
-        csv_response = analytics_service.get_edp_log_csv(n_edp)
-
-        if not csv_response.success:
-            flash(f"Error al generar CSV: {csv_response.message}", "error")
+        # Get CSV data as string
+        csv_data = analytics_service.get_edp_log_csv(n_edp)
+        print(f"CSV data for EDP {n_edp}:\n{csv_data[:1000]}...")  # Log first 1000 chars for debugging
+        # Check if there was an error
+        if csv_data.startswith("Error") or csv_data.startswith("No hay datos"):
+            flash(csv_data, "error")
             return redirect(url_for("controller.ver_log_edp", n_edp=n_edp))
-
-        csv_data = csv_response.data
 
         # Create response
         response = make_response(csv_data)
@@ -1676,194 +1873,35 @@ def descargar_log_csv(n_edp):
         return redirect(url_for("controller.ver_log_edp", n_edp=n_edp))
 
 
-@controller_controller_bp.route("/issues")
-def vista_issues():
-    """Issues management view."""
-    try:
-        # Get filters from request
-        filters = {
-            "estado": request.args.get("estado", "todas"),
-            "tipo": request.args.get("tipo", "todos"),
-            "proyecto": request.args.get("proyecto", "todos"),
-            "fecha_inicio": request.args.get("fecha_inicio"),
-            "fecha_fin": request.args.get("fecha_fin"),
-        }
+def time_ago(fecha_datetime):
+    """Calculate time ago string for template"""
+    if not fecha_datetime:
+        return "desconocido"
+    
+    now = datetime.now()
+    if fecha_datetime.tzinfo is None:
+        # If datetime is naive, assume it's in local timezone
+        fecha_datetime = fecha_datetime.replace(tzinfo=now.tzinfo) if now.tzinfo else fecha_datetime
+    
+    diff = now - fecha_datetime
+    
+    if diff.days > 365:
+        years = diff.days // 365
+        return f"{years} año{'s' if years > 1 else ''}"
+    elif diff.days > 30:
+        months = diff.days // 30
+        return f"{months} mes{'es' if months > 1 else ''}"
+    elif diff.days > 0:
+        return f"{diff.days} día{'s' if diff.days > 1 else ''}"
+    elif diff.seconds > 3600:
+        hours = diff.seconds // 3600
+        return f"{hours} hora{'s' if hours > 1 else ''}"
+    elif diff.seconds > 60:
+        minutes = diff.seconds // 60
+        return f"{minutes} minuto{'s' if minutes > 1 else ''}"
+    else:
+        return "hace un momento"
 
-        # Get issues data using analytics service
-        issues_response = analytics_service.get_issues_analysis(filters)
-
-        if not issues_response.success:
-            flash(f"Error al cargar incidencias: {issues_response.message}", "error")
-            return redirect(url_for("controller.dashboard_controller"))
-
-        issues_data = issues_response.data
-
-        return render_template(
-            "controller/controller_issues.html",
-            **issues_data,
-            filtros=filters,
-            now=datetime.now(),
-        )
-
-    except Exception as e:
-        flash(f"Error al cargar incidencias: {str(e)}", "error")
-        return redirect(url_for("controller.dashboard_controller"))
-
-
-@controller_controller_bp.route("/issues/analisis")
-def analisis_issues():
-    """Issues analysis dashboard."""
-    try:
-        # Get comprehensive issues analysis
-        analysis_response = analytics_service.get_comprehensive_issues_analysis()
-
-        if not analysis_response.success:
-            flash(f"Error al cargar análisis: {analysis_response.message}", "error")
-            return redirect(url_for("controller.vista_issues"))
-
-        analysis_data = analysis_response.data
-
-        return render_template(
-            "controller/controller_issues_analisis.html", **analysis_data
-        )
-
-    except Exception as e:
-        flash(f"Error al cargar análisis: {str(e)}", "error")
-        return redirect(url_for("controller.vista_issues"))
-
-
-# === HELPER FUNCTIONS ===
-
-
-def _calcular_dso_simple(registros):
-    """
-    Calcula DSO simple para una lista de registros (diccionarios)
-    """
-    if not registros:
-        return 0
-
-    registros_validos = []
-    for r in registros:
-        if r.get("Fecha Emisión") and (
-            r.get("Fecha Pago") or r.get("Fecha Conformidad")
-        ):
-            try:
-                fecha_emision = datetime.strptime(str(r["Fecha Emisión"]), "%Y-%m-%d")
-                fecha_final = None
-
-                if r.get("Fecha Pago"):
-                    fecha_final = datetime.strptime(str(r["Fecha Pago"]), "%Y-%m-%d")
-                elif r.get("Fecha Conformidad"):
-                    fecha_final = datetime.strptime(
-                        str(r["Fecha Conformidad"]), "%Y-%m-%d"
-                    )
-
-                if fecha_final:
-                    dias_cobro = (fecha_final - fecha_emision).days
-                    if dias_cobro >= 0:
-                        registros_validos.append(
-                            {
-                                "dias": dias_cobro,
-                                "monto": float(r.get("monto_aprobado", 0)),
-                            }
-                        )
-            except:
-                continue
-
-    if not registros_validos:
-        return 0
-
-    # Calculate weighted average
-    total_monto = sum(r["monto"] for r in registros_validos)
-    if total_monto == 0:
-        return 0
-
-    dso = sum(r["dias"] * r["monto"] for r in registros_validos) / total_monto
-    return round(dso, 1)
-
-
-def _calcular_variaciones_mensuales(
-    df_full_dict, mes_actual_param, meses_disponibles, total_pagado_global, META_GLOBAL
-):
-    """
-    Calcula las variaciones de métricas respecto al mes anterior.
-    """
-    variaciones = {
-        "meta_var_porcentaje": 0,
-        "pagado_var_porcentaje": 0,
-        "pendiente_var_porcentaje": 0,
-        "avance_var_porcentaje": 0,
-    }
-
-    if not meses_disponibles or len(meses_disponibles) <= 1:
-        return variaciones
-
-    mes_actual = mes_actual_param if mes_actual_param else max(meses_disponibles)
-    mes_anterior = None
-
-    if mes_actual and len(meses_disponibles) > 1:
-        try:
-            idx_mes_actual = meses_disponibles.index(mes_actual)
-            mes_anterior = (
-                meses_disponibles[idx_mes_actual - 1] if idx_mes_actual > 0 else None
-            )
-        except ValueError:
-            pass
-
-    if mes_anterior:
-        # Filter records for previous month
-        registros_mes_anterior = [
-            r for r in df_full_dict if r.get("Mes") == mes_anterior
-        ]
-
-        # Previous month metrics
-        meta_mes_anterior = META_GLOBAL  # Assuming constant META_GLOBAL
-        pagado_mes_anterior = sum(
-            float(r.get("monto_aprobado", 0))
-            for r in registros_mes_anterior
-            if r.get("estado") == "pagado"
-        )
-        avance_mes_anterior = (
-            round(pagado_mes_anterior / meta_mes_anterior * 100, 1)
-            if meta_mes_anterior > 0
-            else 0
-        )
-
-        # Calculate variations
-        variaciones["pagado_var_porcentaje"] = round(
-            (
-                (
-                    (total_pagado_global - pagado_mes_anterior)
-                    / pagado_mes_anterior
-                    * 100
-                )
-                if pagado_mes_anterior
-                else 0
-            ),
-            1,
-        )
-
-        # Pending variations
-        pendiente_actual = META_GLOBAL - total_pagado_global
-        pendiente_anterior = meta_mes_anterior - pagado_mes_anterior
-        variaciones["pendiente_var_porcentaje"] = round(
-            (
-                ((pendiente_actual - pendiente_anterior) / pendiente_anterior * 100)
-                if pendiente_anterior
-                else 0
-            ),
-            1,
-        )
-
-        # Progress variation (in percentage points)
-        avance_global = (
-            round(total_pagado_global / META_GLOBAL * 100, 1) if META_GLOBAL > 0 else 0
-        )
-        variaciones["avance_var_porcentaje"] = round(
-            avance_global - avance_mes_anterior, 1
-        )
-
-    return variaciones
 
 
 def _generate_monthly_evolution_data(analisis_encargados: Dict, meses_disponibles: List[str], raw_data: Dict = None) -> Dict:
@@ -1968,16 +2006,15 @@ def _generate_monthly_evolution_data(analisis_encargados: Dict, meses_disponible
         },
         'tendencia_general': 'creciente' if len(total_por_mes) > 1 and total_por_mes[-1] > total_por_mes[0] else 'decreciente' if len(total_por_mes) > 1 else 'estable'
     }
-
-
+    
 def _calculate_historical_velocity(tendencias: Dict) -> List[Dict]:
     """Calcula velocidad histórica basada en datos reales de tendencias."""
     tendencia_cobro = tendencias.get('tendencia_cobro', [])
-    
+
     if not tendencia_cobro:
         # Fallback con datos ficticios si no hay datos históricos
         return [{'mes': f'Mes {i+1}', 'velocidad': 85} for i in range(6)]
-    
+
     velocidad_historica = []
     for i, item in enumerate(tendencia_cobro[-6:]):  # Últimos 6 meses
         if isinstance(item, (list, tuple)) and len(item) >= 2:
@@ -1996,11 +2033,11 @@ def _calculate_historical_velocity(tendencias: Dict) -> List[Dict]:
             'mes': mes if isinstance(item, (list, tuple)) else f'Mes {i+1}',
             'velocidad': round(velocidad, 1)
         })
-    
+
     # Asegurar que tenemos 6 elementos
     while len(velocidad_historica) < 6:
         velocidad_historica.append({'mes': f'Mes {len(velocidad_historica)+1}', 'velocidad': 85})
-    
+
     return velocidad_historica[-6:]
 
 

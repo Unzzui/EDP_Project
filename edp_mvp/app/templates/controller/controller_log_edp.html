@@ -1,283 +1,653 @@
-{% extends "base.html" %}
-{% block title %}Historial de Cambios EDP {{ n_edp }}{% endblock %}
-{% block content %}
-<div class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn">
-  <!-- Encabezado -->
-  <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
-    <div class="flex items-center">
-      <div class="mr-3 p-2 bg-[color:var(--bg-card)] rounded-lg relative overflow-hidden">
-        <div class="absolute inset-0 bg-[color:var(--accent-blue)] opacity-10 rounded-lg"></div>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[color:var(--accent-blue)] relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Historial de Cambios</h1>
-        <div class="flex items-center mt-1 text-sm text-[color:var(--text-secondary)]">
-          <span class="font-medium">EDP-{{ n_edp }}</span>
-          <span class="mx-2 inline-flex h-1.5 w-1.5 rounded-full bg-[color:var(--accent-blue)] opacity-60"></span>
-          <span>{{ registros|length }} cambios registrados</span>
-        </div>
+{% extends "base.html" %} {% block title %}Historial de Cambios EDP {{ n_edp
+}}{% endblock %} {% block content %}
+
+<div class="log-container">
+  <!-- Encabezado con estadísticas -->
+  <div class="log-header">
+    <div class="header-top">
+      <h1 class="log-title">📊 Historial de Cambios - EDP {{ n_edp }}</h1>
+
+      <div class="header-actions">
+        <a
+          href="{{ url_for('controller.dashboard_controller') }}"
+          class="btn btn-secondary">
+          ← Volver al Dashboard
+        </a>
+        {% if registros_agrupados %}
+        <a
+          href="{{ url_for('controller.descargar_log_csv', n_edp=n_edp) }}"
+          class="btn btn-primary">
+          📥 Descargar CSV
+        </a>
+        {% endif %}
       </div>
     </div>
-    
-    <div class="mt-4 md:mt-0 flex flex-col sm:flex-row gap-3">
-      <a href="{{ url_for('controller_bp.detalle_edp', n_edp=n_edp) }}" 
-         class="flex items-center justify-center text-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-lg border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-all shadow-sm hover:shadow">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Volver al Detalle del EDP
-      </a>
-      
-      <a href="{{ url_for('controller_bp.descargar_log_csv', n_edp=n_edp) }}" 
-         class="flex items-center justify-center text-sm bg-[color:var(--accent-blue-dark)] bg-opacity-15 text-[color:var(--accent-blue)] px-4 py-2 rounded-lg hover:bg-opacity-25 transition-all border border-transparent hover:border-[color:var(--accent-blue-dark)] hover:border-opacity-20 shadow-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M3 4a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V4zm7 5a1 1 0 10-2 0v3H6l4 4 4-4h-2V9z" clip-rule="evenodd" />
-        </svg>
-        Descargar CSV
-      </a>
+
+    {% if resumen_stats.total_cambios > 0 %}
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">{{ resumen_stats.total_cambios }}</div>
+        <div class="stat-label">Total de cambios</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">
+          {{ resumen_stats.tipos_cambios.get('estado', 0) }}
+        </div>
+        <div class="stat-label">Estados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">
+          {{ resumen_stats.tipos_cambios.get('monto', 0) }}
+        </div>
+        <div class="stat-label">Montos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ resumen_stats.usuarios_unicos|length }}</div>
+        <div class="stat-label">Usuarios</div>
+      </div>
+      {% if resumen_stats.ultimo_cambio %}
+      <div class="stat-card">
+        <div class="stat-value">
+          {{ time_ago(resumen_stats.ultimo_cambio) }}
+        </div>
+        <div class="stat-label">Último cambio</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Filtros -->
+  {% if registros_agrupados %}
+  <div class="filters">
+    <div class="filter-buttons">
+      <button class="filter-btn active" data-filter="all">📊 Todos</button>
+      <button class="filter-btn" data-filter="states">📋 Estados</button>
+      <button class="filter-btn" data-filter="amounts">💰 Montos</button>
+      <button class="filter-btn" data-filter="conformities">
+        ✅ Conformidades
+      </button>
+      <button class="filter-btn" data-filter="important">⭐ Importantes</button>
+    </div>
+
+    <div class="filter-users">
+      <select id="userFilter" class="filter-btn">
+        <option value="">👥 Todos los usuarios</option>
+        {% for usuario in resumen_stats.usuarios_unicos %}
+        <option value="{{ usuario }}">{{ usuario }}</option>
+        {% endfor %}
+      </select>
     </div>
   </div>
 
-  {% if registros %}
-  <!-- Timeline con linealidad visual mejorada -->
-  <div class="relative">
-    <!-- Línea de tiempo continua -->
-    <div class="hidden md:block absolute left-[35px] top-4 bottom-4 w-[2px] bg-gradient-to-b from-[color:var(--accent-blue-dark)] via-[color:var(--accent-blue)] to-[color:var(--accent-blue-light)] opacity-50"></div>
+  <!-- Timeline -->
+  <div class="timeline">
+    {% for fecha_key, grupo in registros_agrupados.items() %}
+    <div class="date-group" data-date="{{ fecha_key }}">
+      <div class="date-header">
+        <h3 class="date-title">
+          {{ grupo.fecha_display }} ({{ grupo.registros|length }} cambios)
+        </h3>
+      </div>
 
-    <div class="space-y-4">
-      {% for r in registros %}
-      <div class="timeline-item flex flex-col md:flex-row p-4 bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)] transition-all hover:border-[color:var(--border-color)] hover:shadow-md hover:translate-y-[-2px] duration-300"
-           {% if r['Campo'] == 'Estado' %}data-campo-importante="true"{% endif %}>
-        
-        <!-- Fecha (móvil) -->
-        <div class="md:hidden mb-3 flex items-center text-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[color:var(--accent-blue-light)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <span class="text-[color:var(--text-secondary)]">{{ r['Fecha y Hora'].strftime('%Y-%m-%d %H:%M:%S') }}</span>
-        </div>
-        
-        <!-- Fecha (escritorio) con punto destacado y alineación consistente -->
-        <div class="timeline-marker hidden md:flex flex-col items-center mr-6 w-[70px] relative z-10">
-          <!-- Punto del timeline con tamaño consistente -->
-          <div class="h-[12px] w-[12px] rounded-full bg-[color:var(--accent-blue)]
-                     {% if r['Campo'] == 'Estado' %}ring-4 ring-[color:var(--accent-blue)] ring-opacity-20{% endif %}
-                     shadow-[0_0_10px_rgba(91,139,255,0.8)] mb-1.5"></div>
-          <!-- Fecha con alineación fija -->
-          <div class="text-xs text-[color:var(--text-secondary)] text-center font-medium">
-            {{ r['Fecha y Hora'].strftime('%Y-%m-%d') }}<br>
-            <span class="opacity-80">{{ r['Fecha y Hora'].strftime('%H:%M:%S') }}</span>
-          </div>
-        </div>
+      {% for registro in grupo.registros %}
+      <div
+        class="change-item {{ registro.color_clase }}"
+        data-type="{{ registro.tipo_cambio }}"
+        data-user="{{ registro.usuario }}"
+        data-important="{{ 'true' if registro.es_importante else 'false' }}">
+        <div class="change-icon">{{ registro.icono }}</div>
 
-        <!-- Contenido del cambio con altura mínima garantizada -->
-        <div class="flex-1 min-h-[90px] flex flex-col justify-between">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
-            <!-- Tipo de cambio con iconos estandarizados -->
-            <div class="campo-header text-[color:var(--accent-blue-light)] font-semibold flex items-center">
-              <div class="icon-container flex items-center justify-center h-5 w-5 mr-1.5">
-                {% if r['Campo'] == 'Estado' %}
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
-                </svg>
-                {% elif 'Monto' in r['Campo'] %}
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
-                </svg>
-                {% else %}
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                  <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
-                </svg>
-                {% endif %}
-              </div>
-              <span>{{ r['Campo'] }}</span>
-            </div>
-            
-            <!-- Usuario con estilo consistente -->
-            <div class="text-xs flex items-center mt-1 md:mt-0 bg-[color:var(--bg-input)] px-2.5 py-1 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1 text-[color:var(--accent-blue-light)]" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-              </svg>
-              <span class="text-[color:var(--text-secondary)]">{{ r['Usuario'] }}</span>
-            </div>
-          </div>
-
-          <!-- Visualización del valor anterior y nuevo con altura consistente -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-auto">
-            {% for etiqueta, valor, side in [('Valor anterior', r['Antes'], 'left'), ('Nuevo valor', r['Después'], 'right')] %}
-            <div class="valor-container p-3.5 bg-[color:var(--bg-input)] rounded-lg border border-[color:var(--border-color-subtle)] relative overflow-hidden group min-h-[60px] flex flex-col" 
-                 title="{{ valor }}">
-              
-              {% if side == 'right' %}
-              <div class="absolute inset-y-0 left-0 w-1 bg-[color:var(--accent-blue)] rounded-l"></div>
-              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-[color:var(--accent-blue)] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="change-content">
+          <div class="change-header">
+            <div class="change-description">
+              {{ registro.campo_display }} {% if registro.es_importante %}
+              <span class="important-tag">⭐ Importante</span>
               {% endif %}
-              
-              <div class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5 flex items-center">
-                {% if side == 'left' %}
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm1 8a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
-                </svg>
-                {% else %}
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-                {% endif %}
-                {{ etiqueta }}
-              </div>
-              
-              <!-- Contenido del valor con formato consistente -->
-              <div class="valor-texto mt-1 {% if side=='right' %}text-[color:var(--text-primary)] font-medium{% else %}text-[color:var(--text-secondary)]{% endif %} truncate">
-                {% if valor %}
-                  {% if 'Monto' in r['Campo'] and valor|int %}
-                    <span class="font-mono">${{ "{:,.0f}".format(valor|int).replace(',', '.') }}</span>
-                  {% else %}
-                    {{ valor }}
-                  {% endif %}
-                {% else %}
-                  <span class="text-[color:var(--text-disabled)] italic">Sin valor</span>
-                {% endif %}
-              </div>
-              
             </div>
-            {% endfor %}
+            <div class="change-time">{{ registro.hora_display }}</div>
+          </div>
+
+          <div class="change-user">👤 {{ registro.usuario }}</div>
+
+          <div class="change-values">
+            <div class="value-from">
+              <span class="value-label">Antes</span>
+              <span class="value-content">{{ registro.antes_formateado }}</span>
+            </div>
+            <div class="arrow">→</div>
+            <div class="value-to">
+              <span class="value-label">Después</span>
+              <span class="value-content"
+                >{{ registro.despues_formateado }}</span
+              >
+            </div>
           </div>
         </div>
       </div>
       {% endfor %}
     </div>
+    {% endfor %}
   </div>
+
   {% else %}
-  <!-- Sin cambios registrados -->
-  <div class="flex flex-col items-center justify-center py-12 text-center">
-    <div class="p-5 mb-5 rounded-full bg-[color:var(--bg-card)] text-[color:var(--text-secondary)] relative">
-      <div class="absolute inset-0 rounded-full bg-[color:var(--accent-blue)] opacity-5"></div>
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-      </svg>
+  <!-- Estado vacío -->
+  <div class="empty-state">
+    <div class="empty-icon">📝</div>
+    <div class="empty-message">No hay cambios registrados</div>
+    <div class="empty-submessage">
+      Los cambios aparecerán aquí cuando se modifique el EDP
     </div>
-    <h2 class="text-[color:var(--text-primary)] text-lg font-medium mb-2">
-      No hay cambios registrados para este EDP
-    </h2>
-    <p class="text-sm text-[color:var(--text-secondary)] opacity-75 max-w-md">
-      Los cambios aparecerán aquí cuando se modifique el estado o las propiedades del EDP.
-    </p>
-    <a href="{{ url_for('controller_bp.detalle_edp', n_edp=n_edp) }}" class="mt-6 inline-flex items-center text-[color:var(--accent-blue)] hover:underline">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-      </svg>
-      Volver al detalle del EDP
-    </a>
   </div>
   {% endif %}
 </div>
 
-{% if registros %}
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    try {
-      // Garantizar visibilidad inmediata
-      document.querySelectorAll('.timeline-item').forEach(function(item) {
-        item.style.opacity = '1';
-      });
-      
-      // Aplicar animación escalonada
-      const timelineItems = document.querySelectorAll('.timeline-item');
-      console.log('Elementos timeline encontrados:', timelineItems.length);
-      
-      if (timelineItems.length > 0) {
-        timelineItems.forEach(function(item, index) {
-          setTimeout(function() {
-            item.classList.add('animate-complete');
-          }, 80 * index);
-        });
-      }
-      
-      // Destacar cambios de estado de forma consistente
-      const importantChanges = document.querySelectorAll('[data-campo-importante="true"]');
-      if (importantChanges.length > 0) {
-        importantChanges.forEach(function(item) {
-          item.classList.add('estado-destacado');
-        });
-      }
-      
-      // Garantizar alineación consistente
-      adjustHeights('.valor-container');
-      adjustHeights('.campo-header');
-      
-    } catch (error) {
-      console.error('Error en la inicialización del timeline:', error);
-    }
-  });
-  
-  // Función para ajustar alturas y mantener linealidad
-  function adjustHeights(selector) {
-    const elements = document.querySelectorAll(selector);
-    let maxHeight = 0;
-    
-    // Encontrar la altura máxima
-    elements.forEach(el => {
-      const height = el.offsetHeight;
-      if (height > maxHeight) maxHeight = height;
-    });
-    
-    // Aplicar altura máxima a todos
-    elements.forEach(el => {
-      el.style.minHeight = maxHeight + 'px';
-    });
-  }
-</script>
-
 <style>
-  /* Garantizar visibilidad básica */
-  .timeline-item {
-    opacity: 1;
-    position: relative;
+  .log-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: var(--background);
+    color: var(--text-primary);
   }
-  
-  /* Estilos para la animación */
-  .timeline-item {
-    transition: transform 0.4s ease-out, border-color 0.3s ease;
+
+  .log-header {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
   }
-  
-  .timeline-item.animate-complete {
-    transform: translateY(0);
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 20px;
+    flex-wrap: wrap;
   }
-  
-  /* Estilos para destacar cambios de estado de forma consistente */
-  .estado-destacado {
-    border-left: 4px solid var(--accent-blue) !important;
-    padding-left: 16px !important;
-    background-color: var(--bg-card);
-    background-image: linear-gradient(to right, rgba(var(--accent-blue-rgb), 0.05), transparent);
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
   }
-  
-  /* Garantizar consistencia en la línea temporal */
-  .timeline-marker {
-    position: relative;
-    align-self: flex-start;
+
+  .log-title {
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    flex: 1;
   }
-  
-  /* Valores monetarios con formato consistente */
-  .valor-texto {
-    line-height: 1.5;
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
   }
-  
-  /* Responsive con linealidad preservada */
+
+  .stat-card {
+    background: var(--bg-subtle);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color-subtle);
+  }
+
+  .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .filters {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .filter-buttons,
+  .filter-users {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .filter-users {
+    margin-bottom: 0;
+  }
+
+  .filter-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+  }
+
+  .filter-btn:hover {
+    background: var(--bg-hover);
+  }
+
+  .filter-btn.active {
+    background: var(--accent-blue);
+    color: var(--accent-white);
+    border-color: var(--accent-blue);
+  }
+
+  select.filter-btn {
+    appearance: none;
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 8px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+  }
+
+  .timeline {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+
+  .date-group {
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .date-group:last-child {
+    border-bottom: none;
+  }
+
+  .date-header {
+    background: var(--bg-subtle);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .date-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .change-item {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color-subtle);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: background-color 0.2s ease;
+  }
+
+  .change-item:hover {
+    background: var(--bg-hover);
+  }
+
+  .change-item:last-child {
+    border-bottom: none;
+  }
+
+  .change-icon {
+    font-size: 20px;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .change-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .change-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .change-description {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .important-tag {
+    font-size: 12px;
+    background: var(--warning-bg);
+    color: var(--warning);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+  }
+
+  .change-time {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    font-family: monospace;
+  }
+
+  .change-user {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  .change-values {
+    display: flex;
+    gap: 16px;
+    font-size: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .value-from,
+  .value-to {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .value-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    letter-spacing: 0.5px;
+  }
+
+  .value-content {
+    font-weight: 500;
+    font-family: monospace;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: var(--bg-subtle);
+  }
+
+  .value-from .value-content {
+    color: var(--text-secondary);
+  }
+
+  .value-to .value-content {
+    color: var(--text-primary);
+    background: var(--info-bg);
+  }
+
+  .arrow {
+    font-size: 16px;
+    color: var(--text-secondary);
+    align-self: center;
+  }
+
+  /* Color classes for different change types */
+  .change-item.state-change {
+    border-left: 3px solid var(--info);
+    background: var(--info-bg);
+  }
+
+  .change-item.state-change .change-icon {
+    color: var(--info);
+  }
+
+  .change-item.amount-change {
+    border-left: 3px solid var(--success);
+    background: var(--success-bg);
+  }
+
+  .change-item.amount-change .change-icon {
+    color: var(--success);
+  }
+
+  .change-item.conformity-change {
+    border-left: 3px solid var(--warning);
+    background: var(--warning-bg);
+  }
+
+  .change-item.conformity-change .change-icon {
+    color: var(--warning);
+  }
+
+  .change-item.important-change {
+    border-left: 3px solid var(--danger);
+    background: var(--danger-bg);
+  }
+
+  .change-item.important-change .change-icon {
+    color: var(--danger);
+  }
+
+  .change-item.pending-change {
+    border-left: 3px solid var(--accent-amber);
+    background: rgba(245, 158, 11, 0.08);
+  }
+
+  .change-item.pending-change .change-icon {
+    color: var(--accent-amber);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  .empty-message {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+
+  .empty-submessage {
+    font-size: 14px;
+    opacity: 0.8;
+    color: var(--text-secondary);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 14px;
+  }
+
+  .btn-primary {
+    background: var(--accent-blue);
+    color: var(--accent-white);
+    border: 1px solid var(--accent-blue);
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-blue-dark);
+    border-color: var(--accent-blue-dark);
+  }
+
+  .btn-secondary {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+  }
+
+  .btn-secondary:hover {
+    background: var(--bg-hover);
+  }
+
+  /* Filter button variants */
+  .filter-btn[data-filter="states"].active {
+    background: var(--info);
+    border-color: var(--info);
+  }
+
+  .filter-btn[data-filter="amounts"].active {
+    background: var(--success);
+    border-color: var(--success);
+  }
+
+  .filter-btn[data-filter="conformities"].active {
+    background: var(--warning);
+    border-color: var(--warning);
+  }
+
+  .filter-btn[data-filter="important"].active {
+    background: var(--danger);
+    border-color: var(--danger);
+  }
+
+  /* Responsive */
   @media (max-width: 768px) {
-    .timeline-item {
-      border-left: 2px solid var(--border-color-subtle);
-      padding-left: 12px;
+    .log-container {
+      padding: 16px;
     }
-    
-    .estado-destacado {
-      border-left: 3px solid var(--accent-blue) !important;
+
+    .header-top {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
     }
+
+    .header-actions {
+      order: -1; /* Move buttons above title on mobile */
+      justify-content: stretch;
+      flex-direction: column;
+    }
+
+    .log-title {
+      font-size: 20px;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .filter-buttons {
+      flex-direction: column;
+    }
+
+    .change-values {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .change-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .arrow {
+      transform: rotate(90deg);
+    }
+  }
+
+  /* Hide filtered items */
+  .change-item.hidden {
+    display: none;
+  }
+
+  .date-group.hidden {
+    display: none;
   }
 </style>
-{% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const filterButtons = document.querySelectorAll(".filter-btn[data-filter]");
+    const userFilter = document.getElementById("userFilter");
+    const changeItems = document.querySelectorAll(".change-item");
+    const dateGroups = document.querySelectorAll(".date-group");
+
+    function applyFilters() {
+      const activeFilter = document.querySelector(".filter-btn.active");
+      const filterType = activeFilter ? activeFilter.dataset.filter : "all";
+      const selectedUser = userFilter ? userFilter.value : "";
+
+      changeItems.forEach((item) => {
+        let shouldShow = true;
+
+        // Type filter
+        if (filterType === "important") {
+          shouldShow = item.dataset.important === "true";
+        } else if (filterType === "states") {
+          shouldShow = item.dataset.type.includes("estado");
+        } else if (filterType === "amounts") {
+          shouldShow = item.dataset.type.includes("monto");
+        } else if (filterType === "conformities") {
+          shouldShow = item.dataset.type.includes("conformidad");
+        } else if (filterType !== "all") {
+          shouldShow = item.dataset.type === filterType;
+        }
+
+        // User filter
+        if (shouldShow && selectedUser) {
+          shouldShow = item.dataset.user === selectedUser;
+        }
+
+        // Apply visibility
+        item.classList.toggle("hidden", !shouldShow);
+      });
+
+      // Hide empty date groups
+      dateGroups.forEach((group) => {
+        const visibleItems = group.querySelectorAll(
+          ".change-item:not(.hidden)"
+        );
+        group.classList.toggle("hidden", visibleItems.length === 0);
+      });
+    }
+
+    // Filter button clicks
+    filterButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        filterButtons.forEach((btn) => btn.classList.remove("active"));
+        this.classList.add("active");
+        applyFilters();
+      });
+    });
+
+    // User filter change
+    if (userFilter) {
+      userFilter.addEventListener("change", applyFilters);
+    }
+
+    // Initialize
+    applyFilters();
+  });
+</script>
+
 {% endblock %}

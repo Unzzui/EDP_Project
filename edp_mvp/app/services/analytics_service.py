@@ -1,6 +1,6 @@
 """
 Analytics Service - Servicio para análisis avanzados y reportes
-Maneja análisis de retrabajos, issues, tendencias y reportes detallados
+Maneja análisis de retrabajos, tendencias y reportes detallados
 """
 
 from typing import Dict, List, Any, Optional, Tuple
@@ -24,10 +24,8 @@ class AnalyticsService:
     def __init__(self):
         from ..repositories.edp_repository import EDPRepository
         from ..repositories.log_repository import LogRepository
-        from    ..repositories.issues_repository import IssuesRepository
         self.edp_repository = EDPRepository()
         self.log_repository = LogRepository()
-        self.issues_repository = IssuesRepository()
         self.date_utils = DateUtils()
         self.format_utils = FormatUtils()
         self.validation_utils = ValidationUtils()
@@ -63,74 +61,6 @@ class AnalyticsService:
             else:
                 result[key] = value
         return result
-
-    def get_issues_analysis(self, filtros: Optional[Dict] = None) -> ServiceResponse:
-        """
-        Análisis de incidencias para mejora de procesos
-
-        Args:
-            filtros: Filtros opcionales
-
-        Returns:
-            ServiceResponse con análisis de incidencias
-        """
-        try:
-            issues_response = self.issues_repository.find_all_dataframe()
-            df_issues = issues_response.get("data", pd.DataFrame())
-
-         
-
-            # Análisis por tipo de incidencia
-            analisis_tipos = self._analizar_tipos_incidencia(df_issues)
-
-            # Análisis por tipo de falla
-            analisis_fallas = self._analizar_tipos_falla(df_issues)
-
-            # Análisis por proyecto
-            analisis_proyectos = self._analizar_incidencias_por_proyecto(df_issues)
-
-            # Tendencias temporales
-            tendencias = self._analizar_tendencias_incidencias(df_issues)
-
-            # Tiempo de resolución
-            tiempo_resolucion = self._calcular_tiempo_resolucion(df_issues)
-
-            analisis = {
-                "tipos_incidencia": analisis_tipos,
-                "tipos_falla": analisis_fallas,
-                "por_proyecto": analisis_proyectos,
-                "tendencias": tendencias,
-                "tiempo_resolucion": tiempo_resolucion,
-                "stats": {
-                    "total_incidencias": len(df_issues),
-                    "incidencias_resueltas": len(
-                        df_issues.dropna(subset=["Fecha resolución"])
-                    ),
-                    "porcentaje_resuelto": (
-                        round(
-                            len(df_issues.dropna(subset=["Fecha resolución"]))
-                            / len(df_issues)
-                            * 100,
-                            1,
-                        )
-                        if len(df_issues) > 0
-                        else 0
-                    ),
-                },
-            }
-
-            return ServiceResponse(
-                success=True,
-                data=analisis,
-                message="Análisis de incidencias completado exitosamente",
-            )
-
-        except Exception as e:
-            logger.error(f"Error en análisis de incidencias: {str(e)}")
-            return ServiceResponse(
-                success=False,
-                message=f"Error al realizar análisis de incidencias: {str(e)}",
-            )
 
     def obtener_vista_encargado(
         self, nombre: str, filtros: Optional[Dict] = None
@@ -573,57 +503,6 @@ class AnalyticsService:
         )
 
         return df_enriquecido
-
-    def _analizar_tipos_incidencia(self, df_issues: pd.DataFrame) -> Dict:
-        """Analiza tipos de incidencia"""
-        if "Tipo" in df_issues.columns:
-            tipos = df_issues["tipo"].value_counts().to_dict()
-            total = sum(tipos.values())
-            porcentajes = {k: round(v / total * 100, 1) for k, v in tipos.items()}
-            return {"counts": tipos, "percentages": porcentajes}
-        return {"counts": {}, "percentages": {}}
-
-    def _analizar_tipos_falla(self, df_issues: pd.DataFrame) -> Dict:
-        """Analiza tipos de falla"""
-        if "tipo_falla" in df_issues.columns:
-            fallas = df_issues["tipo_falla"].value_counts().to_dict()
-            total = sum(fallas.values())
-            porcentajes = {k: round(v / total * 100, 1) for k, v in fallas.items()}
-            return {"counts": fallas, "percentages": porcentajes}
-        return {"counts": {}, "percentages": {}}
-
-    def _analizar_incidencias_por_proyecto(self, df_issues: pd.DataFrame) -> Dict:
-        """Analiza incidencias por proyecto"""
-        if "proyecto_relacionado" in df_issues.columns:
-            return df_issues["proyecto_relacionado"].value_counts().to_dict()
-        return {}
-
-    def _analizar_tendencias_incidencias(self, df_issues: pd.DataFrame) -> Dict:
-        """Analiza tendencias temporales de incidencias"""
-        if "timestamp" in df_issues.columns:
-            df_issues["semana"] = df_issues["timestamp"].dt.isocalendar().week
-            return df_issues.groupby("semana").size().to_dict()
-        return {}
-
-    def _calcular_tiempo_resolucion(self, df_issues: pd.DataFrame) -> Optional[float]:
-        """Calcula tiempo promedio de resolución"""
-        if "timestamp" in df_issues.columns and "fecha_resolucion" in df_issues.columns:
-            resueltas = df_issues.dropna(subset=["fecha_resolucion"])
-            if not resueltas.empty:
-                timestamp_col = pd.to_datetime(resueltas["timestamp"])
-                resolucion_col = pd.to_datetime(resueltas["fecha_resolucion"])
-
-                # Normalizar zonas horarias
-                if hasattr(timestamp_col.dt, "tz"):
-                    timestamp_col = timestamp_col.dt.tz_localize(None)
-                if hasattr(resolucion_col.dt, "tz"):
-                    resolucion_col = resolucion_col.dt.tz_localize(None)
-
-                # Calcular diferencia en días
-                diferencia = resolucion_col - timestamp_col
-                tiempo_resolucion = diferencia.dt.total_seconds() / (60 * 60 * 24)
-                return tiempo_resolucion.mean()
-        return None
 
     def _analizar_financiero_encargado(
         self, df_encargado: pd.DataFrame, nombre: str
@@ -1082,11 +961,11 @@ class AnalyticsService:
     def _generar_opciones_filtro(self, df: pd.DataFrame) -> Dict:
         """Genera opciones para filtros dinámicos"""
         return {
-            "meses": sorted(df["mes"].dropna().unique()),
-            "encargados": sorted(df["jefe_proyecto"].dropna().unique()),
-            "clientes": sorted(df["cliente"].dropna().unique()),
-            "estados": sorted(df["estado"].dropna().unique()),
-            "proyectos": sorted(df["proyecto"].dropna().unique()),
+            "meses": sorted(df["mes"].dropna().unique()) if "mes" in df.columns else [],
+            "encargados": sorted(df["jefe_proyecto"].dropna().unique()) if "jefe_proyecto" in df.columns else [],
+            "clientes": sorted(df["cliente"].dropna().unique()) if "cliente" in df.columns else [],
+            "estados": sorted(df["estado"].dropna().unique()) if "estado" in df.columns else [],
+            "proyectos": sorted(df["proyecto"].dropna().unique()) if "proyecto" in df.columns else [],
         }
 
     def _obtener_top_edps_pendientes(
@@ -1468,3 +1347,45 @@ class AnalyticsService:
                 "data": [],
                 "message": f"Error retrieving EDPs DataFrame: {str(e)}",
             }
+    def get_edp_log_csv(self, n_edp: str) -> str:
+        """Obtiene el log de EDPs como CSV string para exportar"""
+        try:
+            from ..utils.gsheet import read_log
+            
+            # Get log data using the existing read_log function
+            df_log = read_log(n_edp)
+
+            if df_log.empty:
+                return "No hay datos de log para este EDP"
+
+            # Sort by date descending
+            df_log = df_log.sort_values('fecha_hora', ascending=False)
+            
+            # Format datetime for CSV
+            if 'fecha_hora' in df_log.columns:
+                df_log["fecha_hora"] = pd.to_datetime(df_log["fecha_hora"]).dt.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+
+            # Renombrar columnas para claridad
+            column_mapping = {
+                "fecha_hora": "Fecha y Hora",
+                "n_edp": "Número EDP",
+                "proyecto": "Proyecto",
+                "campo": "Campo Modificado",
+                "antes": "Valor Anterior",
+                "despues": "Nuevo Valor",
+                "usuario": "Usuario Responsable",
+            }
+            
+            # Only rename columns that exist
+            df_log = df_log.rename(columns={k: v for k, v in column_mapping.items() if k in df_log.columns})
+
+            # Convert to CSV string
+            csv_string = df_log.to_csv(index=False, encoding='utf-8')
+            
+            return csv_string
+            
+        except Exception as e:
+            logger.error(f"Error al obtener log de EDP {n_edp}: {str(e)}")
+            return f"Error al generar CSV: {str(e)}"

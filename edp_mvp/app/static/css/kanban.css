@@ -1,5 +1,4 @@
-
-  /* ===== ESTILOS BÁSICOS DEL TABLERO KANBAN ===== */
+/* ===== ESTILOS BÁSICOS DEL TABLERO KANBAN ===== */
 .kanban-column {
 display: flex;
 flex-direction: column;
@@ -404,4 +403,46 @@ transform: none !important; /* Prevenir rotaciones que causan desalineación */
   outline: none;
   border-color: var(--accent-blue);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+/* ===== ESTILOS PARA FILTROS ===== */
+/* Corregir posicionamiento de iconos en select */
+.form-group .relative select {
+  position: relative;
+  z-index: 1;
+}
+
+.form-group .relative .absolute {
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Asegurar que los iconos no interfieran con el dropdown */
+.form-select {
+  position: relative;
+  z-index: 1;
+}
+
+/* Evitar que los iconos bloqueen clicks en el select */
+.form-group svg {
+  pointer-events: none;
+}
+
+/* Asegurar padding correcto para los iconos */
+.form-select.pl-9 {
+  padding-left: 2.25rem !important;
+}
+
+/* Posicionamiento específico para iconos de filtro */
+.filter-icon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
 }

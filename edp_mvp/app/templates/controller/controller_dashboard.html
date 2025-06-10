@@ -975,10 +975,6 @@
         <input type="checkbox" checked data-column="montoaprobado" class="mr-2">
         M. Aprobado
       </label>
-      <label class="flex items-center">
-        <input type="checkbox" checked data-column="critico" class="mr-2">
-        Crítico
-      </label>
     </div>
   </div>
   
@@ -998,7 +994,6 @@
           <th class="sortable text-center" data-sort="dias-habiles">Días Hábiles</th>
           <th class="sortable text-right" data-sort="monto-propuesto">M. Propuesto</th>
           <th class="sortable text-right" data-sort="monto-aprobado">M. Aprobado</th>
-          <th class="sortable text-center" data-sort="critico">Crítico</th>
           <th>Observaciones</th>
           <th></th>
         </tr>
@@ -1020,7 +1015,6 @@
       data-dias-habiles="{{ registro.get('dias_habiles', 0) }}"
       data-monto-propuesto="{{ registro.get('monto_propuesto', 0)|default(0) }}"
       data-monto-aprobado="{{ registro.get('monto_aprobado', 0)|default(0) }}"
-      data-critico="{{ 1 if registro.get('critico', False) else 0 }}"
       class="{% if registro.get('critico', False) %}data-table-row-critical{% endif %}{% if registro.get('estado', '') == 'validado' %}data-table-row-validated{% endif %}"
     >
       <td class="font-medium">{{ registro.get('proyecto', '-') }}</td>
@@ -1043,12 +1037,6 @@
       <td class="text-center">{{ registro.get('dias_habiles', 0) }}</td>
       <td class="text-right">${{ "{:,.0f}".format(registro.get('monto_propuesto', 0)|default(0)).replace(",",".") }}</td>
       <td class="text-right">${{ "{:,.0f}".format(registro.get('monto_aprobado', 0)|default(0)).replace(",",".") }}</td>
-      <td class="text-center">
-        {% if registro.get('critico', False) %}
-          <span class="text-[color:var(--accent-red)]">●</span>
-        {% else %}
-          <span class="text-[color:var(--text-secondary)]">○</span>
-        {% endif %}
  <td class="max-w-xs truncate" title="{{ registro.get('observaciones', '') }}">
   {{ registro.get('observaciones', '-')[:15] ~ ('...' if registro.get('observaciones') and registro.get('observaciones')|length > 50 else '') }}
 </td>

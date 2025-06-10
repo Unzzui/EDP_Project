@@ -118,24 +118,7 @@
           Re-trabajos
         </a>
       </li>
-      <li>
-        <a
-          href="{{ url_for('controller.vista_issues') }}"
-          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 {% if 'issues' in request.endpoint %} text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold {% else %} hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% endif %}">
-          <svg
-            class="w-4 h-4 mr-1.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Incidencias
-        </a>
-      </li>
+
     </ul>
 
     <!-- Acciones -->
@@ -280,11 +263,7 @@
       class="block py-2 px-4 rounded-md {% if 'retrabajos' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
       Re-trabajos
     </a>
-    <a
-      href="{{ url_for('controller.vista_issues') }}"
-      class="block py-2 px-4 rounded-md {% if 'issues' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
-      Incidencias
-    </a>
+   
   </div>
 </nav>
 

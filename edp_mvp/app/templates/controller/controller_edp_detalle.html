@@ -1,272 +1,434 @@
 {% extends "base.html" %}
-{% block title %}Detalle EDP #{{ edp['N° EDP'] }}{% endblock %}
+{% block title %}Detalle EDP #{{ edp['n_edp'] }}{% endblock %}
 
 {% block content %}
-<!-- ===================== PANEL PRINCIPAL ===================== -->
-<div class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn" aria-label="Detalles de EDP">
-  {# ----------------------------------------------------------- #}
-  {# Header                                                      #}
-  {# ----------------------------------------------------------- #}
-  <header class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
-    <div class="flex items-center">
-      <div class="mr-3 p-2 bg-[color:var(--bg-highlight)] rounded-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-      </div>
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">EDP-{{ edp['N° EDP'] }}</h1>
-        <div class="flex items-center mt-1 text-[color:var(--text-secondary)] text-sm">
-          <span>{{ edp['Proyecto'] }}</span><span class="mx-2" aria-hidden="true">•</span><span>{{ edp['Cliente'] }}</span>
+<div class="container mx-auto px-4 py-6 max-w-4xl">
+  <!-- Header del EDP -->
+  <div class="bg-[color:var(--bg-card)] rounded-lg shadow-md p-6 mb-6 border border-[color:var(--border-color)]">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center">
+      <div class="flex items-center mb-4 md:mb-0">
+        <div class="mr-4 p-3 bg-[color:var(--accent-blue)] rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-[color:var(--text-primary)]">EDP-{{ edp['n_edp'] }}</h1>
+          <p class="text-[color:var(--text-secondary)]">{{ edp['proyecto'] }} • {{ edp['cliente'] }}</p>
         </div>
       </div>
-    </div>
-    <div class="flex flex-col items-end mt-4 md:mt-0">
-      <div class="estado-pill estado-{{ edp['Estado']|lower }} text-sm mb-1" role="status">{{ edp['Estado']|title }}</div>
-      <p class="text-[color:var(--text-secondary)] text-xs">Última modificación: {{ edp.get('Fecha Modificación','No registrada') }}</p>
-    </div>
-  </header>
-
-  {# ----------------------------------------------------------- #}
-  {# Tarjetas Financieras + Tiempo                               #}
-  {# ----------------------------------------------------------- #}
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-    {% set prop = edp['Monto Propuesto']|float %}
-    {% set appr = edp['Monto Aprobado']|float %}
-    {% set diff = appr - prop %}
-    
-    <div class="metric-card p-4" role="region" aria-label="Monto Propuesto">
-      <p class="metric-label">Monto Propuesto</p>
-      <p class="metric-value">${{ '{:,.0f}'.format(prop).replace(',', '.') }}</p>
-    </div>
-    
-    <div class="metric-card p-4" role="region" aria-label="Monto Aprobado">
-      <p class="metric-label">Monto Aprobado</p>
-      <p class="metric-value">${{ '{:,.0f}'.format(appr).replace(',', '.') }}</p>
-      {% if diff != 0 %}
-        <p class="text-xs {{ 'text-[color:var(--accent-red)]' if diff < 0 else 'text-[color:var(--accent-green)]' }} font-medium" aria-live="polite">
-          {{ '+' if diff>0 else '' }}{{ '{:,.0f}'.format(diff).replace(',', '.') }} ({{ (diff/prop*100)|round(1) }}%)
-        </p>
-      {% endif %}
-    </div>
-    
-    <div class="metric-card p-4" role="region" aria-label="Tiempo Transcurrido">
-      {% set dias = edp['dias_espera']|int %}
-      <p class="metric-label">Tiempo Transcurrido</p>
-      <div class="flex items-center justify-between">
-        <p class="metric-value">{{ dias }} días</p>
-        <span class="px-2 py-1 rounded-full text-xs font-bold {{ 
-          'bg-[color:var(--state-error-bg)] text-[color:var(--accent-red)]' if dias>10 else 
-          ('bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)]' if dias>5 else 
-          'bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)]') }}"
-          role="status">
-          {{ 'Crítico' if dias>10 else ('Atención' if dias>5 else 'Normal') }}
+      <div class="flex flex-col items-end space-y-2">
+        <span class="estado-pill estado-{{ edp['estado']|lower }} px-3 py-1 rounded-full text-sm font-semibold">
+          {{ edp['estado']|title }}
         </span>
+        <p class="text-sm text-[color:var(--text-muted)]">Última modificación: {{ edp.get('fecha_modificacion','No registrada') }}</p>
       </div>
-      <p class="text-xs text-[color:var(--text-secondary)] mt-1">{{ edp['dias_habiles'] }} días hábiles</p>
     </div>
   </div>
 
-  {# ----------------------------------------------------------- #}
-  {# FORMULARIO EDP                                              #}
-  {# ----------------------------------------------------------- #}
-  <form method="POST" class="space-y-6" novalidate id="edpForm">
-    <!-- ===== BLOQUE: ACTUALIZAR ESTADO ===== -->
-    <section class="bg-[color:var(--bg-card)] rounded-xl p-5 border border-[color:var(--border-color-subtle)]">
-      <div class="section-title-modern mb-4">
-        <h2 class="text-lg font-semibold flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
-          Actualizar Estado
-        </h2>
-        <div class="section-line"></div>
+  <!-- Métricas principales -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    {% set prop = edp['monto_propuesto']|float %}
+    {% set appr = edp['monto_aprobado']|float %}
+    {% set diff = appr - prop %}
+    {% set dias = edp['dias_espera']|int if edp['dias_espera'] else 0 %}
+    
+    <div class="bg-[color:var(--bg-card)] p-6 rounded-lg shadow-md border border-[color:var(--border-color)]">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-medium text-[color:var(--text-secondary)]">💰 Monto Propuesto</h3>
       </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <!-- Macro Estado -->
-        <div class="form-group">
-          <label for="estado" class="label-small">Estado</label>
-          <select name="estado" id="estado" class="form-select mt-1" required>
-            {% for e in ['revisión','enviado','pagado','validado'] %}
-              <option value="{{ e }}" {{ 'selected' if edp['Estado']==e else '' }}>{{ e|title }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <!-- Estado Detallado -->
-        <div class="form-group">
-          <label for="estado_detallado" class="label-small">Estado Detallado</label>
-          <select name="estado_detallado" id="estado_detallado" class="form-select mt-1" required>
-            {% set estados_det = ['creado','revisión interna','enviado cliente','revisión cliente','aprobado','re-trabajo solicitado','conformidad emitida'] %}
-            {% for e in estados_det %}
-              <option value="{{ e }}" {{ 'selected' if edp['Estado Detallado']==e else '' }}>{{ e|title }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <!-- Motivo No-aprobado (solo visible en re-trabajo) -->
-  <div class="form-group hidden transition-all duration-200 ease-in-out" id="wrap_motivo">
-  <label for="motivo_no" class="label-small">Motivo No-aprobado</label>
-  <select name="motivo_no_aprobado" id="motivo_no" class="form-select mt-1">
-    {% for m in ['falta documentación','error de monto','alcance no claro','otros'] %}
-      <option value="{{ m }}" {{ 'selected' if edp['Motivo No-aprobado']==m else '' }}>{{ m|title }}</option>
-    {% endfor %}
-  </select>
-</div>
-
-        <!-- Tipo_falla -->
-<div class="form-group hidden transition-all duration-200 ease-in-out" id="wrap_falla">
-  <label for="tipo_falla" class="label-small">Tipo de Falla</label>
-  <select name="tipo_falla" id="tipo_falla" class="form-select mt-1">
-    {% for f in ['retraso doc','error interno','error cliente','otros'] %}
-      <option value="{{ f }}" {{ 'selected' if edp['Tipo_falla']==f else '' }}>{{ f|title }}</option>
-    {% endfor %}
-  </select>
-</div>
-        <!-- Conformidad Enviada -->
-        <div class="form-group">
-          <label for="conformidad_enviada" class="label-small">Conformidad Enviada</label>
-          <select name="conformidad_enviada" id="conformidad_enviada" class="form-select mt-1">
-            <option value="">Seleccionar</option>
-            <option value="Sí" {{ 'selected' if edp['Conformidad Enviada']=='Sí' else '' }}>Sí</option>
-            <option value="No" {{ 'selected' if edp['Conformidad Enviada']=='No' else '' }}>No</option>
-          </select>
-        </div>
-
-        <!-- Fecha Conformidad -->
-        <div class="form-group">
-          <label for="fecha_conformidad" class="label-small">Fecha Conformidad</label>
-          <input type="date" name="fecha_conformidad" id="fecha_conformidad" value="{{ edp['fecha_conf_str'] }}" class="form-input mt-1" />
-        </div>
-
-        <!-- Observaciones -->
-        <div class="form-group md:col-span-2">
-          <label for="observaciones" class="label-small">Observaciones</label>
-          <textarea name="observaciones" id="observaciones" rows="3" class="form-input mt-1 w-full">{{ edp['Observaciones'] }}</textarea>
-        </div>
+      <p class="text-2xl font-bold text-[color:var(--text-primary)]">${{ '{:,.0f}'.format(prop).replace(',', '.') }}</p>
+      <p class="text-sm text-[color:var(--text-muted)]">Valor inicial solicitado</p>
+    </div>
+    
+    <div class="bg-[color:var(--bg-card)] p-6 rounded-lg shadow-md border border-[color:var(--border-color)]">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-medium text-[color:var(--text-secondary)]">✅ Monto Aprobado</h3>
+        <span class="text-lg">{{ '✓' if appr > 0 else '⚠️' }}</span>
       </div>
-    </section>
-
-    <!-- ===== BLOQUE: DATOS FINANCIEROS ===== -->
-    <section class="bg-[color:var(--bg-card)] rounded-xl p-5 border border-[color:var(--border-color-subtle)]">
-      <div class="section-title-modern mb-4">
-        <h2 class="text-lg font-semibold flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" clip-rule="evenodd"/></svg>
-          Montos y Fechas
-        </h2>
-        <div class="section-line"></div>
+      <p class="text-2xl font-bold text-[color:var(--text-primary)]">${{ '{:,.0f}'.format(appr).replace(',', '.') }}</p>
+      {% if diff != 0 %}
+        <div class="mt-2">
+          <span class="text-sm px-2 py-1 rounded-full {{ 'text-[color:var(--accent-red)] bg-[color:var(--state-error-bg)]' if diff < 0 else 'text-[color:var(--accent-green)] bg-[color:var(--state-success-bg)]' }}">
+            {{ '+' if diff>0 else '' }}{{ '{:,.0f}'.format(diff).replace(',', '.') }} ({{ (diff/prop*100)|round(1) }}%)
+          </span>
+        </div>
+      {% endif %}
+      <p class="text-sm text-[color:var(--text-muted)]">{{ 'Aprobado con ajuste' if diff != 0 else 'Aprobado como se solicitó' }}</p>
+    </div>
+    
+    <div class="bg-[color:var(--bg-card)] p-6 rounded-lg shadow-md border border-[color:var(--border-color)]">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-medium text-[color:var(--text-secondary)]">⏱️ Tiempo Transcurrido</h3>
+        <div class="w-3 h-3 rounded-full {{ 'bg-[color:var(--accent-red)]' if dias>10 else ('bg-[color:var(--accent-amber)]' if dias>5 else 'bg-[color:var(--accent-green)]') }}"></div>
       </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <!-- Monto Propuesto -->
-        <div class="form-group">
-          <label for="monto_prop_fmt" class="label-small">Monto Propuesto</label>
-          <div class="relative mt-1">
-            <span class="prefix" aria-hidden="true">$</span>
-            <input type="text" id="monto_prop_fmt" class="form-input pl-8 w-full" value="{{ '{:,.0f}'.format(prop).replace(',', '.') }}" aria-describedby="prop-format-hint"/>
-            <input type="hidden" name="monto_propuesto" id="monto_prop_val" value="{{ prop|int }}"/>
-            <p id="prop-format-hint" class="text-xs text-[color:var(--text-secondary)] mt-1 hidden">Formato: números sin decimales</p>
-          </div>
-        </div>
-        
-        <!-- Monto Aprobado -->
-        <div class="form-group">
-          <label for="monto_apr_fmt" class="label-small">Monto Aprobado</label>
-          <div class="relative mt-1">
-            <span class="prefix" aria-hidden="true">$</span>
-            <input type="text" id="monto_apr_fmt" class="form-input pl-8 w-full" value="{{ '{:,.0f}'.format(appr).replace(',', '.') }}" aria-describedby="apr-format-hint"/>
-            <input type="hidden" name="monto_aprobado" id="monto_apr_val" value="{{ appr|int }}"/>
-            <p id="apr-format-hint" class="text-xs text-[color:var(--text-secondary)] mt-1 hidden">Formato: números sin decimales</p>
-          </div>
-        </div>
-        
-        <!-- Nº Conformidad -->
-        <div class="form-group">
-          <label for="n_conformidad" class="label-small">N° Conformidad</label>
-          <input type="text" name="n_conformidad" id="n_conformidad" value="{{ edp['N° Conformidad'] }}" class="form-input mt-1"/>
-        </div>
-        
-        <!-- Fecha Estimada Pago -->
-        <div class="form-group">
-          <label for="fecha_estimada_pago" class="label-small">Fecha Estimada de Pago</label>
-          <input type="date" name="fecha_estimada_pago" id="fecha_estimada_pago" value="{{ edp['fecha_estimada_pago'] }}" class="form-input mt-1"/>
-        </div>
-        
-        <!-- Fecha Emision -->
-        <div class="form-group">
-          <label for="fecha_emision" class="label-small">Fecha Emisión</label>
-          <input type="date" name="fecha_emision" id="fecha_emision" value="{{ edp['fecha_emision_str'] }}" class="form-input mt-1"/>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== ACCIONES ===== -->
-    <div class="flex flex-wrap justify-end gap-3 pt-4">
-      <a href="{{ url_for('controller.dashboard_controller') }}" class="btn-secondary">Volver</a>
-      <button type="submit" class="btn-primary flex items-center" id="submitButton">
-        <span>Guardar Cambios</span>
-        <span id="loadingIndicator" class="ml-2 hidden">
-          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-2xl font-bold text-[color:var(--text-primary)]">{{ dias }} días</p>
+        <span class="px-3 py-1 rounded-full text-sm font-bold {{ 
+          'bg-[color:var(--state-error-bg)] text-[color:var(--accent-red)] border border-[color:var(--accent-red)]' if dias>10 else 
+          ('bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)] border border-[color:var(--accent-amber)]' if dias>5 else 
+          'bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] border border-[color:var(--accent-green)]') }}">
+          {{ 'Crítico' if dias>10 else ('Atención' if dias>5 else 'Normal') }}
         </span>
-      </button>
+      </div>
+      <p class="text-sm text-[color:var(--text-muted)]">{{ edp['dias_habiles'] if edp['dias_habiles'] else 0 }} días hábiles transcurridos</p>
+    </div>
+  </div>
+
+  <!-- Indicador de cambios sin guardar -->
+  <div id="unsavedChanges" class="hidden mb-6 p-4 bg-[color:var(--state-warning-bg)] border border-[color:var(--accent-amber)] rounded-lg">
+    <div class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[color:var(--accent-amber)] mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+      </svg>
+      <div>
+        <p class="font-semibold text-[color:var(--accent-amber)]">Tienes cambios sin guardar</p>
+        <p class="text-sm text-[color:var(--text-secondary)]">Recuerda guardar tus cambios antes de salir</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulario principal -->
+  <form method="POST" class="space-y-8" novalidate id="edpForm">
+    
+    <!-- Sección: Estado y Conformidad -->
+    <div class="bg-[color:var(--bg-card)] rounded-lg shadow-md overflow-hidden border border-[color:var(--border-color)]">
+      <div class="bg-[color:var(--bg-secondary)] px-6 py-4 border-b border-[color:var(--border-color)]">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="mr-4 p-2 bg-[color:var(--accent-blue)] rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-[color:var(--text-primary)]">Estado y Conformidad</h2>
+              <p class="text-sm text-[color:var(--text-secondary)]">Información sobre el estado actual del EDP y su proceso</p>
+            </div>
+          </div>
+          <!-- Indicador de progreso -->
+          <div class="flex space-x-2">
+            <div class="w-3 h-3 rounded-full {{ 'bg-[color:var(--accent-blue)]' if edp['estado'] in ['revisión', 'enviado', 'validado', 'pagado'] else 'bg-[color:var(--border-color)]' }}"></div>
+            <div class="w-3 h-3 rounded-full {{ 'bg-[color:var(--accent-blue)]' if edp['estado'] in ['enviado', 'validado', 'pagado'] else 'bg-[color:var(--border-color)]' }}"></div>
+            <div class="w-3 h-3 rounded-full {{ 'bg-[color:var(--accent-blue)]' if edp['estado'] in ['validado', 'pagado'] else 'bg-[color:var(--border-color)]' }}"></div>
+            <div class="w-3 h-3 rounded-full {{ 'bg-[color:var(--accent-blue)]' if edp['estado'] == 'pagado' else 'bg-[color:var(--border-color)]' }}"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Estado actual -->
+          <div class="space-y-2">
+            <label for="estado" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              📋 ¿Cuál es el estado actual? <span class="text-[color:var(--accent-red)]">*</span>
+            </label>
+            <select name="estado" id="estado" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]" required>
+              {% for e in ['revisión','enviado','pagado','validado'] %}
+                <option value="{{ e }}" {{ 'selected' if edp['estado']==e else '' }}>
+                  {{ e|title }}
+                  {% if e == 'revisión' %} - En proceso interno
+                  {% elif e == 'enviado' %} - Enviado al cliente
+                  {% elif e == 'validado' %} - Aprobado por cliente
+                  {% elif e == 'pagado' %} - Pago recibido
+                  {% endif %}
+                </option>
+              {% endfor %}
+            </select>
+            <p class="text-xs text-[color:var(--text-muted)]">Selecciona el estado que mejor describa la situación actual</p>
+          </div>
+
+          <!-- Estado detallado -->
+          <div class="space-y-2">
+            <label for="estado_detallado" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              🔍 ¿En qué etapa específica se encuentra? <span class="text-[color:var(--accent-red)]">*</span>
+            </label>
+            <select name="estado_detallado" id="estado_detallado" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]" required>
+              {% set estados_det = ['creado','revisión interna','enviado cliente','revisión cliente','aprobado','re-trabajo solicitado','conformidad emitida'] %}
+              {% for e in estados_det %}
+                <option value="{{ e }}" {{ 'selected' if edp['estado_detallado']==e else '' }}>
+                  {{ e|title }}
+                </option>
+              {% endfor %}
+            </select>
+            <p class="text-xs text-[color:var(--text-muted)]">Información más específica sobre el proceso</p>
+          </div>
+
+          <!-- Conformidad enviada -->
+          <div class="space-y-2">
+            <label for="conformidad_enviada" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              📧 ¿Se envió la conformidad?
+            </label>
+            <select name="conformidad_enviada" id="conformidad_enviada" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]">
+              <option value="">Seleccionar opción...</option>
+              <option value="Sí" {{ 'selected' if edp['conformidad_enviada']=='Sí' else '' }}>✅ Sí, ya se envió</option>
+              <option value="No" {{ 'selected' if edp['conformidad_enviada']=='No' else '' }}>❌ No, aún pendiente</option>
+            </select>
+            <p class="text-xs text-[color:var(--text-muted)]">Indica si ya se envió la conformidad al cliente</p>
+          </div>
+
+          <!-- Fecha conformidad -->
+          <div class="space-y-2">
+            <label for="fecha_conformidad" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              📅 ¿Cuándo se envió la conformidad?
+            </label>
+            <input type="date" name="fecha_conformidad" id="fecha_conformidad" 
+                   value="{{ edp['fecha_conf_str'] }}" 
+                   class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]"/>
+            <p class="text-xs text-[color:var(--text-muted)]">Fecha en que se envió la conformidad (si aplica)</p>
+          </div>
+
+          <!-- Campos condicionales para re-trabajo -->
+          <div class="space-y-2 conditional-field" id="wrap_motivo" style="display: none;">
+            <label for="motivo_no" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              ❓ ¿Por qué no fue aprobado? <span class="text-[color:var(--accent-red)]">*</span>
+            </label>
+            <select name="motivo_no_aprobado" id="motivo_no" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]">
+              {% for m in ['falta documentación','error de monto','alcance no claro','otros'] %}
+                <option value="{{ m }}" {{ 'selected' if edp['motivo_no_aprobado']==m else '' }}>{{ m|title }}</option>
+              {% endfor %}
+            </select>
+            <p class="text-xs text-[color:var(--text-muted)]">Especifica la razón del rechazo</p>
+          </div>
+
+          <div class="space-y-2 conditional-field" id="wrap_falla" style="display: none;">
+            <label for="tipo_falla" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              ⚠️ ¿Qué tipo de falla ocurrió? <span class="text-[color:var(--accent-red)]">*</span>
+            </label>
+            <select name="tipo_falla" id="tipo_falla" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]">
+              {% for f in ['retraso doc','error interno','error cliente','otros'] %}
+                <option value="{{ f }}" {{ 'selected' if edp['tipo_falla']==f else '' }}>{{ f|title }}</option>
+              {% endfor %}
+            </select>
+            <p class="text-xs text-[color:var(--text-muted)]">Categoriza el tipo de problema encontrado</p>
+          </div>
+
+          <!-- Observaciones -->
+          <div class="space-y-2 md:col-span-2">
+            <label for="observaciones" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              💭 Observaciones adicionales
+            </label>
+            <textarea name="observaciones" id="observaciones" rows="4" 
+                      class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)] resize-none" 
+                      placeholder="Agrega cualquier comentario, detalle o información relevante que consideres importante...">{{ edp['observaciones'] }}</textarea>
+            <p class="text-xs text-[color:var(--text-muted)]">Cualquier información adicional que pueda ser útil</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección: Información Financiera -->
+    <div class="bg-[color:var(--bg-card)] rounded-lg shadow-md overflow-hidden border border-[color:var(--border-color)]">
+      <div class="bg-[color:var(--bg-secondary)] px-6 py-4 border-b border-[color:var(--border-color)]">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="mr-4 p-2 bg-[color:var(--accent-green)] rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-[color:var(--text-primary)]">Información Financiera</h2>
+              <p class="text-sm text-[color:var(--text-secondary)]">Montos, fechas y documentación del EDP</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-full text-sm font-semibold {{ 'bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)]' if edp['monto_aprobado']|float > 0 else 'bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)]' }}">
+            {{ 'Montos definidos' if edp['monto_aprobado']|float > 0 else 'Pendiente definir' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Monto propuesto -->
+          <div class="space-y-2">
+            <label for="monto_prop_fmt" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              💰 ¿Cuál es el monto propuesto?
+            </label>
+            <div class="relative">
+              <span class="absolute left-3 top-2 text-[color:var(--text-muted)]">$</span>
+              <input type="text" id="monto_prop_fmt" 
+                     class="w-full pl-8 pr-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]" 
+                     value="{{ '{:,.0f}'.format(prop).replace(',', '.') }}" 
+                     placeholder="Ej: 1.500.000"/>
+              <input type="hidden" name="monto_propuesto" id="monto_prop_val" value="{{ prop|int }}"/>
+            </div>
+            <p class="text-xs text-[color:var(--text-muted)]">Ingresa el monto sin decimales (ej: 1500000)</p>
+          </div>
+          
+          <!-- Monto aprobado -->
+          <div class="space-y-2">
+            <label for="monto_apr_fmt" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              ✅ ¿Cuánto fue aprobado finalmente?
+            </label>
+            <div class="relative">
+              <span class="absolute left-3 top-2 text-[color:var(--text-muted)]">$</span>
+              <input type="text" id="monto_apr_fmt" 
+                     class="w-full pl-8 pr-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]" 
+                     value="{{ '{:,.0f}'.format(appr).replace(',', '.') }}" 
+                     placeholder="Ej: 1.350.000"/>
+              <input type="hidden" name="monto_aprobado" id="monto_apr_val" value="{{ appr|int }}"/>
+            </div>
+            <p class="text-xs text-[color:var(--text-muted)]">Monto final aprobado por el cliente</p>
+          </div>
+          
+          <!-- Número de conformidad -->
+          <div class="space-y-2">
+            <label for="n_conformidad" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              📄 ¿Cuál es el número de conformidad?
+            </label>
+            <input type="text" name="n_conformidad" id="n_conformidad" 
+                   value="{{ edp['n_conformidad'] }}" 
+                   class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]"
+                   placeholder="Ej: CONF-2024-001"/>
+            <p class="text-xs text-[color:var(--text-muted)]">Número de documento de conformidad (si ya existe)</p>
+          </div>
+          
+          <!-- Fecha estimada de pago -->
+          <div class="space-y-2">
+            <label for="fecha_estimada_pago" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              📅 ¿Cuándo se estima el pago?
+            </label>
+            <input type="date" name="fecha_estimada_pago" id="fecha_estimada_pago" 
+                   value="{{ edp['fecha_estimada_pago'] }}" 
+                   class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]"/>
+            <p class="text-xs text-[color:var(--text-muted)]">Fecha aproximada en que se espera recibir el pago</p>
+          </div>
+          
+          <!-- Fecha de emisión -->
+          <div class="space-y-2 md:col-span-2">
+            <label for="fecha_emision" class="block text-sm font-medium text-[color:var(--text-primary)]">
+              📋 ¿Cuál fue la fecha de emisión?
+            </label>
+            <input type="date" name="fecha_emision" id="fecha_emision" 
+                   value="{{ edp['fecha_emision_str'] }}" 
+                   class="w-full md:w-1/2 px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]"/>
+            <p class="text-xs text-[color:var(--text-muted)]">Fecha en que se creó originalmente este EDP</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="bg-[color:var(--bg-card)] border-t border-[color:var(--border-color)] px-6 py-4 rounded-lg shadow-md border border-[color:var(--border-color)]">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center text-sm text-[color:var(--text-secondary)]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span id="formStatusText">Formulario listo para edición</span>
+        </div>
+        
+        <div class="flex gap-3">
+          <a href="{{ url_for('controller.dashboard_controller') }}" 
+             class="px-4 py-2 text-[color:var(--text-secondary)] bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-md hover:bg-[color:var(--bg-hover)] focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] transition-colors duration-200">
+            ← Cancelar
+          </a>
+          
+          <button type="submit" class="px-6 py-2 bg-[color:var(--accent-blue)] text-white rounded-md hover:bg-[color:var(--accent-blue-dark)] focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:ring-offset-2 transition-colors duration-200" id="submitButton">
+            <span id="submitButtonText">Guardar Cambios</span>
+            <span id="loadingIndicator" class="ml-2 hidden">
+              <svg class="animate-spin h-4 w-4 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
     </div>
   </form>
 </div>
 
-<!-- ===== HISTORIAL ===== -->
-<div class="mb-4 bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow">
-  <a href="{{ url_for('controller.ver_log_edp', n_edp=edp['N° EDP']) }}" class="flex items-center text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)]">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 001.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-    </svg>
-    Ver historial completo de cambios
-  </a>
+<!-- Enlace al historial -->
+<div class="container mx-auto px-4 py-6 max-w-4xl">
+  <div class="bg-[color:var(--bg-card)] rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200 border border-[color:var(--border-color)]">
+    <a href="{{ url_for('controller.ver_log_edp', n_edp=edp['n_edp']) }}" class="flex items-center justify-between group">
+      <div class="flex items-center">
+        <div class="mr-4 p-3 bg-[color:var(--accent-blue)] rounded-lg group-hover:bg-[color:var(--accent-blue-dark)] transition-colors duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 001.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-blue)] transition-colors duration-200">
+            Historial Completo de Cambios
+          </h3>
+          <p class="text-sm text-[color:var(--text-secondary)]">
+            Ver todos los cambios y modificaciones realizadas en este EDP
+          </p>
+        </div>
+      </div>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[color:var(--accent-blue)] group-hover:translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+      </svg>
+    </a>
+  </div>
 </div>
 
-<!-- ===== JS PARA FORMATEO Y VISIBILIDAD ===== -->
+<!-- Notificación de éxito -->
+<div id="successNotification" class="fixed top-4 right-4 z-50 hidden">
+  <div class="bg-[color:var(--accent-green)] text-white px-6 py-4 rounded-lg shadow-lg">
+    <div class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div>
+        <p class="font-semibold">¡Cambios guardados correctamente!</p>
+        <p class="text-sm opacity-90">Los datos del EDP han sido actualizados</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-// Currency formatting utilities
+// Variables globales
+let formChanged = false;
+let originalFormData = {};
+
+// Utilidades de formateo
 function formatCurrency(value) {
-  // Remove non-digits and convert to number
   const number = parseInt(value.toString().replace(/[^\d]/g, '')) || 0;
-  // Format with locale settings
   return number.toLocaleString('es-CL');
 }
 
-// Setup currency input with formatting
+function showNotification(message, type = 'success') {
+  const notification = document.getElementById('successNotification');
+  if (notification) {
+    notification.classList.remove('hidden');
+    setTimeout(() => {
+      notification.classList.add('hidden');
+    }, 3000);
+  }
+}
+
+function updateFormStatus(message, type = 'info') {
+  const statusText = document.getElementById('formStatusText');
+  if (statusText) {
+    statusText.textContent = message;
+  }
+}
+
+// Configuración de inputs de moneda
 function setupCurrencyInput(formattedInputId, hiddenValueId) {
   const formattedInput = document.getElementById(formattedInputId);
   const hiddenValue = document.getElementById(hiddenValueId);
   
   if (!formattedInput || !hiddenValue) return;
   
-  // Format on input
+  originalFormData[hiddenValueId] = hiddenValue.value;
+  
   formattedInput.addEventListener('input', (e) => {
-    // Extract raw numeric value
     const rawValue = e.target.value.replace(/[^\d]/g, '');
-    // Update hidden field with raw value
     hiddenValue.value = rawValue;
-    // Update display with formatted value
     formattedInput.value = formatCurrency(rawValue);
+    markFormAsChanged();
   });
   
-  // Format initial value
   formattedInput.value = formatCurrency(hiddenValue.value);
-  
-  // Show hint on focus
-  const hintId = formattedInputId + '-format-hint';
-  const hint = document.getElementById(hintId);
-  if (hint) {
-    formattedInput.addEventListener('focus', () => {
-      hint.classList.remove('hidden');
-    });
-    formattedInput.addEventListener('blur', () => {
-      hint.classList.add('hidden');
-    });
-  }
 }
 
-// Setup dynamic field visibility based on estado_detallado
+// Campos condicionales
 function setupConditionalFields() {
   const estadoDetallado = document.getElementById('estado_detallado');
   const wrapMotivo = document.getElementById('wrap_motivo');
@@ -276,194 +438,77 @@ function setupConditionalFields() {
   
   function updateFieldVisibility() {
     const showReTrabajo = estadoDetallado.value === 're-trabajo solicitado';
-    
-    // Toggle both fields together with the same animation timing
-    if (showReTrabajo) {
-      // Primero mostramos los contenedores
-      wrapMotivo.style.display = 'block';
-      wrapFalla.style.display = 'block';
-      
-      // Luego, después de un pequeño delay, quitamos la clase hidden para la animación
-      setTimeout(() => {
-        wrapMotivo.classList.remove('hidden');
-        wrapFalla.classList.remove('hidden');
-      }, 10);
-    } else {
-      // Primero aplicamos la clase hidden para iniciar la transición
-      wrapMotivo.classList.add('hidden');
-      wrapFalla.classList.add('hidden');
-      
-      // Después de la transición, ocultamos completamente
-      setTimeout(() => {
-        wrapMotivo.style.display = 'none';
-        wrapFalla.style.display = 'none';
-      }, 200); // duración de la transición
-    }
+    wrapMotivo.style.display = showReTrabajo ? 'block' : 'none';
+    wrapFalla.style.display = showReTrabajo ? 'block' : 'none';
   }
   
-  // Update on change
   estadoDetallado.addEventListener('change', updateFieldVisibility);
-  
-  // Asegurar que el estado inicial sea correcto
   updateFieldVisibility();
-  
-  // Re-verificar después de un momento para casos donde otras scripts
-  // podrían estar afectando la visibilidad
-  setTimeout(updateFieldVisibility, 100);
 }
-// Setup condiciones para el campo de Conformidad Enviada
-function setupConformidadFields() {
-  const conformidadSelect = document.getElementById('conformidad_enviada');
-  const fechaConformidad = document.getElementById('fecha_conformidad');
-  const numConformidad = document.getElementById('n_conformidad');
-  
-  // Mensaje de notificación que crearemos dinámicamente
-  let notificationDiv = null;
-  
-  if (!conformidadSelect || !fechaConformidad || !numConformidad) return;
-  
-  // Crear elemento de notificación
-  function createNotification() {
-    notificationDiv = document.createElement('div');
-    notificationDiv.id = 'conformidadNotification';
-    notificationDiv.className = 'mt-4 mb-2 p-3 rounded-md bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber-dark)] border border-[color:var(--accent-amber)] animate__animated animate__fadeIn';
-    notificationDiv.innerHTML = `
-      <div class="flex items-start">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-        </svg>
-        <div>
-          <p class="font-medium">Campos obligatorios para conformidad</p>
-          <p class="text-sm mt-1">Al marcar "Conformidad Enviada" como "Sí", debes completar tanto el <strong>N° de Conformidad</strong> como la <strong>Fecha de Conformidad</strong>.</p>
-        </div>
-        <button type="button" id="closeConformidadNotification" class="ml-auto text-[color:var(--accent-amber-dark)] hover:text-[color:var(--accent-amber)]">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </button>
-      </div>
-    `;
-    
-    // Insertar después del selector de conformidad
-    const formGroup = conformidadSelect.closest('.form-group');
-    formGroup.parentNode.insertBefore(notificationDiv, formGroup.nextSibling);
-    
-    // Configurar botón cerrar
-    document.getElementById('closeConformidadNotification').addEventListener('click', removeNotification);
+
+// Seguimiento de cambios
+function markFormAsChanged() {
+  if (!formChanged) {
+    formChanged = true;
+    document.getElementById('unsavedChanges').classList.remove('hidden');
+    updateFormStatus('Tienes cambios sin guardar');
+    document.title = '● ' + document.title.replace('● ', '');
   }
-  
-  // Remover notificación
-  function removeNotification() {
-    if (notificationDiv) {
-      notificationDiv.classList.add('animate__fadeOut');
-      setTimeout(() => {
-        if (notificationDiv && notificationDiv.parentNode) {
-          notificationDiv.parentNode.removeChild(notificationDiv);
-          notificationDiv = null;
-        }
-      }, 300);
-    }
-  }
-  
-  // Resaltar campos requeridos
-  function highlightRequiredFields(isRequired) {
-    const requiredClass = 'border-[color:var(--accent-amber)] bg-[color:var(--state-warning-bg-subtle)]';
-    const labelClass = 'text-[color:var(--accent-amber-dark)] font-medium';
-    
-    if (isRequired) {
-      // Resaltar campos
-      fechaConformidad.classList.add(...requiredClass.split(' '));
-      numConformidad.classList.add(...requiredClass.split(' '));
-      
-      // Resaltar etiquetas
-      fechaConformidad.previousElementSibling.classList.add(...labelClass.split(' '));
-      numConformidad.previousElementSibling.classList.add(...labelClass.split(' '));
-      
-      // Agregar indicador visual de requerido
-      addRequiredIndicator(fechaConformidad);
-      addRequiredIndicator(numConformidad);
-    } else {
-      // Quitar resaltado
-      fechaConformidad.classList.remove(...requiredClass.split(' '));
-      numConformidad.classList.remove(...requiredClass.split(' '));
-      
-      // Quitar resaltado de etiquetas
-      fechaConformidad.previousElementSibling.classList.remove(...labelClass.split(' '));
-      numConformidad.previousElementSibling.classList.remove(...labelClass.split(' '));
-      
-      // Quitar indicador visual
-      removeRequiredIndicator(fechaConformidad);
-      removeRequiredIndicator(numConformidad);
-    }
-  }
-  
-  // Agregar indicador de campo requerido
-  function addRequiredIndicator(field) {
-    if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('required-indicator')) {
-      const indicator = document.createElement('span');
-      indicator.className = 'required-indicator text-xs text-[color:var(--accent-amber-dark)] mt-1 block animate__animated animate__fadeIn';
-      indicator.textContent = 'Campo requerido';
-      field.parentNode.insertBefore(indicator, field.nextSibling);
-    }
-  }
-  
-  // Quitar indicador de campo requerido
-  function removeRequiredIndicator(field) {
-    const indicator = field.nextElementSibling;
-    if (indicator && indicator.classList.contains('required-indicator')) {
-      indicator.remove();
-    }
-  }
-  
-  // Función principal que actualiza la UI según la selección
-  function updateConformidadUI() {
-    const isConformidadSi = conformidadSelect.value === 'Sí';
-    
-    if (isConformidadSi) {
-      // Si no existe la notificación, crearla
-      if (!notificationDiv) {
-        createNotification();
-      }
-      highlightRequiredFields(true);
-    } else {
-      // Quitar notificación
-      removeNotification();
-      highlightRequiredFields(false);
-    }
-  }
-  
-  // Escuchar cambios en el selector
-  conformidadSelect.addEventListener('change', updateConformidadUI);
-  
-  // Establecer estado inicial
-  updateConformidadUI();
 }
-// Form submission handling
+
+function setupChangeTracking() {
+  const form = document.getElementById('edpForm');
+  const inputs = form.querySelectorAll('input, select, textarea');
+  
+  inputs.forEach(input => {
+    originalFormData[input.name || input.id] = input.value;
+    input.addEventListener('change', markFormAsChanged);
+    input.addEventListener('input', markFormAsChanged);
+  });
+  
+  window.addEventListener('beforeunload', (e) => {
+    if (formChanged) {
+      e.preventDefault();
+      e.returnValue = '¿Estás seguro de que quieres salir? Tienes cambios sin guardar.';
+      return e.returnValue;
+    }
+  });
+}
+
+// Envío del formulario
 function setupFormSubmission() {
   const form = document.getElementById('edpForm');
   const submitButton = document.getElementById('submitButton');
   const loadingIndicator = document.getElementById('loadingIndicator');
+  const submitButtonText = document.getElementById('submitButtonText');
   
-  if (!form || !submitButton || !loadingIndicator) return;
+  if (!form || !submitButton) return;
   
-  form.addEventListener('submit', () => {
-    // Disable button and show loading
+  form.addEventListener('submit', (e) => {
     submitButton.disabled = true;
-    loadingIndicator.classList.remove('hidden');
+    if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+    if (submitButtonText) submitButtonText.textContent = 'Guardando...';
+    updateFormStatus('Guardando cambios...');
     
-    // Could add form validation here
-    return true;
+    formChanged = false;
+    document.getElementById('unsavedChanges').classList.add('hidden');
+    document.title = document.title.replace('● ', '');
   });
 }
 
-
-// Asegúrate de inicializar esta función con el resto
+// Inicialización
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('🚀 Inicializando formulario EDP...');
+  
   setupCurrencyInput('monto_prop_fmt', 'monto_prop_val');
   setupCurrencyInput('monto_apr_fmt', 'monto_apr_val');
   setupConditionalFields();
-  setupConformidadFields(); 
+  setupChangeTracking();
   setupFormSubmission();
+  
+  updateFormStatus('Formulario listo para edición');
+  
+  console.log('✅ Formulario EDP inicializado correctamente');
 });
 </script>
 {% endblock %}
