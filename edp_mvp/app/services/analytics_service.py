@@ -24,9 +24,10 @@ class AnalyticsService:
     def __init__(self):
         from ..repositories.edp_repository import EDPRepository
         from ..repositories.log_repository import LogRepository
-
+        from    ..repositories.issues_repository import IssuesRepository
         self.edp_repository = EDPRepository()
         self.log_repository = LogRepository()
+        self.issues_repository = IssuesRepository()
         self.date_utils = DateUtils()
         self.format_utils = FormatUtils()
         self.validation_utils = ValidationUtils()
@@ -63,7 +64,7 @@ class AnalyticsService:
                 result[key] = value
         return result
 
-    def analizar_issues(self, filtros: Optional[Dict] = None) -> ServiceResponse:
+    def get_issues_analysis(self, filtros: Optional[Dict] = None) -> ServiceResponse:
         """
         Análisis de incidencias para mejora de procesos
 
@@ -74,24 +75,10 @@ class AnalyticsService:
             ServiceResponse con análisis de incidencias
         """
         try:
-            # Obtener datos de incidencias - for now return empty analysis as issues repository isn't implemented
-            # TODO: Implement issues repository when issues data structure is defined
-            return ServiceResponse(
-                success=True,
-                data={
-                    "tipos_incidencia": {"counts": {}, "percentages": {}},
-                    "tipos_falla": {"counts": {}, "percentages": {}},
-                    "por_proyecto": {},
-                    "tendencias": {},
-                    "tiempo_resolucion": None,
-                    "stats": {
-                        "total_incidencias": 0,
-                        "incidencias_resueltas": 0,
-                        "porcentaje_resuelto": 0,
-                    },
-                },
-                message="Análisis de incidencias completado (datos de prueba)",
-            )
+            issues_response = self.issues_repository.find_all_dataframe()
+            df_issues = issues_response.get("data", pd.DataFrame())
+
+         
 
             # Análisis por tipo de incidencia
             analisis_tipos = self._analizar_tipos_incidencia(df_issues)
@@ -590,7 +577,7 @@ class AnalyticsService:
     def _analizar_tipos_incidencia(self, df_issues: pd.DataFrame) -> Dict:
         """Analiza tipos de incidencia"""
         if "Tipo" in df_issues.columns:
-            tipos = df_issues["Tipo"].value_counts().to_dict()
+            tipos = df_issues["tipo"].value_counts().to_dict()
             total = sum(tipos.values())
             porcentajes = {k: round(v / total * 100, 1) for k, v in tipos.items()}
             return {"counts": tipos, "percentages": porcentajes}
@@ -598,8 +585,8 @@ class AnalyticsService:
 
     def _analizar_tipos_falla(self, df_issues: pd.DataFrame) -> Dict:
         """Analiza tipos de falla"""
-        if "Tipo_falla" in df_issues.columns:
-            fallas = df_issues["Tipo_falla"].value_counts().to_dict()
+        if "tipo_falla" in df_issues.columns:
+            fallas = df_issues["tipo_falla"].value_counts().to_dict()
             total = sum(fallas.values())
             porcentajes = {k: round(v / total * 100, 1) for k, v in fallas.items()}
             return {"counts": fallas, "percentages": porcentajes}
@@ -607,24 +594,24 @@ class AnalyticsService:
 
     def _analizar_incidencias_por_proyecto(self, df_issues: pd.DataFrame) -> Dict:
         """Analiza incidencias por proyecto"""
-        if "Proyecto Relacionado" in df_issues.columns:
-            return df_issues["Proyecto Relacionado"].value_counts().to_dict()
+        if "proyecto_relacionado" in df_issues.columns:
+            return df_issues["proyecto_relacionado"].value_counts().to_dict()
         return {}
 
     def _analizar_tendencias_incidencias(self, df_issues: pd.DataFrame) -> Dict:
         """Analiza tendencias temporales de incidencias"""
-        if "Timestamp" in df_issues.columns:
-            df_issues["Semana"] = df_issues["Timestamp"].dt.isocalendar().week
-            return df_issues.groupby("Semana").size().to_dict()
+        if "timestamp" in df_issues.columns:
+            df_issues["semana"] = df_issues["timestamp"].dt.isocalendar().week
+            return df_issues.groupby("semana").size().to_dict()
         return {}
 
     def _calcular_tiempo_resolucion(self, df_issues: pd.DataFrame) -> Optional[float]:
         """Calcula tiempo promedio de resolución"""
-        if "Timestamp" in df_issues.columns and "Fecha resolución" in df_issues.columns:
-            resueltas = df_issues.dropna(subset=["Fecha resolución"])
+        if "timestamp" in df_issues.columns and "fecha_resolucion" in df_issues.columns:
+            resueltas = df_issues.dropna(subset=["fecha_resolucion"])
             if not resueltas.empty:
-                timestamp_col = pd.to_datetime(resueltas["Timestamp"])
-                resolucion_col = pd.to_datetime(resueltas["Fecha resolución"])
+                timestamp_col = pd.to_datetime(resueltas["timestamp"])
+                resolucion_col = pd.to_datetime(resueltas["fecha_resolucion"])
 
                 # Normalizar zonas horarias
                 if hasattr(timestamp_col.dt, "tz"):
@@ -1421,6 +1408,7 @@ class AnalyticsService:
                     chart_data["eficiencia"].append(eficiencia)
             # ====== Calcular Impacto Financiero ======
             impacto_financiero = 0
+            # TODO: Calcular impacto financiero
             # for _, row in df_log_enriquecido.iterrows():
             #     impacto_financiero += row.get("monto_aprobado", 0)
 

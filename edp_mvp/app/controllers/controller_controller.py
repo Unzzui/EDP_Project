@@ -1575,7 +1575,7 @@ def analisis_retrabajos():
    
 
         rework_data = rework_response
-        print(rework_data)
+     
         return render_template(
             "controller/controller_retrabajos.html", **rework_data, filtros=filters
         )
