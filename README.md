@@ -73,6 +73,14 @@ python run.py
 
 La aplicación estará disponible en `http://127.0.0.1:5000/login`
 
+## Profiling inicial
+
+Para capturar una línea base de tiempos de respuesta se puede habilitar el
+middleware de profiling de **Werkzeug**. Establece la variable de entorno
+`ENABLE_PROFILER=1` antes de ejecutar `run.py` y se registrarán estadísticas en
+la consola durante las peticiones. Desactívalo quitando esa variable una vez
+terminadas las mediciones.
+
 ## Estructura del proyecto
 
 ```

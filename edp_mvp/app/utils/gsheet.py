@@ -489,6 +489,28 @@ def read_sheet(range_name, apply_transformations=True):
     
     return df
 
+
+def batch_read_sheets(range_names, apply_transformations=True):
+    """Read multiple ranges using a single batch request."""
+    service = get_service()
+    config = get_config()
+    sheet = service.spreadsheets()
+    result = sheet.values().batchGet(spreadsheetId=config.SHEET_ID, ranges=range_names).execute()
+    dfs = {}
+    for value_range in result.get("valueRanges", []):
+        rng = value_range.get("range")
+        values = value_range.get("values", [])
+        if len(values) > 1:
+            headers = values[0]
+            df = pd.DataFrame(values[1:], columns=headers).fillna("")
+        elif values:
+            df = pd.DataFrame(columns=values[0])
+        else:
+            df = pd.DataFrame()
+        # Transformations are skipped in batch mode to avoid extra API calls
+        dfs[rng] = df
+    return dfs
+
 def append_row(row_values, sheet_name="edp"):
     """
     Inserta una fila al final de la sheet `sheet_name`.
