@@ -137,8 +137,8 @@
         </svg>
       </div>
       <div>
-        <h2 class="text-xl font-bold bg-gradient-to-r from-[color:var(--text-primary)] to-[color:var(--accent-blue)] bg-clip-text text-transparent">Dashboard Financiero</h2>
-        <p class="text-sm text-[color:var(--text-secondary)]">Vista consolidada de EDPs</p>
+        <h2 class="text-xl font-bold bg-gradient-to-r from-[color:var(--text-primary)] to-[color:var(--accent-blue)] bg-clip-text text-transparent">Vista consolidada de EDPs</h2>
+        <p class="text-sm text-[color:var(--text-secondary)]">Kanban</p>
       </div>
     </div>
     <div class="flex items-center gap-4">
@@ -472,7 +472,8 @@
   <!-- Botón de acción mejorado -->
   <button 
     class="group inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[color:var(--accent-blue)]/10 to-[color:var(--accent-purple)]/10 border border-[color:var(--border-color-subtle)] hover:from-[color:var(--accent-blue)]/20 hover:to-[color:var(--accent-purple)]/20 hover:border-[color:var(--accent-blue)]/50 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md backdrop-blur-sm"
-    onclick="openEdpModal('{{ edp['n_edp'] }}')">
+    onclick="openEdpModal('{{ edp['n_edp'] }}')"
+  >
     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-blue)] group-hover:rotate-12 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
     </svg>

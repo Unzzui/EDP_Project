@@ -471,19 +471,7 @@ function initSocketIO() {
 	
 	// Crear conexión
 	const socket = io();
-
-	// Gestionar estados de conexión
-	socket.on("connect", () => {
-		if (window.showToast) {
-			showToast("Conexión en tiempo real establecida", "info");
-		}
-	});
-
-	socket.on("disconnect", () => {
-		if (window.showToast) {
-			showToast("Se perdió la conexión en tiempo real", "error");
-		}
-	});
+	
 
 	// Escuchar actualizaciones
 	socket.on("estado_actualizado", (data) => {

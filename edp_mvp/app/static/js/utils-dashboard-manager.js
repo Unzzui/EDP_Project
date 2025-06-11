@@ -486,10 +486,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('✅ Dashboard Manager inicializado completamente');
     
-    // Mostrar notificación de bienvenida
-    setTimeout(() => {
-        showNotification('Dashboard cargado correctamente', 'success');
-    }, 500);
     
     // Exponer funciones útiles al objeto window para debugging
     window.dashboardUtils = {

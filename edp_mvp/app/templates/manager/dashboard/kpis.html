@@ -1,19 +1,19 @@
 <!-- KPIs Principales - Primera fila con contexto aumentado -->
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
   <!-- KPI: Ingresos totales MEJORADO 🟩 -->
   <div
-    class="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-5 text-white shadow-lg relative overflow-hidden">
+    class="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-4 sm:p-5 text-white shadow-lg relative overflow-hidden">
     <!-- Δ Budget badge flotante superior derecho -->
-    <div class="absolute top-2 right-2 flex items-center space-x-2">
-      <div class="px-2 py-1 rounded-full bg-white/20 text-xs font-medium">
-        {% if kpis.vs_meta_ingresos >= 0 %}+{{ kpis.vs_meta_ingresos }}%{% else
-        %}{{ kpis.vs_meta_ingresos }}%{% endif %} vs budget
-      </div>
+    <div
+      class="absolute top-2 right-2 flex items-center space-x-1 sm:space-x-2">
       <!-- Tooltip info button con top 2 drivers -->
       <button
-        class="text-[#f5f5f7]/80 hover:text-[#f5f5f7] group relative"
+        class="text-[#f5f5f7]/80 hover:text-[#f5f5f7] group relative hidden sm:block"
         aria-label="Ver drivers de variación">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <svg
+          class="w-4 h-4 sm:w-5 sm:h-5"
+          fill="currentColor"
+          viewBox="0 0 20 20">
           <path
             fill-rule="evenodd"
             d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -51,18 +51,19 @@
     <!-- Contenido principal -->
     <div class="flex justify-between items-start">
       <div class="flex-1">
-        <p style="color: #f5f5f7" class="text-sm font-medium">
+        <p style="color: #f5f5f7" class="text-xs sm:text-sm font-medium">
           Ingresos Totales 🟩
         </p>
-        <p style="color: #f5f5f7" class="text-3xl font-bold mt-1">
+        <p style="color: #f5f5f7" class="text-2xl sm:text-3xl font-bold mt-1">
           ${{ kpis.ingresos_totales }}M
         </p>
 
         <!-- Run-rate mini-tag -->
         <div class="mt-2">
           <span
-            class="inline-block px-2 py-1 bg-white/15 rounded-md text-xs font-medium">
-            Run-rate anual: ${{
+            class="inline-block px-1.5 sm:px-2 py-0.5 sm:py-1 bg-white/15 rounded-md text-xs font-medium">
+            <span class="hidden sm:inline">Run-rate anual: </span
+            ><span class="sm:hidden">Anual: </span>${{
             kpis.run_rate_anual|default((kpis.ingresos_totales|float *
             12)|round(1)) }}M
           </span>
@@ -70,7 +71,7 @@
 
         <div class="flex items-center mt-2">
           <svg
-            class="w-4 h-4 mr-1 {% if kpis.crecimiento_ingresos|default(0) < 0 %}rotate-180 text-red-300{% else %}text-emerald-200{% endif %}"
+            class="w-3 h-3 sm:w-4 sm:h-4 mr-1 {% if kpis.crecimiento_ingresos|default(0) < 0 %}rotate-180 text-red-300{% else %}text-emerald-200{% endif %}"
             fill="currentColor"
             viewBox="0 0 20 20">
             <path
@@ -79,15 +80,16 @@
               clip-rule="evenodd"></path>
           </svg>
           <span
-            class="text-sm {% if kpis.crecimiento_ingresos|default(0) < 0 %}text-red-300{% endif %}"
+            class="text-xs sm:text-sm {% if kpis.crecimiento_ingresos|default(0) < 0 %}text-red-300{% endif %}"
             >{{ kpis.crecimiento_ingresos|default(0)|abs }}% {% if
-            kpis.crecimiento_ingresos|default(0) < 0 %}menos{% endif %} vs
-            periodo anterior</span
+            kpis.crecimiento_ingresos|default(0) < 0 %}menos{% endif %}
+            <span class="hidden sm:inline">vs periodo anterior</span
+            ><span class="sm:hidden">vs anterior</span></span
           >
         </div>
 
         <!-- Meta vs Actual - Más compacto -->
-        <div class="mt-3 pt-2 border-t border-white/20">
+        <div class="mt-2 sm:mt-3 pt-2 border-t border-white/20">
           <div class="flex justify-between items-center mb-1">
             <span class="text-xs text-emerald-100"
               >Meta: ${{ kpis.meta_ingresos }}M</span
@@ -103,7 +105,7 @@
     </div>
 
     <!-- Sparkline de historial 6 meses (más visible y contextual) -->
-    <div class="absolute bottom-2 right-2 w-32 h-16">
+    <div class="absolute bottom-2 right-2 w-24 sm:w-32 h-12 sm:h-16">
       <canvas
         id="ingresosSparkline"
         class="w-full h-full opacity-70"
@@ -112,8 +114,11 @@
 
     <!-- Icono del dinero actualizado -->
     <div
-      class="absolute bottom-5 left-5 w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+      class="absolute bottom-3 sm:bottom-5 left-3 sm:left-5 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+      <svg
+        class="w-3 h-3 sm:w-4 sm:h-4"
+        fill="currentColor"
+        viewBox="0 0 20 20">
         <path
           fill-rule="evenodd"
           d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
@@ -124,13 +129,16 @@
 
   <!-- KPI: Monto Pendiente - AHORA DESTACADO CON GRADIENTE AZUL -->
   <div
-    class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-5 text-white shadow-lg relative">
+    class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-4 sm:p-5 text-white shadow-lg relative">
     <div class="absolute top-2 right-2">
       <button
-        class="text-white/80 hover:text-white"
+        class="text-white/80 hover:text-white hidden sm:block"
         aria-label="Ver detalles de cobranza"
         title="Ver análisis de cobranza">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <svg
+          class="w-4 h-4 sm:w-5 sm:h-5"
+          fill="currentColor"
+          viewBox="0 0 20 20">
           <path
             fill-rule="evenodd"
             d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -139,23 +147,25 @@
       </button>
     </div>
     <div class="flex justify-between items-start">
-      <div>
-        <p style="color: #f5f5f7" class="text-sm font-medium">
+      <div class="flex-1">
+        <p style="color: #f5f5f7" class="text-xs sm:text-sm font-medium">
           Monto Pendiente
         </p>
-        <p style="color: #f5f5f7" class="text-3xl font-bold mt-1">
+        <p style="color: #f5f5f7" class="text-2xl sm:text-3xl font-bold mt-1">
           ${{ kpis.monto_pendiente }}M
         </p>
         <div class="flex items-center mt-1">
           <span
-            class="text-sm {% if kpis.tendencia_pendiente|default(0) > 0 %}text-red-300{% else %}text-blue-200{% endif %}">
+            class="text-xs sm:text-sm {% if kpis.tendencia_pendiente|default(0) > 0 %}text-red-300{% else %}text-blue-200{% endif %}">
             {% if kpis.tendencia_pendiente|default(0) > 0 %}+{% endif %}{{
-            kpis.tendencia_pendiente|default(0) }}% vs mes anterior
+            kpis.tendencia_pendiente|default(0) }}%
+            <span class="hidden sm:inline">vs mes anterior</span
+            ><span class="sm:hidden">vs anterior</span>
           </span>
         </div>
 
         <!-- DSO y benchmarks -->
-        <div class="mt-3 pt-2 border-t border-white/20">
+        <div class="mt-2 sm:mt-3 pt-2 border-t border-white/20">
           <div class="flex justify-between items-center">
             <span class="text-xs text-blue-100">DSO: {{ kpis.dso }} días</span>
             <span
@@ -171,8 +181,11 @@
         </div>
       </div>
       <span
-        class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+        <svg
+          class="w-4 h-4 sm:w-5 sm:h-5"
+          fill="currentColor"
+          viewBox="0 0 20 20">
           <path
             d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path>
           <path
@@ -186,12 +199,15 @@
 
   <!-- KPI: Proyectos y Montos Críticos - COMBINADO -->
   <div
-    class="bg-gradient-to-br from-red-700 to-red-800 rounded-xl p-5 text-white shadow-lg relative">
+    class="bg-gradient-to-br from-red-700 to-red-800 rounded-xl p-4 sm:p-5 text-white shadow-lg relative">
     <div class="absolute top-2 right-2">
       <button
-        class="text-white/80 hover:text-white"
+        class="text-white/80 hover:text-white hidden sm:block"
         title="Proyectos y montos con riesgo elevado">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <svg
+          class="w-4 h-4 sm:w-5 sm:h-5"
+          fill="currentColor"
+          viewBox="0 0 20 20">
           <path
             fill-rule="evenodd"
             d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -201,10 +217,10 @@
     </div>
 
     <div class="flex justify-between items-start">
-      <div>
+      <div class="flex-1">
         <!-- Título combinado -->
         <div class="flex items-center space-x-2">
-          <p style="color: #f5f5f7" class="text-sm font-medium">
+          <p style="color: #f5f5f7" class="text-xs sm:text-sm font-medium">
             Proyectos Críticos
           </p>
           <span class="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded">
@@ -213,17 +229,17 @@
         </div>
 
         <!-- Valor crítico -->
-        <p style="color: #f5f5f7" class="text-3xl font-bold mt-1">
+        <p style="color: #f5f5f7" class="text-2xl sm:text-3xl font-bold mt-1">
           ${{ kpis.critical_amount }}M
         </p>
         <div class="flex items-center mt-1">
-          <span class="text-sm"
+          <span class="text-xs sm:text-sm"
             >{{ kpis.pct_critico }}% del total pendiente</span
           >
         </div>
 
         <!-- Costo financiero y acciones -->
-        <div class="mt-3 pt-2 border-t border-white/20">
+        <div class="mt-2 sm:mt-3 pt-2 border-t border-white/20">
           <div class="flex justify-between items-center mb-1">
             <span class="text-xs text-amber-100">Costo financiero:</span>
             <span class="text-xs font-medium"
@@ -232,7 +248,7 @@
           </div>
 
           <!-- Botones de acción (ambos incluidos) -->
-          <div class="grid grid-cols-2 gap-2 mt-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
             <button
               id="show-critical-projects-btn"
               class="text-xs py-1.5 px-2 bg-white/20 hover:bg-white/30 text-white rounded flex items-center justify-center font-medium transition-colors">
@@ -258,10 +274,13 @@
       </div>
 
       <!-- Lado derecho con ícono y visualización de distribución -->
-      <div class="flex flex-col items-center">
+      <div class="flex flex-col items-center flex-shrink-0 ml-2">
         <span
-          class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+          <svg
+            class="w-4 h-4 sm:w-5 sm:h-5"
+            fill="currentColor"
+            viewBox="0 0 20 20">
             <path
               fill-rule="evenodd"
               d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -270,7 +289,7 @@
         </span>
 
         <!-- Mini gráfico de distribución por antiguedad -->
-        <div class="mt-2 w-1.5 h-16 flex flex-col-reverse">
+        <div class="mt-2 w-1.5 h-12 sm:h-16 flex flex-col-reverse">
           <div
             class="w-full rounded-b-sm"
             style="height: {{ kpis.pct_mas90d|default(25) }}%; background-color: rgba(239, 68, 68, 0.9);"></div>
@@ -289,12 +308,15 @@
   </div>
   <!-- KPI: Rentabilidad General -->
   <div
-    class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl p-5 text-white shadow-lg relative">
+    class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl p-4 sm:p-5 text-white shadow-lg relative">
     <div class="absolute top-2 right-2">
       <button
-        class="text-[#f5f5f7]/80 hover:text-[#f5f5f7]"
+        class="text-[#f5f5f7]/80 hover:text-[#f5f5f7] hidden sm:block"
         title="Análisis de márgenes y estructura de costos">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <svg
+          class="w-4 h-4 sm:w-5 sm:h-5"
+          fill="currentColor"
+          viewBox="0 0 20 20">
           <path
             fill-rule="evenodd"
             d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -303,26 +325,27 @@
       </button>
     </div>
     <div class="flex justify-between items-start">
-      <div>
+      <div class="flex-1">
         <!-- Título y valor principal -->
-        <div class="flex items-center space-x-2">
-          <p style="color: #f5f5f7" class="text-sm font-medium">
+        <div class="flex items-center space-x-2 flex-wrap">
+          <p style="color: #f5f5f7" class="text-xs sm:text-sm font-medium">
             Rentabilidad General
           </p>
           <span class="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded">
             {% if kpis.posicion_vs_benchmark|default(0) >= 0 %}↗{% else %}↘{%
-            endif %} {{ kpis.posicion_vs_benchmark|default(0)|abs }}% vs
-            benchmark
+            endif %} {{ kpis.posicion_vs_benchmark|default(0)|abs }}%
+            <span class="hidden sm:inline">vs benchmark</span
+            ><span class="sm:hidden">vs bench</span>
           </span>
         </div>
 
         <!-- Margen principal -->
-        <p style="color: #f5f5f7" class="text-3xl font-bold mt-1">
+        <p style="color: #f5f5f7" class="text-2xl sm:text-3xl font-bold mt-1">
           {{ kpis.rentabilidad_general|default(0) }}%
         </p>
         <div class="flex items-center mt-1">
           <svg
-            class="w-4 h-4 mr-1 {% if kpis.tendencia_rentabilidad|default(0) < 0 %}rotate-180 text-red-300{% else %}text-[#f5f5f7]{% endif %}"
+            class="w-3 h-3 sm:w-4 sm:h-4 mr-1 {% if kpis.tendencia_rentabilidad|default(0) < 0 %}rotate-180 text-red-300{% else %}text-[#f5f5f7]{% endif %}"
             fill="currentColor"
             viewBox="0 0 20 20">
             <path

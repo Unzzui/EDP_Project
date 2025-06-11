@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Agregar a la función de actualización existente
 function updateDashboardCharts(data) {
-    // ... existing update code ...
+ 
     
     if (data.analisis_costos) {
         updateAnalisisCostosCharts(data.analisis_costos);
