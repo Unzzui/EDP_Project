@@ -50,16 +50,16 @@
       </div>
       
       <!-- Botón toggle de filtros -->
- <button id="toggle-filters-btn" class="flex items-center px-2 sm:px-3 py-1.5 text-sm bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white rounded-md transition-colors shadow-sm">
-  <svg id="filter-icon" class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-    <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
-  </svg>
-  <span id="filter-text" class="hidden sm:inline">Mostrar filtros</span>
-  <span id="filter-text-mobile" class="sm:hidden">Filtros</span>
-  <svg id="filter-chevron" class="w-3 h-3 ml-1 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-  </svg>
-</button>
+      <button id="toggle-filters-btn" class="flex items-center px-2 sm:px-3 py-1.5 text-sm bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white rounded-md transition-colors shadow-sm" onclick="console.log('CLICK DIRECTO FUNCIONANDO!'); alert('Botón clickeado directamente!');">
+        <svg id="filter-icon" class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
+        </svg>
+        <span id="filter-text" class="hidden sm:inline">Mostrar filtros</span>
+        <span id="filter-text-mobile" class="sm:hidden">Filtros</span>
+        <svg id="filter-chevron" class="w-3 h-3 ml-1 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+        </svg>
+      </button>
 
     </div>
   </div>
@@ -412,84 +412,160 @@
 <script src="{{ url_for('static', filename='js/critical-projects-modal.js') }}"></script>
 <script src="{{ url_for('static', filename='js/utils-dashboard-manager.js') }}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// Debug: Intentar múltiples formas de cargar el script
+console.log('🔧 Dashboard script loading...');
+
+// Función principal que se ejecuta cuando la página está lista
+function initializeToggleFilters() {
+    console.log('🚀 Initializing toggle filters...');
+    
+    // Intentar obtener los elementos
     const toggleFiltersBtn = document.getElementById('toggle-filters-btn');
     const filtersSection = document.getElementById('filters-section');
     const filterText = document.getElementById('filter-text');
     const filterTextMobile = document.getElementById('filter-text-mobile');
     const filterChevron = document.getElementById('filter-chevron');
     
+    // Debug detallado
+    console.log('🔍 Element search results:');
+    console.log('  - Toggle button:', toggleFiltersBtn);
+    console.log('  - Filters section:', filtersSection);
+    console.log('  - Filter text:', filterText);
+    console.log('  - Filter text mobile:', filterTextMobile);
+    console.log('  - Filter chevron:', filterChevron);
+    
+    // Verificar si los elementos críticos existen
+    if (!toggleFiltersBtn) {
+        console.error('❌ ERROR: No se encontró el botón toggle-filters-btn');
+        // Intentar buscar por clase o selector diferente
+        const altBtn = document.querySelector('button[id*="toggle"]');
+        console.log('🔍 Alternative button search:', altBtn);
+        return;
+    }
+    
+    if (!filtersSection) {
+        console.error('❌ ERROR: No se encontró la sección filters-section');
+        // Intentar buscar por clase o selector diferente
+        const altSection = document.querySelector('div[id*="filter"]');
+        console.log('🔍 Alternative section search:', altSection);
+        return;
+    }
+    
+    console.log('✅ All critical elements found, setting up functionality...');
+    
     let filtersVisible = false;
     
-    // Función para mostrar/ocultar filtros
+    // Función simplificada para mostrar/ocultar filtros
     function toggleFilters() {
-        filtersVisible = !filtersVisible;
+        console.log('🔄 toggleFilters called, current state:', filtersVisible);
         
-        if (filtersVisible) {
-            // Mostrar filtros
-            filtersSection.classList.remove('hidden');
-            filtersSection.style.opacity = '0';
-            filtersSection.style.transform = 'translateY(-10px)';
+        try {
+            filtersVisible = !filtersVisible;
             
-            // Animación de entrada
-            setTimeout(() => {
-                filtersSection.style.transition = 'all 0.3s ease-out';
-                filtersSection.style.opacity = '1';
-                filtersSection.style.transform = 'translateY(0)';
-            }, 10);
-            
-            // Actualizar botón
-            if (filterText) filterText.textContent = 'Ocultar filtros';
-            if (filterTextMobile) filterTextMobile.textContent = 'Ocultar';
-            filterChevron.style.transform = 'rotate(180deg)';
-            toggleFiltersBtn.classList.add('bg-blue-700');
-            
-        } else {
-            // Ocultar filtros
-            filtersSection.style.transition = 'all 0.3s ease-in';
-            filtersSection.style.opacity = '0';
-            filtersSection.style.transform = 'translateY(-10px)';
-            
-            setTimeout(() => {
+            if (filtersVisible) {
+                console.log('👁️ Showing filters...');
+                filtersSection.classList.remove('hidden');
+                filtersSection.style.display = 'block';
+                
+                // Actualizar texto del botón
+                if (filterText) filterText.textContent = 'Ocultar filtros';
+                if (filterTextMobile) filterTextMobile.textContent = 'Ocultar';
+                if (filterChevron) filterChevron.style.transform = 'rotate(180deg)';
+                
+                console.log('✅ Filters shown successfully');
+                
+            } else {
+                console.log('🙈 Hiding filters...');
                 filtersSection.classList.add('hidden');
-            }, 300);
-            
-            // Actualizar botón
-            if (filterText) filterText.textContent = 'Mostrar filtros';
-            if (filterTextMobile) filterTextMobile.textContent = 'Filtros';
-            filterChevron.style.transform = 'rotate(0deg)';
-            toggleFiltersBtn.classList.remove('bg-blue-700');
+                filtersSection.style.display = 'none';
+                
+                // Actualizar texto del botón
+                if (filterText) filterText.textContent = 'Mostrar filtros';
+                if (filterTextMobile) filterTextMobile.textContent = 'Filtros';
+                if (filterChevron) filterChevron.style.transform = 'rotate(0deg)';
+                
+                console.log('✅ Filters hidden successfully');
+            }
+        } catch (error) {
+            console.error('❌ Error in toggleFilters:', error);
         }
     }
     
-    // Event listener para el botón
-    toggleFiltersBtn.addEventListener('click', toggleFilters);
+    // Agregar event listener con múltiples intentos
+    console.log('🎯 Adding click event listener...');
+    
+    // Método 1: addEventListener normal
+    toggleFiltersBtn.addEventListener('click', function(e) {
+        console.log('🖱️ Button clicked via addEventListener!', e);
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFilters();
+    });
+    
+    // Método 2: onclick como respaldo
+    toggleFiltersBtn.onclick = function(e) {
+        console.log('🖱️ Button clicked via onclick!', e);
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFilters();
+    };
+    
+    console.log('✅ Event listeners added successfully');
+    
+    // Test inmediato para verificar que funciona
+    console.log('🧪 Testing toggle function...');
+    setTimeout(() => {
+        console.log('🧪 Running test toggle...');
+        toggleFilters();
+        setTimeout(() => {
+            toggleFilters();
+            console.log('🧪 Test completed');
+        }, 1000);
+    }, 2000);
     
     // Auto-mostrar filtros si hay filtros activos aplicados
     {% if filtros_activos %}
-        // Si hay filtros aplicados, mostrar automáticamente
-        setTimeout(toggleFilters, 100);
+        console.log('🎯 Auto-showing filters (filtros_activos detected)');
+        setTimeout(toggleFilters, 500);
     {% endif %}
     
-    // Funcionalidad para filtros avanzados (ya existente)
+    // Funcionalidad para filtros avanzados
     const toggleAdvanced = document.getElementById('toggle-advanced');
     const advancedFilters = document.getElementById('advanced-filters');
     const advancedText = document.getElementById('advanced-text');
     
     if (toggleAdvanced && advancedFilters) {
-        toggleAdvanced.addEventListener('click', function() {
+        console.log('🔧 Setting up advanced filters toggle...');
+        toggleAdvanced.addEventListener('click', function(e) {
+            e.preventDefault();
             const isHidden = advancedFilters.classList.contains('hidden');
             
             if (isHidden) {
                 advancedFilters.classList.remove('hidden');
-                advancedText.textContent = 'Ocultar filtros avanzados';
+                if (advancedText) advancedText.textContent = 'Ocultar filtros avanzados';
             } else {
                 advancedFilters.classList.add('hidden');
-                advancedText.textContent = 'Filtros avanzados';
+                if (advancedText) advancedText.textContent = 'Filtros avanzados';
             }
         });
     }
-});
+    
+    console.log('🎉 Toggle filters initialization completed!');
+}
+
+// Múltiples formas de asegurar que el script se ejecute
+document.addEventListener('DOMContentLoaded', initializeToggleFilters);
+
+// Respaldo si DOMContentLoaded ya pasó
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeToggleFilters);
+} else {
+    // DOM ya está listo
+    initializeToggleFilters();
+}
+
+// Respaldo adicional con setTimeout
+setTimeout(initializeToggleFilters, 100);
 
 // ===== SISTEMA DE NOTIFICACIONES AUTOMÁTICAS (SIN REFRESH MANUAL) =====
 document.addEventListener('DOMContentLoaded', function() {

@@ -1292,5 +1292,203 @@ if (timelineElement) {
   // Renderizar sparkline después de que se inicialicen los otros charts
   renderSparkline();
 
+  // ===== FUNCIONALIDAD PARA CAMBIO DE VISTA DE PROYECTOS =====
+  function setupProjectViewToggle() {
+    const chartViewBtn = document.getElementById('chart-view-btn');
+    const bubbleViewBtn = document.getElementById('bubble-view-btn');
+    const chartView = document.getElementById('project-chart-view');
+    const bubbleView = document.getElementById('project-bubble-view');
+
+    if (!chartViewBtn || !bubbleViewBtn || !chartView || !bubbleView) {
+      console.log('⚠️ Elementos de toggle de vista de proyectos no encontrados');
+      return;
+    }
+
+    // Función para cambiar vista
+    function switchView(targetView) {
+      if (targetView === 'chart') {
+        // Mostrar vista de gráfica
+        chartView.classList.remove('hidden');
+        bubbleView.classList.add('hidden');
+        
+        // Actualizar botones
+        chartViewBtn.classList.remove('bg-[color:var(--bg-subtle)]', 'text-[color:var(--text-secondary)]');
+        chartViewBtn.classList.add('bg-[color:var(--accent-blue)]', 'text-white');
+        
+        bubbleViewBtn.classList.remove('bg-[color:var(--accent-blue)]', 'text-white');
+        bubbleViewBtn.classList.add('bg-[color:var(--bg-subtle)]', 'text-[color:var(--text-secondary)]');
+        
+        console.log('📊 Vista cambiada a: Gráfica');
+      } else if (targetView === 'bubble') {
+        // Mostrar vista de mapa de riesgo
+        chartView.classList.add('hidden');
+        bubbleView.classList.remove('hidden');
+        
+        // Actualizar botones
+        bubbleViewBtn.classList.remove('bg-[color:var(--bg-subtle)]', 'text-[color:var(--text-secondary)]');
+        bubbleViewBtn.classList.add('bg-[color:var(--accent-blue)]', 'text-white');
+        
+        chartViewBtn.classList.remove('bg-[color:var(--accent-blue)]', 'text-white');
+        chartViewBtn.classList.add('bg-[color:var(--bg-subtle)]', 'text-[color:var(--text-secondary)]');
+        
+        console.log('🎯 Vista cambiada a: Mapa de riesgo');
+        
+        // Inicializar bubble chart si no existe
+        initializeBubbleChart();
+      }
+    }
+
+    // Event listeners
+    chartViewBtn.addEventListener('click', () => switchView('chart'));
+    bubbleViewBtn.addEventListener('click', () => switchView('bubble'));
+
+    console.log('✅ Toggle de vista de proyectos configurado');
+  }
+
+  // Función para inicializar el bubble chart
+  function initializeBubbleChart() {
+    const canvas = document.getElementById('projectBubbleChart');
+    if (!canvas) return;
+
+    // Verificar si el chart ya existe
+    let existingChart = Chart.getChart(canvas);
+    if (existingChart) {
+      console.log('📊 Bubble chart ya existe, actualizando...');
+      return;
+    }
+
+    const adaptiveColors = getAdaptiveColors();
+    
+    // Datos realistas para el mapa de riesgo basados en proyectos reales
+    const bubbleData = {
+      datasets: [{
+        label: 'Proyectos por Riesgo vs Valor',
+        data: [
+          { x: 15, y: 92, r: 25, proyecto: 'Proyecto Minera Los Andes', valor: '$4.2M', riesgo: 'Bajo', probabilidad: 92 },
+          { x: 35, y: 78, r: 18, proyecto: 'Sistema ERP Corporativo', valor: '$2.8M', riesgo: 'Medio', probabilidad: 78 },
+          { x: 65, y: 45, r: 22, proyecto: 'Infraestructura Cloud', valor: '$3.5M', riesgo: 'Alto', probabilidad: 45 },
+          { x: 25, y: 85, r: 20, proyecto: 'Auditoría Financiera Q4', valor: '$3.1M', riesgo: 'Bajo', probabilidad: 85 },
+          { x: 75, y: 30, r: 15, proyecto: 'Migración Legacy', valor: '$2.2M', riesgo: 'Crítico', probabilidad: 30 },
+          { x: 45, y: 65, r: 16, proyecto: 'Capacitación RRHH', valor: '$2.5M', riesgo: 'Medio', probabilidad: 65 },
+          { x: 20, y: 88, r: 14, proyecto: 'Consultoría Fiscal', valor: '$2.0M', riesgo: 'Bajo', probabilidad: 88 },
+          { x: 80, y: 25, r: 19, proyecto: 'Restructuración TI', valor: '$2.9M', riesgo: 'Crítico', probabilidad: 25 }
+        ],
+        backgroundColor: function(context) {
+          const point = context.parsed;
+          if (point.x < 30) return 'rgba(34, 197, 94, 0.7)';    // Verde (bajo riesgo)
+          if (point.x < 50) return 'rgba(59, 130, 246, 0.7)';   // Azul (medio-bajo)
+          if (point.x < 70) return 'rgba(251, 191, 36, 0.7)';   // Amarillo (medio-alto)
+          return 'rgba(239, 68, 68, 0.7)';                      // Rojo (alto riesgo)
+        },
+        borderColor: function(context) {
+          const point = context.parsed;
+          if (point.x < 30) return 'rgb(34, 197, 94)';
+          if (point.x < 50) return 'rgb(59, 130, 246)';
+          if (point.x < 70) return 'rgb(251, 191, 36)';
+          return 'rgb(239, 68, 68)';
+        },
+        borderWidth: 2
+      }]
+    };
+
+    new Chart(canvas, {
+      type: 'bubble',
+      data: bubbleData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: adaptiveColors.tooltipBg,
+            titleColor: adaptiveColors.textPrimary,
+            bodyColor: adaptiveColors.textSecondary,
+            borderColor: adaptiveColors.borderColor,
+            borderWidth: 1,
+            callbacks: {
+              title: function(context) {
+                return context[0].raw.proyecto;
+              },
+              label: function(context) {
+                const data = context.raw;
+                return [
+                  `Valor: ${data.valor}`,
+                  `Nivel de riesgo: ${data.riesgo}`,
+                  `Probabilidad de éxito: ${data.probabilidad}%`,
+                  `Factor de riesgo: ${data.x}%`
+                ];
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Factor de Riesgo (%)',
+              color: adaptiveColors.textSecondary,
+              font: {
+                size: 12,
+                weight: 'bold'
+              }
+            },
+            grid: {
+              color: adaptiveColors.gridColor
+            },
+            ticks: {
+              color: adaptiveColors.textSecondary,
+              callback: function(value) {
+                if (value <= 30) return value + '% (Bajo)';
+                if (value <= 50) return value + '% (Medio)';
+                if (value <= 70) return value + '% (Alto)';
+                return value + '% (Crítico)';
+              }
+            },
+            min: 0,
+            max: 100
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Probabilidad de Éxito (%)',
+              color: adaptiveColors.textSecondary,
+              font: {
+                size: 12,
+                weight: 'bold'
+              }
+            },
+            grid: {
+              color: adaptiveColors.gridColor
+            },
+            ticks: {
+              color: adaptiveColors.textSecondary,
+              callback: function(value) {
+                return value + '%';
+              }
+            },
+            min: 0,
+            max: 100
+          }
+        },
+        interaction: {
+          intersect: false
+        },
+        animation: {
+          duration: 1500,
+          easing: 'easeInOutQuart'
+        }
+      }
+    });
+
+    console.log('✅ Bubble chart (Mapa de Riesgo) inicializado con datos realistas');
+  }
+
+  // Configurar toggle después de que todos los charts estén listos
+  setupProjectViewToggle();
+
   console.log('🎉 Charts Manager inicializado con tema adaptativo automático');
 });

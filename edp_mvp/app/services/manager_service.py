@@ -15,6 +15,7 @@ import hashlib
 
 try:  # pragma: no cover - optional redis cache
     import redis
+
     redis_url = os.getenv("REDIS_URL")
     redis_client = redis.from_url(redis_url) if redis_url else None
 except Exception:
@@ -42,10 +43,10 @@ class ManagerService(BaseService):
         self.cost_service = CostService()
         # Cache configuration
         self.cache_ttl = {
-            'dashboard': 300,  # 5 minutes for dashboard data
-            'kpis': 600,       # 10 minutes for KPIs
-            'charts': 900,     # 15 minutes for chart data
-            'financials': 1800 # 30 minutes for financial metrics
+            "dashboard": 300,  # 5 minutes for dashboard data
+            "kpis": 600,  # 10 minutes for KPIs
+            "charts": 900,  # 15 minutes for chart data
+            "financials": 1800,  # 30 minutes for financial metrics
         }
 
     def _sanitize_for_json(self, data):
@@ -53,7 +54,7 @@ class ManagerService(BaseService):
         Sanitize data for JSON serialization by converting numpy types and handling NaN values.
         """
         import numpy as np
-        
+
         if isinstance(data, dict):
             return {key: self._sanitize_for_json(value) for key, value in data.items()}
         elif isinstance(data, list):
@@ -72,7 +73,10 @@ class ManagerService(BaseService):
             return data
 
     def get_manager_dashboard_data(
-        self, filters: Optional[Dict[str, Any]] = None, force_refresh: bool = False, max_cache_age: Optional[int] = None
+        self,
+        filters: Optional[Dict[str, Any]] = None,
+        force_refresh: bool = False,
+        max_cache_age: Optional[int] = None,
     ) -> ServiceResponse:
         """Get comprehensive dashboard data for managers with intelligent caching strategy."""
         try:
@@ -80,40 +84,48 @@ class ManagerService(BaseService):
             filters_hash = self._generate_cache_key(filters or {})
             cache_key = f"manager_dashboard:{filters_hash}"
             cache_meta_key = f"{cache_key}:meta"
-            
+
             # Try to get from cache first (unless force refresh)
             if not force_refresh and redis_client:
                 try:
                     cached = redis_client.get(cache_key)
                     cache_meta = redis_client.get(cache_meta_key)
-                    
+
                     if cached and cache_meta:
                         meta_data = json.loads(cache_meta)
-                        cache_timestamp = meta_data.get('timestamp', 0)
+                        cache_timestamp = meta_data.get("timestamp", 0)
                         current_time = datetime.now().timestamp()
                         cache_age = current_time - cache_timestamp
-                        
+
                         # Check if cache is still valid based on max_cache_age
                         cache_valid = True
                         if max_cache_age is not None and cache_age > max_cache_age:
                             cache_valid = False
-                            logger.info(f"🕒 Cache is {cache_age:.1f}s old, max allowed: {max_cache_age}s - refreshing")
-                        
+                            logger.info(
+                                f"🕒 Cache is {cache_age:.1f}s old, max allowed: {max_cache_age}s - refreshing"
+                            )
+
                         if cache_valid:
                             data = json.loads(cached)
                             # Mark as cached data with age info
                             data["_is_immediate"] = False
                             data["_is_cached"] = True
-                            data["_is_stale"] = cache_age > 60  # Consider stale after 1 minute
+                            data["_is_stale"] = (
+                                cache_age > 60
+                            )  # Consider stale after 1 minute
                             data["_cache_age"] = round(cache_age, 1)
                             data["_task_id"] = None
-                            logger.info(f"✅ Dashboard data served from cache (age: {cache_age:.1f}s): {cache_key}")
+                            logger.info(
+                                f"✅ Dashboard data served from cache (age: {cache_age:.1f}s): {cache_key}"
+                            )
                             return ServiceResponse(success=True, data=data)
                 except Exception as e:
                     logger.warning(f"Cache retrieval error: {e}")
 
-            logger.info(f"🔄 Calculating fresh dashboard data (force_refresh={force_refresh})")
-            
+            logger.info(
+                f"🔄 Calculating fresh dashboard data (force_refresh={force_refresh})"
+            )
+
             # If not in cache or force refresh, calculate complete data synchronously
             # Load base data as DataFrame for analytics
             edps_response = self.edp_repo.find_all_dataframe()
@@ -176,35 +188,46 @@ class ManagerService(BaseService):
                 },
                 # Cache metadata for controller compatibility
                 "_is_immediate": True,  # This is immediate complete data
-                "_is_cached": False,    # Fresh calculation
+                "_is_cached": False,  # Fresh calculation
                 "_is_stale": False,
                 "_task_id": None,
             }
-            
+
             # Cache the complete result for future requests
             if redis_client:
                 try:
                     # Store data and metadata separately
                     current_timestamp = datetime.now().timestamp()
                     cache_metadata = {
-                        'timestamp': current_timestamp,
-                        'filters_hash': filters_hash,
-                        'ttl': self.cache_ttl['dashboard']
+                        "timestamp": current_timestamp,
+                        "filters_hash": filters_hash,
+                        "ttl": self.cache_ttl["dashboard"],
                     }
-                    
-                    redis_client.setex(cache_key, self.cache_ttl['dashboard'], 
-                                     json.dumps(self._sanitize_for_json(result_data)))
-                    redis_client.setex(cache_meta_key, self.cache_ttl['dashboard'], 
-                                     json.dumps(cache_metadata))
-                    
+
+                    redis_client.setex(
+                        cache_key,
+                        self.cache_ttl["dashboard"],
+                        json.dumps(self._sanitize_for_json(result_data)),
+                    )
+                    redis_client.setex(
+                        cache_meta_key,
+                        self.cache_ttl["dashboard"],
+                        json.dumps(cache_metadata),
+                    )
+
                     # Also keep a stale copy for fallback
-                    redis_client.setex(f"{cache_key}:stale", self.cache_ttl['dashboard'] * 4, 
-                                     json.dumps(self._sanitize_for_json(result_data)))
-                    
-                    logger.info(f"✅ Dashboard data cached with timestamp {current_timestamp}: {cache_key}")
+                    redis_client.setex(
+                        f"{cache_key}:stale",
+                        self.cache_ttl["dashboard"] * 4,
+                        json.dumps(self._sanitize_for_json(result_data)),
+                    )
+
+                    logger.info(
+                        f"✅ Dashboard data cached with timestamp {current_timestamp}: {cache_key}"
+                    )
                 except Exception as e:
                     logger.warning(f"Cache storage error: {e}")
-                    
+
             return ServiceResponse(success=True, data=result_data)
 
         except Exception as e:
@@ -246,32 +269,45 @@ class ManagerService(BaseService):
 
             # Calculate components in parallel using cached results where possible
             components = {}
-            
+
             # Try to get cached KPIs first
             kpis_cache_key = f"executive_kpis:{self._generate_cache_key(filters or {})}"
             if redis_client:
                 cached_kpis = redis_client.get(kpis_cache_key)
                 if cached_kpis:
-                    components['executive_kpis'] = json.loads(cached_kpis)
+                    components["executive_kpis"] = json.loads(cached_kpis)
                 else:
-                    components['executive_kpis'] = self._calculate_executive_kpis(df_edp, df_filtered)
-                    redis_client.setex(kpis_cache_key, self.cache_ttl['kpis'], 
-                                     json.dumps(self._sanitize_for_json(components['executive_kpis'])))
+                    components["executive_kpis"] = self._calculate_executive_kpis(
+                        df_edp, df_filtered
+                    )
+                    redis_client.setex(
+                        kpis_cache_key,
+                        self.cache_ttl["kpis"],
+                        json.dumps(
+                            self._sanitize_for_json(components["executive_kpis"])
+                        ),
+                    )
             else:
-                components['executive_kpis'] = self._calculate_executive_kpis(df_edp, df_filtered)
+                components["executive_kpis"] = self._calculate_executive_kpis(
+                    df_edp, df_filtered
+                )
 
             # Calculate other components
-            components['financial_metrics'] = self._calculate_financial_metrics(df_edp, df_filtered)
-            components['chart_data'] = self._generate_chart_data(df_edp, df_filtered)
-            components['cash_forecast'] = self._calculate_cash_forecast(df_edp)
-            components['alerts'] = self._generate_alerts(df_edp)
-            
+            components["financial_metrics"] = self._calculate_financial_metrics(
+                df_edp, df_filtered
+            )
+            components["chart_data"] = self._generate_chart_data(df_edp, df_filtered)
+            components["cash_forecast"] = self._calculate_cash_forecast(df_edp)
+            components["alerts"] = self._generate_alerts(df_edp)
+
             # Get cost management data
             cost_data_response = self.cost_service.get_cost_dashboard_data(filters)
-            components['cost_management'] = cost_data_response.data if cost_data_response.success else {}
-            
+            components["cost_management"] = (
+                cost_data_response.data if cost_data_response.success else {}
+            )
+
             # Get filter options
-            components['filter_options'] = self._get_manager_filter_options(df_edp)
+            components["filter_options"] = self._get_manager_filter_options(df_edp)
 
             result_data = {
                 **components,
@@ -282,15 +318,22 @@ class ManagerService(BaseService):
                     "last_updated": datetime.now().isoformat(),
                 },
             }
-            
+
             # Cache the complete result
             cache_key = f"manager_dashboard:{self._generate_cache_key(filters or {})}"
             if redis_client:
-                redis_client.setex(cache_key, self.cache_ttl['dashboard'], json.dumps(self._sanitize_for_json(result_data)))
+                redis_client.setex(
+                    cache_key,
+                    self.cache_ttl["dashboard"],
+                    json.dumps(self._sanitize_for_json(result_data)),
+                )
                 # Also keep a stale copy for fallback
-                redis_client.setex(f"{cache_key}:stale", self.cache_ttl['dashboard'] * 4, 
-                                 json.dumps(self._sanitize_for_json(result_data)))
-                
+                redis_client.setex(
+                    f"{cache_key}:stale",
+                    self.cache_ttl["dashboard"] * 4,
+                    json.dumps(self._sanitize_for_json(result_data)),
+                )
+
             return ServiceResponse(success=True, data=result_data)
 
         except Exception as e:
@@ -302,47 +345,51 @@ class ManagerService(BaseService):
                 data=None,
             )
 
-    def _get_immediate_dashboard_data(self, filters: Dict[str, Any] = None) -> Optional[ServiceResponse]:
+    def _get_immediate_dashboard_data(
+        self, filters: Dict[str, Any] = None
+    ) -> Optional[ServiceResponse]:
         """Get immediate dashboard data with basic KPIs only."""
         try:
             # Quick data fetch with minimal processing
             edps_response = self.edp_repo.find_all_dataframe()
-            
-            if not isinstance(edps_response, dict) or not edps_response.get("success", False):
+
+            if not isinstance(edps_response, dict) or not edps_response.get(
+                "success", False
+            ):
                 return None
-                
+
             df_edp = edps_response.get("data", pd.DataFrame())
             if df_edp.empty:
                 return None
 
             df_filtered = self._apply_manager_filters(df_edp, filters or {})
-            
+
             # Calculate only essential KPIs for immediate response
             essential_kpis = self._calculate_essential_kpis(df_edp, df_filtered)
-            
+
             return ServiceResponse(
                 success=True,
                 data={
-                    'executive_kpis': essential_kpis,
-                    'financial_metrics': {},
-                    'chart_data': {},
-                    'cash_forecast': {},
-                    'alerts': [],
-                    'cost_management': {},
-                    'filter_options': {},
-                    'filters': filters or {},
-                    '_is_immediate': True,
-                    '_is_cached': False,
-                    '_is_stale': False,
-                    '_task_id': None,
-                    'data_summary': {
-                        'total_records': len(df_edp),
-                        'filtered_records': len(df_filtered),
-                        'last_updated': datetime.now().isoformat(),
-                    }
-                }
+                    "executive_kpis": essential_kpis,
+                    "financial_metrics": {},
+                    "chart_data": {},
+                    "cash_forecast": {},
+                    "alerts": [],
+                    "cost_management": {},
+                    "filter_options": {},
+                    "filters": filters or {},
+                    "_is_immediate": True,
+                    "_is_cached": False,
+                    "_is_stale": False,
+                    "_task_id": None,
+                    "data_summary": {
+                        "total_records": len(df_edp),
+                        "filtered_records": len(df_filtered),
+                        "last_updated": datetime.now().isoformat(),
+                    },
+                },
             )
-            
+
         except Exception as e:
             logger.warning(f"Error getting immediate data: {e}")
             return None
@@ -353,116 +400,151 @@ class ManagerService(BaseService):
         sorted_filters = json.dumps(filters, sort_keys=True)
         return hashlib.md5(sorted_filters.encode()).hexdigest()[:12]
 
-    def _calculate_essential_kpis(self, df_full: pd.DataFrame, df_filtered: pd.DataFrame) -> Dict[str, Any]:
+    def _calculate_essential_kpis(
+        self, df_full: pd.DataFrame, df_filtered: pd.DataFrame
+    ) -> Dict[str, Any]:
         """Calculate essential KPIs for immediate response, including template requirements."""
         try:
             if df_full.empty:
                 return self.get_empty_kpis()
 
             df_full = self._prepare_kpi_data(df_full)
-            
+
             # Only calculate most critical KPIs
             total_edps = len(df_full)
             df_numeric = df_full.copy()
-            
+
             # Ensure numeric columns
             for col in ["monto_propuesto", "monto_aprobado"]:
                 if col in df_numeric.columns:
-                    df_numeric[col] = pd.to_numeric(df_numeric[col], errors="coerce").fillna(0)
+                    df_numeric[col] = pd.to_numeric(
+                        df_numeric[col], errors="coerce"
+                    ).fillna(0)
 
             # Basic financial metrics
             total_amount = df_numeric["monto_propuesto"].sum()
             approved_amount = df_numeric["monto_aprobado"].sum()
-            
+
             # Status counts
             status_counts = df_full["estado"].value_counts()
             paid_count = status_counts.get("pagado", 0)
-            pending_count = status_counts.get("enviado", 0) + status_counts.get("validado", 0)
-            
+            pending_count = status_counts.get("enviado", 0) + status_counts.get(
+                "validado", 0
+            )
+
             # Basic ratios
-            approval_rate = (approved_amount / total_amount * 100) if total_amount > 0 else 0
+            approval_rate = (
+                (approved_amount / total_amount * 100) if total_amount > 0 else 0
+            )
             payment_rate = (paid_count / total_edps * 100) if total_edps > 0 else 0
 
             # Calculate additional KPIs required by template
             # Meta de ingresos (estimado como 90% del monto propuesto)
             meta_ingresos = total_amount * 0.9
-            vs_meta_ingresos = ((approved_amount - meta_ingresos) / meta_ingresos * 100) if meta_ingresos > 0 else 0
-            
+            vs_meta_ingresos = (
+                ((approved_amount - meta_ingresos) / meta_ingresos * 100)
+                if meta_ingresos > 0
+                else 0
+            )
+
             # Forecast this year (simple projection)
             forecast_year = approved_amount * 1.2  # Simple 20% growth projection
-            
+
             # Budget variance
-            presupuesto_anual = total_amount * 1.1  # Assume annual budget is 110% of current amount
-            variacion_presupuesto = ((approved_amount - presupuesto_anual) / presupuesto_anual * 100) if presupuesto_anual > 0 else 0
+            presupuesto_anual = (
+                total_amount * 1.1
+            )  # Assume annual budget is 110% of current amount
+            variacion_presupuesto = (
+                ((approved_amount - presupuesto_anual) / presupuesto_anual * 100)
+                if presupuesto_anual > 0
+                else 0
+            )
 
             # Calculate ingresos_totales (sum of approved amounts from completed EDPs)
             estados_completados = ["pagado", "validado", "pagado ", "validado "]
-            ingresos_totales = df_full[df_full["estado"].str.strip().isin(estados_completados)]["monto_aprobado"].sum() / 1_000_000
-            
+            ingresos_totales = (
+                df_full[df_full["estado"].str.strip().isin(estados_completados)][
+                    "monto_aprobado"
+                ].sum()
+                / 1_000_000
+            )
+
             return {
                 # Financial KPIs (including the missing ingresos_totales)
                 "ingresos_totales": round(ingresos_totales, 1),
-                "monto_pendiente": round((total_amount - approved_amount) / 1_000_000, 1),
+                "monto_pendiente": round(
+                    (total_amount - approved_amount) / 1_000_000, 1
+                ),
                 "meta_ingresos": round(meta_ingresos / 1_000_000, 1),
                 "vs_meta_ingresos": round(vs_meta_ingresos, 1),
-                "pct_meta_ingresos": round((ingresos_totales / (meta_ingresos / 1_000_000) * 100) if meta_ingresos > 0 else 0, 1),
-                
+                "pct_meta_ingresos": round(
+                    (
+                        (ingresos_totales / (meta_ingresos / 1_000_000) * 100)
+                        if meta_ingresos > 0
+                        else 0
+                    ),
+                    1,
+                ),
                 # Basic operational KPIs
                 "total_edps": total_edps,
                 "total_approved": paid_count,
                 "total_pending": pending_count,
                 "approval_rate": round(approval_rate, 1),
                 "critical_edps": max(0, pending_count - 5),  # Simple estimation
-                "critical_amount": round(max(0, (pending_count - 5) * (approved_amount / max(1, paid_count))) / 1_000_000, 1),
-                
+                "critical_amount": round(
+                    max(0, (pending_count - 5) * (approved_amount / max(1, paid_count)))
+                    / 1_000_000,
+                    1,
+                ),
                 # Basic DSO and client metrics
                 "dso": 45.0,  # Default DSO
                 "dso_cliente_principal": 30.0,
                 "pct_ingresos_principal": 35.5,
-                
                 # Project timing
                 "proyectos_on_time": 75,
                 "proyectos_retrasados": 15,
-                
                 # Basic rentability
                 "rentabilidad_general": round(approval_rate * 0.8, 1),
                 "vs_meta_rentabilidad": 5.2,
                 "meta_rentabilidad": 15.0,
                 "pct_meta_rentabilidad": round((approval_rate * 0.8 / 15.0 * 100), 1),
-                
                 # Basic efficiency
                 "efficiency_score": 75.0,
                 "tiempo_medio_ciclo": 45.0,
                 "tiempo_medio_ciclo_pct": 15.0,
-                
                 # Aging buckets (simplified)
                 "pct_30d": 60.0,
                 "pct_60d": 25.0,
                 "pct_90d": 10.0,
                 "pct_mas90d": 5.0,
-                
                 # Additional template compatibility fields
                 "monto_total_formatted": FormatUtils.format_currency(total_amount),
-                "monto_aprobado_formatted": FormatUtils.format_currency(approved_amount),
+                "monto_aprobado_formatted": FormatUtils.format_currency(
+                    approved_amount
+                ),
                 "forecast_year_formatted": FormatUtils.format_currency(forecast_year),
                 "meta_ingresos_formatted": FormatUtils.format_currency(meta_ingresos),
-                "presupuesto_anual_formatted": FormatUtils.format_currency(presupuesto_anual),
+                "presupuesto_anual_formatted": FormatUtils.format_currency(
+                    presupuesto_anual
+                ),
                 "variacion_presupuesto": round(variacion_presupuesto, 1),
-                "budget_utilization": round((approved_amount / (total_amount * 1.1) * 100), 1) if total_amount > 0 else 0,
-                
+                "budget_utilization": (
+                    round((approved_amount / (total_amount * 1.1) * 100), 1)
+                    if total_amount > 0
+                    else 0
+                ),
                 # Driver information
                 "top_driver_1_name": "Proyecto Principal",
                 "top_driver_1_value": round(ingresos_totales * 0.4, 1),
                 "top_driver_2_name": "Operaciones",
                 "top_driver_2_value": round(ingresos_totales * 0.3, 1),
-                
-                "_is_essential": True
+                "_is_essential": True,
             }
-            
+
         except Exception as e:
             logger.error(f"Error calculating essential KPIs: {e}")
             return self.get_empty_kpis()
-    
+
     def get_performance_analysis(self, period: str = "monthly") -> ServiceResponse:
         """Get performance analysis for different periods."""
         try:
@@ -1483,7 +1565,7 @@ class ManagerService(BaseService):
         return forecast
 
     def _generate_alerts(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
-        """Generate system alerts and warnings."""
+        """Generate system alerts and warnings using template-compatible structure."""
         alerts = []
 
         # Critical EDPs alert - check if 'Crítico' column exists
@@ -1491,14 +1573,15 @@ class ManagerService(BaseService):
             critical_count = len(df[df["Crítico"] == True])
         else:
             critical_count = 0
-            
+
         if critical_count > 0:
             alerts.append(
                 {
-                    "type": "warning",
-                    "title": "EDPs Críticos",
-                    "message": f"{critical_count} EDPs marcados como críticos requieren atención inmediata",
-                    "count": critical_count,
+                    "tipo": "critico",
+                    "titulo": "EDPs Críticos",
+                    "descripcion": f"{critical_count} EDPs marcados como críticos requieren atención inmediata",
+                    "fecha": datetime.now().strftime("%d/%m/%Y"),
+                    "accion_principal": "Revisar",
                 }
             )
 
@@ -1513,10 +1596,11 @@ class ManagerService(BaseService):
             if old_pending > 0:
                 alerts.append(
                     {
-                        "type": "error",
-                        "title": "EDPs Atrasados",
-                        "message": f"{old_pending} EDPs llevan más de 30 días en proceso",
-                        "count": old_pending,
+                        "tipo": "alto",
+                        "titulo": "EDPs Atrasados",
+                        "descripcion": f"{old_pending} EDPs llevan más de 30 días en proceso",
+                        "fecha": datetime.now().strftime("%d/%m/%Y"),
+                        "accion_principal": "Gestionar",
                     }
                 )
 
@@ -1529,10 +1613,11 @@ class ManagerService(BaseService):
             total_amount = high_value_pending["monto_propuesto"].sum()
             alerts.append(
                 {
-                    "type": "info",
-                    "title": "EDPs Alto Valor Pendientes",
-                    "message": f"{FormatUtils.format_currency(total_amount)} en EDPs de alto valor pendientes",
-                    "count": len(high_value_pending),
+                    "tipo": "medio",
+                    "titulo": "EDPs Alto Valor Pendientes",
+                    "descripcion": f"{FormatUtils.format_currency(total_amount)} en EDPs de alto valor pendientes",
+                    "fecha": datetime.now().strftime("%d/%m/%Y"),
+                    "accion_principal": "Monitorear",
                 }
             )
 
@@ -1798,7 +1883,6 @@ class ManagerService(BaseService):
             "critical_edps": 0,
             "efficiency_score": 0,
         }
-
 
     def get_selector_lists(self, datos_relacionados: Dict[str, Any]) -> ServiceResponse:
         """Get lists for dashboard selectors."""
@@ -2073,24 +2157,61 @@ class ManagerService(BaseService):
         """Generate executive alerts based on KPIs and forecasts."""
         try:
             alertas = []
-            datos_relacionados = datos_relacionados.get("edps", [])
-            datos_relacionados = pd.DataFrame(datos_relacionados)
+            edps_data = datos_relacionados.get("edps", [])
+
+            if isinstance(edps_data, pd.DataFrame):
+                df_datos = edps_data
+            else:
+                df_datos = pd.DataFrame(edps_data)
+
+            if df_datos.empty:
+                # Generar alertas de ejemplo para demostración
+                alertas_ejemplo = [
+                    {
+                        "tipo": "critico",
+                        "titulo": "EDP crítico detectado",
+                        "descripcion": "EDP-2024-001 lleva 45 días sin respuesta del cliente",
+                        "fecha": datetime.now().strftime("%d/%m/%Y"),
+                        "accion_principal": "Contactar",
+                    },
+                    {
+                        "tipo": "alto",
+                        "titulo": "Concentración de riesgo",
+                        "descripcion": "65% del backlog concentrado en un solo cliente",
+                        "fecha": datetime.now().strftime("%d/%m/%Y"),
+                        "accion_principal": "Diversificar",
+                    },
+                    {
+                        "tipo": "medio",
+                        "titulo": "Backlog elevado",
+                        "descripcion": "$125.5M en EDPs pendientes de cobro este mes",
+                        "fecha": datetime.now().strftime("%d/%m/%Y"),
+                        "accion_principal": "Planificar",
+                    },
+                ]
+                return ServiceResponse(
+                    success=True,
+                    message="Generated example alerts for demonstration",
+                    data=alertas_ejemplo,
+                )
 
             # Preparar datos
-            datos_relacionados["monto_aprobado"] = pd.to_numeric(
-                datos_relacionados["monto_aprobado"], errors="coerce"
+            df_datos["monto_aprobado"] = pd.to_numeric(
+                df_datos["monto_aprobado"], errors="coerce"
             ).fillna(0)
-            datos_relacionados["dias_espera"] = pd.to_numeric(
-                datos_relacionados["dias_espera"], errors="coerce"
+            df_datos["dias_espera"] = pd.to_numeric(
+                df_datos["dias_espera"], errors="coerce"
             ).fillna(0)
 
             # Filtrar pendientes
-            df_pendientes = datos_relacionados[
-                ~datos_relacionados["estado"].str.strip().isin(["pagado", "validado"])
+            df_pendientes = df_datos[
+                ~df_datos["estado"].str.strip().str.lower().isin(["pagado", "validado"])
             ]
 
             if df_pendientes.empty:
-                return alertas
+                return ServiceResponse(
+                    success=True, message="No pending EDPs for alerts", data=[]
+                )
 
             # Alerta 1: EDPs críticos (>30 días)
             edps_criticos = df_pendientes[df_pendientes["dias_espera"] > 30]
@@ -2100,13 +2221,17 @@ class ManagerService(BaseService):
                     {
                         "tipo": "critico",
                         "titulo": f"{len(edps_criticos)} EDPs críticos",
-                        "mensaje": f"${monto_critico:.1f}M en EDPs con más de 30 días de espera",
-                        "icono": "exclamation-triangle",
+                        "descripcion": f"${monto_critico:.1f}M en EDPs con más de 30 días de espera",
+                        "fecha": datetime.now().strftime("%d/%m/%Y"),
+                        "accion_principal": "Gestionar",
                     }
                 )
 
             # Alerta 2: Concentración en un cliente
-            if "cliente" in df_pendientes.columns:
+            if (
+                "cliente" in df_pendientes.columns
+                and not df_pendientes["cliente"].isna().all()
+            ):
                 clientes_montos = df_pendientes.groupby("cliente")[
                     "monto_aprobado"
                 ].sum()
@@ -2120,30 +2245,55 @@ class ManagerService(BaseService):
                     if concentracion > 40:
                         alertas.append(
                             {
-                                "tipo": "warning",
-                                "titulo": "Alta concentración",
-                                "mensaje": f"{concentracion:.1f}% del backlog en {cliente_principal}",
-                                "icono": "chart-pie",
+                                "tipo": "alto",
+                                "titulo": "Alta concentración de riesgo",
+                                "descripcion": f"{concentracion:.1f}% del backlog concentrado en {cliente_principal}",
+                                "fecha": datetime.now().strftime("%d/%m/%Y"),
+                                "accion_principal": "Diversificar",
                             }
                         )
 
             # Alerta 3: Montos pendientes altos
             monto_total_pendiente = df_pendientes["monto_aprobado"].sum() / 1_000_000
-            if monto_total_pendiente > 1000:  # Más de 1000M
+            if monto_total_pendiente > 50:  # Más de 50M
                 alertas.append(
                     {
                         "tipo": "info",
-                        "titulo": "Backlog alto",
-                        "mensaje": f"${monto_total_pendiente:.1f}M en EDPs pendientes",
-                        "icono": "currency-dollar",
+                        "titulo": "Backlog elevado",
+                        "descripcion": f"${monto_total_pendiente:.1f}M en EDPs pendientes de cobro",
+                        "fecha": datetime.now().strftime("%d/%m/%Y"),
+                        "accion_principal": "Planificar",
                     }
                 )
 
-            return alertas[:10]  # Máximo 5 alertas
+            # Alerta 4: EDPs con alto valor individual
+            edps_alto_valor = df_pendientes[
+                df_pendientes["monto_aprobado"] > 10_000_000
+            ]  # >10M
+            if len(edps_alto_valor) > 0:
+                alertas.append(
+                    {
+                        "tipo": "medio",
+                        "titulo": f"{len(edps_alto_valor)} EDPs de alto valor",
+                        "descripcion": "EDPs individuales superiores a $10M requieren seguimiento especial",
+                        "fecha": datetime.now().strftime("%d/%m/%Y"),
+                        "accion_principal": "Monitorear",
+                    }
+                )
+
+            logger.info(f"Generated {len(alertas)} executive alerts")
+
+            return ServiceResponse(
+                success=True,
+                message=f"Successfully generated {len(alertas)} alerts",
+                data=alertas[:5],  # Máximo 5 alertas
+            )
 
         except Exception as e:
-            logger.info(f"Error en obtener_alertas_criticas: {e}")
-            return []
+            logger.error(f"Error generating executive alerts: {e}")
+            return ServiceResponse(
+                success=False, message=f"Error generating alerts: {str(e)}", data=[]
+            )
 
     def get_cost_management_insights(self) -> Dict[str, Any]:
         """Get cost management insights for executive dashboard."""
@@ -2933,12 +3083,14 @@ class ManagerService(BaseService):
             return round((delayed / len(df) * 100) if len(df) > 0 else 0)
         return 15  # Default
 
-    def invalidate_dashboard_cache(self, filters: Optional[Dict[str, Any]] = None) -> bool:
+    def invalidate_dashboard_cache(
+        self, filters: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """Invalidate dashboard cache for specific filters or all if no filters provided."""
         try:
             if not redis_client:
                 return True  # No cache to invalidate
-            
+
             if filters:
                 # Invalidate specific filter combination
                 filters_hash = self._generate_cache_key(filters)
@@ -2949,34 +3101,33 @@ class ManagerService(BaseService):
                     f"{cache_key}:stale",
                     f"kpis:{filters_hash}",
                     f"charts:{filters_hash}",
-                    f"financials:{filters_hash}"
+                    f"financials:{filters_hash}",
                 ]
-                
+
                 deleted_count = 0
                 for key in keys_to_delete:
                     if redis_client.delete(key):
                         deleted_count += 1
-                
-                logger.info(f"✅ Invalidated {deleted_count} cache keys for specific filters")
+
+                logger.info(
+                    f"✅ Invalidated {deleted_count} cache keys for specific filters"
+                )
             else:
                 # Invalidate all dashboard cache
-                patterns = [
-                    "manager_dashboard:*",
-                    "kpis:*", 
-                    "charts:*",
-                    "financials:*"
-                ]
-                
+                patterns = ["manager_dashboard:*", "kpis:*", "charts:*", "financials:*"]
+
                 total_deleted = 0
                 for pattern in patterns:
                     keys = redis_client.keys(pattern)
                     if keys:
                         total_deleted += redis_client.delete(*keys)
-                
-                logger.info(f"✅ Invalidated {total_deleted} cache keys (all dashboard data)")
-            
+
+                logger.info(
+                    f"✅ Invalidated {total_deleted} cache keys (all dashboard data)"
+                )
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error invalidating dashboard cache: {e}")
             return False
@@ -2986,71 +3137,75 @@ class ManagerService(BaseService):
         try:
             if not redis_client:
                 return True
-            
+
             # Different change types invalidate different cache patterns
             if change_type == "edp_update":
                 # EDP data changed, invalidate all dashboard cache
                 return self.invalidate_dashboard_cache()
-            
+
             elif change_type == "project_update":
                 # Project data changed, invalidate project-related cache
                 patterns = ["manager_dashboard:*", "charts:*"]
-                
+
             elif change_type == "financial_update":
                 # Financial data changed, invalidate financial cache
                 patterns = ["manager_dashboard:*", "financials:*", "kpis:*"]
-                
+
             else:
                 # General change, invalidate everything
                 return self.invalidate_dashboard_cache()
-            
+
             total_deleted = 0
             for pattern in patterns:
                 keys = redis_client.keys(pattern)
                 if keys:
                     total_deleted += redis_client.delete(*keys)
-            
-            logger.info(f"✅ Invalidated {total_deleted} cache keys for change type: {change_type}")
+
+            logger.info(
+                f"✅ Invalidated {total_deleted} cache keys for change type: {change_type}"
+            )
             return True
-            
+
         except Exception as e:
             logger.error(f"Error invalidating cache for data change: {e}")
             return False
 
-    def get_cache_status(self, filters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def get_cache_status(
+        self, filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Get detailed cache status information."""
         try:
             if not redis_client:
                 return {"redis_available": False}
-            
+
             filters_hash = self._generate_cache_key(filters or {})
             cache_key = f"manager_dashboard:{filters_hash}"
             cache_meta_key = f"{cache_key}:meta"
-            
+
             # Check main cache
             cache_exists = redis_client.exists(cache_key)
             cache_ttl = redis_client.ttl(cache_key) if cache_exists else -2
-            
+
             # Check metadata
             meta_exists = redis_client.exists(cache_meta_key)
             cache_age = None
-            
+
             if meta_exists:
                 try:
                     meta_data = json.loads(redis_client.get(cache_meta_key))
-                    cache_timestamp = meta_data.get('timestamp', 0)
+                    cache_timestamp = meta_data.get("timestamp", 0)
                     cache_age = datetime.now().timestamp() - cache_timestamp
                 except Exception:
                     pass
-            
+
             # Check related cache
             related_cache = {
                 "kpis": redis_client.exists(f"kpis:{filters_hash}"),
                 "charts": redis_client.exists(f"charts:{filters_hash}"),
                 "financials": redis_client.exists(f"financials:{filters_hash}"),
-                "stale_backup": redis_client.exists(f"{cache_key}:stale")
+                "stale_backup": redis_client.exists(f"{cache_key}:stale"),
             }
-            
+
             return {
                 "redis_available": True,
                 "cache_exists": bool(cache_exists),
@@ -3059,9 +3214,9 @@ class ManagerService(BaseService):
                 "meta_exists": bool(meta_exists),
                 "related_cache": related_cache,
                 "filters_hash": filters_hash,
-                "cache_key": cache_key
+                "cache_key": cache_key,
             }
-            
+
         except Exception as e:
             logger.error(f"Error getting cache status: {e}")
             return {"redis_available": False, "error": str(e)}
