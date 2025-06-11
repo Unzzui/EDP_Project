@@ -52,21 +52,27 @@ log_info() {
 cleanup() {
     log_warning "Deteniendo todos los servicios..."
     
-    # Detener Redis
-    if pgrep -f "redis-server" > /dev/null; then
-        pkill -f "redis-server" 2>/dev/null || true
-        log_info "Redis detenido"
-    fi
-    
-    # Detener Celery worker
-    if pgrep -f "celery.*worker" > /dev/null; then
-        pkill -f "celery.*worker" 2>/dev/null || true
+    # Detener Celery worker usando PID file
+    if [ -f "/tmp/celery_worker.pid" ]; then
+        local worker_pid=$(cat /tmp/celery_worker.pid 2>/dev/null)
+        if [ ! -z "$worker_pid" ] && kill -0 "$worker_pid" 2>/dev/null; then
+            kill -TERM "$worker_pid" 2>/dev/null || true
+            sleep 2
+            kill -KILL "$worker_pid" 2>/dev/null || true
+        fi
+        rm -f /tmp/celery_worker.pid
         log_info "Celery worker detenido"
     fi
     
-    # Detener Celery beat
-    if pgrep -f "celery.*beat" > /dev/null; then
-        pkill -f "celery.*beat" 2>/dev/null || true
+    # Detener Celery beat usando PID file
+    if [ -f "/tmp/celery_beat.pid" ]; then
+        local beat_pid=$(cat /tmp/celery_beat.pid 2>/dev/null)
+        if [ ! -z "$beat_pid" ] && kill -0 "$beat_pid" 2>/dev/null; then
+            kill -TERM "$beat_pid" 2>/dev/null || true
+            sleep 1
+            kill -KILL "$beat_pid" 2>/dev/null || true
+        fi
+        rm -f /tmp/celery_beat.pid
         log_info "Celery beat detenido"
     fi
     
@@ -76,11 +82,20 @@ cleanup() {
         log_info "Flower detenido"
     fi
     
+    # Detener Redis
+    if pgrep -f "redis-server" > /dev/null; then
+        pkill -f "redis-server" 2>/dev/null || true
+        log_info "Redis detenido"
+    fi
+    
     # Detener Flask
     if pgrep -f "python.*run.py" > /dev/null; then
         pkill -f "python.*run.py" 2>/dev/null || true
         log_info "Flask app detenida"
     fi
+    
+    # Limpiar archivos temporales
+    rm -f /tmp/celery_worker.pid /tmp/celery_beat.pid 2>/dev/null || true
     
     log_success "Limpieza completada. Hasta pronto! 👋"
 }
@@ -212,7 +227,7 @@ EOF
 
 # ========== INICIO DE SERVICIOS ==========
 start_redis() {
-    log "🔴 Iniciando Redis..."
+    log "🔴 Iniciando Redis/Valkey..."
     
     # Verificar si Redis ya está corriendo
     if pgrep -f "redis-server" > /dev/null; then
@@ -220,21 +235,51 @@ start_redis() {
         return 0
     fi
     
-    # Iniciar Redis
-    redis-server --daemonize yes --port $REDIS_PORT
+    # Limpiar archivo RDB incompatible si existe
+    if [ -f "dump.rdb" ]; then
+        log_warning "Encontrado archivo dump.rdb incompatible, respaldando..."
+        mv dump.rdb dump.rdb.backup_$(date +%Y%m%d_%H%M%S) 2>/dev/null || rm dump.rdb 2>/dev/null || true
+        log_success "Archivo RDB problemático limpiado"
+    fi
+    
+    # Configurar memory overcommit (solo Linux y con permisos)
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        if [ "$(cat /proc/sys/vm/overcommit_memory 2>/dev/null || echo 0)" = "0" ]; then
+            log_info "Configurando memory overcommit para mejor rendimiento..."
+            if sudo -n sysctl vm.overcommit_memory=1 2>/dev/null; then
+                log_success "Memory overcommit configurado"
+            else
+                log_warning "No se pudo configurar memory overcommit (requiere sudo)"
+                log_info "Puedes configurarlo manualmente: sudo sysctl vm.overcommit_memory=1"
+            fi
+        fi
+    fi
+    
+    # Iniciar Redis con configuración específica
+    log_info "Iniciando Redis en puerto $REDIS_PORT..."
+    redis-server --daemonize yes --port $REDIS_PORT --dir $(pwd) --dbfilename dump_edp_mvp.rdb
     
     # Esperar a que Redis esté listo
     local count=0
     while ! redis-cli -p $REDIS_PORT ping &> /dev/null; do
         count=$((count + 1))
-        if [ $count -gt 10 ]; then
+        if [ $count -gt 15 ]; then
             log_error "Redis no pudo iniciarse correctamente"
+            log_info "Verificando procesos..."
+            if pgrep -f "redis-server" > /dev/null; then
+                log_error "El proceso está corriendo pero no responde"
+            else
+                log_error "El proceso no se inició"
+            fi
             exit 1
         fi
         sleep 1
+        if [ $((count % 5)) -eq 0 ]; then
+            log_info "Esperando Redis... (intento $count/15)"
+        fi
     done
     
-    log_success "Redis iniciado en puerto $REDIS_PORT"
+    log_success "Redis iniciado correctamente en puerto $REDIS_PORT"
 }
 
 start_celery_services() {
@@ -243,26 +288,50 @@ start_celery_services() {
     # Activar entorno virtual
     source $VENV_DIR/bin/activate
     
-    # Iniciar Celery worker
+    # Iniciar Celery worker con eventos habilitados
     log_info "Iniciando Celery worker..."
     celery -A edp_mvp.app.celery worker \
         --loglevel=info \
         --events \
-        --broker_connection_retry_on_startup=True &
+        --detach \
+        --pidfile=/tmp/celery_worker.pid \
+        --logfile=/tmp/celery_worker.log
+    
+    # Esperar un momento para que el worker se establezca
+    log_info "Esperando que el worker se establezca..."
+    sleep 2
     
     # Iniciar Celery beat
     log_info "Iniciando Celery beat (scheduler)..."
-    celery -A edp_mvp.app.celery beat --loglevel=info &
+    celery -A edp_mvp.app.celery beat \
+        --loglevel=info \
+        --detach \
+        --pidfile=/tmp/celery_beat.pid \
+        --logfile=/tmp/celery_beat.log
     
-    # Flower vía Celery subcomando
+    # Esperar antes de iniciar Flower
+    log_info "Esperando servicios base..."
+    sleep 3
+    
+    # Iniciar Flower con configuración mejorada
     if command -v celery &> /dev/null; then
-        echo "[$(date +"%T")] Iniciando Flower (monitor) en http://localhost:5555..."
-        celery -A edp_mvp.app.celery --broker="$REDIS_URL" flower &
+        log_info "Iniciando Flower (monitor) en http://localhost:5555..."
+        celery -A edp_mvp.app.celery flower \
+            --broker="$REDIS_URL" \
+            --port=5555 \
+            --broker_api="$REDIS_URL" \
+            --basic_auth=admin:admin123 \
+            --persistent=True \
+            --max_tasks=10000 &
+        
+        # Dar tiempo para que Flower se conecte
+        sleep 2
+        log_success "Flower iniciado en http://localhost:5555 (admin/admin123)"
     else
-        echo "[$(date +"%T")] Celery no encontró el subcomando flower, salteando Flower..."
+        log_warning "Celery no encontró el subcomando flower, salteando Flower..."
     fi
     
-    log_success "Servicios de Celery iniciados"
+    log_success "Servicios de Celery iniciados correctamente"
 }
 
 # ========== VERIFICACIÓN DE SALUD ==========
@@ -413,4 +482,4 @@ case "${1:-}" in
         echo "Usa '$0 --help' para ver las opciones disponibles"
         exit 1
         ;;
-esac 
+esac

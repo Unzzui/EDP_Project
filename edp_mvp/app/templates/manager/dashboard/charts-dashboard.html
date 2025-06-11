@@ -489,199 +489,353 @@
     </div>
   </div>
 
-  <!-- Alertas críticas y panel de acciones -->
+  <!-- Widget de métricas de eficiencia operativa - EXPANDIDO CON MÁS PROTAGONISMO -->
   <div
-    class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative lg:col-span-2">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-bold flex items-center">
-        Alertas Críticas {% if alertas|length > 3 %}
-        <span
-          class="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
-          <span class="text-xs font-medium text-red-800 dark:text-red-200"
-            >{{ alertas|length }}</span
-          >
-        </span>
-        {% endif %}
-      </h2>
-      <button
-        class="text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)] border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card)]">
-        Filtrar
-      </button>
-    </div>
-    <div class="space-y-3 max-h-[280px] overflow-y-auto pr-1">
-      {% for alerta in alertas[:5] %}
-      <div
-        class="p-3 rounded-lg bg-[color:var(--bg-subtle)] border-l-4 {% if alerta.tipo == 'critico' %}border-red-500{% elif alerta.tipo == 'alto' %}border-amber-500{% else %}border-blue-500{% endif %}">
-        <div class="flex justify-between items-start">
-          <h3 class="font-medium text-sm">{{ alerta.titulo }}</h3>
-          <span
-            class="text-xs px-1.5 py-0.5 rounded {% if alerta.tipo == 'critico' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% elif alerta.tipo == 'alto' %}bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200{% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% endif %}">
-            {{ alerta.tipo|title }}
-          </span>
-        </div>
-        <p class="text-sm mt-1 text-[color:var(--text-secondary)]">
-          {{ alerta.descripcion }}
-        </p>
-
-        <!-- Acciones inmediatas para cada alerta -->
-        <div
-          class="flex justify-between items-center mt-2 pt-2 border-t border-[color:var(--border-color-subtle)]">
-          <span class="text-xs text-[color:var(--text-tertiary)]"
-            >{{ alerta.fecha }}</span
-          >
-          <div class="flex space-x-2">
-            <button
-              class="text-xs py-0.5 px-2 bg-[color:var(--bg-card)] rounded border border-[color:var(--border-color)] hover:bg-[color:var(--bg-subtle)]">
-              Asignar
-            </button>
-            <button
-              class="text-xs py-0.5 px-2 bg-[color:var(--accent-blue)] text-white rounded hover:bg-blue-600">
-              {{ alerta.accion_principal }}
-            </button>
-          </div>
-        </div>
-      </div>
-      {% else %}
-      <div class="text-center py-8">
-        <svg
-          class="w-12 h-12 mx-auto text-[color:var(--text-tertiary)]"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <p class="mt-2 text-sm text-[color:var(--text-secondary)]">
-          No hay alertas críticas en este momento
-        </p>
-      </div>
-      {% endfor %}
-    </div>
-
-    <!-- Resumen y acciones para todas las alertas -->
-    {% if alertas|length > 0 %}
-    <div
-      class="mt-4 pt-3 border-t border-[color:var(--border-color-subtle)] flex justify-between items-center">
-      <span class="text-sm">
-        <strong>{{ alertas|length }}</strong> alertas requieren atención
-      </span>
-      <button
-        class="text-xs flex items-center text-[color:var(--accent-blue)] hover:underline">
-        Ver todas
-        <svg class="w-3.5 h-3.5 ml-1" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fill-rule="evenodd"
-            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-            clip-rule="evenodd"></path>
-        </svg>
-      </button>
-    </div>
-    {% endif %}
-  </div>
-
-  <!-- Widget de métricas de eficiencia operativa -->
-  <div
-    class="bg-[color:var(--bg-card)] p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative lg:col-span-2">
-    <h2 class="text-lg font-bold mb-4">Indicadores de Eficiencia</h2>
-
-    <div class="space-y-4">
-      <!-- Tiempo promedio ciclo completo -->
+    class="bg-[color:var(--bg-card)] p-6 rounded-xl border border-[color:var(--border-color)] shadow-lg relative lg:col-span-4">
+    <div class="flex justify-between items-start mb-6">
       <div>
-        <div class="flex justify-between items-center mb-1">
-          <div class="flex items-center">
-            <span class="text-sm">Tiempo medio ciclo EDP</span>
-            <button
-              class="ml-1 text-[color:var(--text-tertiary)]"
-              title="Tiempo desde emisión hasta pago final">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+        <h2 class="text-xl font-bold text-[color:var(--text-primary)]">
+          Indicadores de Eficiencia
+        </h2>
+        <p class="text-sm text-[color:var(--text-secondary)] mt-1">
+          Análisis completo de tiempo de ciclo EDP
+        </p>
+      </div>
+      <div class="text-right">
+        <span class="text-xs text-[color:var(--text-secondary)]"
+          >Último cálculo</span
+        >
+        <p class="text-xs font-medium text-[color:var(--text-primary)]">
+          {{ kpis.fecha_ultimo_calculo|default('Hoy 14:30') }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Layout expandido con dos columnas principales -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <!-- Columna izquierda: Métrica principal y progreso -->
+      <div>
+        <!-- Métrica principal con alerta visual -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span
+                class="text-base font-medium text-[color:var(--text-primary)]"
+                >Tiempo medio ciclo EDP</span
+              >
+              {% if kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float
+              * 1.5 %}
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                ❌ Crítico
+              </span>
+              {% elif kpis.tiempo_medio_ciclo|float >
+              kpis.meta_tiempo_ciclo|float * 1.2 %}
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                ⚠️ Alto
+              </span>
+              {% else %}
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                ✅ Normal
+              </span>
+              {% endif %}
+            </div>
+            <div class="text-right">
+              {% if kpis.tendencia_tiempo_ciclo == 'up' %}
+              <span
+                class="text-sm text-red-500 dark:text-red-400 flex items-center">
+                ↗️ +{{ kpis.variacion_tiempo_ciclo|default('5') }}d vs mes
+                anterior
+              </span>
+              {% elif kpis.tendencia_tiempo_ciclo == 'down' %}
+              <span
+                class="text-sm text-green-500 dark:text-green-400 flex items-center">
+                ↘️ -{{ kpis.variacion_tiempo_ciclo|default('3') }}d vs mes
+                anterior
+              </span>
+              {% else %}
+              <span
+                class="text-sm text-blue-500 dark:text-blue-400 flex items-center">
+                ➡️ Sin cambios vs mes anterior
+              </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Valor principal con contraste mejorado -->
+          <div class="flex items-baseline gap-6 mb-4">
+            <div
+              class="{% if kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.5 %}text-red-600 dark:text-red-400{% elif kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.2 %}text-amber-600 dark:text-amber-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+              <span class="text-5xl font-bold"
+                >{{ kpis.tiempo_medio_ciclo|default('124.8') }}</span
+              >
+              <span class="text-xl font-medium ml-2">días</span>
+            </div>
+            <div class="text-base text-[color:var(--text-secondary)] space-y-1">
+              <div>
+                Meta:
+                <span class="font-medium text-[color:var(--text-primary)]"
+                  >{{ kpis.meta_tiempo_ciclo|default('30') }}d</span
+                >
+              </div>
+              <div>
+                Industria:
+                <span class="font-medium text-[color:var(--text-primary)]"
+                  >{{ kpis.benchmark_tiempo_ciclo|default('75') }}d</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Barra de progreso con colores semánticos -->
+          <div class="relative mb-6">
+            <div
+              class="w-full bg-[color:var(--bg-subtle)] rounded-full h-4 overflow-hidden">
+              {% set progreso_pct = (kpis.tiempo_medio_ciclo|float /
+              (kpis.benchmark_tiempo_ciclo|float * 2)) * 100 %}
+              <div
+                class="h-4 rounded-full transition-all duration-500 ease-out {% if kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.5 %}bg-gradient-to-r from-red-500 to-red-600 dark:from-red-400 dark:to-red-500{% elif kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.2 %}bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500{% else %}bg-gradient-to-r from-green-500 to-green-600 dark:from-green-400 dark:to-green-500{% endif %}"
+                style="width: {{ progreso_pct|round(1) if progreso_pct <= 100 else 100 }}%"></div>
+            </div>
+            <!-- Marcadores de referencia -->
+            <div class="absolute top-0 left-0 w-full h-4 flex items-center">
+              <div
+                class="absolute bg-[color:var(--bg-card)] w-0.5 h-6 -mt-1 border-l-2 border-green-500 dark:border-green-400"
+                style="left: {{ (kpis.meta_tiempo_ciclo|float / (kpis.benchmark_tiempo_ciclo|float * 2)) * 100 }}%">
+                <span
+                  class="absolute -top-7 -left-4 text-sm font-medium text-green-600 dark:text-green-400"
+                  >Meta</span
+                >
+              </div>
+              <div
+                class="absolute bg-[color:var(--bg-card)] w-0.5 h-6 -mt-1 border-l-2 border-blue-500 dark:border-blue-400"
+                style="left: {{ (kpis.benchmark_tiempo_ciclo|float / (kpis.benchmark_tiempo_ciclo|float * 2)) * 100 }}%">
+                <span
+                  class="absolute -top-7 -left-6 text-sm font-medium text-blue-600 dark:text-blue-400"
+                  >Industria</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Impacto financiero -->
+          <div
+            class="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-3">
+              <svg
+                class="w-5 h-5 text-red-600 dark:text-red-400"
+                fill="currentColor"
+                viewBox="0 0 20 20">
                 <path
                   fill-rule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
                   clip-rule="evenodd"></path>
               </svg>
-            </button>
+              <span class="text-base font-medium text-red-800 dark:text-red-200"
+                >Impacto del retraso</span
+              >
+            </div>
+            <div class="grid grid-cols-2 gap-6 text-base">
+              <div>
+                <p class="text-red-700 dark:text-red-300">
+                  Costo financiero estimado
+                </p>
+                <p class="font-bold text-red-800 dark:text-red-200 text-lg">
+                  ${{ kpis.costo_retraso_estimado|default('2.4') }}M/mes
+                </p>
+              </div>
+              <div>
+                <p class="text-red-700 dark:text-red-300">Potencial ahorro</p>
+                <p class="font-bold text-green-700 dark:text-green-300 text-lg">
+                  ${{ kpis.potencial_ahorro|default('1.8') }}M/mes
+                </p>
+              </div>
+            </div>
           </div>
-          <span class="text-xs font-medium"
-            >{{ kpis.tiempo_medio_ciclo }} días</span
-          >
         </div>
-        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+      </div>
+
+      <!-- Columna derecha: Desglose por etapa y plan de acción -->
+      <div>
+        <!-- Desglose por etapa con indicadores de problema -->
+        <div class="mb-6">
+          <div class="flex justify-between items-center mb-4">
+            <p class="text-base font-medium text-[color:var(--text-primary)]">
+              Desglose por etapa
+            </p>
+            <span class="text-sm text-[color:var(--text-secondary)]"
+              >días promedio</span
+            >
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Emisión -->
+            <div
+              class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <span
+                  class="text-sm font-medium text-[color:var(--text-primary)]"
+                  >Emisión</span
+                >
+                {% if kpis.tiempo_emision|float > 8 %}
+                <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
+                {% else %}
+                <span class="text-sm text-green-500 dark:text-green-400"
+                  >✅</span
+                >
+                {% endif %}
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span
+                  class="text-2xl font-bold {% if kpis.tiempo_emision|float > 8 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                  {{ kpis.tiempo_emision|default('12') }}
+                </span>
+                <span class="text-sm text-[color:var(--text-secondary)]"
+                  >días</span
+                >
+              </div>
+              <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
+                Meta: 5d
+              </div>
+            </div>
+
+            <!-- Gestión -->
+            <div
+              class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <span
+                  class="text-sm font-medium text-[color:var(--text-primary)]"
+                  >Gestión</span
+                >
+                {% if kpis.tiempo_gestion|float > 15 %}
+                <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
+                {% else %}
+                <span class="text-sm text-green-500 dark:text-green-400"
+                  >✅</span
+                >
+                {% endif %}
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span
+                  class="text-2xl font-bold {% if kpis.tiempo_gestion|float > 15 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                  {{ kpis.tiempo_gestion|default('28') }}
+                </span>
+                <span class="text-sm text-[color:var(--text-secondary)]"
+                  >días</span
+                >
+              </div>
+              <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
+                Meta: 10d
+              </div>
+            </div>
+
+            <!-- Conformidad -->
+            <div
+              class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <span
+                  class="text-sm font-medium text-[color:var(--text-primary)]"
+                  >Conformidad</span
+                >
+                {% if kpis.tiempo_conformidad|float > 10 %}
+                <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
+                {% else %}
+                <span class="text-sm text-green-500 dark:text-green-400"
+                  >✅</span
+                >
+                {% endif %}
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span
+                  class="text-2xl font-bold {% if kpis.tiempo_conformidad|float > 10 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                  {{ kpis.tiempo_conformidad|default('45') }}
+                </span>
+                <span class="text-sm text-[color:var(--text-secondary)]"
+                  >días</span
+                >
+              </div>
+              <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
+                Meta: 7d
+              </div>
+            </div>
+
+            <!-- Pago -->
+            <div
+              class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <span
+                  class="text-sm font-medium text-[color:var(--text-primary)]"
+                  >Pago</span
+                >
+                {% if kpis.tiempo_pago|float > 8 %}
+                <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
+                {% else %}
+                <span class="text-sm text-green-500 dark:text-green-400"
+                  >✅</span
+                >
+                {% endif %}
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span
+                  class="text-2xl font-bold {% if kpis.tiempo_pago|float > 8 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                  {{ kpis.tiempo_pago|default('39') }}
+                </span>
+                <span class="text-sm text-[color:var(--text-secondary)]"
+                  >días</span
+                >
+              </div>
+              <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
+                Meta: 8d
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan de acción prioritario -->
+        <div class="pt-4 border-t border-[color:var(--border-color-subtle)]">
+          <div class="flex items-center justify-between mb-3">
+            <span
+              class="text-base font-medium text-[color:var(--text-primary)] flex items-center">
+              <svg
+                class="w-5 h-5 mr-2 text-amber-500 dark:text-amber-400"
+                fill="currentColor"
+                viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                  clip-rule="evenodd"></path>
+              </svg>
+              Acción prioritaria
+            </span>
+            <span
+              class="text-sm bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 px-3 py-1 rounded-full"
+              >Urgente</span
+            >
+          </div>
           <div
-            class="bg-blue-600 h-2 rounded-full"
-            style="width: {{ kpis.tiempo_medio_ciclo_pct }}%"></div>
-        </div>
-        <div class="flex justify-between text-xs mt-1">
-          <span>Meta: {{ kpis.meta_tiempo_ciclo }}d</span>
-          <span>Benchmark: {{ kpis.benchmark_tiempo_ciclo }}d</span>
-        </div>
-      </div>
-
-      <!-- Desglose de tiempos por etapa -->
-      <div class="mt-6">
-        <p class="text-sm font-medium mb-3">Desglose por etapa (días)</p>
-        <div class="grid grid-cols-4 gap-2">
-          <div class="text-center">
-            <div class="h-20 flex items-end justify-center">
-              <div
-                class="w-full bg-blue-200 dark:bg-blue-900/40 rounded-t-md"
-                style="height: {{ kpis.etapa_emision_pct }}%"></div>
+            class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg p-4">
+            <p
+              class="text-base font-medium text-amber-800 dark:text-amber-200 mb-2">
+              {{ kpis.etapa_critica|default('Conformidad') }}: Mayor cuello de
+              botella
+            </p>
+            <p class="text-sm text-amber-700 dark:text-amber-300 mb-4">
+              {{ kpis.descripcion_problema|default('45 días promedio vs meta de
+              7 días. Revisar proceso de validación de documentos.') }}
+            </p>
+            <div class="flex gap-3">
+              <button
+                class="text-sm bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-colors font-medium">
+                Ver plan detallado
+              </button>
+              <button
+                class="text-sm bg-[color:var(--bg-card)] hover:bg-[color:var(--bg-subtle)] border border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 px-4 py-2 rounded-lg transition-colors font-medium">
+                Asignar responsable
+              </button>
             </div>
-            <p class="text-xs mt-1">Emisión</p>
-            <p class="text-xs font-medium">{{ kpis.tiempo_emision }}d</p>
           </div>
-          <div class="text-center">
-            <div class="h-20 flex items-end justify-center">
-              <div
-                class="w-full bg-green-200 dark:bg-green-900/40 rounded-t-md"
-                style="height: {{ kpis.etapa_gestion_pct }}%"></div>
-            </div>
-            <p class="text-xs mt-1">Gestión</p>
-            <p class="text-xs font-medium">{{ kpis.tiempo_gestion }}d</p>
-          </div>
-          <div class="text-center">
-            <div class="h-20 flex items-end justify-center">
-              <div
-                class="w-full bg-purple-200 dark:bg-purple-900/40 rounded-t-md"
-                style="height: {{ kpis.etapa_conformidad_pct }}%"></div>
-            </div>
-            <p class="text-xs mt-1">Conformidad</p>
-            <p class="text-xs font-medium">{{ kpis.tiempo_conformidad }}d</p>
-          </div>
-          <div class="text-center">
-            <div class="h-20 flex items-end justify-center">
-              <div
-                class="w-full bg-amber-200 dark:bg-amber-900/40 rounded-t-md"
-                style="height: {{ kpis.etapa_pago_pct }}%"></div>
-            </div>
-            <p class="text-xs mt-1">Pago</p>
-            <p class="text-xs font-medium">{{ kpis.tiempo_pago }}d</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Oportunidad de mejora -->
-      <div class="mt-4 pt-3 border-t border-[color:var(--border-color-subtle)]">
-        <p class="text-sm font-medium flex items-center">
-          <svg
-            class="w-4 h-4 mr-1 text-amber-500 dark:text-amber-400"
-            fill="currentColor"
-            viewBox="0 0 20 20">
-            <path
-              fill-rule="evenodd"
-              d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
-              clip-rule="evenodd"></path>
-          </svg>
-          Principal oportunidad de mejora:
-        </p>
-        <div class="flex justify-between items-center mt-2">
-          <span class="text-sm">{{ kpis.oportunidad_mejora }}</span>
-          <button
-            class="text-xs text-[color:var(--accent-blue)] hover:underline">
-            Plan de acción
-          </button>
         </div>
       </div>
     </div>

@@ -102,14 +102,14 @@ body {
   --accent-orange-light: #EA580C;
   --accent-white: #FFFFFF;
   
-  --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.08);
-  --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.08);
-  --danger: #ef4444;
-  --danger-bg: rgba(239, 68, 68, 0.08);
-  --info: #3b82f6;
-  --info-bg: rgba(59, 130, 246, 0.08);
+  --success: #059669;
+  --success-bg: rgba(16, 185, 129, 0.25);
+  --warning: #d97706;
+  --warning-bg: rgba(245, 158, 11, 0.25);
+  --danger: #dc2626;
+  --danger-bg: rgba(239, 68, 68, 0.25);
+  --info: #2563eb;
+  --info-bg: rgba(59, 130, 246, 0.25);
 
   --state-pending-bg: rgba(253, 224, 71, 0.12);   /* Amarillo claro */
   --state-warning-bg: rgba(234, 179, 8, 0.15);    /* Mostaza fuerte */

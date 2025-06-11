@@ -185,16 +185,16 @@
 
             if (updatedFields.length > 0) {
               notificationType = "status_change";
-              message = `EDP ${data.edp_id}: ${updatedFields.join(
+              message = `🔄 EDP ${data.edp_id}: ${updatedFields.join(
                 ", "
               )} actualizado por ${usuario}`;
             } else {
               notificationType = "status_change";
-              message = `EDP ${data.edp_id} actualizado por ${usuario}`;
+              message = `🔄 EDP ${data.edp_id} actualizado por ${usuario}`;
             }
           }
         } else {
-          message = `EDP ${
+          message = `📋 EDP ${
             data.edp_id || "desconocido"
           } modificado por ${usuario}`;
         }

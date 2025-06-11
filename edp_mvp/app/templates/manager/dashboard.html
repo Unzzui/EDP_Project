@@ -50,7 +50,7 @@
       </div>
       
       <!-- Botón toggle de filtros -->
-      <button id="toggle-filters-btn" class="flex items-center px-2 sm:px-3 py-1.5 text-sm bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white rounded-md transition-colors shadow-sm" onclick="console.log('CLICK DIRECTO FUNCIONANDO!'); alert('Botón clickeado directamente!');">
+      <button id="toggle-filters-btn" class="flex items-center px-2 sm:px-3 py-1.5 text-sm bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white rounded-md transition-colors shadow-sm">
         <svg id="filter-icon" class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
         </svg>
@@ -272,15 +272,391 @@
   <!-- Fin de la sección de filtros -->
 
   <!-- KPIs principales -->
-
 {% include 'manager/dashboard/kpis.html' %}
   <!-- Final Sección de KPIs -->
   
-  <!-- Secccion graficos -->
+  <!-- Indicadores de Eficiencia (Solo esta sección de charts) -->
+  <div class="grid grid-cols-1 gap-4 sm:gap-6">
+    <!-- Widget de métricas de eficiencia operativa - EXPANDIDO CON MÁS PROTAGONISMO -->
+    <div
+      class="bg-[color:var(--bg-card)] p-6 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
+      <div class="flex justify-between items-start mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-[color:var(--text-primary)]">
+            Indicadores de Eficiencia
+          </h2>
+          <p class="text-sm text-[color:var(--text-secondary)] mt-1">
+            Análisis completo de tiempo de ciclo EDP
+          </p>
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-[color:var(--text-secondary)]"
+            >Último cálculo</span
+          >
+          <p class="text-xs font-medium text-[color:var(--text-primary)]">
+            {{ kpis.fecha_ultimo_calculo|default('Hoy 14:30') }}
+          </p>
+        </div>
+      </div>
 
-{% include 'manager/dashboard/charts-dashboard.html' %}
-  
-  <!-- Final Sección de gráficos -->
+      <!-- Layout expandido con dos columnas principales -->
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        <!-- Columna izquierda: Métrica principal y progreso -->
+        <div>
+          <!-- Métrica principal con alerta visual -->
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-base font-medium text-[color:var(--text-primary)]"
+                  >Tiempo medio ciclo EDP</span
+                >
+                {% if kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float
+                * 1.5 %}
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                  ❌ Crítico
+                </span>
+                {% elif kpis.tiempo_medio_ciclo|float >
+                kpis.meta_tiempo_ciclo|float * 1.2 %}
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                  ⚠️ Alto
+                </span>
+                {% else %}
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                  ✅ Normal
+                </span>
+                {% endif %}
+              </div>
+              <div class="text-right">
+                {% if kpis.tendencia_tiempo_ciclo == 'up' %}
+                <span
+                  class="text-sm text-red-500 dark:text-red-400 flex items-center">
+                  ↗️ +{{ kpis.variacion_tiempo_ciclo|default('5') }}d vs mes
+                  anterior
+                </span>
+                {% elif kpis.tendencia_tiempo_ciclo == 'down' %}
+                <span
+                  class="text-sm text-green-500 dark:text-green-400 flex items-center">
+                  ↘️ -{{ kpis.variacion_tiempo_ciclo|default('3') }}d vs mes
+                  anterior
+                </span>
+                {% else %}
+                <span
+                  class="text-sm text-blue-500 dark:text-blue-400 flex items-center">
+                  ➡️ Sin cambios vs mes anterior
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Valor principal con contraste mejorado -->
+            <div class="flex items-baseline gap-6 mb-4">
+              <div
+                class="{% if kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.5 %}text-red-600 dark:text-red-400{% elif kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.2 %}text-amber-600 dark:text-amber-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                <span class="text-5xl font-bold"
+                  >{{ kpis.tiempo_medio_ciclo|default('124.8') }}</span
+                >
+                <span class="text-xl font-medium ml-2">días</span>
+              </div>
+              <div class="text-base text-[color:var(--text-secondary)] space-y-1">
+                <div>
+                  Meta:
+                  <span class="font-medium text-[color:var(--text-primary)]"
+                    >{{ kpis.meta_tiempo_ciclo|default('30') }}d</span
+                  >
+                </div>
+                <div>
+                  Industria:
+                  <span class="font-medium text-[color:var(--text-primary)]"
+                    >{{ kpis.benchmark_tiempo_ciclo|default('75') }}d</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Barra de progreso con colores semánticos -->
+            <div class="relative mb-6">
+              <div
+                class="w-full bg-[color:var(--bg-subtle)] rounded-full h-4 overflow-hidden">
+                {% set progreso_pct = (kpis.tiempo_medio_ciclo|float /
+                (kpis.benchmark_tiempo_ciclo|float * 2)) * 100 %}
+                <div
+                  class="h-4 rounded-full transition-all duration-500 ease-out {% if kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.5 %}bg-gradient-to-r from-red-500 to-red-600 dark:from-red-400 dark:to-red-500{% elif kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.2 %}bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500{% else %}bg-gradient-to-r from-green-500 to-green-600 dark:from-green-400 dark:to-green-500{% endif %}"
+                  style="width: {{ progreso_pct|round(1) if progreso_pct <= 100 else 100 }}%"></div>
+              </div>
+              <!-- Marcadores de referencia -->
+              <div class="absolute top-0 left-0 w-full h-4 flex items-center">
+                <div
+                  class="absolute bg-[color:var(--bg-card)] w-0.5 h-6 -mt-1 border-l-2 border-green-500 dark:border-green-400"
+                  style="left: {{ (kpis.meta_tiempo_ciclo|float / (kpis.benchmark_tiempo_ciclo|float * 2)) * 100 }}%">
+                  <span
+                    class="absolute -top-7 -left-4 text-sm font-medium text-green-600 dark:text-green-400"
+                    >Meta</span
+                  >
+                </div>
+                <div
+                  class="absolute bg-[color:var(--bg-card)] w-0.5 h-6 -mt-1 border-l-2 border-blue-500 dark:border-blue-400"
+                  style="left: {{ (kpis.benchmark_tiempo_ciclo|float / (kpis.benchmark_tiempo_ciclo|float * 2)) * 100 }}%">
+                  <span
+                    class="absolute -top-7 -left-6 text-sm font-medium text-blue-600 dark:text-blue-400"
+                    >Industria</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Impacto financiero -->
+            <div
+              class="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-lg p-4">
+              <div class="flex items-center gap-2 mb-3">
+                <svg
+                  class="w-5 h-5 text-red-600 dark:text-red-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-base font-medium text-red-800 dark:text-red-200"
+                  >Impacto del retraso</span
+                >
+              </div>
+              <div class="grid grid-cols-2 gap-6 text-base">
+                <div>
+                  <p class="text-red-700 dark:text-red-300">
+                    Costo financiero estimado
+                  </p>
+                  <p class="font-bold text-red-800 dark:text-red-200 text-lg">
+                    ${{ kpis.costo_retraso_estimado|default('2.4') }}M/mes
+                  </p>
+                </div>
+                <div>
+                  <p class="text-red-700 dark:text-red-300">Potencial ahorro</p>
+                  <p class="font-bold text-green-700 dark:text-green-300 text-lg">
+                    ${{ kpis.potencial_ahorro|default('1.8') }}M/mes
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna derecha: Desglose por etapa y plan de acción -->
+        <div>
+          <!-- Desglose por etapa con indicadores de problema -->
+          <div class="mb-6">
+            <div class="flex justify-between items-center mb-4">
+              <p class="text-base font-medium text-[color:var(--text-primary)]">
+                Desglose por etapa
+              </p>
+              <span class="text-sm text-[color:var(--text-secondary)]"
+                >días promedio</span
+              >
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Emisión -->
+              <div
+                class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <span
+                    class="text-sm font-medium text-[color:var(--text-primary)]"
+                    >Emisión</span
+                  >
+                  {% if kpis.tiempo_emision|float > 8 %}
+                  <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
+                  {% else %}
+                  <span class="text-sm text-green-500 dark:text-green-400"
+                    >✅</span
+                  >
+                  {% endif %}
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span
+                    class="text-2xl font-bold {% if kpis.tiempo_emision|float > 8 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                    {{ kpis.tiempo_emision|default('12') }}
+                  </span>
+                  <span class="text-sm text-[color:var(--text-secondary)]"
+                    >días</span
+                  >
+                </div>
+                <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
+                  Meta: 5d
+                </div>
+              </div>
+
+              <!-- Gestión -->
+              <div
+                class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <span
+                    class="text-sm font-medium text-[color:var(--text-primary)]"
+                    >Gestión</span
+                  >
+                  {% if kpis.tiempo_gestion|float > 15 %}
+                  <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
+                  {% else %}
+                  <span class="text-sm text-green-500 dark:text-green-400"
+                    >✅</span
+                  >
+                  {% endif %}
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span
+                    class="text-2xl font-bold {% if kpis.tiempo_gestion|float > 15 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                    {{ kpis.tiempo_gestion|default('28') }}
+                  </span>
+                  <span class="text-sm text-[color:var(--text-secondary)]"
+                    >días</span
+                  >
+                </div>
+                <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
+                  Meta: 10d
+                </div>
+              </div>
+
+              <!-- Conformidad -->
+              <div
+                class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <span
+                    class="text-sm font-medium text-[color:var(--text-primary)]"
+                    >Conformidad</span
+                  >
+                  {% if kpis.tiempo_conformidad|float > 10 %}
+                  <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
+                  {% else %}
+                  <span class="text-sm text-green-500 dark:text-green-400"
+                    >✅</span
+                  >
+                  {% endif %}
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span
+                    class="text-2xl font-bold {% if kpis.tiempo_conformidad|float > 10 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                    {{ kpis.tiempo_conformidad|default('45') }}
+                  </span>
+                  <span class="text-sm text-[color:var(--text-secondary)]"
+                    >días</span
+                  >
+                </div>
+                <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
+                  Meta: 7d
+                </div>
+              </div>
+
+              <!-- Pago -->
+              <div
+                class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <span
+                    class="text-sm font-medium text-[color:var(--text-primary)]"
+                    >Pago</span
+                  >
+                  {% if kpis.tiempo_pago|float > 8 %}
+                  <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
+                  {% else %}
+                  <span class="text-sm text-green-500 dark:text-green-400"
+                    >✅</span
+                  >
+                  {% endif %}
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span
+                    class="text-2xl font-bold {% if kpis.tiempo_pago|float > 8 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                    {{ kpis.tiempo_pago|default('39') }}
+                  </span>
+                  <span class="text-sm text-[color:var(--text-secondary)]"
+                    >días</span
+                  >
+                </div>
+                <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
+                  Meta: 8d
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Plan de acción prioritario -->
+          <div class="pt-4 border-t border-[color:var(--border-color-subtle)]">
+            <div class="flex items-center justify-between mb-3">
+              <span
+                class="text-base font-medium text-[color:var(--text-primary)] flex items-center">
+                <svg
+                  class="w-5 h-5 mr-2 text-amber-500 dark:text-amber-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                    clip-rule="evenodd"></path>
+                </svg>
+                Acción prioritaria
+              </span>
+              <span
+                class="text-sm bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 px-3 py-1 rounded-full"
+                >Urgente</span
+              >
+            </div>
+            <div
+              class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg p-4">
+              <p
+                class="text-base font-medium text-amber-800 dark:text-amber-200 mb-2">
+                {{ kpis.etapa_critica|default('Conformidad') }}: Mayor cuello de
+                botella
+              </p>
+              <p class="text-sm text-amber-700 dark:text-amber-300 mb-4">
+                {{ kpis.descripcion_problema|default('45 días promedio vs meta de
+                7 días. Revisar proceso de validación de documentos.') }}
+              </p>
+              <div class="flex gap-3">
+                <button
+                  class="text-sm bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-colors font-medium">
+                  Ver plan detallado
+                </button>
+                <button
+                  class="text-sm bg-[color:var(--bg-card)] hover:bg-[color:var(--bg-subtle)] border border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 px-4 py-2 rounded-lg transition-colors font-medium">
+                  Asignar responsable
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navegación rápida a dashboards especializados -->
+  <div class="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 sm:p-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div>
+        <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-1">
+          ¿Necesitas más detalle?
+        </h3>
+        <p class="text-sm text-blue-700 dark:text-blue-300">
+          Accede a dashboards especializados con análisis granulares y métricas avanzadas
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-3 w-full sm:w-auto">
+        <a href="/manager/dashboard/operational" 
+           class="flex-1 sm:flex-initial text-center sm:text-left bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          📊 Dashboard Operativo
+        </a>
+        <a href="/manager/dashboard/charts" 
+           class="flex-1 sm:flex-initial text-center sm:text-left bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          📈 Dashboard de Análisis
+        </a>
+        <a href="/controller/kanban" 
+           class="flex-1 sm:flex-initial text-center sm:text-left bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          🗂️ Vista Kanban
+        </a>
+      </div>
+    </div>
+  </div>
           
           <!-- Top EDPs por valor -->
           <div class="bg-[color:var(--bg-card)] p-3 sm:p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
@@ -411,161 +787,19 @@
         <!-- Scripts para funcionalidad interactiva -->
 <script src="{{ url_for('static', filename='js/critical-projects-modal.js') }}"></script>
 <script src="{{ url_for('static', filename='js/utils-dashboard-manager.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard-toggle.js') }}"></script>
 <script>
-// Debug: Intentar múltiples formas de cargar el script
-console.log('🔧 Dashboard script loading...');
-
-// Función principal que se ejecuta cuando la página está lista
-function initializeToggleFilters() {
-    console.log('🚀 Initializing toggle filters...');
-    
-    // Intentar obtener los elementos
-    const toggleFiltersBtn = document.getElementById('toggle-filters-btn');
-    const filtersSection = document.getElementById('filters-section');
-    const filterText = document.getElementById('filter-text');
-    const filterTextMobile = document.getElementById('filter-text-mobile');
-    const filterChevron = document.getElementById('filter-chevron');
-    
-    // Debug detallado
-    console.log('🔍 Element search results:');
-    console.log('  - Toggle button:', toggleFiltersBtn);
-    console.log('  - Filters section:', filtersSection);
-    console.log('  - Filter text:', filterText);
-    console.log('  - Filter text mobile:', filterTextMobile);
-    console.log('  - Filter chevron:', filterChevron);
-    
-    // Verificar si los elementos críticos existen
-    if (!toggleFiltersBtn) {
-        console.error('❌ ERROR: No se encontró el botón toggle-filters-btn');
-        // Intentar buscar por clase o selector diferente
-        const altBtn = document.querySelector('button[id*="toggle"]');
-        console.log('🔍 Alternative button search:', altBtn);
-        return;
-    }
-    
-    if (!filtersSection) {
-        console.error('❌ ERROR: No se encontró la sección filters-section');
-        // Intentar buscar por clase o selector diferente
-        const altSection = document.querySelector('div[id*="filter"]');
-        console.log('🔍 Alternative section search:', altSection);
-        return;
-    }
-    
-    console.log('✅ All critical elements found, setting up functionality...');
-    
-    let filtersVisible = false;
-    
-    // Función simplificada para mostrar/ocultar filtros
-    function toggleFilters() {
-        console.log('🔄 toggleFilters called, current state:', filtersVisible);
-        
-        try {
-            filtersVisible = !filtersVisible;
-            
-            if (filtersVisible) {
-                console.log('👁️ Showing filters...');
-                filtersSection.classList.remove('hidden');
-                filtersSection.style.display = 'block';
-                
-                // Actualizar texto del botón
-                if (filterText) filterText.textContent = 'Ocultar filtros';
-                if (filterTextMobile) filterTextMobile.textContent = 'Ocultar';
-                if (filterChevron) filterChevron.style.transform = 'rotate(180deg)';
-                
-                console.log('✅ Filters shown successfully');
-                
-            } else {
-                console.log('🙈 Hiding filters...');
-                filtersSection.classList.add('hidden');
-                filtersSection.style.display = 'none';
-                
-                // Actualizar texto del botón
-                if (filterText) filterText.textContent = 'Mostrar filtros';
-                if (filterTextMobile) filterTextMobile.textContent = 'Filtros';
-                if (filterChevron) filterChevron.style.transform = 'rotate(0deg)';
-                
-                console.log('✅ Filters hidden successfully');
-            }
-        } catch (error) {
-            console.error('❌ Error in toggleFilters:', error);
+// ===== AUTO-MOSTRAR FILTROS SI HAY FILTROS ACTIVOS =====
+{% if filtros_activos %}
+document.addEventListener('DOMContentLoaded', function() {
+    // El dashboard-toggle.js debe estar cargado antes
+    setTimeout(function() {
+        if (window.autoShowFilters) {
+            window.autoShowFilters();
         }
-    }
-    
-    // Agregar event listener con múltiples intentos
-    console.log('🎯 Adding click event listener...');
-    
-    // Método 1: addEventListener normal
-    toggleFiltersBtn.addEventListener('click', function(e) {
-        console.log('🖱️ Button clicked via addEventListener!', e);
-        e.preventDefault();
-        e.stopPropagation();
-        toggleFilters();
-    });
-    
-    // Método 2: onclick como respaldo
-    toggleFiltersBtn.onclick = function(e) {
-        console.log('🖱️ Button clicked via onclick!', e);
-        e.preventDefault();
-        e.stopPropagation();
-        toggleFilters();
-    };
-    
-    console.log('✅ Event listeners added successfully');
-    
-    // Test inmediato para verificar que funciona
-    console.log('🧪 Testing toggle function...');
-    setTimeout(() => {
-        console.log('🧪 Running test toggle...');
-        toggleFilters();
-        setTimeout(() => {
-            toggleFilters();
-            console.log('🧪 Test completed');
-        }, 1000);
-    }, 2000);
-    
-    // Auto-mostrar filtros si hay filtros activos aplicados
-    {% if filtros_activos %}
-        console.log('🎯 Auto-showing filters (filtros_activos detected)');
-        setTimeout(toggleFilters, 500);
-    {% endif %}
-    
-    // Funcionalidad para filtros avanzados
-    const toggleAdvanced = document.getElementById('toggle-advanced');
-    const advancedFilters = document.getElementById('advanced-filters');
-    const advancedText = document.getElementById('advanced-text');
-    
-    if (toggleAdvanced && advancedFilters) {
-        console.log('🔧 Setting up advanced filters toggle...');
-        toggleAdvanced.addEventListener('click', function(e) {
-            e.preventDefault();
-            const isHidden = advancedFilters.classList.contains('hidden');
-            
-            if (isHidden) {
-                advancedFilters.classList.remove('hidden');
-                if (advancedText) advancedText.textContent = 'Ocultar filtros avanzados';
-            } else {
-                advancedFilters.classList.add('hidden');
-                if (advancedText) advancedText.textContent = 'Filtros avanzados';
-            }
-        });
-    }
-    
-    console.log('🎉 Toggle filters initialization completed!');
-}
-
-// Múltiples formas de asegurar que el script se ejecute
-document.addEventListener('DOMContentLoaded', initializeToggleFilters);
-
-// Respaldo si DOMContentLoaded ya pasó
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeToggleFilters);
-} else {
-    // DOM ya está listo
-    initializeToggleFilters();
-}
-
-// Respaldo adicional con setTimeout
-setTimeout(initializeToggleFilters, 100);
+    }, 200);
+});
+{% endif %}
 
 // ===== SISTEMA DE NOTIFICACIONES AUTOMÁTICAS (SIN REFRESH MANUAL) =====
 document.addEventListener('DOMContentLoaded', function() {
@@ -874,12 +1108,223 @@ if (window.io && typeof window.io === 'function') {
 </script>
 
 <style>
+/* ===== ANIMACIONES AVANZADAS PARA FILTROS ===== */
+
+/* Contenedor principal de filtros */
 #filters-section {
-    transition: all 0.3s ease-out;
+    overflow: hidden;
+    will-change: max-height, opacity, transform;
 }
 
+/* Estados de animación para filtros principales */
+#filters-section.filter-hidden {
+    display: none !important;
+}
+
+#filters-section.filter-showing,
+#filters-section.filter-hiding {
+    display: block !important;
+}
+
+#filters-section.filter-visible {
+    display: block !important;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* Chevron con animación suave */
 #filter-chevron {
-    transition: transform 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform-origin: center;
+}
+
+/* Botón toggle con efectos avanzados */
+#toggle-filters-btn {
+    position: relative;
+    overflow: hidden;
+    will-change: transform, box-shadow;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+#toggle-filters-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    pointer-events: none;
+}
+
+#toggle-filters-btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+#toggle-filters-btn.filter-btn-animating {
+    transform: scale(0.98) !important;
+}
+
+/* Hover avanzado para el botón */
+#toggle-filters-btn:hover {
+    background-color: rgb(37, 99, 235) !important;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Animaciones para textos */
+#filter-text,
+#filter-text-mobile {
+    transition: opacity 0.3s ease;
+}
+
+/* Animaciones para filtros avanzados */
+#advanced-filters {
+    will-change: opacity, transform;
+}
+
+/* Efecto de aparición suave para elementos del formulario */
+#filters-section .form-group {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: slideInForm 0.6s ease forwards;
+}
+
+#filters-section .form-group:nth-child(1) { animation-delay: 0.1s; }
+#filters-section .form-group:nth-child(2) { animation-delay: 0.15s; }
+#filters-section .form-group:nth-child(3) { animation-delay: 0.2s; }
+#filters-section .form-group:nth-child(4) { animation-delay: 0.25s; }
+
+@keyframes slideInForm {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animación de entrada para botones de rango rápido */
+#filters-section .quick-date-btn {
+    opacity: 0;
+    transform: scale(0.9);
+    animation: bounceIn 0.4s ease forwards;
+}
+
+#filters-section .quick-date-btn:nth-child(1) { animation-delay: 0.3s; }
+#filters-section .quick-date-btn:nth-child(2) { animation-delay: 0.35s; }
+#filters-section .quick-date-btn:nth-child(3) { animation-delay: 0.4s; }
+#filters-section .quick-date-btn:nth-child(4) { animation-delay: 0.45s; }
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    60% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Efecto hover mejorado para inputs y selects */
+.form-input:focus,
+.form-select:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    transition: all 0.2s ease;
+}
+
+/* Animación sutil para el botón de filtros avanzados */
+#toggle-advanced {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+#toggle-advanced:hover {
+    transform: translateX(2px);
+}
+
+#toggle-advanced::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: currentColor;
+    transition: width 0.3s ease;
+}
+
+#toggle-advanced:hover::after {
+    width: 100%;
+}
+
+/* Animación para el botón de aplicar filtros */
+.btn-primary {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+}
+
+.btn-primary:active::before {
+    width: 200px;
+    height: 200px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+/* Animación suave para elementos que aparecen */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Clase utility para animaciones */
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Mejoras para dispositivos móviles */
+@media (max-width: 640px) {
+    #filters-section .form-group {
+        animation-delay: 0s !important;
+    }
+    
+    #filters-section .quick-date-btn {
+        animation-delay: 0.1s !important;
+    }
+    
+    #toggle-filters-btn:active {
+        transform: scale(0.95);
+    }
 }
 
 .btn-primary {

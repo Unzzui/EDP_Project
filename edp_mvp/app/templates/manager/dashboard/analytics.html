@@ -1,0 +1,1555 @@
+{% extends "manager/base_manager.html" %} {% block title %}Dashboard de Análisis
+- Pagora Manager{% endblock %} {% block content %}
+
+<!-- External CSS and JS -->
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/analytics-dashboard.css') }}" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/analytics-dashboard.js') }}"></script>
+<!-- Analytics Data for JavaScript -->
+<script id="analytics-data" type="application/json">
+  {
+    "dso": {
+      "current_dso": {{ analytics.dso.current_dso|default(124) }},
+      "target_dso": {{ analytics.dso.target_dso|default(90) }},
+      "trend": {{ analytics.dso.trend|default(-2.3) }},
+      "variance": {{ analytics.dso.variance|default(34) }},
+      "predicted_dso": {{ analytics.dso.predicted_dso|default(118) }},
+      "insights": "DSO actual está por encima del objetivo"
+    },
+    "correlations": {
+      "key_correlations": [
+        {"metric1": "DSO", "metric2": "Rentabilidad", "correlation": -0.72},
+        {"metric1": "Volumen", "metric2": "Eficiencia", "correlation": 0.65},
+        {"metric1": "Días de Proceso", "metric2": "Satisfacción Cliente", "correlation": -0.58}
+      ],
+      "main_insight": "DSO y rentabilidad muestran correlación negativa fuerte"
+    },
+    "predictions": {
+      "cash_flow_30d": {{ analytics.predictions.cash_flow_30d|default(38500000) }},
+      "confidence": {{ analytics.predictions.confidence|default(85.2) }},
+      "risk_score": {{ analytics.predictions.risk_score|default(4.8) }},
+      "projects_at_risk": {{ analytics.predictions.projects_at_risk|default(6) }}
+    },
+    "segmentation": {
+      "client_segments": [
+        {"name": "Premium", "count": 12, "dso": 68, "revenue": 45, "risk": "low"},
+        {"name": "Estándar", "count": 28, "dso": 95, "revenue": 35, "risk": "medium"},
+        {"name": "Básico", "count": 15, "dso": 145, "revenue": 20, "risk": "high"}
+      ],
+      "size_segments": [
+        {"name": "Grande", "count": 8, "revenue": 60, "margin": 18},
+        {"name": "Mediano", "count": 25, "revenue": 30, "margin": 22},
+        {"name": "Pequeño", "count": 22, "revenue": 10, "margin": 15}
+      ]
+    }
+  }
+</script>
+<div class="container mx-auto px-2 sm:px-4 py-4 sm:py-6 space-y-6">
+  <div class="container-fluid">
+    <!-- ========== HEADER SECTION ========== -->
+    <div
+      style="background: var(--bg-card); border: 1px solid var(--border-color)"
+      class="rounded-xl p-6 shadow-lg">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-6">
+          <div
+            class="w-16 h-16 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center shadow-md">
+            <svg
+              class="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+
+          <div>
+            <h1
+              style="color: var(--text-primary)"
+              class="text-3xl font-bold mb-2">
+              Dashboard de Análisis Avanzado
+            </h1>
+            <p style="color: var(--text-secondary)" class="text-base">
+              Análisis predictivo, correlaciones y métricas financieras
+              avanzadas
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-8">
+          <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span
+                style="color: var(--text-secondary)"
+                class="text-sm font-medium"
+                >{{ analytics.predictions.projects_at_risk|default('6') }} en
+                riesgo</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>
+              <span
+                style="color: var(--text-secondary)"
+                class="text-sm font-medium"
+                >{{ analytics.predictions.confidence|default('85') }}%
+                confianza</span
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span
+                style="color: var(--text-secondary)"
+                class="text-sm font-medium"
+                >Análisis activo</span
+              >
+            </div>
+          </div>
+
+          <div
+            style="
+              background: var(--bg-subtle);
+              border: 1px solid var(--border-color);
+            "
+            class="rounded-lg p-4">
+            <div class="text-center">
+              <div style="color: var(--text-secondary)" class="text-xs mb-1">
+                Actualizado
+              </div>
+              <div style="color: var(--text-primary)" class="text-lg font-bold">
+                {{ analytics.last_update|default('14:35') }}
+              </div>
+              <div style="color: var(--text-secondary)" class="text-xs">
+                Auto-refresh 2min
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== FILTER BAR SECTION ========== -->
+    <div
+      style="background: var(--bg-card); border: 1px solid var(--border-color)"
+      class="rounded-xl p-6 shadow-lg">
+      <div class="flex items-center gap-3 mb-6">
+        <div
+          class="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl flex items-center justify-center">
+          <svg
+            class="w-5 h-5 text-blue-600 dark:text-blue-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"></path>
+          </svg>
+        </div>
+        <div>
+          <h3 style="color: var(--text-primary)" class="text-lg font-semibold">
+            Filtros de Análisis
+          </h3>
+          <p style="color: var(--text-secondary)" class="text-sm">
+            Personaliza tu vista analítica
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="form-group">
+          <label
+            style="color: var(--text-primary)"
+            class="block text-sm font-medium mb-2"
+            >Período de Análisis</label
+          >
+          <select
+            style="
+              background: var(--bg-input);
+              border-color: var(--border-color);
+              color: var(--text-primary);
+            "
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            id="periodFilter">
+            <option value="3m">Últimos 3 meses</option>
+            <option value="6m" selected>Últimos 6 meses</option>
+            <option value="12m">Último año</option>
+            <option value="24m">Últimos 2 años</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label
+            style="color: var(--text-primary)"
+            class="block text-sm font-medium mb-2"
+            >Segmentación</label
+          >
+          <select
+            style="
+              background: var(--bg-input);
+              border-color: var(--border-color);
+              color: var(--text-primary);
+            "
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            id="segmentFilter">
+            <option value="all">Todos los proyectos</option>
+            <option value="client">Por cliente</option>
+            <option value="geography">Por geografía</option>
+            <option value="size">Por tamaño</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label
+            style="color: var(--text-primary)"
+            class="block text-sm font-medium mb-2"
+            >Métrica Principal</label
+          >
+          <select
+            style="
+              background: var(--bg-input);
+              border-color: var(--border-color);
+              color: var(--text-primary);
+            "
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            id="metricFilter">
+            <option value="dso">DSO</option>
+            <option value="revenue">Facturación</option>
+            <option value="profitability">Rentabilidad</option>
+            <option value="risk">Riesgo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="block text-sm font-medium mb-2 opacity-0"
+            >Acciones</label
+          >
+          <button
+            class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+            onclick="updateAnalytics()">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Actualizar Análisis
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== KPI CARDS SECTION ========== -->
+    <div class="grid grid-cols-12 gap-6 mb-8">
+      <div class="col-span-12">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2
+              style="color: var(--text-primary)"
+              class="text-2xl font-bold flex items-center gap-3">
+              <svg
+                class="w-6 h-6 text-purple-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+              Análisis DSO (Days Sales Outstanding)
+            </h2>
+            <p style="color: var(--text-secondary)" class="text-base mt-1">
+              Métricas clave de días de cobranza y proyecciones
+            </p>
+          </div>
+          <div
+            style="
+              background: var(--bg-subtle);
+              border: 1px solid var(--border-color);
+            "
+            class="rounded-lg px-4 py-2">
+            <span
+              style="color: var(--text-secondary)"
+              class="text-sm font-medium">
+              4 métricas activas
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-6">
+          <!-- DSO Actual - Critical KPI Card -->
+          <div
+            class="group relative overflow-hidden bg-gradient-to-br from-red-50 via-red-100 to-red-200 dark:from-red-950/40 dark:via-red-900/40 dark:to-red-950/60 border-2 border-red-300 dark:border-red-700 rounded-3xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-500 h-[180px] cursor-pointer">
+            <!-- Background Pattern -->
+            <div class="absolute inset-0 opacity-20">
+              <div
+                class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-400 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
+              <div
+                class="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-red-500 to-transparent rounded-full translate-y-12 -translate-x-12"></div>
+            </div>
+
+            <div class="relative flex flex-col h-full">
+              <div class="flex items-start justify-between mb-4">
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <p
+                      style="color: var(--danger)"
+                      class="text-xs font-bold uppercase tracking-wider">
+                      DSO ACTUAL
+                    </p>
+                  </div>
+                  <p
+                    style="color: var(--danger)"
+                    class="text-sm font-medium opacity-80">
+                    +{{ analytics.dso.variance|default(34) }}d sobre target
+                  </p>
+                </div>
+                <div
+                  class="p-3 bg-red-500/20 backdrop-blur-sm rounded-2xl group-hover:bg-red-500 group-hover:text-white transition-all duration-300">
+                  <svg
+                    style="color: var(--danger)"
+                    class="w-6 h-6 group-hover:text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+
+              <div class="flex-1 flex items-center justify-between">
+                <div>
+                  <div
+                    style="color: var(--danger)"
+                    class="text-4xl font-black mb-1">
+                    {{ analytics.dso.current_dso|default('124') }}
+                  </div>
+                  <div style="color: var(--danger)" class="text-base font-bold">
+                    días
+                  </div>
+                </div>
+                <div class="flex items-end gap-1 h-12">
+                  <div
+                    style="background: var(--danger)"
+                    class="w-2 opacity-60 h-6 rounded-full animate-pulse"></div>
+                  <div
+                    style="background: var(--danger)"
+                    class="w-2 opacity-70 h-8 rounded-full animate-pulse"
+                    style="animation-delay: 0.1s"></div>
+                  <div
+                    style="background: var(--danger)"
+                    class="w-2 opacity-80 h-10 rounded-full animate-pulse"
+                    style="animation-delay: 0.2s"></div>
+                  <div
+                    style="background: var(--danger)"
+                    class="w-2 h-12 rounded-full animate-pulse"
+                    style="animation-delay: 0.3s"></div>
+                  <div
+                    style="background: var(--danger)"
+                    class="w-2 h-9 rounded-full opacity-60 animate-pulse"
+                    style="animation-delay: 0.4s"></div>
+                </div>
+              </div>
+
+              <!-- Alert Badge -->
+              <div
+                class="absolute -top-2 -right-2 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-bounce">
+                🚨 CRÍTICO
+              </div>
+            </div>
+          </div>
+
+          <!-- DSO Target - Success KPI Card -->
+          <div
+            class="group relative overflow-hidden bg-gradient-to-br from-green-50 via-green-100 to-green-200 dark:from-green-950/40 dark:via-green-900/40 dark:to-green-950/60 border-2 border-green-300 dark:border-green-700 rounded-3xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-500 h-[180px] cursor-pointer">
+            <!-- Background Pattern -->
+            <div class="absolute inset-0 opacity-20">
+              <div
+                class="absolute top-0 left-0 w-20 h-20 bg-gradient-to-br from-green-400 to-transparent rounded-full -translate-y-10 -translate-x-10"></div>
+              <div
+                class="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-green-500 to-transparent rounded-full translate-y-8 translate-x-8"></div>
+            </div>
+
+            <div class="relative flex flex-col h-full">
+              <div class="flex items-start justify-between mb-4">
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <p
+                      style="color: var(--success)"
+                      class="text-xs font-bold uppercase tracking-wider">
+                      DSO OBJETIVO
+                    </p>
+                  </div>
+                  <p
+                    style="color: var(--success)"
+                    class="text-sm font-medium opacity-80">
+                    Meta corporativa
+                  </p>
+                </div>
+                <div
+                  class="p-3 bg-green-500/20 backdrop-blur-sm rounded-2xl group-hover:bg-green-500 group-hover:text-white transition-all duration-300">
+                  <svg
+                    style="color: var(--success)"
+                    class="w-6 h-6 group-hover:text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+
+              <div class="flex-1 flex items-center justify-between">
+                <div>
+                  <div
+                    style="color: var(--success)"
+                    class="text-4xl font-black mb-1">
+                    {{ analytics.dso.target_dso|default('90') }}
+                  </div>
+                  <div
+                    style="color: var(--success)"
+                    class="text-base font-bold">
+                    días
+                  </div>
+                </div>
+                <div class="relative w-16 h-16">
+                  <svg
+                    class="w-16 h-16 transform -rotate-90"
+                    viewBox="0 0 36 36">
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-dasharray="100, 100"
+                      style="color: var(--border-color)"
+                      opacity="0.3"></path>
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-dasharray="90, 100"
+                      style="color: var(--success)"
+                      class="animate-pulse"></path>
+                  </svg>
+                  <div
+                    class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span
+                      style="color: var(--success)"
+                      class="text-lg font-black"
+                      >90%</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Success Badge -->
+              <div
+                class="absolute -top-2 -right-2 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                🎯 META
+              </div>
+            </div>
+          </div>
+
+          <!-- DSO Predicted - Info KPI Card -->
+          <div
+            class="group relative overflow-hidden bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 dark:from-blue-950/40 dark:via-blue-900/40 dark:to-blue-950/60 border-2 border-blue-300 dark:border-blue-700 rounded-3xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-500 h-[180px] cursor-pointer">
+            <!-- Progress Ring Background -->
+            <div class="absolute inset-0 opacity-10">
+              <svg class="w-full h-full" viewBox="0 0 100 100">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="35"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1"
+                  opacity="0.2"
+                  class="text-blue-400"></circle>
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="35"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-dasharray="{{ analytics.predictions.confidence|default(85) * 2.2 }}, 220"
+                  transform="rotate(-90 50 50)"
+                  class="text-blue-500"></circle>
+              </svg>
+            </div>
+
+            <div class="relative flex flex-col h-full">
+              <div class="flex items-start justify-between mb-4">
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>
+                    <p
+                      style="color: var(--info)"
+                      class="text-xs font-bold uppercase tracking-wider">
+                      DSO PREDICHO
+                    </p>
+                  </div>
+                  <p
+                    style="color: var(--info)"
+                    class="text-sm font-medium opacity-80">
+                    {{ analytics.predictions.confidence|default(85) }}%
+                    confianza
+                  </p>
+                </div>
+                <div
+                  class="p-3 bg-blue-500/20 backdrop-blur-sm rounded-2xl group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
+                  <svg
+                    style="color: var(--info)"
+                    class="w-6 h-6 group-hover:text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+              </div>
+
+              <div class="flex-1 flex items-center justify-between">
+                <div>
+                  <div
+                    style="color: var(--info)"
+                    class="text-4xl font-black mb-1">
+                    {{ analytics.dso.predicted_dso|default('118') }}
+                  </div>
+                  <div style="color: var(--info)" class="text-base font-bold">
+                    días
+                  </div>
+                </div>
+                <div class="relative w-16 h-16">
+                  <svg
+                    class="w-16 h-16 transform -rotate-90"
+                    viewBox="0 0 36 36">
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-dasharray="100, 100"
+                      style="color: var(--border-color)"
+                      opacity="0.3"></path>
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-dasharray="{{ analytics.predictions.confidence|default(85) }}, 100"
+                      style="color: var(--info)"
+                      class="animate-pulse"></path>
+                  </svg>
+                  <div
+                    class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span style="color: var(--info)" class="text-lg font-black"
+                      >{{ analytics.predictions.confidence|default(85) }}%</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Prediction Badge -->
+              <div
+                class="absolute -top-2 -right-2 bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                🔮 PREDICCIÓN
+              </div>
+            </div>
+          </div>
+
+          <!-- Risk Score - Warning KPI Card -->
+          <div
+            class="group relative overflow-hidden bg-gradient-to-br from-purple-50 via-purple-100 to-purple-200 dark:from-purple-950/40 dark:via-purple-900/40 dark:to-purple-950/60 border-2 border-purple-300 dark:border-purple-700 rounded-3xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-500 h-[180px] cursor-pointer">
+            <!-- Warning Pattern -->
+            <div class="absolute inset-0 opacity-15">
+              <div
+                class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-400 to-transparent rounded-full -translate-y-12 translate-x-12"></div>
+              <div
+                class="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-purple-500 to-transparent rounded-full translate-y-10 -translate-x-10"></div>
+              <div
+                class="absolute center w-12 h-12 bg-gradient-to-br from-orange-400 to-transparent rounded-full animate-ping"></div>
+            </div>
+
+            <div class="relative flex flex-col h-full">
+              <div class="flex items-start justify-between mb-4">
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+                    <p
+                      style="color: var(--accent-purple)"
+                      class="text-xs font-bold uppercase tracking-wider">
+                      SCORE DE RIESGO
+                    </p>
+                  </div>
+                  <p
+                    style="color: var(--accent-purple)"
+                    class="text-sm font-medium opacity-80">
+                    {{ analytics.predictions.projects_at_risk|default(6) }}
+                    proyectos en riesgo
+                  </p>
+                </div>
+                <div
+                  class="p-3 bg-purple-500/20 backdrop-blur-sm rounded-2xl group-hover:bg-purple-500 group-hover:text-white transition-all duration-300">
+                  <svg
+                    style="color: var(--accent-purple)"
+                    class="w-6 h-6 group-hover:text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+              </div>
+
+              <div class="flex-1 flex items-center justify-between">
+                <div>
+                  <div
+                    style="color: var(--accent-purple)"
+                    class="text-4xl font-black mb-1">
+                    {{ analytics.predictions.risk_score|default('4.8') }}
+                  </div>
+                  <div
+                    style="color: var(--accent-purple)"
+                    class="text-base font-bold">
+                    de 10
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div
+                    style="color: var(--accent-purple)"
+                    class="text-2xl font-black">
+                    ${{ analytics.predictions.amount_at_risk|default('57') }}M
+                  </div>
+                  <p
+                    style="color: var(--accent-purple)"
+                    class="text-sm font-medium opacity-80">
+                    en riesgo
+                  </p>
+                </div>
+              </div>
+
+              <!-- Warning Badge -->
+              <div
+                class="absolute -top-2 -right-2 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                ⚠️ RIESGO
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ========== CHARTS SECTION ========== -->
+    <div class="grid grid-cols-12 gap-6 mb-8">
+      <!-- DSO Evolution Chart - 6 cols -->
+      <div class="col-span-6">
+        <div
+          style="
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+          "
+          class="rounded-xl p-6 shadow-lg transition-all duration-300">
+          <div
+            class="flex items-center justify-between mb-6 pb-4"
+            style="border-bottom: 1px solid var(--border-color)">
+            <div>
+              <h3
+                style="color: var(--text-primary)"
+                class="text-lg font-semibold flex items-center gap-2">
+                <svg
+                  class="w-5 h-5 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                Evolución DSO
+              </h3>
+              <p style="color: var(--text-secondary)" class="text-sm mt-1">
+                Tendencia histórica y predicción
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                style="color: var(--text-secondary)"
+                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Descargar">
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+              </button>
+              <button
+                style="color: var(--text-secondary)"
+                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Pantalla completa">
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="relative h-80">
+            <canvas id="dsoEvolutionChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Correlation Matrix - 6 cols -->
+      <div class="col-span-6">
+        <div
+          style="
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+          "
+          class="rounded-xl p-6 shadow-lg transition-all duration-300">
+          <div
+            class="flex items-center justify-between mb-6 pb-4"
+            style="border-bottom: 1px solid var(--border-color)">
+            <div>
+              <h3
+                style="color: var(--text-primary)"
+                class="text-lg font-semibold flex items-center gap-2">
+                <svg
+                  class="w-5 h-5 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                Matriz de Correlaciones
+              </h3>
+              <p style="color: var(--text-secondary)" class="text-sm mt-1">
+                Relaciones entre métricas clave
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                style="color: var(--text-secondary)"
+                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Descargar">
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+              </button>
+              <button
+                style="color: var(--text-secondary)"
+                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Pantalla completa">
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="relative h-80">
+            <canvas id="correlationMatrix"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ========== CASH FLOW & RISK ANALYSIS SECTION ========== -->
+    <div class="grid grid-cols-12 gap-6 mb-8">
+      <!-- Cash Flow Prediction - 8 cols -->
+      <div class="col-span-8">
+        <div
+          style="
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+          "
+          class="rounded-xl p-6 shadow-lg transition-all duration-300">
+          <div
+            class="flex items-center justify-between mb-6 pb-4"
+            style="border-bottom: 1px solid var(--border-color)">
+            <div>
+              <h3
+                style="color: var(--text-primary)"
+                class="text-lg font-semibold flex items-center gap-2">
+                <svg
+                  class="w-5 h-5 text-purple-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                Predicción de Cash Flow
+              </h3>
+              <p style="color: var(--text-secondary)" class="text-sm mt-1">
+                Proyección a 90 días con intervalos de confianza
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                style="color: var(--text-secondary)"
+                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Descargar">
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+              </button>
+              <button
+                style="color: var(--text-secondary)"
+                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Pantalla completa">
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="relative h-80">
+            <canvas id="cashFlowPrediction"></canvas>
+          </div>
+        </div>
+      </div>
+      <!-- Risk Analysis - 4 cols -->
+      <div class="col-span-4">
+        <div
+          style="
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+          "
+          class="rounded-xl p-6 shadow-lg transition-all duration-300">
+          <div
+            class="flex items-center justify-between mb-6 pb-4"
+            style="border-bottom: 1px solid var(--border-color)">
+            <div>
+              <h3
+                style="color: var(--text-primary)"
+                class="text-lg font-semibold flex items-center gap-2">
+                <svg
+                  class="w-5 h-5 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                Análisis de Riesgo
+              </h3>
+              <p style="color: var(--text-secondary)" class="text-sm mt-1">
+                Distribución de riesgo por proyecto
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                style="color: var(--text-secondary)"
+                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Descargar">
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+              </button>
+              <button
+                style="color: var(--text-secondary)"
+                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Pantalla completa">
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="relative h-80">
+            <canvas id="riskAnalysis"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SEGMENTATION ANALYSIS SECTION ========== -->
+    <div class="grid grid-cols-12 gap-6 mb-8">
+      <div class="col-span-12">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2
+              style="color: var(--text-primary)"
+              class="text-2xl font-bold flex items-center gap-3">
+              <svg
+                class="w-6 h-6 text-indigo-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+              </svg>
+              Análisis de Segmentación
+            </h2>
+            <p style="color: var(--text-secondary)" class="text-base mt-1">
+              Distribución de rendimiento por segmentos de cliente y tamaño
+            </p>
+          </div>
+          <div
+            style="
+              background: var(--bg-subtle);
+              border: 1px solid var(--border-color);
+            "
+            class="rounded-lg px-4 py-2">
+            <span
+              style="color: var(--text-secondary)"
+              class="text-sm font-medium">
+              2 análisis de segmentación
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6">
+          <!-- Client Segmentation -->
+          <div
+            style="background: var(--bg-card); border: 1px solid var(--border-color)"
+            class="rounded-xl p-6 shadow-lg transition-all duration-300">
+            <div
+              class="flex items-center justify-between mb-6 pb-4"
+              style="border-bottom: 1px solid var(--border-color)">
+              <div>
+                <h3
+                  style="color: var(--text-primary)"
+                  class="text-lg font-semibold flex items-center gap-2">
+                  <svg
+                    class="w-5 h-5 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                  </svg>
+                  Segmentación por Cliente
+                </h3>
+                <p style="color: var(--text-secondary)" class="text-sm mt-1">
+                  DSO vs Rentabilidad por segmento
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  style="color: var(--text-secondary)"
+                  class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Descargar">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                </button>
+                <button
+                  style="color: var(--text-secondary)"
+                  class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Pantalla completa">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="relative h-80">
+              <canvas id="clientSegmentation"></canvas>
+            </div>
+          </div>
+
+          <!-- Size Segmentation -->
+          <div
+            style="background: var(--bg-card); border: 1px solid var(--border-color)"
+            class="rounded-xl p-6 shadow-lg transition-all duration-300">
+            <div
+              class="flex items-center justify-between mb-6 pb-4"
+              style="border-bottom: 1px solid var(--border-color)">
+              <div>
+                <h3
+                  style="color: var(--text-primary)"
+                  class="text-lg font-semibold flex items-center gap-2">
+                  <svg
+                    class="w-5 h-5 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                  </svg>
+                  Segmentación por Tamaño
+                </h3>
+                <p style="color: var(--text-secondary)" class="text-sm mt-1">
+                  Distribución de ingresos y márgenes
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  style="color: var(--text-secondary)"
+                  class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Descargar">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                </button>
+                <button
+                  style="color: var(--text-secondary)"
+                  class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Pantalla completa">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="relative h-80">
+              <canvas id="sizeSegmentation"></canvas>
+            </div>
+          </div>
+        </div>
+              <div class="chart-toolbar flex items-center gap-2">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== INSIGHTS & RECOMMENDATIONS SECTION ========== -->
+    <div class="grid grid-cols-12 gap-6 mb-8">
+      <div class="col-span-12">
+        <div
+          style="background: var(--bg-card); border: 1px solid var(--border-color)"
+          class="rounded-xl p-6 shadow-lg transition-all duration-300">
+          <div
+            class="flex items-center justify-between mb-6 pb-4"
+            style="border-bottom: 1px solid var(--border-color)">
+            <div>
+              <h2
+                style="color: var(--text-primary)"
+                class="text-2xl font-bold flex items-center gap-3">
+                <svg
+                  class="w-6 h-6 text-purple-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+                Insights y Recomendaciones
+              </h2>
+              <p style="color: var(--text-secondary)" class="text-base mt-1">
+                Análisis inteligente y acciones recomendadas basadas en IA
+              </p>
+            </div>
+            <div
+              style="background: var(--bg-subtle); border: 1px solid var(--border-color)"
+              class="rounded-lg px-4 py-2">
+              <span style="color: var(--text-secondary)" class="text-sm font-medium">
+                {{ analytics.insights.total_insights|default(3) }} insights detectados
+              </span>
+            </div>
+          </div>
+
+          <div class="insights-list space-y-6">
+            <!-- Critical Insight: DSO Elevado -->
+            <div
+              style="background: var(--bg-subtle); border: 1px solid var(--border-color)"
+              class="insight-item flex items-start gap-4 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+              <div class="insight-severity flex-shrink-0 mt-1">
+                <div class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
+              </div>
+              <div class="insight-content flex-1">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4
+                      style="color: var(--danger)"
+                      class="text-base font-bold mb-2">
+                      🚨 DSO Crítico - Acción Inmediata Requerida
+                    </h4>
+                    <p
+                      style="color: var(--text-secondary)"
+                      class="text-sm leading-relaxed mb-4">
+                      El DSO actual de
+                      <strong style="color: var(--danger)">{{ analytics.dso.current_dso|default('124') }} días</strong>
+                      supera el objetivo corporativo en
+                      <strong style="color: var(--danger)">{{ analytics.dso.variance|default(34) }} días</strong>.
+                      Impacto estimado en cash flow:
+                      <strong style="color: var(--danger)">${{ analytics.financial_impact.dso_excess|default('2.8M') }}</strong>
+                      retenidos.
+                    </p>
+                    <div class="flex items-center gap-3">
+                      <button
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Revisar Cobranza
+                      </button>
+                      <button
+                        style="color: var(--danger); border-color: var(--danger)"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-transparent border hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 0a9 9 0 109 9 9 9 0 00-9-9z"></path>
+                        </svg>
+                        Ver Detalles
+                      </button>
+                    </div>
+                  </div>
+                  <div class="insight-icon ml-4">
+                    <div style="background: var(--bg-card)" class="p-3 rounded-xl shadow-sm">
+                      <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Success Insight: Tendencia Positiva -->
+            <div
+              style="background: var(--bg-subtle); border: 1px solid var(--border-color)"
+              class="insight-item flex items-start gap-4 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+              <div class="insight-severity flex-shrink-0 mt-1">
+                <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+              </div>
+              <div class="insight-content flex-1">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4
+                      style="color: var(--success)"
+                      class="text-base font-bold mb-2">
+                      🏆 Tendencia de Mejora Sostenida
+                    </h4>
+                    <p
+                      style="color: var(--text-secondary)"
+                      class="text-sm leading-relaxed mb-4">
+                      Mejora consistente del
+                      <strong style="color: var(--success)">{{ analytics.dso.trend|default(-2.3)|abs }}% mensual</strong>
+                      durante los últimos 3 meses. Si se mantiene esta tendencia, el DSO objetivo se alcanzará en
+                      <strong style="color: var(--success)">{{ analytics.predictions.target_achievement_months|default(6) }} meses</strong>.
+                    </p>
+                    <div class="flex items-center gap-3">
+                      <button
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                        Ver Progreso
+                      </button>
+                      <button
+                        style="color: var(--success); border-color: var(--success)"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-transparent border hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+                        </svg>
+                        Compartir
+                      </button>
+                    </div>
+                  </div>
+                  <div class="insight-icon ml-4">
+                    <div style="background: var(--bg-card)" class="p-3 rounded-xl shadow-sm">
+                      <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Warning Insight: Proyectos en Riesgo -->
+            <div
+              style="background: var(--bg-subtle); border: 1px solid var(--border-color)"
+              class="insight-item flex items-start gap-4 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+              <div class="insight-severity flex-shrink-0 mt-1">
+                <div class="w-3 h-3 rounded-full bg-purple-500 animate-pulse"></div>
+              </div>
+              <div class="insight-content flex-1">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4
+                      style="color: var(--accent-purple)"
+                      class="text-base font-bold mb-2">
+                      ⚠️ Proyectos de Alto Riesgo Identificados
+                    </h4>
+                    <p
+                      style="color: var(--text-secondary)"
+                      class="text-sm leading-relaxed mb-4">
+                      <strong style="color: var(--accent-purple)">{{ analytics.predictions.projects_at_risk|default(6) }} proyectos</strong>
+                      con score de riesgo superior a 7/10 requieren monitoreo intensivo.
+                      Valor total en riesgo:
+                      <strong style="color: var(--accent-purple)">${{ analytics.risk_analysis.total_value_at_risk|default('8.2M') }}</strong>.
+                    </p>
+                    <div class="flex items-center gap-3">
+                      <button
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        Revisar Proyectos
+                      </button>
+                      <button
+                        style="color: var(--accent-purple); border-color: var(--accent-purple)"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-transparent border hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        Plan de Mitigación
+                      </button>
+                    </div>
+                  </div>
+                  <div class="insight-icon ml-4">
+                    <div style="background: var(--bg-card)" class="p-3 rounded-xl shadow-sm">
+                      <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    // Initialize dashboard when page loads
+    function initializeAnalyticsDashboard() {
+      // Prevent multiple initializations
+      if (window.analyticsInitialized) {
+        console.log("⚠️ Analytics Dashboard already initialized, skipping...");
+        return;
+      }
+
+      // Add entrance animations to page elements
+      addPageEntranceAnimations();
+
+      // Get analytics data from script tag
+      const analyticsDataElement = document.getElementById("analytics-data");
+      let analyticsData = {};
+
+      try {
+        analyticsData = JSON.parse(analyticsDataElement.textContent);
+        console.log("✅ Analytics data loaded:", analyticsData);
+      } catch (error) {
+        console.error("❌ Error parsing analytics data:", error);
+        analyticsData = {
+          dso: { current_dso: 124, target_dso: 90, trend: -2.3 },
+          correlations: { key_correlations: [] },
+          predictions: { cash_flow_30d: 38500000, confidence: 85.2 },
+          segmentation: { client_segments: [], size_segments: [] },
+        };
+      }
+
+      // Initialize dashboard
+      if (typeof AnalyticsDashboard !== "undefined") {
+        window.analyticsInstance = new AnalyticsDashboard(analyticsData);
+        window.analyticsInstance.addEventListeners();
+        window.analyticsInitialized = true;
+        console.log("✅ Analytics Dashboard initialized successfully");
+
+        // Add sparkle effects to metric numbers
+        addSparkleEffectsToMetrics();
+      } else {
+        console.error("❌ AnalyticsDashboard class not found");
+      }
+    }
+
+    // Add entrance animations to page elements
+    function addPageEntranceAnimations() {
+      // Animate header
+      const header = document.querySelector(".hero-header");
+      if (header) {
+        header.style.opacity = "0";
+        header.style.transform = "translateY(-20px)";
+        setTimeout(() => {
+          header.style.transition = "all 0.6s ease-out";
+          header.style.opacity = "1";
+          header.style.transform = "translateY(0)";
+        }, 100);
+      }
+
+      // Animate filter bar
+      const filterBar = document.querySelector(".filter-bar");
+      if (filterBar) {
+        filterBar.style.opacity = "0";
+        filterBar.style.transform = "translateY(20px)";
+        setTimeout(() => {
+          filterBar.style.transition = "all 0.6s ease-out";
+          filterBar.style.opacity = "1";
+          filterBar.style.transform = "translateY(0)";
+        }, 200);
+      }
+    }
+
+    // Add sparkle effects to metric numbers
+    function addSparkleEffectsToMetrics() {
+      const metricNumbers = document.querySelectorAll(".metric-number");
+      metricNumbers.forEach((number, index) => {
+        // Create sparkle container
+        const sparkleContainer = document.createElement("div");
+        sparkleContainer.className = "absolute inset-0 pointer-events-none";
+        number.parentElement.style.position = "relative";
+        number.parentElement.appendChild(sparkleContainer);
+
+        // Add periodic sparkle effect
+        setInterval(() => {
+          createSparkle(sparkleContainer);
+        }, 3000 + index * 500);
+      });
+    }
+
+    // Create individual sparkle element
+    function createSparkle(container) {
+      const sparkle = document.createElement("div");
+      sparkle.className =
+        "absolute w-1 h-1 bg-yellow-400 rounded-full opacity-0";
+      sparkle.style.left = Math.random() * 100 + "%";
+      sparkle.style.top = Math.random() * 100 + "%";
+
+      container.appendChild(sparkle);
+
+      // Animate sparkle
+      setTimeout(() => {
+        sparkle.style.transition = "all 0.6s ease-out";
+        sparkle.style.opacity = "1";
+        sparkle.style.transform = "scale(3)";
+      }, 50);
+
+      setTimeout(() => {
+        sparkle.style.opacity = "0";
+        sparkle.style.transform = "scale(0)";
+      }, 600);
+
+      setTimeout(() => {
+        container.removeChild(sparkle);
+      }, 1200);
+    }
+
+    // Enhanced parallax effect for hero header
+    function addParallaxEffect() {
+      const header = document.querySelector(".hero-header");
+      if (!header) return;
+
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const rate = scrolled * -0.5;
+        header.style.transform = `translateY(${rate}px)`;
+      });
+    }
+
+    // Add smooth reveal animation for charts
+    function addChartRevealAnimations() {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.style.opacity = "1";
+              entry.target.style.transform = "translateY(0)";
+            }
+          });
+        },
+        { threshold: 0.1 }
+      );
+
+      document.querySelectorAll(".chart-card").forEach((card) => {
+        card.style.opacity = "0";
+        card.style.transform = "translateY(20px)";
+        card.style.transition = "all 0.6s ease-out";
+        observer.observe(card);
+      });
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
+        initializeAnalyticsDashboard();
+        addParallaxEffect();
+        addChartRevealAnimations();
+      });
+    } else {
+      // DOM is already loaded
+      initializeAnalyticsDashboard();
+      addParallaxEffect();
+      addChartRevealAnimations();
+    }
+
+    // Cleanup when page unloads
+    window.addEventListener("beforeunload", function () {
+      if (window.analyticsInstance && window.analyticsInstance.destroy) {
+        window.analyticsInstance.destroy();
+      }
+      window.analyticsInitialized = false;
+    });
+
+    // Global function for filter updates with loading animation
+    function updateAnalytics() {
+      console.log("🔄 Updating analytics...");
+
+      // Show loading overlay
+      const overlay = document.createElement("div");
+      overlay.className =
+        "fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center";
+      overlay.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-xl flex items-center gap-4">
+          <div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+          <span class="text-gray-700 dark:text-gray-300 font-medium">Actualizando datos...</span>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      setTimeout(() => {
+        document.body.removeChild(overlay);
+        location.reload();
+      }, 1500);
+    }
+  </script>
+
+  {% endblock %}
+</div>

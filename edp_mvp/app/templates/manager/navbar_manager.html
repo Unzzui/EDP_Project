@@ -47,7 +47,7 @@
       <li>
         <a
           href="{{ url_for('manager.dashboard') }}"
-          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 {% if 'dashboard' in request.endpoint %} text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold {% else %} hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% endif %}">
+          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 {% if request.endpoint == 'manager.dashboard' %} text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold {% else %} hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% endif %}">
           <svg
             class="w-4 h-4 mr-1.5"
             viewBox="0 0 24 24"
@@ -64,8 +64,8 @@
       </li>
       <li>
         <a
-          href=""
-          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 {% if 'proyectos' in request.endpoint %} text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold {% else %} hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% endif %}">
+          href="{{ url_for('manager.operational_dashboard') }}"
+          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 {% if request.endpoint == 'manager.operational_dashboard' %} text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold {% else %} hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% endif %}">
           <svg
             class="w-4 h-4 mr-1.5"
             viewBox="0 0 24 24"
@@ -77,27 +77,10 @@
               stroke-linejoin="round"
               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          Proyectos
+          Operativos
         </a>
       </li>
-      <li>
-        <a
-          href=""
-          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 {% if 'equipos' in request.endpoint %} text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold {% else %} hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% endif %}">
-          <svg
-            class="w-4 h-4 mr-1.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          Equipos
-        </a>
-      </li>
+  
       <li>
         <a
           href=""
@@ -118,8 +101,8 @@
       </li>
       <li>
         <a
-          href=""
-          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 {% if 'analisis' in request.endpoint %} text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold {% else %} hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% endif %}">
+          href="{{ url_for('manager.analytics_dashboard') }}"
+          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 {% if 'analytics' in request.endpoint %} text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold {% else %} hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% endif %}">
           <svg
             class="w-4 h-4 mr-1.5"
             viewBox="0 0 24 24"
@@ -277,27 +260,23 @@
     class="hidden md:hidden bg-[color:var(--bg-card)] border-t border-[color:var(--border-color)] px-2 py-3 animate-fadeIn">
     <a
       href="{{ url_for('manager.dashboard') }}"
-      class="block py-2 px-4 rounded-md mb-1 {% if 'dashboard' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
+      class="block py-2 px-4 rounded-md mb-1 {% if request.endpoint == 'manager.dashboard' %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
       Dashboard
     </a>
     <a
-      href=""
-      class="block py-2 px-4 rounded-md mb-1 {% if 'proyectos' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
-      Proyectos
+      href="{{ url_for('manager.operational_dashboard') }}"
+      class="block py-2 px-4 rounded-md mb-1 {% if request.endpoint == 'manager.operational_dashboard' %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
+      Operativos
     </a>
-    <a
-      href=""
-      class="block py-2 px-4 rounded-md mb-1 {% if 'equipos' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
-      Equipos
-    </a>
+  
     <a
       href=""
       class="block py-2 px-4 rounded-md mb-1 {% if 'reportes' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
       Reportes
     </a>
     <a
-      href=""
-      class="block py-2 px-4 rounded-md {% if 'analisis' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
+      href="{{ url_for('manager.analytics_dashboard') }}"
+      class="block py-2 px-4 rounded-md {% if 'analytics' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
       Análisis
     </a>
   </div>
