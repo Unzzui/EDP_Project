@@ -1,21 +1,23 @@
-/* Analytics Dashboard - Theme-Aware Design System */
-/* Using CSS variables from manager-theme.css for dark/light mode support */
+/* ===== ANALYTICS DASHBOARD - THEME-AWARE DESIGN SYSTEM ===== */
+/* Optimized for ApexCharts with full light/dark mode support */
 
-/* Analytics-specific chart styling only - base styles from manager-theme.css */
+/* ===== BASE DASHBOARD STYLES ===== */
 .analytics-dashboard {
     color: var(--text-primary);
     background-color: var(--background);
+    transition: all 0.3s ease;
 }
 
-/* Chart containers override for analytics - Important to override Tailwind */
+/* ===== CHART CONTAINERS ===== */
 .chart-card {
     background: var(--bg-card) !important;
     border: 1px solid var(--border-color) !important;
     color: var(--text-primary) !important;
     box-shadow: var(--shadow) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    border-radius: 0.75rem;
 }
 
 .chart-card::before {
@@ -25,118 +27,45 @@
     left: -100%;
     width: 100%;
     height: 2px;
-    background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+    background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
     transition: left 0.5s ease-in-out;
+    z-index: 1;
 }
 
 .chart-card:hover {
-    box-shadow: var(--shadow-md) !important;
+    box-shadow: var(--shadow-lg) !important;
     transform: translateY(-4px);
-    border-color: var(--primary-color) !important;
+    border-color: var(--accent-blue) !important;
 }
 
 .chart-card:hover::before {
     left: 100%;
 }
 
-.chart-container {
-    background: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-    transition: all 0.3s ease;
-}
-
-.chart-container canvas {
-    background: transparent !important;
-    transition: opacity 0.3s ease;
-}
-
-/* Chart headers - Override Tailwind colors */
+/* Chart headers */
 .chart-header {
     border-bottom: 1px solid var(--border-color) !important;
     position: relative;
+    z-index: 2;
 }
 
 .chart-header h3 {
     color: var(--text-primary) !important;
-    position: relative;
-    z-index: 2;
+    font-weight: 600;
 }
 
 .chart-header p {
     color: var(--text-secondary) !important;
 }
 
-/* Insights card styling */
-.insights-card {
-    background: var(--bg-card) !important;
-    border: 1px solid var(--border-color) !important;
-    color: var(--text-primary) !important;
-    box-shadow: var(--shadow) !important;
-    transition: all 0.3s ease;
-}
-
-.insights-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg) !important;
-}
-
-/* ===== WOW FACTOR ELEMENTS ===== */
-
-/* Loading animations */
-@keyframes chartLoadPulse {
-    0%, 100% { opacity: 0.6; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.02); }
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-@keyframes gradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-}
-
-@keyframes countUp {
-    0% { transform: translateY(20px); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes slideInRight {
-    0% { transform: translateX(30px); opacity: 0; }
-    100% { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideInUp {
-    0% { transform: translateY(30px); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
-}
-
-/* Chart loading states */
-.chart-loading {
-    animation: chartLoadPulse 2s ease-in-out infinite;
-    position: relative;
-}
-
-.chart-loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    animation: shimmer 2s infinite;
-}
-
-/* Metric cards with enhanced effects */
+/* ===== KPI METRIC CARDS ===== */
 .metric-card {
     background: var(--bg-card) !important;
-    border: 1px solid var(--border-color) !important;
+    border: 2px solid var(--border-color) !important;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    border-radius: 1.5rem;
 }
 
 .metric-card::before {
@@ -146,10 +75,11 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.3s ease;
+    z-index: 1;
 }
 
 .metric-card:hover::before {
@@ -157,27 +87,255 @@
 }
 
 .metric-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    border-color: var(--primary-color) !important;
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent-blue) !important;
 }
 
-/* Animated numbers */
+/* Animated metric numbers */
 .metric-number {
-    font-weight: 700;
+    font-weight: 800;
     animation: countUp 0.8s ease-out;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradientShift 3s ease infinite, countUp 0.8s ease-out;
+    position: relative;
 }
 
-/* Progress bars with glow effect */
+/* ===== INSIGHTS CARDS ===== */
+.insight-item {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    box-shadow: var(--shadow) !important;
+    transition: all 0.3s ease;
+    border-radius: 0.75rem;
+}
+
+.insight-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md) !important;
+    border-color: var(--accent-blue) !important;
+}
+
+/* ===== APEXCHARTS THEME INTEGRATION ===== */
+
+/* ApexCharts containers */
+.apexcharts-canvas {
+    background: transparent !important;
+}
+
+/* ApexCharts text colors for light/dark mode */
+[data-theme="light"] .apexcharts-text,
+.light .apexcharts-text {
+    fill: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .apexcharts-text,
+:root .apexcharts-text {
+    fill: var(--text-primary) !important;
+}
+
+/* ApexCharts grid lines */
+[data-theme="light"] .apexcharts-gridlines-horizontal line,
+[data-theme="light"] .apexcharts-gridlines-vertical line,
+.light .apexcharts-gridlines-horizontal line,
+.light .apexcharts-gridlines-vertical line {
+    stroke: var(--border-color) !important;
+    stroke-opacity: 0.3 !important;
+}
+
+[data-theme="dark"] .apexcharts-gridlines-horizontal line,
+[data-theme="dark"] .apexcharts-gridlines-vertical line,
+:root .apexcharts-gridlines-horizontal line,
+:root .apexcharts-gridlines-vertical line {
+    stroke: var(--border-color) !important;
+    stroke-opacity: 0.5 !important;
+}
+
+/* ApexCharts axis labels */
+[data-theme="light"] .apexcharts-xaxis-label,
+[data-theme="light"] .apexcharts-yaxis-label,
+.light .apexcharts-xaxis-label,
+.light .apexcharts-yaxis-label {
+    fill: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .apexcharts-xaxis-label,
+[data-theme="dark"] .apexcharts-yaxis-label,
+:root .apexcharts-xaxis-label,
+:root .apexcharts-yaxis-label {
+    fill: var(--text-secondary) !important;
+}
+
+/* ApexCharts tooltips */
+.apexcharts-tooltip {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: var(--shadow-lg) !important;
+    color: var(--text-primary) !important;
+    border-radius: 0.5rem !important;
+}
+
+.apexcharts-tooltip-title {
+    background: var(--bg-subtle) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+}
+
+.apexcharts-tooltip-text-y-label,
+.apexcharts-tooltip-text-y-value {
+    color: var(--text-primary) !important;
+}
+
+/* ApexCharts legend */
+.apexcharts-legend-text {
+    color: var(--text-secondary) !important;
+}
+
+/* ===== FILTER BAR STYLES ===== */
+.filter-bar {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow);
+}
+
+.filter-bar select {
+    background: var(--bg-subtle) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    border-radius: 0.5rem;
+}
+
+.filter-bar select:focus {
+    border-color: var(--accent-blue) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.filter-bar label {
+    color: var(--text-primary) !important;
+    font-weight: 500;
+}
+
+/* ===== BUTTON STYLES ===== */
+.btn-update {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)) !important;
+    border: none !important;
+    color: white !important;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+}
+
+.btn-update:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    filter: brightness(1.1);
+}
+
+/* ===== STATUS INDICATORS ===== */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-critical {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+.status-success {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+
+.status-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+}
+
+.status-info {
+    background: var(--info-bg);
+    color: var(--info);
+    border: 1px solid var(--info);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes countUp {
+    0% { 
+        transform: translateY(20px); 
+        opacity: 0; 
+    }
+    100% { 
+        transform: translateY(0); 
+        opacity: 1; 
+    }
+}
+
+@keyframes slideInUp {
+    0% { 
+        transform: translateY(30px); 
+        opacity: 0; 
+    }
+    100% { 
+        transform: translateY(0); 
+        opacity: 1; 
+    }
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ===== LOADING STATES ===== */
+.chart-loading {
+    position: relative;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-loading::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 3px solid var(--border-color);
+    border-top: 3px solid var(--accent-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ===== PROGRESS BARS ===== */
 .progress-bar {
     position: relative;
-    background: var(--bg-secondary);
+    background: var(--bg-subtle);
     border-radius: 10px;
     overflow: hidden;
     height: 8px;
@@ -185,7 +343,7 @@
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
     border-radius: 10px;
     position: relative;
     transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -202,164 +360,107 @@
     animation: shimmer 2s infinite;
 }
 
-/* Glassmorphism effects for key insights */
+/* ===== GLASS EFFECT ===== */
 .glass-effect {
-    background: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.dark .glass-effect {
-    background: rgba(0, 0, 0, 0.2) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Floating action button for refresh */
-.fab-refresh {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 56px;
-    height: 56px;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
-}
-
-.fab-refresh:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-}
-
-.fab-refresh svg {
-    width: 24px;
-    height: 24px;
-    color: white;
-    transition: transform 0.3s ease;
-}
-
-.fab-refresh:hover svg {
-    transform: rotate(180deg);
-}
-
-/* Data visualization enhancements */
-.data-point {
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.data-point:hover {
-    transform: scale(1.1);
-    filter: brightness(1.2);
-}
-
-/* Correlation matrix special effects */
-.correlation-strong {
-    background: linear-gradient(135deg, #10b981, #059669);
-    animation: gradientShift 3s ease infinite;
-}
-
-.correlation-moderate {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    animation: gradientShift 3s ease infinite;
-}
-
-.correlation-weak {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    animation: gradientShift 3s ease infinite;
-}
-
-/* Risk indicators with pulsing animation */
-.risk-high {
-    background: #fee2e2;
-    border-left: 4px solid #ef4444;
-    animation: pulse 2s infinite;
-}
-
-.risk-medium {
-    background: #fef3c7;
-    border-left: 4px solid #f59e0b;
-}
-
-.risk-low {
-    background: #dcfce7;
-    border-left: 4px solid #10b981;
-}
-
-/* Chart entry animations */
-.chart-animate-in {
-    animation: slideInUp 0.6s ease-out forwards;
-}
-
-.metric-animate-in {
-    animation: slideInRight 0.6s ease-out forwards;
-}
-
-/* Enhanced tooltips */
-.custom-tooltip {
-    background: rgba(0, 0, 0, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 8px !important;
+[data-theme="dark"] .glass-effect,
+:root .glass-effect {
+    background: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Status indicators with glow */
-.status-online {
-    position: relative;
-}
-
-.status-online::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #10b981;
-    border-radius: 50%;
-    opacity: 0.3;
-    animation: pulse 2s infinite;
-}
-
-/* Responsive enhancements */
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
-    .fab-refresh {
-        bottom: 1rem;
-        right: 1rem;
-        width: 48px;
-        height: 48px;
+    .chart-card {
+        margin-bottom: 1rem;
     }
     
-    .fab-refresh svg {
-        width: 20px;
-        height: 20px;
+    .metric-card {
+        padding: 1rem;
+    }
+    
+    .chart-card:hover {
+        transform: none;
+    }
+    
+    .metric-card:hover {
+        transform: none;
     }
 }
 
-/* Performance optimization */
-.will-change-transform {
-    will-change: transform;
+@media (max-width: 640px) {
+    .analytics-dashboard {
+        padding: 0.5rem;
+    }
+    
+    .chart-header h3 {
+        font-size: 1rem;
+    }
+    
+    .metric-number {
+        font-size: 1.5rem;
+    }
 }
 
-.will-change-opacity {
-    will-change: opacity;
-}
-
-/* Enhanced focus states for accessibility */
+/* ===== ACCESSIBILITY ===== */
 .chart-card:focus-within {
-    outline: 2px solid var(--primary-color);
+    outline: 2px solid var(--accent-blue);
     outline-offset: 2px;
 }
 
-/* Staggered animation delays for multiple elements */
+.metric-card:focus-within {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* ===== UTILITY CLASSES ===== */
 .animate-delay-100 { animation-delay: 0.1s; }
 .animate-delay-200 { animation-delay: 0.2s; }
 .animate-delay-300 { animation-delay: 0.3s; }
 .animate-delay-400 { animation-delay: 0.4s; }
 .animate-delay-500 { animation-delay: 0.5s; }
+
+.will-change-transform { will-change: transform; }
+.will-change-opacity { will-change: opacity; }
+
+/* ===== CHART-SPECIFIC ENHANCEMENTS ===== */
+
+/* DSO Evolution Chart - Removed filter to allow proper color application */
+#dsoEvolutionChart .apexcharts-series {
+    transition: all 0.3s ease;
+}
+
+/* Correlation Matrix */
+#correlationMatrix .apexcharts-bar-area {
+    transition: all 0.3s ease;
+}
+
+#correlationMatrix .apexcharts-bar-area:hover {
+    filter: brightness(1.2);
+}
+
+/* Risk Analysis Donut */
+#riskAnalysis .apexcharts-pie-area {
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+/* Cash Flow Prediction */
+#cashFlowPrediction .apexcharts-area-series path {
+    filter: drop-shadow(0 2px 6px rgba(139, 92, 246, 0.3));
+}
+
+/* Segmentation Charts */
+#clientSegmentation .apexcharts-bar-area,
+#sizeSegmentation .apexcharts-pie-area {
+    transition: all 0.3s ease;
+}
+
+#clientSegmentation .apexcharts-bar-area:hover,
+#sizeSegmentation .apexcharts-pie-area:hover {
+    filter: brightness(1.1);
+}

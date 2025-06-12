@@ -1,0 +1,545 @@
+{% extends "base.html" %} {% block title %}Equipo | Jefe de Proyecto{% endblock
+%} {% block head_extras %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  .team-member-card {
+    transition: all 0.3s ease;
+  }
+  .team-member-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+  .efficiency-bar {
+    transition: width 0.5s ease;
+  }
+  .performance-ring {
+    transform: rotate(-90deg);
+  }
+</style>
+{% endblock %} {% block content %}
+<!-- Header del equipo -->
+<div
+  class="bg-gradient-to-r from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 mb-6 shadow-sm">
+  <div class="flex flex-col md:flex-row justify-between items-start">
+    <div class="flex items-center mb-4 md:mb-0">
+      <a
+        href="{{ url_for('project_manager.dashboard') }}"
+        class="mr-4 p-2 bg-[color:var(--bg-card)] rounded-lg border border-[color:var(--border-color)] hover:bg-[color:var(--bg-hover)] transition-colors">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 text-[color:var(--text-primary)]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+
+      <div>
+        <div class="flex items-center">
+          <h1 class="text-2xl font-bold text-[color:var(--text-primary)]">
+            Gestión del Equipo
+          </h1>
+          <span
+            class="ml-3 px-3 py-1 bg-[color:var(--accent-purple)] bg-opacity-15 text-[color:var(--accent-purple)] text-sm font-semibold rounded-md">
+            {{ current_user.nombre_completo or current_user.username }}
+          </span>
+        </div>
+        <div
+          class="flex items-center mt-2 text-sm text-[color:var(--text-secondary)]">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          {{ team_metrics.total_members }} miembros
+          <span class="mx-2">•</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Eficiencia promedio: {{ "%.1f"|format(team_metrics.avg_efficiency) }}%
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3">
+      <button class="btn btn-outline" onclick="exportTeamReport()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Exportar Reporte
+      </button>
+      <button class="btn btn-primary" onclick="refreshTeamData()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Actualizar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Métricas del Equipo -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <!-- Total Miembros -->
+  <div
+    class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6 text-center">
+    <div
+      class="w-16 h-16 bg-[color:var(--accent-blue)] bg-opacity-15 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-8 w-8 text-[color:var(--accent-blue)]"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    </div>
+    <div class="text-2xl font-bold text-[color:var(--accent-blue)] mb-1">
+      {{ team_metrics.total_members }}
+    </div>
+    <div class="text-sm text-[color:var(--text-secondary)]">
+      Miembros del Equipo
+    </div>
+  </div>
+
+  <!-- Eficiencia Promedio -->
+  <div
+    class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6 text-center">
+    <div class="relative w-16 h-16 mx-auto mb-4">
+      <svg class="w-16 h-16 performance-ring">
+        <circle
+          cx="32"
+          cy="32"
+          r="28"
+          stroke="currentColor"
+          stroke-width="4"
+          fill="transparent"
+          class="text-[color:var(--bg-subtle)]" />
+        <circle
+          cx="32"
+          cy="32"
+          r="28"
+          stroke="currentColor"
+          stroke-width="4"
+          fill="transparent"
+          class="text-[color:var(--accent-green)]"
+          stroke-dasharray="{{ (team_metrics.avg_efficiency or 0) * 1.75 }} 175.93" />
+      </svg>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="text-lg font-bold text-[color:var(--accent-green)]"
+          >{{ "%.0f"|format(team_metrics.avg_efficiency or 0) }}%</span
+        >
+      </div>
+    </div>
+    <div class="text-sm text-[color:var(--text-secondary)]">
+      Eficiencia Promedio
+    </div>
+  </div>
+
+  <!-- Carga de Trabajo Total -->
+  <div
+    class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6 text-center">
+    <div
+      class="w-16 h-16 bg-[color:var(--accent-purple)] bg-opacity-15 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-8 w-8 text-[color:var(--accent-purple)]"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    </div>
+    <div class="text-2xl font-bold text-[color:var(--accent-purple)] mb-1">
+      {{ team_metrics.total_team_workload }}
+    </div>
+    <div class="text-sm text-[color:var(--text-secondary)]">EDPs Totales</div>
+  </div>
+
+  <!-- Mejor Rendimiento -->
+  <div
+    class="bg-gradient-to-br from-[color:var(--accent-amber)] to-[color:var(--accent-orange)] text-white rounded-xl p-6 text-center">
+    <div
+      class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-8 w-8 text-white"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M5 3l14 9-14 9V3z" />
+      </svg>
+    </div>
+    {% if team_metrics.top_performer %}
+    <div class="text-lg font-bold mb-1">
+      {{ team_metrics.top_performer.name[:10] }}{% if
+      team_metrics.top_performer.name|length > 10 %}...{% endif %}
+    </div>
+    <div class="text-sm opacity-90">
+      Top Performer: {{ "%.0f"|format(team_metrics.top_performer.score) }}%
+    </div>
+    {% else %}
+    <div class="text-lg font-bold mb-1">N/A</div>
+    <div class="text-sm opacity-90">Sin datos</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Gráfico de Rendimiento y Alertas -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+  <!-- Gráfico de Eficiencia del Equipo -->
+  <div class="lg:col-span-2">
+    <div
+      class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6">
+      <h2 class="text-xl font-semibold mb-6 flex items-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        Eficiencia por Miembro
+      </h2>
+      <canvas id="efficiencyChart" width="400" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Miembros que Necesitan Atención -->
+  <div class="space-y-4">
+    <div
+      class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6">
+      <h3 class="font-semibold mb-4 flex items-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2 text-[color:var(--accent-red)]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+        Requieren Atención
+      </h3>
+      {% if team_metrics.needs_attention and team_metrics.needs_attention|length
+      > 0 %}
+      <div class="space-y-3">
+        {% for member in team_metrics.needs_attention %}
+        <div
+          class="flex items-center justify-between p-3 bg-[color:var(--state-warning-bg)] rounded-lg">
+          <div>
+            <div class="font-medium text-[color:var(--text-primary)]">
+              {{ member.name }}
+            </div>
+            <div class="text-sm text-[color:var(--text-secondary)]">
+              Eficiencia baja
+            </div>
+          </div>
+          <div class="text-[color:var(--accent-red)] font-bold">
+            {{ "%.0f"|format(member.score) }}%
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-8">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-12 w-12 mx-auto text-[color:var(--accent-green)] mb-3"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="text-sm text-[color:var(--text-secondary)]">
+          Todo el equipo está<br />funcionando bien
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Lista de Miembros del Equipo -->
+<div
+  class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-semibold flex items-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+      Miembros del Equipo
+      <span class="ml-2 text-sm text-[color:var(--text-secondary)]"
+        >({{ team_performance|length if team_performance else 0 }})</span
+      >
+    </h2>
+  </div>
+
+  {% if team_performance and team_performance|length > 0 %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for member_name, member_data in team_performance.items() %}
+    <div
+      class="team-member-card bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6">
+      <!-- Avatar y nombre -->
+      <div class="flex items-center mb-4">
+        <div
+          class="w-12 h-12 bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] rounded-full flex items-center justify-center mr-3">
+          <span class="text-white font-bold text-lg"
+            >{{ member_name[0].upper() }}</span
+          >
+        </div>
+        <div>
+          <div class="font-semibold text-[color:var(--text-primary)]">
+            {{ member_name }}
+          </div>
+          <div class="text-sm text-[color:var(--text-secondary)]">
+            Miembro del equipo
+          </div>
+        </div>
+      </div>
+
+      <!-- Métricas -->
+      <div class="space-y-3 mb-4">
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-[color:var(--text-secondary)]"
+            >EDPs Manejados</span
+          >
+          <span class="font-semibold text-[color:var(--text-primary)]"
+            >{{ member_data.total_edps }}</span
+          >
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-[color:var(--text-secondary)]"
+            >Monto Total</span
+          >
+          <span class="font-semibold text-[color:var(--accent-green)]"
+            >{{ format_currency(member_data.total_amount) }}</span
+          >
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-[color:var(--text-secondary)]"
+            >Tiempo Promedio</span
+          >
+          <span
+            class="font-semibold {% if member_data.avg_processing_days <= 30 %}text-[color:var(--accent-green)]{% elif member_data.avg_processing_days <= 45 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-red)]{% endif %}">
+            {{ "%.1f"|format(member_data.avg_processing_days) }}d
+          </span>
+        </div>
+      </div>
+
+      <!-- Barra de Eficiencia -->
+      <div class="mb-3">
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-sm font-medium text-[color:var(--text-primary)]"
+            >Eficiencia</span
+          >
+          <span
+            class="text-sm font-bold {% if member_data.efficiency_score >= 80 %}text-[color:var(--accent-green)]{% elif member_data.efficiency_score >= 70 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-red)]{% endif %}">
+            {{ "%.0f"|format(member_data.efficiency_score) }}%
+          </span>
+        </div>
+        <div class="w-full bg-[color:var(--bg-subtle)] rounded-full h-2">
+          <div
+            class="efficiency-bar h-2 rounded-full {% if member_data.efficiency_score >= 80 %}bg-[color:var(--accent-green)]{% elif member_data.efficiency_score >= 70 %}bg-[color:var(--accent-amber)]{% else %}bg-[color:var(--accent-red)]{% endif %}"
+            style="width: {{ member_data.efficiency_score }}%"></div>
+        </div>
+      </div>
+
+      <!-- Badge de Rendimiento -->
+      <div class="flex justify-center">
+        {% if member_data.efficiency_score >= 90 %}
+        <span
+          class="px-3 py-1 bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] text-xs font-semibold rounded-full">
+          ⭐ Excelente
+        </span>
+        {% elif member_data.efficiency_score >= 80 %}
+        <span
+          class="px-3 py-1 bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] text-xs font-semibold rounded-full">
+          ✅ Muy Bueno
+        </span>
+        {% elif member_data.efficiency_score >= 70 %}
+        <span
+          class="px-3 py-1 bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)] text-xs font-semibold rounded-full">
+          ⚠️ Bueno
+        </span>
+        {% else %}
+        <span
+          class="px-3 py-1 bg-[color:var(--state-danger-bg)] text-[color:var(--accent-red)] text-xs font-semibold rounded-full">
+          ⚡ Necesita Mejora
+        </span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-12">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-16 w-16 mx-auto text-[color:var(--text-secondary)] mb-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+    <h3 class="text-lg font-semibold text-[color:var(--text-primary)] mb-2">
+      No hay miembros del equipo
+    </h3>
+    <p class="text-[color:var(--text-secondary)]">
+      Aún no se han asignado miembros a este jefe de proyecto.
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de eficiencia por miembro
+    const ctx = document.getElementById('efficiencyChart').getContext('2d');
+
+    const teamData = {{ team_performance | tojson }};
+    const memberNames = Object.keys(teamData);
+    const efficiencyScores = memberNames.map(name => teamData[name].efficiency_score);
+
+    // Colores dinámicos basados en el rendimiento
+    const backgroundColors = efficiencyScores.map(score => {
+      if (score >= 80) return '#10b981'; // green
+      if (score >= 70) return '#f59e0b'; // amber
+      return '#ef4444'; // red
+    });
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: memberNames,
+        datasets: [{
+          label: 'Eficiencia (%)',
+          data: efficiencyScores,
+          backgroundColor: backgroundColors,
+          borderColor: backgroundColors,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const memberName = context.label;
+                const member = teamData[memberName];
+                return [
+                  `Eficiencia: ${context.parsed.y}%`,
+                  `EDPs: ${member.total_edps}`,
+                  `Tiempo promedio: ${member.avg_processing_days.toFixed(1)}d`
+                ];
+              }
+            }
+          }
+        }
+      }
+    });
+  });
+
+  function exportTeamReport() {
+    // Implementar exportación del reporte del equipo
+    console.log('Exportando reporte del equipo...');
+  }
+
+  function refreshTeamData() {
+    // Implementar actualización de datos
+    window.location.reload();
+  }
+</script>
+{% endblock %}

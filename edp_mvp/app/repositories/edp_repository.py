@@ -6,12 +6,14 @@ from typing import List, Optional, Dict, Any
 import pandas as pd
 from datetime import datetime
 import logging
+import traceback
 
 from . import BaseRepository, SheetsRepository
 from ..models import EDP
 from ..utils.date_utils import parse_date_safe
 from ..utils.format_utils import clean_numeric_value
 from ..utils.gsheet import update_row, log_cambio_edp
+from ..config import get_config
 import numpy as np
 from ..services.cache_invalidation_service import invalidate_cache_on_change
 
@@ -134,35 +136,85 @@ class EDPRepository(BaseRepository):
     @invalidate_cache_on_change('edp_updated', ['edps'])
     def update_fields(self, edp_id: int, updates: Dict[str, Any]) -> bool:
         """Update specific fields of an EDP."""
-        # Find the row
-        row_number = self.sheets_repo.find_row_by_id(self.sheet_name, str(edp_id))
-        if not row_number:
+        try:
+            print(f"🔍 update_fields called with:")
+            print(f"   - edp_id: {edp_id} (type: {type(edp_id)})")
+            print(f"   - updates: {updates}")
+            
+            # Convert edp_id to string for comparison with n_edp
+            edp_id_str = str(edp_id)
+            
+            # Find the row by n_edp (column B) instead of id (column A)
+            row_number = self.sheets_repo.find_row_by_id(self.sheet_name, edp_id_str, id_column="B")
+            print(f"   - row_number found (searching n_edp in column B): {row_number}")
+            
+            if not row_number:
+                print(f"❌ Row not found for n_edp: {edp_id_str}")
+                return False
+
+            # Get current data
+            headers = self.sheets_repo._get_headers(self.sheet_name)
+            print(f"   - headers count: {len(headers)}")
+            
+            if not headers:
+                print(f"❌ No headers found for sheet: {self.sheet_name}")
+                return False
+
+            # Read the specific row directly using Google Sheets API (bypass read_sheet function)
+            range_name = f"{self.sheet_name}!A{row_number}:{self._get_last_column(len(headers))}{row_number}"
+            print(f"   - range_name: {range_name}")
+            
+            try:
+                config = get_config()
+                result = self.service.spreadsheets().values().get(
+                    spreadsheetId=config.SHEET_ID,
+                    range=range_name
+                ).execute()
+                
+                values = result.get('values', [])
+                print(f"   - direct API values: {values}")
+                
+                if not values or not values[0]:
+                    print(f"❌ No current values found for range: {range_name}")
+                    return False
+
+                row_values = values[0]
+                
+                # Ensure row_values has same length as headers
+                while len(row_values) < len(headers):
+                    row_values.append('')
+                    
+            except Exception as api_error:
+                print(f"❌ Error reading row directly from API: {api_error}")
+                return False
+
+            # Apply updates
+            for field_name, new_value in updates.items():
+                if field_name in headers:
+                    col_index = headers.index(field_name)
+                    if col_index < len(row_values):
+                        old_value = row_values[col_index]
+                        row_values[col_index] = (
+                            str(new_value) if new_value is not None else ""
+                        )
+                        print(f"   - Updated {field_name}: '{old_value}' → '{new_value}'")
+                    else:
+                        print(f"⚠️  Column index {col_index} out of range for {field_name}")
+                else:
+                    print(f"⚠️  Field '{field_name}' not found in headers")
+
+            # Write back
+            result = self.sheets_repo._write_range(range_name, [row_values])
+            print(f"   - Write result: {result}")
+            return result
+            
+        except Exception as e:
+            print(f"💥 Exception in update_fields: {e}")
+            print(traceback.format_exc())
             return False
-
-        # Get current data
-        headers = self.sheets_repo._get_headers(self.sheet_name)
-        range_name = f"{self.sheet_name}!A{row_number}:{self._get_last_column(len(headers))}{row_number}"
-        current_values = self.sheets_repo._read_range(range_name)
-
-        if not current_values:
-            return False
-
-        row_values = current_values[0]
-
-        # Apply updates
-        for field_name, new_value in updates.items():
-            if field_name in headers:
-                col_index = headers.index(field_name)
-                if col_index < len(row_values):
-                    row_values[col_index] = (
-                        str(new_value) if new_value is not None else ""
-                    )
-
-        # Write back
-        return self.sheets_repo._write_range(range_name, [row_values])
 
     @invalidate_cache_on_change('edp_updated', ['edps'])
-    def update_by_edp_id(self, n_edp: str, form_data: Dict[str, Any], user: str = "Sistema") -> Dict[str, Any]:
+    def update_by_edp_id(self, n_edp: str, form_data: Dict[str, Any]) -> Dict[str, Any]:
         """Update EDP by n_edp using form data and log changes."""
         try:
             
@@ -281,8 +333,7 @@ class EDPRepository(BaseRepository):
                         proyecto=current_edp.get('proyecto', ''),
                         campo=change['campo'],
                         antes=change['antes'],
-                        despues=change['despues'],
-                        usuario=user
+                        despues=change['despues']
                     )
                 
                 return {

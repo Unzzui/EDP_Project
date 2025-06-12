@@ -7,30 +7,44 @@ from datetime import datetime
 from ..models import Project
 from . import BaseRepository
 import logging
+from . import BaseRepository, SheetsRepository
 
-
+logger = logging.getLogger(__name__)
 class ProjectRepository(BaseRepository):
     """Repository for managing projects."""
 
-    logger = logging.getLogger(__name__)
 
     def __init__(self):
         super().__init__()
-        self.sheet_name = "Projects"
-
+        self.sheets_repo = SheetsRepository()
+        self.sheet_name = "projects"
+        self.range_name = "projects!A:I"
     def find_all(self) -> List[Project]:
         """Get all projects."""
         try:
-            sheet = self.get_sheet(self.sheet_name)
-            if not sheet:
-                return []
-
-            records = sheet.get_all_records()
-            return [self._dict_to_project(record) for record in records]
+            df = self.sheets_repo.read_sheet_raw(self.range_name)
+            models = self._dataframe_to_models(df)
+            return models
         except Exception as e:
             logger.info(f"Error fetching all projects: {e}")
             return []
-
+    def get_project_manager(self) -> Optional[Project]:
+        try:
+            df = self.sheets_repo.read_sheet_raw(self.range_name)
+            project_managers = df['jefe_proyecto'].unique()
+            return project_managers
+        except Exception as e:
+            logger.info(f"Error fetching project manager: {e}")
+            return None
+    def get_manager_projects(self, manager_name: str) -> List[Dict[str, Any]]:
+        """Get all projects for a project manager."""
+        try:
+            df = self.sheets_repo.read_sheet_raw(self.range_name)
+            df_projects = df[df["jefe_proyecto"] == manager_name]
+            return df_projects
+        except Exception as e:
+            logger.info(f"Error fetching manager projects: {e}")
+            return []
     def find_by_id(self, project_id: str) -> Optional[Project]:
         """Get a project by its ID."""
         try:

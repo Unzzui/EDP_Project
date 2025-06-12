@@ -3,20 +3,63 @@ from datetime import datetime, timezone, timedelta
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from ..config import get_config
-from ..repositories import _range_cache
 import pandas as pd
 import re
 import traceback
-import pandas as pd
-import re
-import traceback
-import re
 from time import time
+import json
 
+# Importar Flask-Login para obtener el usuario actual
+try:
+    from flask_login import current_user
+    from flask import has_request_context
+    HAS_FLASK_LOGIN = True
+except ImportError:
+    current_user = None
+    has_request_context = None
+    HAS_FLASK_LOGIN = False
 
-
+# Redis setup for cache
+try:
+    import redis
+    import os
+    redis_url = os.getenv("REDIS_URL")
+    redis_client = redis.from_url(redis_url) if redis_url else None
+    if redis_client:
+        # Test connection
+        redis_client.ping()
+        print("✅ Redis disponible para cache de Google Sheets")
+except (ImportError, Exception) as e:
+    redis_client = None
+    print(f"⚠️ Redis no disponible para cache: {e}")
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+
+# Memory cache for ranges - moved from repositories to avoid circular import
+_range_cache = {}
+
+def clear_all_cache():
+    """Limpia tanto el cache en memoria como Redis cuando se actualizan datos"""
+    global _range_cache
+    
+    # 1. Limpiar cache en memoria
+    _range_cache.clear()
+    print("🧹 Cache en memoria limpiado")
+    
+    # 2. Limpiar Redis cache para Google Sheets
+    if redis_client:
+        try:
+            pattern = "gsheet:*"
+            keys = redis_client.keys(pattern)
+            if keys:
+                deleted = redis_client.delete(*keys)
+                print(f"🧹 Redis cache limpiado: {deleted} keys eliminadas")
+            else:
+                print("🧹 Redis cache ya estaba limpio")
+        except Exception as e:
+            print(f"⚠️ Error limpiando Redis cache: {e}")
+    else:
+        print("⚠️ Redis no disponible para limpiar cache")
 def idx_to_a1(idx):          # 0-based
     s = ""
     while idx >= 0:
@@ -167,6 +210,7 @@ def get_service():
 def read_sheet(range_name, apply_transformations=True):
     """
     Lee datos de Google Sheets y los convierte en DataFrame de pandas.
+    Con cache inteligente usando Redis + memoria para reducir llamadas a API.
     
     Args:
         range_name (str): Rango a leer, ej: "edp!A1:Z", "cost_header!A1:Q", "projects!A1:I"
@@ -175,11 +219,85 @@ def read_sheet(range_name, apply_transformations=True):
     Returns:
         DataFrame: Datos solicitados
     """
-    service = get_service()
-    config = get_config()
-    sheet = service.spreadsheets()
-    result = sheet.values().get(spreadsheetId=config.SHEET_ID, range=range_name).execute()
-    values = result.get('values', [])
+    # Configuración de cache
+    cache_timeout = 120  # 2 minutos de cache
+    redis_timeout = 300  # 5 minutos en Redis (más tiempo)
+    now = time()
+    
+    values = None
+    cache_source = None
+    
+    # 1. Intentar Redis cache primero (más duradero)
+    if redis_client:
+        try:
+            cached_data = redis_client.get(f"gsheet:{range_name}")
+            if cached_data:
+                values = json.loads(cached_data)
+                cache_source = "Redis"
+                print(f"🚀 Cache hit Redis para {range_name}")
+        except Exception as e:
+            print(f"⚠️ Error leyendo Redis cache: {e}")
+    
+    # 2. Si no hay Redis cache, intentar cache en memoria
+    if values is None and range_name in _range_cache:
+        ts, cached_values = _range_cache[range_name]
+        if now - ts < cache_timeout:
+            values = cached_values
+            cache_source = "memoria"
+            print(f"🚀 Cache hit memoria para {range_name}")
+        else:
+            print(f"🕐 Cache en memoria expirado para {range_name}")
+    
+    # 3. Si no hay cache válido, leer desde Google Sheets
+    if values is None:
+        try:
+            service = get_service()
+            config = get_config()
+            sheet = service.spreadsheets()
+            result = sheet.values().get(spreadsheetId=config.SHEET_ID, range=range_name).execute()
+            values = result.get('values', [])
+            cache_source = "Google Sheets"
+            
+            # Guardar en ambos caches
+            _range_cache[range_name] = (now, values)
+            
+            if redis_client:
+                try:
+                    redis_client.setex(f"gsheet:{range_name}", redis_timeout, json.dumps(values))
+                    print(f"📊 Datos cargados desde Google Sheets y cacheados en Redis+memoria: {range_name}")
+                except Exception as e:
+                    print(f"⚠️ Error guardando en Redis: {e}")
+                    print(f"📊 Datos cargados desde Google Sheets y cacheados en memoria: {range_name}")
+            else:
+                print(f"📊 Datos cargados desde Google Sheets y cacheados en memoria: {range_name}")
+            
+        except Exception as e:
+            print(f"❌ Error reading range {range_name}: {str(e)}")
+            # Si falla, intentar usar datos de cache aunque estén expirados
+            if range_name in _range_cache:
+                _, values = _range_cache[range_name]
+                cache_source = "memoria expirada (fallback)"
+                print(f"⚠️ Usando cache expirado como fallback para {range_name}")
+            elif redis_client:
+                try:
+                    cached_data = redis_client.get(f"gsheet:{range_name}")
+                    if cached_data:
+                        values = json.loads(cached_data)
+                        cache_source = "Redis expirado (fallback)"
+                        print(f"⚠️ Usando Redis cache como fallback para {range_name}")
+                except Exception:
+                    pass
+            
+            if values is None:
+                print(f"💥 No hay datos disponibles para {range_name}, retornando DataFrame vacío")
+                return pd.DataFrame()  # Retornar DataFrame vacío si no hay datos
+    
+    # Log de origen de datos para debugging
+    if cache_source:
+        print(f"📈 {range_name}: datos obtenidos desde {cache_source}")
+    
+    # Continuar con el procesamiento normal
+    values = values or []
     if not values:
         print(f"No hay datos en el rango {range_name}")
         return pd.DataFrame()
@@ -540,17 +658,17 @@ def append_row(row_values, sheet_name="edp"):
         insertDataOption= "INSERT_ROWS",
         body            = {"values": [row_values]}
     ).execute()
-    _range_cache.clear()
+    clear_all_cache()  # Limpiar ambos caches después de agregar
 
 
-def update_edp_by_id(edp_id, updates, usuario="Sistema"):
+def update_edp_by_id(edp_id, updates, usuario=None):
     """
     Actualiza un EDP utilizando su ID único
     
     Args:
         edp_id (int): ID único del EDP
         updates (dict): Cambios a aplicar
-        usuario (str): Usuario que realiza los cambios
+        usuario (str): Usuario que realiza los cambios (None para auto-detectar)
     """
     try:
         # Buscar la fila por ID único
@@ -572,7 +690,7 @@ def update_edp_by_id(edp_id, updates, usuario="Sistema"):
         print(f"Error al actualizar EDP por ID: {str(e)}")
         return False
     
-def update_row(row_number, updates, sheet_name="edp", usuario="Sistema", force_update=False):
+def update_row(row_number, updates, sheet_name="edp", usuario=None, force_update=False):
     """
     Actualiza columnas específicas en la fila `row_number` (base-1, incluye encabezado)
     y deja un registro en la hoja `log`.
@@ -586,7 +704,7 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema", force_u
     sheet_name : str
         Nombre de la pestaña con los datos EDP (sin !A1).
     usuario : str
-        Quien ejecuta el cambio (para el log).
+        Quien ejecuta el cambio (para el log). Si es None, se auto-detecta el usuario actual.
     force_update : bool
         Si es True, ignora la comparación y fuerza la actualización.
     """
@@ -662,7 +780,7 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema", force_u
                 valueInputOption="USER_ENTERED",
                 body=body
             ).execute()
-            _range_cache.clear()
+            clear_all_cache()  # Limpiar ambos caches después de actualizar
             print(f"Actualización enviada a Sheets: {len(cambios_reales)} cambios")
             
             # --- 5. Registrar solo los cambios reales en el log ---
@@ -677,7 +795,7 @@ def update_row(row_number, updates, sheet_name="edp", usuario="Sistema", force_u
                     campo=campo,
                     antes=antes,
                     despues=despues,
-                    usuario=usuario
+                    usuario=usuario  # Se pasa None si no se especifica, permitiendo auto-detección
                 )
             
             return True
@@ -732,14 +850,36 @@ def log_cambio_edp(n_edp: str,
                    campo: str,
                    antes: str,
                    despues: str,
-                   usuario: str = "Sistema"):
+                   usuario: str = None):
     """
     Registra un cambio en la pestaña `log` del mismo Spreadsheet.
     Incluye deduplicación para evitar entradas repetidas.
+    
+    Si no se especifica usuario, intenta obtener el usuario actual de Flask-Login.
 
     Columnas:
     A) Fecha y Hora (UTC-3) · B) N° EDP · C) Proyecto · D) Campo · E) Antes · F) Después · G) Usuario
     """
+    # Obtener el usuario real si no se especifica
+    if usuario is None:
+        try:
+            # Verificar si estamos en un contexto de request de Flask y Flask-Login está disponible
+            if HAS_FLASK_LOGIN and has_request_context and has_request_context() and current_user and current_user.is_authenticated:
+                # Intentar obtener el nombre completo, email o username del usuario
+                if hasattr(current_user, 'nombre_completo') and current_user.nombre_completo:
+                    usuario = current_user.nombre_completo
+                elif hasattr(current_user, 'email') and current_user.email:
+                    usuario = current_user.email
+                elif hasattr(current_user, 'username') and current_user.username:
+                    usuario = current_user.username
+                else:
+                    usuario = f"Usuario ID: {current_user.id}"
+            else:
+                usuario = "Sistema"
+        except Exception as e:
+            print(f"Error obteniendo usuario actual: {e}")
+            usuario = "Sistema"
+    
     # 1. Hora en Chile (UTC-3)
     chile_tz = timezone(timedelta(hours=-3))
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -784,7 +924,7 @@ def log_cambio_edp(n_edp: str,
         insertDataOption= "INSERT_ROWS",
         body            = {"values": [valores]}
     ).execute()
-    _range_cache.clear()
+    clear_all_cache()  # Limpiar ambos caches después de logging
     
 def read_log(n_edp=None, proyecto=None, usuario=None, range_name="log!A1:G"):
     """

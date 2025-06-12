@@ -1,0 +1,202 @@
+<!-- Navegación simplificada para debug -->
+<nav class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+  <div class="mx-auto max-w-7xl px-4 flex items-center justify-between h-16">
+    <!-- Logo -->
+    <div class="flex items-center">
+      <div class="text-lg font-bold text-blue-600">Pagora</div>
+    </div>
+
+    <!-- Mobile hamburger button -->
+    <div class="md:hidden">
+      <button
+        id="mobile-menu-button"
+        class="flex items-center p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <svg
+          class="w-6 h-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Desktop navigation -->
+    <ul class="hidden md:flex space-x-6 text-sm font-medium">
+      {% if current_user.is_authenticated %}
+      <li><a href="#" class="text-gray-700 hover:text-blue-600">Inicio</a></li>
+      <li><a href="#" class="text-gray-700 hover:text-blue-600">Control</a></li>
+      <li><a href="#" class="text-gray-700 hover:text-blue-600">EDPs</a></li>
+      {% if current_user.rol == 'admin' %}
+      <li><a href="#" class="text-gray-700 hover:text-blue-600">Admin</a></li>
+      {% endif %} {% else %}
+      <li>
+        <a
+          href="{{ url_for('auth.login') }}"
+          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          >Login</a
+        >
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <!-- Mobile menu -->
+  <div
+    id="mobile-menu"
+    class="hidden md:hidden bg-white border-t border-gray-200 shadow-lg">
+    <div class="px-4 py-3 space-y-1">
+      {% if current_user.is_authenticated %}
+      <a
+        href="#"
+        class="block px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100"
+        >Inicio</a
+      >
+
+      <!-- Control Operativo -->
+      <div class="space-y-1">
+        <button
+          id="mobile-controller-toggle"
+          class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+          <span>Control Operativo</span>
+          <svg
+            class="w-4 h-4 transform transition-transform"
+            id="mobile-controller-arrow"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <div id="mobile-controller-menu" class="hidden pl-6 space-y-1">
+          <a
+            href="#"
+            class="block px-3 py-2 rounded-md text-sm hover:bg-gray-100"
+            >Dashboard</a
+          >
+          <a
+            href="#"
+            class="block px-3 py-2 rounded-md text-sm hover:bg-gray-100"
+            >Kanban</a
+          >
+          <a
+            href="#"
+            class="block px-3 py-2 rounded-md text-sm hover:bg-gray-100"
+            >Encargados</a
+          >
+        </div>
+      </div>
+
+      <!-- EDPs -->
+      <div class="space-y-1">
+        <button
+          id="mobile-edp-toggle"
+          class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+          <span>EDPs</span>
+          <svg
+            class="w-4 h-4 transform transition-transform"
+            id="mobile-edp-arrow"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <div id="mobile-edp-menu" class="hidden pl-6 space-y-1">
+          <a
+            href="#"
+            class="block px-3 py-2 rounded-md text-sm hover:bg-gray-100"
+            >Lista EDPs</a
+          >
+          <a
+            href="#"
+            class="block px-3 py-2 rounded-md text-sm hover:bg-gray-100"
+            >Crear EDP</a
+          >
+          <a
+            href="#"
+            class="block px-3 py-2 rounded-md text-sm hover:bg-gray-100"
+            >Estadísticas</a
+          >
+        </div>
+      </div>
+
+      {% if current_user.rol == 'admin' %}
+      <!-- Administración -->
+      <div class="space-y-1">
+        <button
+          id="mobile-admin-toggle"
+          class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+          <span>Administración</span>
+          <svg
+            class="w-4 h-4 transform transition-transform"
+            id="mobile-admin-arrow"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <div id="mobile-admin-menu" class="hidden pl-6 space-y-1">
+          <a
+            href="#"
+            class="block px-3 py-2 rounded-md text-sm hover:bg-gray-100"
+            >Usuarios</a
+          >
+          <a
+            href="#"
+            class="block px-3 py-2 rounded-md text-sm hover:bg-gray-100"
+            >Configuración</a
+          >
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- User section -->
+      <div class="border-t border-gray-200 mt-3 pt-3">
+        <div class="px-3 py-2 text-sm text-gray-600">
+          <div class="font-medium">
+            {{ current_user.nombre_completo or 'Usuario' }}
+          </div>
+          <div class="text-xs">
+            {{ current_user.rol|title if current_user.rol else 'Sin rol' }}
+          </div>
+        </div>
+        <a
+          href="{{ url_for('auth.logout') }}"
+          class="block px-3 py-2 rounded-md text-sm text-red-600 hover:bg-red-50">
+          Cerrar Sesión
+        </a>
+      </div>
+
+      {% else %}
+      <a
+        href="{{ url_for('auth.login') }}"
+        class="block px-3 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700">
+        Iniciar Sesión
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<!-- JavaScript functionality is now handled by navbar.js -->

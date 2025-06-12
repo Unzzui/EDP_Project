@@ -3,7 +3,7 @@ Refactored Controller Dashboard using the new layered architecture.
 This controller replaces the monolithic dashboard/controller.py file.
 """
 
-from flask import (
+from flask import(
     Blueprint,
     render_template,
     request,
@@ -14,6 +14,8 @@ from flask import (
     session,
     make_response,
 )
+from flask_login import login_required, current_user
+
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import traceback
@@ -35,6 +37,7 @@ import pandas as pd
 import traceback
 import logging
 from time import time
+from ..utils.auth_utils import require_controller_or_above, can_access_role_level
 
 _kanban_cache = {"ts": 0, "data": None}
 
@@ -310,6 +313,8 @@ def _get_empty_dashboard_data() -> Dict[str, Any]:
 
 
 @controller_controller_bp.route("/dashboard")
+@login_required
+@require_controller_or_above
 def dashboard_controller():
     """
     Dashboard principal del controlador con KPIs, métricas financieras y análisis de EDPs.
@@ -391,6 +396,8 @@ def dashboard_controller():
 
 
 @controller_controller_bp.route("/kanban")
+@login_required
+@require_controller_or_above
 def vista_kanban():
     """Kanban board view with filtering and real-time updates."""
     try:
@@ -453,6 +460,7 @@ def vista_kanban():
 
 
 @controller_controller_bp.route("/kanban/update_estado", methods=["POST"])
+@login_required
 def actualizar_estado_kanban():
     """Update EDP status from kanban board."""
 
@@ -460,18 +468,34 @@ def actualizar_estado_kanban():
         data = request.get_json()
         edp_id = data.get("edp_id")
         nuevo_estado = data.get("nuevo_estado").lower()
+        estado_anterior = data.get("estado_anterior", "").lower()  # Changed from estado_origen
         conformidad_enviada = data.get("conformidad_enviada", False)
+        proyecto = data.get("proyecto", None)
 
         if not edp_id or not nuevo_estado:
             return jsonify({"error": "Datos incompletos"}), 400
 
-        usuario = session.get("usuario", "Kanban")
+        # Obtener el usuario real desde Flask-Login antes de ir a background
+        usuario = "Sistema"  # Default
+        if current_user.is_authenticated:
+            # Prioridad: nombre_completo > email > username > User ID
+            if hasattr(current_user, 'nombre_completo') and current_user.nombre_completo:
+                usuario = current_user.nombre_completo
+            elif hasattr(current_user, 'email') and current_user.email:
+                usuario = current_user.email
+            elif hasattr(current_user, 'username') and current_user.username:
+                usuario = current_user.username
+            else:
+                usuario = f"User ID: {current_user.id}"
+
         socketio.start_background_task(
             _procesar_actualizacion_estado,
             edp_id,
             nuevo_estado,
             conformidad_enviada,
             usuario,
+            estado_anterior,
+            proyecto,
         )
 
         return jsonify({"success": True, "queued": True}), 202
@@ -484,21 +508,81 @@ def actualizar_estado_kanban():
         )
 
 
-def _procesar_actualizacion_estado(edp_id: str, nuevo_estado: str, conformidad: bool, usuario: str):
+def _procesar_actualizacion_estado(edp_id: str, nuevo_estado: str, conformidad: bool, usuario: str, estado_anterior: str = None, proyecto: str = None):
     """Tarea en segundo plano para persistir el cambio de estado."""
     global _kanban_cache
     try:
         from ..services.cache_invalidation_service import CacheInvalidationService
+        from ..utils.gsheet import log_cambio_edp, read_sheet
         
+        print(f"🔄 Procesando actualización de estado para EDP {edp_id}:")
+        print(f"   - Nuevo estado: {nuevo_estado}")
+        print(f"   - Estado anterior: {estado_anterior}")
+        print(f"   - Conformidad: {conformidad}")
+        print(f"   - Usuario: {usuario}")
+
+        # Obtener proyecto por id del edp
+        df = controller_service.load_related_data().data
+        df_edps = pd.DataFrame(df.get("edps", []))
+        proyecto = df_edps[df_edps["n_edp"] == edp_id]["proyecto"].values[0] if not df_edps[df_edps["n_edp"] == edp_id].empty else None
+      
+        print(f"   - Proyecto asociado: {proyecto}")
         additional = {"conformidad_enviada": "Sí"} if conformidad else None
         resp = kanban_service.update_edp_status(edp_id, nuevo_estado, additional)
+
+        print(f"🔍 Respuesta del servicio kanban:")
+        print(f"   - Success: {resp.success}")
+        print(f"   - Message: {resp.message}")
+        if hasattr(resp, 'data'):
+            print(f"   - Data: {resp.data}")
+        
         if resp.success:
+            # Registrar TODOS los cambios en el log con el usuario detectado
+            try:
+                # Obtener los cambios reales desde la respuesta del servicio
+                updates_realizados = resp.data.get("updates", {})
+                print(f"🔍 Cambios realizados: {updates_realizados}")
+                
+                # Obtener valores anteriores del EDP
+                edp_anterior = df_edps[df_edps["n_edp"] == edp_id]
+                valores_anteriores = {}
+                if not edp_anterior.empty:
+                    valores_anteriores = {
+                        "estado": estado_anterior or edp_anterior.iloc[0]["estado"],
+                        "conformidad_enviada": edp_anterior.iloc[0]["conformidad_enviada"],
+                        "n_conformidad": edp_anterior.iloc[0]["n_conformidad"],
+                        "fecha_conformidad": edp_anterior.iloc[0]["fecha_conformidad"],
+                        "fecha_estimada_pago": edp_anterior.iloc[0]["fecha_estimada_pago"],
+                    }
+                
+                # Registrar cada campo que cambió
+                for campo, nuevo_valor in updates_realizados.items():
+                    valor_anterior = valores_anteriores.get(campo, "")
+                    
+                    # Solo registrar si realmente cambió
+                    if str(nuevo_valor) != str(valor_anterior):
+                        log_cambio_edp(
+                            n_edp=edp_id,
+                            proyecto=proyecto,
+                            campo=campo,
+                            antes=valor_anterior,
+                            despues=nuevo_valor,
+                            usuario=usuario
+                        )
+                        print(f"📝 Cambio registrado en log: EDP {edp_id} {campo} {valor_anterior} → {nuevo_valor} por {usuario}")
+                        
+            except Exception as log_error:
+                print(f"⚠️ Error al registrar cambios en log: {log_error}")
+                import traceback
+                print(traceback.format_exc())
+            
             _kanban_cache["ts"] = 0
             
             # Invalidar cache automáticamente
             cache_invalidation = CacheInvalidationService()
+            updated_fields = list(resp.data.get("updates", {}).keys())
             cache_invalidation.register_data_change('edp_state_changed', [edp_id], 
-                                                  {'updated_fields': ['estado']})
+                                                  {'updated_fields': updated_fields})
             
             # Emit events for both manager dashboard and kanban board
             socketio.emit("edp_actualizado", {
@@ -517,14 +601,19 @@ def _procesar_actualizacion_estado(edp_id: str, nuevo_estado: str, conformidad: 
                 "affected_ids": [edp_id],
                 "timestamp": datetime.now().isoformat()
             })
+            print(f"✅ Actualización de estado completada exitosamente para EDP {edp_id}")
         else:
+            print(f"❌ Error en actualización de estado: {resp.message}")
             logger.error(f"Error en background update: {resp.message}")
     except Exception as exc:
+        print(f"💥 Excepción en _procesar_actualizacion_estado: {exc}")
+        print(traceback.format_exc())
         logger.error(f"Excepción en tarea de actualización: {exc}")
         logger.error(traceback.format_exc())
 
 
 @controller_controller_bp.route("/kanban/update_estado_detallado", methods=["POST"])
+@login_required
 def actualizar_estado_detallado():
     """
     Procesa actualizaciones detalladas de estado con campos adicionales
@@ -578,8 +667,20 @@ def actualizar_estado_detallado():
         # Quitar campos vacíos
         cambios = {k: v for k, v in cambios.items() if v is not None and v != ""}
 
-        # Registrar cambios en log
-        usuario = session.get("usuario", "Kanban Modal")
+        # Obtener el usuario real desde Flask-Login
+        usuario = "Sistema"  # Default
+        if current_user.is_authenticated:
+            # Prioridad: nombre_completo > email > username > User ID
+            if hasattr(current_user, 'nombre_completo') and current_user.nombre_completo:
+                usuario = current_user.nombre_completo
+            elif hasattr(current_user, 'email') and current_user.email:
+                usuario = current_user.email
+            elif hasattr(current_user, 'username') and current_user.username:
+                usuario = current_user.username
+            else:
+                usuario = f"User ID: {current_user.id}"
+        
+        # Registrar cambios en log - ahora con auto-detección de usuario
         for campo, nuevo_valor in cambios.items():
             valor_anterior = edp_data.get(campo)
             if str(nuevo_valor) != str(valor_anterior):
@@ -591,7 +692,7 @@ def actualizar_estado_detallado():
                     campo=campo,
                     antes=valor_anterior,
                     despues=nuevo_valor,
-                    usuario=usuario,
+                    # usuario se auto-detecta automáticamente
                 )
 
         # Actualizar en Google Sheets
@@ -640,6 +741,7 @@ def actualizar_estado_detallado():
 
 
 @controller_controller_bp.route("api/get-edp/<edp_id>", methods=["GET"])
+@login_required
 def get_edp_data(edp_id):
     """API endpoint to get EDP data by ID."""
     try:
@@ -689,6 +791,7 @@ def get_edp_data(edp_id):
         return jsonify({"error": str(e)}), 500
 
 @controller_controller_bp.route("/api/edp-details/<n_edp>", methods=["GET"])
+@login_required
 def api_get_edp_details(n_edp):
     """API para obtener detalles de un EDP en formato JSON"""
 
@@ -722,6 +825,7 @@ def api_get_edp_details(n_edp):
 
 
 @controller_controller_bp.route("/api/update-edp/<n_edp>", methods=["POST"])
+@login_required
 def api_update_edp(n_edp):
     """API para actualizar un EDP desde el modal de forma asíncrona"""
     try:
@@ -746,7 +850,18 @@ def api_update_edp(n_edp):
         if updates["estado"] in ["pagado", "validado"]:
             updates["conformidad_enviada"] = "Sí"
 
-        usuario = session.get("usuario", "Sistema")
+        # Obtener el usuario real desde Flask-Login antes de ir a background
+        usuario = "Sistema"  # Default
+        if current_user.is_authenticated:
+            # Prioridad: nombre_completo > email > username > User ID
+            if hasattr(current_user, 'nombre_completo') and current_user.nombre_completo:
+                usuario = current_user.nombre_completo
+            elif hasattr(current_user, 'email') and current_user.email:
+                usuario = current_user.email
+            elif hasattr(current_user, 'username') and current_user.username:
+                usuario = current_user.username
+            else:
+                usuario = f"User ID: {current_user.id}"
 
         socketio.start_background_task(_background_update_edp, n_edp, updates, usuario)
 
@@ -762,7 +877,7 @@ def api_update_edp(n_edp):
 
 def _background_update_edp(n_edp: str, updates: Dict[str, Any], usuario: str):
     """Procesa la actualización de un EDP en un hilo de fondo."""
-    from ..repositories import _range_cache
+    from ..utils.gsheet import _range_cache
     from ..services.cache_invalidation_service import CacheInvalidationService
 
     try:
@@ -790,7 +905,7 @@ def _background_update_edp(n_edp: str, updates: Dict[str, Any], usuario: str):
                     campo=campo,
                     antes=viejo,
                     despues=nuevo,
-                    usuario=usuario,
+                    # usuario se auto-detecta automáticamente, no necesitamos pasarlo
                 )
 
         update_row(row_idx, updates, sheet_name="edp", usuario=usuario, force_update=True)
@@ -1512,6 +1627,7 @@ def _get_project_control_status(datos: Dict) -> str:
 
 
 @controller_controller_bp.route("/encargado/<nombre>")
+@login_required
 def vista_encargado(nombre):
     """Individual manager view with personal metrics."""
     try:
@@ -1540,6 +1656,7 @@ def vista_encargado(nombre):
 
 
 @controller_controller_bp.route("/encargado/<nombre>/<proyecto>")
+@login_required
 def vista_proyecto_de_encargado(nombre, proyecto):
     """Project-specific view for a manager."""
     try:
@@ -1570,6 +1687,7 @@ def vista_proyecto_de_encargado(nombre, proyecto):
 
 
 @controller_controller_bp.route("/encargados")
+@login_required
 def vista_global_encargados():
     """Global managers view with comparative metrics."""
     try:
@@ -1617,6 +1735,7 @@ def vista_global_encargados():
         return redirect(url_for("controller.dashboard_controller"))
 
 @controller_controller_bp.route("/retrabajos")
+@login_required
 def analisis_retrabajos():
     """Specialized dashboard for rework analysis."""
     try:
@@ -1650,6 +1769,7 @@ def analisis_retrabajos():
 
 
 @controller_controller_bp.route("/id/<n_edp>", methods=["GET", "POST"])
+@login_required
 def detalle_edp(n_edp):
     """EDP detail view with editing capabilities."""
     try:
@@ -1672,10 +1792,8 @@ def detalle_edp(n_edp):
         elif request.method == "POST":
             # Update EDP
             form_data = request.form.to_dict()
-            usuario = session.get("usuario", "Sistema")
 
-
-            update_response = edp_service.update_edp(n_edp, form_data, usuario)
+            update_response = edp_service.update_edp(n_edp, form_data)
 
             if update_response.success:
                 flash("EDP actualizado correctamente", "success")
@@ -1694,6 +1812,7 @@ def detalle_edp(n_edp):
 
 
 @controller_controller_bp.route("/log/<n_edp>")
+@login_required
 def ver_log_edp(n_edp):
     """View EDP change log."""
     try:
@@ -1911,6 +2030,7 @@ def format_date_display(fecha):
 
 
 @controller_controller_bp.route("/log/<n_edp>/csv")
+@login_required
 def descargar_log_csv(n_edp):
     """Download EDP change log as CSV."""
     try:

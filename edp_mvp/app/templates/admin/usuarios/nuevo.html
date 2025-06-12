@@ -121,13 +121,38 @@ block content %}
             id="rol"
             name="rol"
             required
+            onchange="toggleJefeField()"
             class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] transition-all duration-200">
             <option value="">Seleccione un rol</option>
             <option value="admin">Administrador</option>
             <option value="controller">Controller</option>
             <option value="manager">Manager</option>
             <option value="jefe_proyecto">Jefe de Proyecto</option>
+            <option value="miembro_equipo_proyecto">
+              Miembro de Equipo de Proyecto
+            </option>
           </select>
+        </div>
+
+        <!-- Jefe Asignado (Conditional Field) -->
+        <div id="jefe-field" style="display: none">
+          <label
+            for="jefe_asignado"
+            class="block text-sm font-medium text-[color:var(--text-secondary)] mb-2">
+            Jefe de Proyecto Asignado *
+          </label>
+          <select
+            id="jefe_asignado"
+            name="jefe_asignado"
+            class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] transition-all duration-200">
+            <option value="">Seleccione un jefe de proyecto</option>
+            {% for jefe_name, jefe_value in jefes_proyecto %}
+            <option value="{{ jefe_value }}">{{ jefe_name }}</option>
+            {% endfor %}
+          </select>
+          <p class="text-sm text-[color:var(--text-tertiary)] mt-1">
+            Seleccione el jefe de proyecto al que pertenece este usuario
+          </p>
         </div>
 
         <!-- Buttons -->
@@ -170,6 +195,30 @@ block content %}
     </div>
   </div>
 </div>
+
+<script>
+  function toggleJefeField() {
+    const rolSelect = document.getElementById("rol");
+    const jefeField = document.getElementById("jefe-field");
+    const jefeSelect = document.getElementById("jefe_asignado");
+
+    const rolesQueRequierenJefe = ["jefe_proyecto", "miembro_equipo_proyecto"];
+
+    if (rolesQueRequierenJefe.includes(rolSelect.value)) {
+      jefeField.style.display = "block";
+      jefeSelect.required = true;
+    } else {
+      jefeField.style.display = "none";
+      jefeSelect.required = false;
+      jefeSelect.value = "";
+    }
+  }
+
+  // Initialize on page load
+  document.addEventListener("DOMContentLoaded", function () {
+    toggleJefeField();
+  });
+</script>
 
 <style>
   /* Smooth transitions for theme changes */

@@ -26,7 +26,7 @@ class DatabaseConfig:
         """Create config from environment variables."""
         # Default SQLite database path
         base_dir = Path(__file__).parent.parent.parent.parent  # Go to project root
-        default_db_path = str(base_dir / "edp_database.db")
+        default_db_path = str(base_dir / "edp_mvp" / "instance" / "edp_database.db")
         
         sqlite_path = os.getenv('SQLITE_DB_PATH', default_db_path)
         

@@ -11,7 +11,7 @@ from . import BaseRepository, SheetsRepository
 from ..models import Cost
 from ..utils.date_utils import parse_date_safe
 from ..utils.format_utils import clean_numeric_value
-
+from ..repositories.project_repository import ProjectRepository
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +23,7 @@ class CostRepository(BaseRepository):
         self.sheets_repo = SheetsRepository()
         self.sheet_name = "cost_header"
         self.range_name = "cost_header!A:Q"  # A to Q for 17 columns
-
+        self.project_repo = ProjectRepository()
     def find_all(self, apply_filters: bool = True) -> Dict[str, Any]:
         """Get all costs with optional transformations."""
         try:
@@ -371,3 +371,25 @@ class CostRepository(BaseRepository):
                 "paid_amount": 0,
                 "pending_amount": 0,
             }
+    def get_cost_by_manager(self, manager_name: str) -> float:
+        """
+        Get the total cost (importe_neto) of all projects associated with a project manager.
+        """
+        try:
+            # Cargar el DataFrame completo con todos los costos
+            df = self._read_sheet_with_transformations()
+            
+            # Obtener los proyectos del jefe de proyecto
+            df_projects = self.project_repo.get_manager_projects(manager_name)
+            
+            project_ids = df_projects['proyecto']
+
+            # Filtrar solo los registros cuyo 'project_id' esté en los proyectos del manager
+            df_filtered = df[df["project_id"].isin(project_ids)]
+
+            # Retornar la suma total de los importes netos
+            return df_filtered['importe_neto'].sum()
+
+        except Exception as e:
+            logger.error(f"Error getting cost by manager: {e}")
+            return 0.0

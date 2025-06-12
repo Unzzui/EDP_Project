@@ -22,12 +22,15 @@ const chartColors = {
 
 // Utility functions
 function formatCurrency(value) {
-    return new Intl.NumberFormat('es-CL', {
+    const formatted = new Intl.NumberFormat('es-CL', {
         style: 'currency',
         currency: 'CLP',
         minimumFractionDigits: 0,
         maximumFractionDigits: 1
     }).format(value * 1000000);
+    
+    // Reemplazar comas con puntos para separador de miles
+    return formatted.replace(/,/g, '.');
 }
 
 function formatNumber(value) {

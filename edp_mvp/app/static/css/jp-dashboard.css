@@ -1,0 +1,708 @@
+/* JP Dashboard Styles */
+
+.kpi-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease-out;
+}
+
+.kpi-card:hover::before {
+  left: 100%;
+}
+
+.kpi-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+}
+
+.kpi-card:active {
+  transform: translateY(-4px) scale(1.01);
+  transition: all 0.1s ease-out;
+}
+
+/* Pulse animation for important metrics */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+}
+
+.kpi-card.pulse {
+  animation: pulse-glow 2s infinite;
+}
+
+/* Number counter animation */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.kpi-value {
+  animation: countUp 0.8s ease-out;
+  animation-fill-mode: both;
+}
+
+/* Staggered animation delays */
+.kpi-card:nth-child(1) .kpi-value { animation-delay: 0.1s; }
+.kpi-card:nth-child(2) .kpi-value { animation-delay: 0.2s; }
+.kpi-card:nth-child(3) .kpi-value { animation-delay: 0.3s; }
+.kpi-card:nth-child(4) .kpi-value { animation-delay: 0.4s; }
+.kpi-card:nth-child(5) .kpi-value { animation-delay: 0.5s; }
+
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-fill {
+  transition: stroke-dasharray 0.3s ease;
+}
+
+.alert-badge {
+  animation: pulse 2s infinite;
+}
+
+/* Enhanced chart container */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+  border-radius: 12px;
+  padding: 24px;
+  background: var(--bg-card);
+}
+
+/* Prevent horizontal scrolling */
+body {
+  overflow-x: hidden;
+}
+
+/* Enhanced table responsive improvements */
+.table-container {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Enhanced table styling */
+.table-container table {
+  border-spacing: 0;
+}
+
+.table-container tbody tr:hover {
+  transform: translateX(4px);
+  transition: transform 0.2s ease;
+}
+
+/* Financial status indicators */
+.financial-indicator {
+  position: relative;
+  overflow: hidden;
+}
+
+.financial-indicator::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.financial-indicator:hover::before {
+  left: 100%;
+}
+
+/* Improved animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Page entrance animation */
+@keyframes pageEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.page-entrance {
+  animation: pageEntrance 0.6s ease-out forwards;
+}
+
+/* Enhanced mobile optimizations */
+@media (max-width: 768px) {
+  .chart-container {
+    height: 280px;
+  }
+
+  .kpi-card {
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+
+  .grid {
+    gap: 1rem;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-2px) scale(1.01);
+  }
+
+  .table-container tbody tr:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .kpi-card {
+    text-align: center;
+  }
+
+  .chart-container {
+    height: 250px;
+  }
+}
+
+/* Tooltip styling */
+.tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Enhanced button styling */
+.cta-button {
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.cta-button:hover::before {
+  left: 100%;
+}
+
+.cta-button:hover {
+  box-shadow: 0 15px 35px -5px rgba(139, 92, 246, 0.5);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* EDP Flow Chart specific styles */
+.edp-flow-container {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
+  border-radius: 16px;
+  padding: 0;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.edp-flow-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 32px 24px 32px;
+  margin-bottom: 0;
+  flex-wrap: wrap;
+  gap: 20px;
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-subtle) 100%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.edp-flow-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.edp-flow-filters select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.edp-flow-filters select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.edp-flow-filters select:hover {
+  border-color: var(--accent-blue);
+}
+
+/* Chart loading state */
+.chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 320px;
+  background: var(--bg-subtle);
+  border-radius: 12px;
+  color: var(--text-secondary);
+}
+
+.chart-loading::after {
+  content: "";
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 12px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced responsive design for filters */
+@media (max-width: 768px) {
+  .edp-flow-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .edp-flow-filters {
+    justify-content: center;
+  }
+  
+  .edp-flow-filters select {
+    flex: 1;
+    min-width: 140px;
+  }
+}
+
+/* Project status indicators */
+.project-status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.project-status-dot.completed {
+  background-color: var(--accent-green);
+}
+
+.project-status-dot.in-progress {
+  background-color: var(--accent-blue);
+}
+
+.project-status-dot.critical {
+  background-color: var(--accent-red);
+}
+
+.project-status-dot.pending {
+  background-color: var(--accent-amber);
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+/* Enhanced table hover effects */
+.project-table-row {
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+}
+
+.project-table-row:hover {
+  background: var(--bg-hover);
+  border-left-color: var(--accent-blue);
+  transform: translateX(4px);
+}
+
+/* Financial metrics styling */
+.financial-metric {
+  position: relative;
+  overflow: hidden;
+}
+
+.financial-metric::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.financial-metric:hover::before {
+  left: 100%;
+}
+
+/* Progress bars for financial status */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-subtle);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+  position: relative;
+}
+
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.1) 50%, transparent 50%, transparent 75%, rgba(255,255,255,0.1) 75%);
+  background-size: 20px 20px;
+  animation: progressStripes 1s linear infinite;
+}
+
+@keyframes progressStripes {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 20px 0;
+  }
+}
+
+.progress-bar-fill.approved {
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-blue-light));
+}
+
+.progress-bar-fill.paid {
+  background: linear-gradient(90deg, var(--accent-green), var(--accent-green-light));
+}
+
+.progress-bar-fill.pending {
+  background: linear-gradient(90deg, var(--accent-amber), var(--accent-amber-light));
+}
+
+/* ===== PROJECT STATUS ANIMATIONS ===== */
+.project-status-circle {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+}
+
+.project-status-circle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.project-status-circle .status-number {
+  transition: all 0.5s ease;
+  position: relative;
+  z-index: 2;
+}
+
+/* Animated background rings */
+.project-status-circle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.3s ease;
+  z-index: 1;
+}
+
+.project-status-circle:hover::before {
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.project-status-circle.pending::before {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+}
+
+.project-status-circle.in-progress::before {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+}
+
+.project-status-circle.completed::before {
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, transparent 70%);
+}
+
+.project-status-circle.overdue::before {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.1) 0%, transparent 70%);
+}
+
+/* Number counting animation */
+@keyframes numberPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.status-number.animate {
+  animation: numberPop 0.6s ease-out;
+}
+
+/* ===== ENHANCED CHART ANIMATIONS ===== */
+.chart-container {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.chart-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading skeleton */
+.chart-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ===== ENHANCED TABLE ANIMATIONS ===== */
+.project-table-row {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.project-table-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.project-table-row:hover::before {
+  transform: scaleY(1);
+}
+
+.project-table-row:hover {
+  transform: translateX(8px);
+  background: rgba(59, 130, 246, 0.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== MICRO-INTERACTIONS ===== */
+.btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* ===== NOTIFICATION SYSTEM ===== */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 24px;
+  border-radius: 12px;
+  color: white;
+  font-weight: 500;
+  z-index: 1000;
+  transform: translateX(400px);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification.success {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.notification.warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.notification.error {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.notification.info {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+/* ===== BANNER STYLES ===== */
+.banner-gradient {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #4f46e5 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.banner-gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  animation: bannerShimmer 3s ease-in-out infinite;
+}
+
+@keyframes bannerShimmer {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
+.banner-icon {
+  transition: all 0.3s ease;
+}
+
+.banner-icon:hover {
+  transform: rotate(10deg) scale(1.1);
+}
+
+/* ===== ENHANCED CHART HEADER ===== */
+.edp-flow-header h2 {
+  transition: all 0.3s ease;
+}
+
+.edp-flow-header:hover h2 {
+  transform: translateX(4px);
+} 

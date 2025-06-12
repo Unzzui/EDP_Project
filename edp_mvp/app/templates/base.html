@@ -19,11 +19,13 @@
       type="image/x-icon"
       href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkgMTl2LTZhMiAyIDAgMDAtMi0ySDVhMiAyIDAgMDAtMiAydjZhMiAyIDAgMDAyIDJoMmEyIDIgMCAwMDItMnptMCAwVjlhMiAyIDAgMDEyLTJoMmEyIDIgMCAwMTIgMnYxMG0tNiAwYTIgMiAwIDAwMiAyaDJhMiAyIDAgMDAyLTJtMCAwVjVhMiAyIDAgMDEyLTJoMmEyIDIgMCAwMTIgMnYxNGEyIDIgMCAwMS0yIDJoLTJhMiAyIDAgMDEtMi0yeiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K" />
 
-    <!-- Tailwind CDN (o tu build) -->
-    <!-- CSS -->
+    <!-- Tailwind CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- CSS Variables y temas -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/variables.css') }}" />
@@ -34,14 +36,10 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Socket.IO -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
 
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet" />
     <!-- Date Range Picker -->
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
@@ -52,7 +50,7 @@
 
     {% block head %}{% endblock %}
     <!-- Navbar Unified Script -->
-    <script src="{{ url_for('static', filename='js/navbar_unified.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
     <!-- Navbar Unified Styles -->
     <link
       rel="stylesheet"
@@ -60,8 +58,9 @@
   </head>
 
   <body class="bg-[color:var(--background)] text-[color:var(--text-primary)]">
-    {% include 'components/navbar_unified.html' %} {# --- Navbar unificado ---
-    #}
+    <!-- Incluir nueva navegación con control de roles jerárquico -->
+    {% include 'base/_navigation.html' %}
+
     <div class="container mx-auto px-4 py-6">
       {% block content %}{% endblock %}
     </div>

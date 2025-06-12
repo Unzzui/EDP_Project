@@ -119,6 +119,59 @@
         </a>
       </li>
 
+      <!-- Project Manager Navigation - Only visible for jefe_proyecto, miembro_equipo_proyecto and above -->
+      {% if current_user.is_authenticated and current_user.rol in ['jefe_proyecto', 'miembro_equipo_proyecto', 'director_operaciones', 'administrador'] %}
+      <li class="relative group">
+        <button class="flex items-center py-2 px-3 rounded-md transition-all duration-200 hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% if 'project_manager' in request.endpoint %}text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold{% endif %}">
+          <svg
+            class="w-4 h-4 mr-1.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          Gestión JP
+          <svg class="w-4 h-4 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        
+        <!-- Dropdown menu for Project Manager -->
+        <div class="absolute left-0 mt-2 w-48 origin-top-left bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-lg shadow-lg z-50 transform opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200">
+          <div class="py-1">
+            <a
+              href="{{ url_for('project_manager.dashboard') }}"
+              class="flex items-center px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors {% if request.endpoint == 'project_manager.dashboard' %}text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)]{% endif %}">
+              <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Dashboard JP
+            </a>
+            <a
+              href="{{ url_for('project_manager.team_dashboard') }}"
+              class="flex items-center px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors {% if request.endpoint == 'project_manager.team_dashboard' %}text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)]{% endif %}">
+              <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Equipo
+            </a>
+            <a
+              href="{{ url_for('project_manager.reports') }}"
+              class="flex items-center px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors {% if request.endpoint == 'project_manager.reports' %}text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)]{% endif %}">
+              <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Reportes
+            </a>
+          </div>
+        </div>
+      </li>
+      {% endif %}
+
     </ul>
 
     <!-- Acciones -->
@@ -263,6 +316,28 @@
       class="block py-2 px-4 rounded-md {% if 'retrabajos' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
       Re-trabajos
     </a>
+    
+    <!-- Project Manager Mobile Menu - Only visible for jefe_proyecto, miembro_equipo_proyecto and above -->
+    {% if current_user.is_authenticated and current_user.rol in ['jefe_proyecto', 'miembro_equipo_proyecto', 'director_operaciones', 'administrador'] %}
+    <div class="border-t border-[color:var(--border-color)] mt-2 pt-2">
+      <div class="text-xs font-semibold text-[color:var(--text-secondary)] px-4 py-1 uppercase tracking-wide">Gestión JP</div>
+      <a
+        href="{{ url_for('project_manager.dashboard') }}"
+        class="block py-2 px-4 rounded-md mb-1 {% if request.endpoint == 'project_manager.dashboard' %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
+        Dashboard JP
+      </a>
+      <a
+        href="{{ url_for('project_manager.team_dashboard') }}"
+        class="block py-2 px-4 rounded-md mb-1 {% if request.endpoint == 'project_manager.team_dashboard' %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
+        Equipo
+      </a>
+      <a
+        href="{{ url_for('project_manager.reports') }}"
+        class="block py-2 px-4 rounded-md mb-1 {% if request.endpoint == 'project_manager.reports' %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
+        Reportes
+      </a>
+    </div>
+    {% endif %}
    
   </div>
 </nav>

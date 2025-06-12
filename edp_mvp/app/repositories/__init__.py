@@ -9,23 +9,9 @@ from googleapiclient.discovery import build
 from time import time
 import os
 import json
-import redis
-
-# Simple in-memory cache with optional Redis backend
-_range_cache: Dict[str, tuple] = {}
-_redis_client = None
-try:  # pragma: no cover - optional dependency
-
-    redis_url = os.getenv("REDIS_URL")
-    if redis_url:
-        print(f"🔗 Conectando a Redis en {redis_url}")
-        _redis_client = redis.from_url(redis_url)
-        print("✅ Conexión a Redis exitosa")
-except Exception as e:
-    print(f"⚠️ Error conectando a Redis: {e}")
-    _redis_client = None
 
 from ..config import Config, get_config
+from ..utils.gsheet import read_sheet, clear_all_cache
 
 
 class BaseRepository(ABC):
@@ -52,73 +38,36 @@ class BaseRepository(ABC):
         return build('sheets', 'v4', credentials=creds)
     
     def _read_range(self, range_name: str) -> List[List[str]]:
-        """Read data from Google Sheets range with caching (Redis if available)."""
+        """Read data from Google Sheets range using optimized cache from gsheet.py."""
         try:
-            config = get_config()
-            timeout = getattr(config.app, "cache_timeout", 0)
-            now = time()
-
-            # Redis cache
-            if _redis_client:
-                cached = _redis_client.get(range_name)
-                if cached:
-                    return json.loads(cached)
-
-            if range_name in _range_cache:
-                ts, values = _range_cache[range_name]
-                if now - ts < timeout:
-                    return values
-
-            result = self.service.spreadsheets().values().get(
-                spreadsheetId=config.SHEET_ID,
-                range=range_name
-            ).execute()
-            values = result.get("values", [])
-            _range_cache[range_name] = (now, values)
-            if _redis_client:
-                _redis_client.setex(range_name, timeout, json.dumps(values))
-            return values
+            # Use the optimized read_sheet function which handles multi-level caching
+            df = read_sheet(range_name)
+            
+            # Convert DataFrame back to list of lists format
+            if df.empty:
+                return []
+            
+            # Get headers and data
+            headers = df.columns.tolist()
+            data = df.values.tolist()
+            
+            # Convert all values to strings (as expected by Google Sheets API)
+            result = [headers]
+            for row in data:
+                result.append([str(cell) if cell is not None else '' for cell in row])
+            
+            return result
         except Exception as e:
             print(f"Error reading range {range_name}: {str(e)}")
             return []
 
     def _read_ranges(self, range_names: List[str]) -> Dict[str, List[List[str]]]:
-        """Batch read multiple ranges using Google Sheets batchGet."""
+        """Batch read multiple ranges using optimized cache."""
         result_dict: Dict[str, List[List[str]]] = {}
         try:
-            config = get_config()
-            timeout = getattr(config.app, "cache_timeout", 0)
-            now = time()
-
-            to_fetch = []
-            for r in range_names:
-                if _redis_client:
-                    cached = _redis_client.get(r)
-                    if cached:
-                        result_dict[r] = json.loads(cached)
-                        continue
-                if r in _range_cache:
-                    ts, values = _range_cache[r]
-                    if now - ts < timeout:
-                        result_dict[r] = values
-                        continue
-                to_fetch.append(r)
-
-            if to_fetch:
-                response = (
-                    self.service.spreadsheets()
-                    .values()
-                    .batchGet(spreadsheetId=config.SHEET_ID, ranges=to_fetch)
-                    .execute()
-                )
-                for item in response.get("valueRanges", []):
-                    values = item.get("values", [])
-                    r = item.get("range", to_fetch[0])
-                    _range_cache[r] = (now, values)
-                    if _redis_client:
-                        _redis_client.setex(r, timeout, json.dumps(values))
-                    result_dict[r] = values
-
+            # Use individual reads with optimized cache - the cache layer will handle efficiency
+            for range_name in range_names:
+                result_dict[range_name] = self._read_range(range_name)
             return result_dict
         except Exception as e:
             print(f"Error reading ranges {range_names}: {str(e)}")
@@ -135,9 +84,8 @@ class BaseRepository(ABC):
                 valueInputOption=value_input_option,
                 body={"values": values}
             ).execute()
-            _range_cache.clear()  # invalidate cache after write
-            if _redis_client:
-                _redis_client.flushdb()
+            # Invalidate all caches after write
+            clear_all_cache()
             return True
         except Exception as e:
             print(f"Error writing to range {range_name}: {str(e)}")
@@ -154,9 +102,8 @@ class BaseRepository(ABC):
                 insertDataOption="INSERT_ROWS",
                 body={"values": values}
             ).execute()
-            _range_cache.clear()  # invalidate cache after append
-            if _redis_client:
-                _redis_client.flushdb()
+            # Invalidate all caches after append
+            clear_all_cache()
             return True
         except Exception as e:
             print(f"Error appending to sheet {sheet_name}: {str(e)}")
@@ -164,8 +111,21 @@ class BaseRepository(ABC):
     
     def _get_headers(self, sheet_name: str) -> List[str]:
         """Get headers from first row of sheet."""
-        values = self._read_range(f"{sheet_name}!1:1")
-        return values[0] if values else []
+        try:
+            # Read headers directly using read_sheet to get the DataFrame
+            df = read_sheet(f"{sheet_name}!1:1", apply_transformations=False)
+            if not df.empty:
+                return df.columns.tolist()
+            
+            # Fallback: try reading a larger range to get headers
+            df_full = read_sheet(f"{sheet_name}!A:Z", apply_transformations=False)
+            if not df_full.empty:
+                return df_full.columns.tolist()
+            
+            return []
+        except Exception as e:
+            print(f"Error getting headers for {sheet_name}: {str(e)}")
+            return []
     
     def _values_to_dataframe(self, values: List[List[str]], 
                             apply_transformations: bool = True) -> pd.DataFrame:

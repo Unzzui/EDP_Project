@@ -316,7 +316,7 @@ class KanbanService(BaseService):
                     data=None,
                 )
 
-            from ..repositories import _range_cache
+            from ..utils.gsheet import _range_cache
             _range_cache.clear()
 
             return ServiceResponse(

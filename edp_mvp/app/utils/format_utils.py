@@ -37,13 +37,15 @@ class FormatUtils:
     
     @staticmethod
     def format_currency(amount: Union[float, int, Decimal], currency_symbol: str = "$", decimal_places: int = 2) -> str:
-        """Format number as currency."""
+        """Format number as currency with periods as thousands separator."""
         try:
             if amount is None:
                 return f"{currency_symbol}0.00"
             
             amount = float(amount)
             formatted = f"{amount:,.{decimal_places}f}"
+            # Replace commas with periods for thousands separator
+            formatted = formatted.replace(",", ".")
             return f"{currency_symbol}{formatted}"
         except (ValueError, TypeError):
             return f"{currency_symbol}0.00"
@@ -63,14 +65,17 @@ class FormatUtils:
     
     @staticmethod
     def format_number(value: Union[float, int], decimal_places: int = 2, thousands_separator: bool = True) -> str:
-        """Format number with thousands separator and decimal places."""
+        """Format number with periods as thousands separator and decimal places."""
         try:
             if value is None:
                 return "0"
             
             value = float(value)
             if thousands_separator:
-                return f"{value:,.{decimal_places}f}"
+                formatted = f"{value:,.{decimal_places}f}"
+                # Replace commas with periods for thousands separator
+                formatted = formatted.replace(",", ".")
+                return formatted
             else:
                 return f"{value:.{decimal_places}f}"
         except (ValueError, TypeError):

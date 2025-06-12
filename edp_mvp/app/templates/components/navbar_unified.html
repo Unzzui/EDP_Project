@@ -132,8 +132,10 @@ según el rol del usuario #}
           Análisis
         </a>
       </li>
-      {% else %}
-      <!-- Controller/Admin-specific menu items -->
+      {% endif %}
+
+      <!-- Controller menu items (available for controller role and manager) -->
+      {% if current_user.rol == 'controller' or current_user.rol == 'manager' %}
       <li>
         <a
           href="{{ url_for('controller.vista_kanban') }}"
@@ -192,15 +194,14 @@ según el rol del usuario #}
       </li>
       {% endif %}
 
-      <!-- Links disponibles para ambos roles -->
-      {% if current_user.rol == 'manager' %}
-      <!-- Breadcrumb para acceso a vista controller -->
+      <!-- Admin-specific menu items -->
+      {% if current_user.rol == 'admin' %}
       <li>
         <a
-          href="{{ url_for('controller.dashboard_controller') }}"
-          class="hidden sm:flex items-center text-xs text-[color:var(--text-secondary)] hover:text-[color:var(--accent-blue)] transition-colors py-2 px-3 rounded-md">
+          href="{{ url_for('admin.usuarios') }}"
+          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 {% if 'admin' in request.endpoint %} text-[color:var(--accent-blue)] bg-[color:var(--accent-blue-subtle)] font-semibold {% else %} hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)] {% endif %}">
           <svg
-            class="w-3 h-3 mr-1"
+            class="w-4 h-4 mr-1.5"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -208,12 +209,14 @@ según el rol del usuario #}
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
-              d="M8 7l4-4m0 0l4 4m-4-4v18" />
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
           </svg>
-          Vista Controller
+          Usuarios
         </a>
       </li>
       {% endif %}
+
+      <!-- Links disponibles para ambos roles -->
     </ul>
 
     <!-- Acciones y usuario -->
@@ -353,16 +356,13 @@ según el rol del usuario #}
       class="block py-2 px-4 rounded-md mb-1 {% if 'analytics' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
       Análisis
     </a>
-    <a
-      href="{{ url_for('controller.dashboard_controller') }}"
-      class="block py-2 px-4 rounded-md mb-1 text-[color:var(--text-secondary)]">
-      Vista Controller
-    </a>
-    {% else %}
-    <!-- Controller mobile menu items -->
+    {% endif %}
+
+    <!-- Controller mobile menu items (available for controller and manager) -->
+    {% if current_user.rol == 'controller' or current_user.rol == 'manager' %}
     <a
       href="{{ url_for('controller.vista_kanban') }}"
-      class="block py-2 px-4 rounded-md {% if 'kanban' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
+      class="block py-2 px-4 rounded-md mb-1 {% if 'kanban' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
       Kanban
     </a>
     <a
@@ -374,6 +374,15 @@ según el rol del usuario #}
       href="{{ url_for('controller.analisis_retrabajos') }}"
       class="block py-2 px-4 rounded-md mb-1 {% if 'retrabajos' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
       Retrabajos
+    </a>
+    {% endif %}
+
+    <!-- Admin mobile menu items -->
+    {% if current_user.rol == 'admin' %}
+    <a
+      href="{{ url_for('admin.usuarios') }}"
+      class="block py-2 px-4 rounded-md mb-1 {% if 'admin' in request.endpoint %}bg-[color:var(--accent-blue-subtle)] text-[color:var(--accent-blue)]{% endif %}">
+      Usuarios
     </a>
     {% endif %}
   </div>

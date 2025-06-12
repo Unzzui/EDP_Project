@@ -55,6 +55,9 @@ def create_app():
     if os.getenv("ENABLE_PROFILER") == "1" and ProfilerMiddleware:
         app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
 
+    # Register authentication context processor
+    from .utils.auth_utils import inject_user_context
+    app.context_processor(inject_user_context)
 
     # Usar imports relativos (con punto) o absolutos
     from .auth.routes import auth_bp
@@ -66,6 +69,7 @@ def create_app():
     from .controllers.manager_controller import manager_controller_bp
     from .controllers.edp_controller import edp_controller_bp
     from .controllers.admin_controller import admin_bp
+    from .controllers.project_manager_controller import project_manager_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(edp_bp, url_prefix="/edp")
@@ -78,6 +82,7 @@ def create_app():
     app.register_blueprint(manager_controller_bp)
     app.register_blueprint(edp_controller_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(project_manager_bp)
 
     # Old monolithic controllers (comment out when fully migrated)
     # app.register_blueprint(controller_bp)

@@ -3,6 +3,7 @@ Refactored EDP Controller using the new layered architecture.
 This demonstrates how the monolithic controller can be restructured.
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
+from flask_login import login_required, current_user
 from typing import Dict, Any, Optional
 from datetime import datetime
 
@@ -52,6 +53,7 @@ def index():
 
 
 @edp_controller_bp.route("/list")
+@login_required
 def list_edps():
     """List all EDPs with filtering and pagination."""
     try:
@@ -120,6 +122,7 @@ def list_edps():
 
 
 @edp_controller_bp.route("/<edp_id>")
+@login_required
 def view_edp(edp_id: str):
     """View detailed information for a specific EDP."""
     try:
@@ -153,6 +156,7 @@ def view_edp(edp_id: str):
 
 
 @edp_controller_bp.route("/create", methods=["GET", "POST"])
+@login_required
 def create_edp():
     """Create a new EDP."""
     if request.method == "GET":
@@ -213,6 +217,7 @@ def create_edp():
 
 
 @edp_controller_bp.route("/<edp_id>/edit", methods=["GET", "POST"])
+@login_required
 def edit_edp(edp_id: str):
     """Edit an existing EDP."""
     if request.method == "GET":
@@ -288,6 +293,7 @@ def edit_edp(edp_id: str):
 
 
 @edp_controller_bp.route("/<edp_id>/kpis", methods=["GET", "POST"])
+@login_required
 def manage_kpis(edp_id: str):
     """Manage KPIs for an EDP."""
     if request.method == "GET":
@@ -348,6 +354,7 @@ def manage_kpis(edp_id: str):
 
 
 @edp_controller_bp.route("/statistics")
+@login_required
 def statistics():
     """View comprehensive EDP statistics."""
     try:
@@ -380,6 +387,7 @@ def statistics():
 
 # API endpoints for AJAX requests
 @edp_controller_bp.route("/api/health-scores")
+@login_required
 def api_health_scores():
     """API endpoint to get health scores for all EDPs."""
     try:
@@ -404,6 +412,7 @@ def api_health_scores():
 
 
 @edp_controller_bp.route("/api/recent-activity")
+@login_required
 def api_recent_activity():
     """API endpoint to get recent activity."""
     try:
@@ -429,6 +438,7 @@ def api_recent_activity():
 
 
 @edp_controller_bp.route("/api/alerts")
+@login_required
 def api_alerts():
     """API endpoint to get current alerts."""
     try:

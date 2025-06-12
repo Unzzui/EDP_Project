@@ -1,0 +1,959 @@
+{% extends "base.html" %} {% block title %}Dashboard - {{ manager_name }} | Jefe
+de Proyecto{% endblock %} {% block head_extras %}
+<!-- Chart.js para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<!-- JP Dashboard Styles -->
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/jp-dashboard.css') }}" />
+{% endblock %} {% block content %}
+
+<!-- Banner Superior -->
+<div
+  class="banner-gradient text-white p-6 rounded-xl mb-6 shadow-lg animate-fade-in-up"
+  style="animation-delay: 0.05s; opacity: 0">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <div class="relative">
+        <div
+          class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center banner-icon">
+          <span class="text-2xl font-bold"
+            >{{ manager_name[0] if manager_name else 'JP' }}</span
+          >
+        </div>
+        {% if alerts and alerts|length > 0 %}
+        <div
+          class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center alert-badge">
+          {{ alerts|length }}
+        </div>
+        {% endif %}
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold">{{ manager_name }}</h1>
+        <p class="text-blue-100 font-medium">Jefe de Proyecto</p>
+        <div class="flex items-center mt-2 text-sm text-blue-100">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          {{ project_performance|length }} proyectos activos
+          <span class="mx-2">•</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          {{ team_performance|length if team_performance else 0 }} miembros del
+          equipo
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-3">
+      <a
+        href="{{ url_for('project_manager.team_dashboard', manager_name=manager_name) }}"
+        class="btn btn-outline bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 hover:border-opacity-50 px-4 py-2 rounded-lg transition-all duration-300">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        Equipo
+      </a>
+      <a
+        href="{{ url_for('project_manager.reports', manager_name=manager_name) }}"
+        class="btn btn-primary bg-white bg-opacity-30 hover:bg-opacity-40 text-white px-4 py-2 rounded-lg transition-all duration-300">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        Reportes
+      </a>
+    </div>
+  </div>
+</div>
+<!-- Hidden data element for JavaScript -->
+<script id="trends-data" type="application/json">
+  {{ trends.monthly_trends | tojson }}
+</script>
+
+<!-- KPIs Financieros Principales -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+  <!-- Ingresos Aprobados -->
+  <div
+    class="kpi-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div
+          class="w-12 h-12 bg-[color:var(--accent-green)] bg-opacity-15 rounded-xl flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 text-[color:var(--accent-white)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div
+          class="ml-1 cursor-help"
+          title="Total acumulado de EDPs validados y aprobados">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--text-secondary)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div
+      class="text-2xl font-bold text-[color:var(--accent-green)] mb-1 kpi-value"
+      data-value="{{ summary['total_amount_approved'] or 0 }}">
+      {{ format_currency(summary['total_amount_approved'] or 0) }}
+    </div>
+    <h3 class="font-semibold text-[color:var(--text-primary)] mb-1 text-sm">
+      Ingresos Aprobados
+    </h3>
+    <p class="text-xs text-[color:var(--text-secondary)]">EDPs validados</p>
+  </div>
+
+  <!-- EDPs Pendientes por Cobrar -->
+  <div
+    class="kpi-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div
+          class="w-12 h-12 bg-[color:var(--accent-amber)] bg-opacity-15 rounded-xl flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 text-[color:var(--accent-white)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div
+          class="ml-1 cursor-help"
+          title="Suma de montos de EDPs aún no validados">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--text-secondary)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div
+      class="text-2xl font-bold text-[color:var(--accent-amber)] mb-1 kpi-value"
+      data-value="{{ summary['pending_amount'] or 0 }}">
+      {{ format_currency(summary['pending_amount'] or 0) }}
+    </div>
+    <h3 class="font-semibold text-[color:var(--text-primary)] mb-1 text-sm">
+      Pendientes por Cobrar
+    </h3>
+    <p class="text-xs text-[color:var(--text-secondary)]">EDPs sin validar</p>
+  </div>
+
+  <!-- DSO Promedio -->
+  <div
+    class="kpi-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div
+          class="w-12 h-12 bg-[color:var(--accent-blue)] bg-opacity-15 rounded-xl flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 text-[color:var(--accent-white)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        </div>
+        <div
+          class="ml-1 cursor-help"
+          title="Promedio de días que tardan en validarse los EDPs">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--text-secondary)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div
+      class="text-2xl font-bold text-[color:var(--accent-blue)] mb-1 kpi-value"
+      data-value="{{ kpis.avg_processing_days or 0 }}">
+      {{ kpis.avg_processing_days or 0 }}<span class="text-lg">d</span>
+    </div>
+    <h3 class="font-semibold text-[color:var(--text-primary)] mb-1 text-sm">
+      DSO Promedio
+    </h3>
+    <p class="text-xs text-[color:var(--text-secondary)]">Días validación</p>
+  </div>
+
+  <!-- Costo Total -->
+  <div
+    class="kpi-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div
+          class="w-12 h-12 bg-[color:var(--accent-red)] bg-opacity-15 rounded-xl flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 text-[color:var(--accent-white)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </div>
+        <div
+          class="ml-1 cursor-help"
+          title="Total de costos asociados a los proyectos">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--text-secondary)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div
+      class="text-2xl font-bold text-[color:var(--accent-red)] mb-1 kpi-value"
+      data-value="{{ kpis.total_costs or 0 }}">
+      {{ format_currency(kpis.total_costs or 0) }}
+    </div>
+    <h3 class="font-semibold text-[color:var(--text-primary)] mb-1 text-sm">
+      Costo Total
+    </h3>
+    <p class="text-xs text-[color:var(--text-secondary)]">Proyectos JP</p>
+  </div>
+
+  <!-- Margen Estimado -->
+  <div
+    class="kpi-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div
+          class="w-12 h-12 bg-[color:var(--accent-purple)] bg-opacity-15 rounded-xl flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 text-[color:var(--accent-white)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <div
+          class="ml-1 cursor-help"
+          title="Porcentaje de ganancia estimada: (Ingresos - Costos) / Ingresos × 100">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--text-secondary)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div
+      class="text-2xl font-bold text-[color:var(--accent-purple)] mb-1 kpi-value"
+      data-value="{{ kpis.profit_margin or 0 }}">
+      {{ kpis.profit_margin or 0 }}%
+    </div>
+    <h3 class="font-semibold text-[color:var(--text-primary)] mb-1 text-sm">
+      Margen Estimado
+    </h3>
+    <p class="text-xs text-[color:var(--text-secondary)]">Rentabilidad</p>
+  </div>
+</div>
+
+<!-- Gráfico Comparativo de Flujo de EDPs -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+  <div class="lg:col-span-3">
+    <div
+      class="edp-flow-container bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-2xl shadow-lg">
+      <div class="edp-flow-header">
+        <h2
+          class="text-xl font-semibold flex items-center text-[color:var(--text-primary)]">
+          <div
+            class="bg-[color:var(--accent-blue)] bg-opacity-15 p-2 rounded-lg mr-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-[color:var(--accent-blue)]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+          </div>
+          <div>
+            <span class="text-xl font-bold">Flujo de EDPs por Mes</span>
+            <p
+              class="text-sm text-[color:var(--text-secondary)] font-normal mt-1">
+              Seguimiento mensual del estado de los EDPs
+            </p>
+          </div>
+        </h2>
+        <div class="edp-flow-filters">
+          <select
+            id="edpFlowFilter"
+            class="px-3 py-1 border border-[color:var(--border-color)] rounded-lg text-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)]">
+            <option value="all">Todos los proyectos</option>
+            {% for project in project_performance %}
+            <option value="{{ project.project_name }}">
+              {{ project.project_name }}
+            </option>
+            {% endfor %}
+          </select>
+          <select
+            id="edpPeriodFilter"
+            class="px-3 py-1 border border-[color:var(--border-color)] rounded-lg text-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)]">
+            <option value="monthly">Mensual</option>
+            <option value="quarterly">Trimestral</option>
+          </select>
+          <button
+            data-refresh
+            onclick="jpDashboard.refreshDashboard()"
+            class="px-3 py-1 bg-[color:var(--accent-blue)] text-white rounded-lg text-sm hover:bg-[color:var(--accent-blue-dark)] transition-colors">
+            ⟳ Actualizar
+          </button>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="edpFlowChart" class="w-full h-full"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <!-- Resumen Financiero Detallado -->
+    <div
+      class="bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg">
+      <h3 class="font-semibold mb-4 flex items-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2 text-[color:var(--accent-green)]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+        </svg>
+        Estado Financiero
+      </h3>
+      <div class="space-y-4">
+        <div class="bg-[color:var(--bg-subtle)] rounded-lg p-3">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-[color:var(--text-secondary)]"
+              >Total Propuesto</span
+            >
+            <span class="font-semibold text-[color:var(--text-primary)]"
+              >{{ format_currency(summary['total_amount_proposed']) }}</span
+            >
+          </div>
+          <div class="w-full bg-[color:var(--border-color)] rounded-full h-2">
+            <div
+              class="bg-[color:var(--accent-blue)] h-2 rounded-full"
+              style="width: 100%"></div>
+          </div>
+        </div>
+
+        <div class="bg-[color:var(--bg-subtle)] rounded-lg p-3">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-[color:var(--text-secondary)]"
+              >Total Aprobado</span
+            >
+            <span class="font-semibold text-[color:var(--accent-blue)]"
+              >{{ format_currency(summary['total_amount_approved']) }}</span
+            >
+          </div>
+          <div class="w-full bg-[color:var(--border-color)] rounded-full h-2">
+            <div
+              class="bg-[color:var(--accent-blue)] h-2 rounded-full"
+              style="width: {{ ((summary['total_amount_approved'] or 0) / (summary['total_amount_proposed'] or 1) * 100) if summary['total_amount_proposed'] else 0 }}%"></div>
+          </div>
+        </div>
+
+        <div class="bg-[color:var(--bg-subtle)] rounded-lg p-3">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-[color:var(--text-secondary)]"
+              >Total Pagado</span
+            >
+            <span class="font-semibold text-[color:var(--accent-green)]"
+              >{{ format_currency(summary['total_amount_paid']) }}</span
+            >
+          </div>
+          <div class="w-full bg-[color:var(--border-color)] rounded-full h-2">
+            <div
+              class="bg-[color:var(--accent-green)] h-2 rounded-full"
+              style="width: {{ ((summary['total_amount_paid'] or 0) / (summary['total_amount_approved'] or 1) * 100) if summary['total_amount_approved'] else 0 }}%"></div>
+          </div>
+        </div>
+
+        <hr class="border-[color:var(--border-color)]" />
+
+        <div
+          class="bg-gradient-to-r from-[color:var(--accent-amber)] to-[color:var(--accent-red)] bg-opacity-10 rounded-lg p-3">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium text-[color:var(--text-primary)]"
+              >Pendiente por Cobrar</span
+            >
+            <span class="font-bold text-[color:var(--accent-amber)]"
+              >{{ format_currency(summary['pending_amount']) }}</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alertas y Proyectos -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+  <!-- Alertas -->
+  {% if alerts and alerts|length > 0 %}
+  <div
+    class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6">
+    <h2 class="text-lg font-semibold mb-4 flex items-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 mr-2 text-[color:var(--accent-red)]"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
+      </svg>
+      Alertas
+      <span
+        class="ml-2 px-2 py-1 bg-[color:var(--accent-red)] text-white text-xs rounded-full"
+        >{{ alerts|length }}</span
+      >
+    </h2>
+    <div class="space-y-3">
+      {% for alert in alerts[:3] %}
+      <div
+        class="border-l-4 {% if alert.type == 'danger' %}border-[color:var(--accent-red)]{% elif alert.type == 'warning' %}border-[color:var(--accent-amber)]{% else %}border-[color:var(--accent-blue)]{% endif %} bg-opacity-10 p-3 rounded">
+        <div class="flex items-start">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-2 mt-0.5 {% if alert.type == 'danger' %}text-[color:var(--accent-red)]{% elif alert.type == 'warning' %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-blue)]{% endif %}"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <div class="flex-1">
+            <div class="font-medium text-sm">{{ alert.title }}</div>
+            <div class="text-xs text-[color:var(--text-secondary)] mt-1">
+              {{ alert.message }}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Distribución de Estados -->
+  <div
+    class="{% if not alerts or alerts|length == 0 %}lg:col-span-2{% else %}lg:col-span-2{% endif %}">
+    <div
+      class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6">
+      <h2 class="text-lg font-semibold mb-6 flex items-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 mr-2 text-[color:var(--accent-purple)]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+        </svg>
+        Estados de Proyectos
+      </h2>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="text-center">
+          <div
+            class="w-16 h-16 bg-[color:var(--accent-amber)] bg-opacity-15 rounded-full flex items-center justify-center mx-auto mb-2 project-status-circle pending"
+            data-tooltip="Proyectos en revisión inicial">
+            <span
+              class="text-2xl font-bold text-[color:var(--accent-white)] status-number"
+              >{{ projects_by_status.pending|length }}</span
+            >
+          </div>
+          <div class="text-sm font-medium text-[color:var(--text-primary)]">
+            Pendientes
+          </div>
+          <div class="text-xs text-[color:var(--text-secondary)] mt-1">
+            En revisión inicial
+          </div>
+        </div>
+        <div class="text-center">
+          <div
+            class="w-16 h-16 bg-[color:var(--accent-blue)] bg-opacity-15 rounded-full flex items-center justify-center mx-auto mb-2 project-status-circle in-progress"
+            data-tooltip="Proyectos con EDPs en proceso">
+            <span
+              class="text-2xl font-bold text-[color:var(--accent-white)] status-number"
+              >{{ projects_by_status.in_progress|length }}</span
+            >
+          </div>
+          <div class="text-sm font-medium text-[color:var(--text-primary)]">
+            En Progreso
+          </div>
+          <div class="text-xs text-[color:var(--text-secondary)] mt-1">
+            EDPs enviados/procesando
+          </div>
+        </div>
+        <div class="text-center">
+          <div
+            class="w-16 h-16 bg-[color:var(--accent-green)] bg-opacity-15 rounded-full flex items-center justify-center mx-auto mb-2 project-status-circle completed"
+            data-tooltip="Proyectos con >90% EDPs validados">
+            <span
+              class="text-2xl font-bold text-[color:var(--accent-white)] status-number"
+              >{{ projects_by_status.completed|length }}</span
+            >
+          </div>
+          <div class="text-sm font-medium text-[color:var(--text-primary)]">
+            Completados
+          </div>
+          <div class="text-xs text-[color:var(--text-secondary)] mt-1">
+            >90% validados
+          </div>
+        </div>
+        <div class="text-center">
+          <div
+            class="w-16 h-16 bg-[color:var(--accent-red)] bg-opacity-15 rounded-full flex items-center justify-center mx-auto mb-2 project-status-circle overdue"
+            data-tooltip="Proyectos con EDPs vencidos (>45 días)">
+            <span
+              class="text-2xl font-bold text-[color:var(--accent-white)] status-number"
+              >{{ projects_by_status.overdue|length }}</span
+            >
+          </div>
+          <div class="text-sm font-medium text-[color:var(--text-primary)]">
+            Vencidos
+          </div>
+          <div class="text-xs text-[color:var(--text-secondary)] mt-1">
+            >45 días sin procesar
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabla Resumen por Proyecto -->
+<div
+  class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-semibold flex items-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+      </svg>
+      Resumen por Proyecto
+      <span class="ml-2 text-sm text-[color:var(--text-secondary)]"
+        >({{ project_performance|length }} proyectos)</span
+      >
+    </h2>
+  </div>
+
+  <div class="overflow-x-auto -mx-6">
+    <div class="min-w-full px-6">
+      <table class="w-full min-w-[1200px]">
+        <thead class="bg-[color:var(--bg-subtle)] rounded-lg">
+          <tr class="border-b border-[color:var(--border-color)]">
+            <th
+              class="text-left py-4 px-4 font-semibold text-[color:var(--text-primary)] min-w-[200px] rounded-l-lg">
+              <div class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                Proyecto
+              </div>
+            </th>
+            <th
+              class="text-right py-4 px-4 font-semibold text-[color:var(--text-primary)] min-w-[130px]">
+              <div class="flex items-center justify-end">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Ingresos Aprobados
+              </div>
+            </th>
+            <th
+              class="text-right py-4 px-4 font-semibold text-[color:var(--text-primary)] min-w-[130px]">
+              <div class="flex items-center justify-end">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                EDPs Pendientes
+              </div>
+            </th>
+            <th
+              class="text-center py-4 px-4 font-semibold text-[color:var(--text-primary)] w-24">
+              <div class="flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                DSO (días)
+              </div>
+            </th>
+            <th
+              class="text-right py-4 px-4 font-semibold text-[color:var(--text-primary)] min-w-[120px]">
+              <div class="flex items-center justify-end">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+                Costo Total
+              </div>
+            </th>
+            <th
+              class="text-center py-4 px-4 font-semibold text-[color:var(--text-primary)] w-24">
+              <div class="flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Margen %
+              </div>
+            </th>
+            <th
+              class="text-center py-4 px-4 font-semibold text-[color:var(--text-primary)] w-20 rounded-r-lg">
+              Acciones
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for project in project_performance %}
+          <tr
+            class="border-b border-[color:var(--border-color-subtle)] hover:bg-[color:var(--bg-hover)] transition-all duration-200 project-table-row">
+            <td class="py-4 px-4">
+              <div class="flex items-center">
+                <div
+                  class="w-3 h-3 rounded-full mr-3 {% if project.status == 'completed' %}bg-[color:var(--accent-green)]{% elif project.status == 'in_progress' %}bg-[color:var(--accent-blue)]{% elif project.status == 'critical' %}bg-[color:var(--accent-red)]{% else %}bg-[color:var(--accent-amber)]{% endif %}"></div>
+                <div>
+                  <div
+                    class="font-medium text-[color:var(--text-primary)] truncate max-w-[160px]"
+                    title="{{ project.project_name }}">
+                    {{ project.project_name }}
+                  </div>
+                  <div class="text-xs text-[color:var(--text-secondary)]">
+                    {{ project.total_edps }} EDPs total
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="py-4 px-4 text-right">
+              <div class="font-semibold text-[color:var(--accent-green)]">
+                {{ format_currency(project.total_approved) }}
+              </div>
+            </td>
+            <td class="py-4 px-4 text-right">
+              <div class="font-medium text-[color:var(--accent-amber)]">
+                {{ format_currency(project.pending_amount) }}
+              </div>
+            </td>
+            <td class="py-4 px-4 text-center">
+              <span
+                class="px-3 py-1 rounded-full text-xs font-medium {% if project.avg_processing_days <= 30 %}bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] {% elif project.avg_processing_days <= 45 %}bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)] {% else %}bg-[color:var(--state-danger-bg)] text-[color:var(--accent-red)]{% endif %}">
+                {{ project.avg_processing_days }}d
+              </span>
+            </td>
+            <td class="py-4 px-4 text-right">
+              <div class="font-medium text-[color:var(--accent-red)]">
+                {{ format_currency(project.total_costs or 0) }}
+              </div>
+            </td>
+            <td class="py-4 px-4 text-center">
+              {% set margin = project.profit_margin or 0 %}
+              <span
+                class="px-3 py-1 rounded-full text-xs font-bold {% if margin >= 20 %}bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] {% elif margin >= 10 %}bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)] {% elif margin >= 0 %}bg-[color:var(--state-info-bg)] text-[color:var(--accent-blue)] {% else %}bg-[color:var(--state-danger-bg)] text-[color:var(--accent-red)]{% endif %}">
+                {{ margin }}%
+              </span>
+            </td>
+            <td class="py-4 px-4 text-center">
+              <a
+                href="{{ url_for('project_manager.project_detail', manager_name=manager_name, project_name=project.project_name) }}"
+                class="inline-flex items-center px-3 py-1 bg-[color:var(--accent-blue)] text-white rounded-lg hover:bg-[color:var(--accent-blue-dark)] transition-colors text-xs font-medium"
+                title="Ver detalles del proyecto">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3 w-3 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Ver
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CTA Button: Ver Desglose de Costos -->
+  <div class="mt-8 text-center">
+    <a
+      href="#"
+      onclick="alert('Funcionalidad de desglose de costos próximamente disponible'); return false;"
+      class="cta-button inline-flex items-center px-8 py-4 bg-gradient-to-r from-[color:var(--accent-purple)] to-[color:var(--accent-blue)] text-white rounded-2xl hover:from-[color:var(--accent-purple-dark)] hover:to-[color:var(--accent-blue-dark)] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-semibold text-lg">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6 mr-3"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      Ver Desglose Detallado de Costos
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 ml-2"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 7l5 5-5 5M6 12h12" />
+      </svg>
+    </a>
+  </div>
+</div>
+
+<!-- JP Dashboard Utilities -->
+<script src="{{ url_for('static', filename='js/jp-dashboard-utils.js') }}"></script>
+<!-- JP Dashboard JavaScript -->
+<script src="{{ url_for('static', filename='js/jp-dashboard.js') }}"></script>
+
+<!-- Initialize page animations -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Trigger entrance animations
+    setTimeout(() => {
+      const animatedElements = document.querySelectorAll(".animate-fade-in-up");
+      animatedElements.forEach((el, index) => {
+        setTimeout(() => {
+          el.style.opacity = "1";
+        }, index * 100);
+      });
+    }, 100);
+
+    // Add page entrance class to body
+    document.body.classList.add("page-entrance");
+
+    // Initialize intersection observer for scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px",
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = "1";
+          entry.target.style.transform = "translateY(0)";
+        }
+      });
+    }, observerOptions);
+
+    // Observe elements for scroll animations
+    const scrollElements = document.querySelectorAll(
+      ".kpi-card, .project-status-circle, .project-table-row"
+    );
+    scrollElements.forEach((el, index) => {
+      el.style.opacity = "0";
+      el.style.transform = "translateY(20px)";
+      el.style.transition = "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)";
+      el.style.transitionDelay = `${index * 50}ms`;
+      observer.observe(el);
+    });
+  });
+</script>
+
+{% endblock %}

@@ -1401,7 +1401,9 @@ function generarDistribucionHTML(columns) {
 }
 
 function formatCurrency_Kanban(amount) {
-    return `$${amount.toLocaleString("es-CL")}`;
+    const formatted = amount.toLocaleString("es-CL");
+    // Reemplazar comas con puntos para separador de miles
+    return `$${formatted.replace(/,/g, '.')}`;
 }
 /**
  * Actualiza todos los contadores y métricas de manera centralizada
@@ -2161,7 +2163,9 @@ function initKanbanBoard() {
 											estadoDestino,
 											item,
 											col,
-											toList
+											toList,
+											false,
+											estadoOrigen
 										);
 									} else {
 										// Cancelado, devolver la tarjeta a su posición original
@@ -2194,7 +2198,9 @@ function initKanbanBoard() {
 											estadoDestino,
 											item,
 											col,
-											toList
+											toList,
+											false,
+											estadoOrigen
 										);
 									} else {
 										// Cancelado, devolver la tarjeta a su posición original
@@ -2230,7 +2236,8 @@ function initKanbanBoard() {
 						item,
 						col,
 						toList,
-						conformidadEnviada
+						conformidadEnviada,
+						estadoOrigen
 					);
 				}
 			},
@@ -2484,7 +2491,9 @@ function actualizarEstadoEDP(
 	item,
 	col,
 	toList,
-	conformidadEnviada = false
+	conformidadEnviada = false,
+	estadoOrigen = null,
+	proyecto
 ) {
         const loadingOverlay = document.createElement("div");
         loadingOverlay.className =
@@ -2525,7 +2534,9 @@ function actualizarEstadoEDP(
 		body: JSON.stringify({
 			edp_id: edpId,
 			nuevo_estado: estadoDestino,
+			estado_anterior: estadoOrigen,
 			conformidad_enviada: conformidadEnviada,
+			proyecto: proyecto,
 		}),
 	})
 		.then((response) => {

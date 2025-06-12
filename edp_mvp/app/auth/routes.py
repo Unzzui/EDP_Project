@@ -3,8 +3,10 @@ from flask_login import login_user, logout_user, login_required, current_user
 from ..extensions import login_manager
 from .forms import LoginForm
 from ..models.user import User
+from ..utils.auth_utils import get_redirect_for_role
 
 auth_bp = Blueprint("auth", __name__)
+
 
 # Esta función es requerida por Flask-Login
 @login_manager.user_loader
@@ -15,15 +17,10 @@ def load_user(user_id):
 def login():
     # Si el usuario ya está autenticado, redirigir al dashboard
     if current_user.is_authenticated:
-        # Redirect based on user role
+        # Redirect based on user role using our centralized function
         user_role = session.get('user_role', 'controller')
-        if user_role == 'admin':
-            return redirect(url_for("admin.usuarios"))
-        elif user_role == 'manager':
-            return redirect(url_for("manager_controller.dashboard"))
-        else:
-            return redirect(url_for("controller_controller.dashboard"))
-    
+        return redirect(get_redirect_for_role(user_role))
+
     # Crear el formulario
     form = LoginForm()
     
@@ -49,12 +46,8 @@ def login():
             # Redirigir según el rol del usuario
             next_page = request.args.get('next')
             if not next_page or not next_page.startswith('/'):
-                if user.rol == 'admin':
-                    next_page = url_for('admin.usuarios')
-                elif user.rol == 'manager':
-                    next_page = url_for('manager_controller.dashboard')
-                else:
-                    next_page = url_for('controller_controller.dashboard')
+                # Use centralized redirect function
+                next_page = get_redirect_for_role(user.rol)
             
             return redirect(next_page)
         else:
@@ -64,14 +57,14 @@ def login():
     return render_template("login.html", form=form)
 
 @auth_bp.route("/logout")
-@login_required  # ← Agregado decorator
+@login_required
 def logout():
-    logout_user()  # ← Agregada la función de logout
+    logout_user()
     flash('Has cerrado sesión exitosamente.', 'info')
-    return redirect(url_for('auth.login'))  # ← Redirigir al login
+    return redirect(url_for('auth.login'))
 
 @auth_bp.route("/change-password")
-@login_required  # ← Agregado decorator
+@login_required
 def change_password():
     # This is a placeholder - implementation can be added later
-    return render_template("change_password.html")  # ← Template específico
+    return render_template("change_password.html")

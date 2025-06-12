@@ -6,10 +6,10 @@ Este script configura la hoja de usuarios en Google Sheets si no existe
 
 import os
 import sys
+import subprocess
 
 # Add the project root to Python path
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'instance')))
 from edp_mvp.app.utils.init_users_db import init_users_db
 
 def main():
@@ -33,6 +33,17 @@ def main():
             print("   - ⚠️  Cambie esta contraseña después del primer login")
             print("\n🔗 Acceda al sistema en: http://localhost:5000/login")
             print("\n📊 Para gestionar usuarios vaya a: http://localhost:5000/admin/usuarios")
+            # Ejecutar migración automáticamente
+            print("\n2. Ejecutando migración para agregar jefe_asignado...")
+            migrate_path = os.path.join(os.path.dirname(__file__), 'edp_mvp', 'migrate_add_jefe_asignado.py')
+            result = subprocess.run(['python', migrate_path], capture_output=True, text=True)
+            print(result.stdout)
+            if result.returncode != 0:
+                print("❌ Error en la migración:")
+                print(result.stderr)
+                return 1
+            else:
+                print("✅ Migración ejecutada correctamente.")
         else:
             print("\n❌ Error durante la inicialización")
             print("   Verifique los permisos de escritura en el directorio")

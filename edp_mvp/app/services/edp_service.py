@@ -112,11 +112,11 @@ class EDPService(BaseService):
                 message=f"Error retrieving EDP: {str(e)}"
             )
     
-    def update_edp(self, edp_id: str, edp_data: Dict[str, Any], user: str = "Sistema") -> ServiceResponse:
+    def update_edp(self, edp_id: str, edp_data: Dict[str, Any]) -> ServiceResponse:
         """Update an existing EDP using the repository."""
         try:
             # Use the repository's update method
-            update_response = self.edp_repository.update_by_edp_id(edp_id, edp_data, user)
+            update_response = self.edp_repository.update_by_edp_id(edp_id, edp_data)
             
             if update_response.get("success", False):
                 return ServiceResponse(

@@ -2,7 +2,8 @@
 block content %}
 <div class="container mx-auto px-4 py-8">
   <!-- Header -->
-  <div class="flex justify-between items-center mb-8">
+  <div
+    class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-8 space-y-4 lg:space-y-0">
     <div>
       <h1 class="text-3xl font-bold text-[color:var(--text-primary)] mb-2">
         Gestión de Usuarios
@@ -11,23 +12,227 @@ block content %}
         Administrar usuarios del sistema EDP
       </p>
     </div>
-    <a
-      href="{{ url_for('admin.nuevo_usuario') }}"
-      class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-      <svg
-        class="w-4 h-4 mr-2"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-      </svg>
-      Nuevo Usuario
-    </a>
+    <div
+      class="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+      <!-- Search and Filter Controls -->
+      <div
+        class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mb-4 sm:mb-0">
+        <!-- Search Input -->
+        <div class="relative">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Buscar usuarios..."
+            class="w-full sm:w-64 pl-10 pr-4 py-2 border border-[color:var(--border-color)] bg-[color:var(--bg-card)] text-[color:var(--text-primary)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-[color:var(--text-secondary)]"
+            onkeyup="filterUsers()" />
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg
+              class="h-4 w-4 text-[color:var(--text-secondary)]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Role Filter -->
+        <select
+          id="roleFilter"
+          onchange="filterUsers()"
+          class="px-3 py-2 border border-[color:var(--border-color)] bg-[color:var(--bg-card)] text-[color:var(--text-primary)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <option value="">Todos los roles</option>
+          <option value="admin">Administrador</option>
+          <option value="manager">Manager</option>
+          <option value="controller">Controller</option>
+          <option value="jefe_proyecto">Jefe de Proyecto</option>
+          <option value="miembro_equipo_proyecto">
+            Miembro Equipo Proyecto
+          </option>
+        </select>
+      </div>
+
+      <!-- Toggle for showing all users -->
+      <div class="flex items-center">
+        <label class="inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            {%
+            if
+            show_all
+            %}checked{%
+            endif
+            %}
+            onchange="toggleShowAll(this)"
+            class="sr-only peer" />
+          <div
+            class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          <span
+            class="ml-3 text-sm font-medium text-[color:var(--text-secondary)]">
+            Mostrar inactivos
+          </span>
+        </label>
+      </div>
+
+      <!-- Action Buttons -->
+      <div
+        class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+        <button
+          onclick="exportUsers()"
+          class="inline-flex items-center px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm text-sm font-medium text-[color:var(--text-primary)] bg-[color:var(--bg-card)] hover:bg-[color:var(--bg-subtle)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <svg
+            class="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Exportar
+        </button>
+
+        <a
+          href="{{ url_for('admin.nuevo_usuario') }}"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+          <svg
+            class="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Nuevo Usuario
+        </a>
+      </div>
+    </div>
   </div>
+
+  <!-- Quick Stats Bar -->
+  {% if users %}
+  <div class="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div
+      class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-lg p-3 shadow-sm">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div
+            class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+            <svg
+              class="w-4 h-4 text-blue-600 dark:text-blue-400"
+              fill="currentColor"
+              viewBox="0 0 20 20">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-3">
+          <p
+            class="text-xs font-medium text-blue-800 dark:text-blue-300 uppercase">
+            Activos
+          </p>
+          <p
+            class="text-lg font-semibold text-blue-900 dark:text-blue-200"
+            id="activeCount">
+            {{ users|selectattr("activo", "equalto", true)|list|length }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-lg p-3 shadow-sm">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div
+            class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+            <svg
+              class="w-4 h-4 text-green-600 dark:text-green-400"
+              fill="currentColor"
+              viewBox="0 0 20 20">
+              <path
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-3">
+          <p
+            class="text-xs font-medium text-green-800 dark:text-green-300 uppercase">
+            Admins
+          </p>
+          <p class="text-lg font-semibold text-green-900 dark:text-green-200">
+            {{ users|selectattr("rol", "equalto", "admin")|list|length }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-lg p-3 shadow-sm">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div
+            class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+            <svg
+              class="w-4 h-4 text-purple-600 dark:text-purple-400"
+              fill="currentColor"
+              viewBox="0 0 20 20">
+              <path
+                d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-3">
+          <p
+            class="text-xs font-medium text-purple-800 dark:text-purple-300 uppercase">
+            Managers
+          </p>
+          <p class="text-lg font-semibold text-purple-900 dark:text-purple-200">
+            {{ users|selectattr("rol", "equalto", "manager")|list|length }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-lg p-3 shadow-sm">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div
+            class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+            <svg
+              class="w-4 h-4 text-yellow-600 dark:text-yellow-400"
+              fill="currentColor"
+              viewBox="0 0 20 20">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-3">
+          <p
+            class="text-xs font-medium text-yellow-800 dark:text-yellow-300 uppercase">
+            Total
+          </p>
+          <p
+            class="text-lg font-semibold text-yellow-900 dark:text-yellow-200"
+            id="totalCount">
+            {{ users|length }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Flash Messages -->
   {% with messages = get_flashed_messages(with_categories=true) %} {% if
@@ -63,24 +268,55 @@ block content %}
   <div
     class="bg-[color:var(--bg-card)] rounded-lg shadow-md border border-gray-200 overflow-hidden">
     {% if users %}
+    <!-- Table Header with Sort Options -->
+    <div
+      class="px-6 py-4 bg-[color:var(--bg-subtle)] border-b border-[color:var(--border-color)]">
+      <div
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+        <h3 class="text-lg font-medium text-[color:var(--text-primary)]">
+          Lista de Usuarios
+        </h3>
+        <div class="flex items-center space-x-2 text-sm">
+          <span class="text-[color:var(--text-secondary)]">Ordenar por:</span>
+          <select
+            id="sortBy"
+            onchange="sortUsers()"
+            class="border border-[color:var(--border-color)] bg-[color:var(--bg-card)] text-[color:var(--text-primary)] rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="nombre">Nombre</option>
+            <option value="rol">Rol</option>
+            <option value="estado">Estado</option>
+            <option value="id">ID</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+      <table class="min-w-full divide-y divide-gray-200" id="usersTable">
+        <thead class="bg-[color:var(--bg-subtle)]">
           <tr>
             <th
               scope="col"
               class="px-6 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">
-              ID
+              <div class="flex items-center space-x-1">
+                <span>ID</span>
+                <svg
+                  class="w-4 h-4 text-[color:var(--text-secondary)]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                </svg>
+              </div>
             </th>
             <th
               scope="col"
               class="px-6 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">
-              Nombre Completo
-            </th>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">
-              Usuario
+              Información del Usuario
             </th>
             <th
               scope="col"
@@ -90,34 +326,51 @@ block content %}
             <th
               scope="col"
               class="px-6 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">
+              Jefe Asignado
+            </th>
+            <th
+              scope="col"
+              class="px-6 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">
               Estado
+            </th>
+            <th
+              scope="col"
+              class="px-6 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">
+              Último Acceso
             </th>
             <th scope="col" class="relative px-6 py-3">
               <span class="sr-only">Acciones</span>
             </th>
           </tr>
         </thead>
-        <tbody class="bg-[color:var(--bg-card)] divide-y divide-gray-200">
+        <tbody
+          class="bg-[color:var(--bg-card)] divide-y divide-gray-200"
+          id="usersTableBody">
           {% for user in users %}
-          <tr class="hover:bg-gray-50">
+          <tr
+            class="hover:bg-[color:var(--bg-subtle)] transition-colors duration-150 user-row border-b border-[color:var(--border-color)]"
+            data-user-id="{{ user.id }}"
+            data-user-name="{{ user.nombre_completo|lower }}"
+            data-user-role="{{ user.rol }}"
+            data-user-status="{{ 'activo' if user.activo else 'inactivo' }}">
             <td
               class="px-6 py-4 whitespace-nowrap text-sm font-medium text-[color:var(--text-primary)]">
-              {{ user.id }}
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-2 w-2 mr-2">
+                  <div
+                    class="h-2 w-2 rounded-full {% if user.activo %}bg-green-400{% else %}bg-red-400{% endif %}"></div>
+                </div>
+                #{{ user.id }}
+              </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center">
-                <div class="flex-shrink-0 h-8 w-8">
+                <div class="flex-shrink-0 h-10 w-10">
                   <div
-                    class="h-8 w-8 rounded-full bg-[color:var(--bg-subtle)] flex items-center justify-center">
-                    <svg
-                      class="h-4 w-4 text-[color:var(--text-secondary)]"
-                      fill="currentColor"
-                      viewBox="0 0 20 20">
-                      <path
-                        fill-rule="evenodd"
-                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                        clip-rule="evenodd"></path>
-                    </svg>
+                    class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                    {{ user.nombre_completo.split()[0][0] }}{{
+                    user.nombre_completo.split()[1][0] if
+                    user.nombre_completo.split()|length > 1 else '' }}
                   </div>
                 </div>
                 <div class="ml-4">
@@ -125,41 +378,178 @@ block content %}
                     class="text-sm font-medium text-[color:var(--text-primary)]">
                     {{ user.nombre_completo }}
                   </div>
+                  <div class="text-sm text-[color:var(--text-secondary)]">
+                    @{{ user.username }}
+                  </div>
                 </div>
               </div>
             </td>
-            <td
-              class="px-6 py-4 whitespace-nowrap text-sm text-[color:var(--text-primary)]">
-              {{ user.username }}
-            </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span
-                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {% if user.rol == 'admin' %}bg-red-100 text-red-800 {% elif user.rol == 'manager' %}bg-blue-100 text-blue-800 {% elif user.rol == 'controller' %}bg-green-100 text-green-800 {% elif user.rol == 'jefe_proyecto' %}bg-yellow-100 text-yellow-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.rol == 'admin' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 {% elif user.rol == 'manager' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 {% elif user.rol == 'controller' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 {% elif user.rol == 'jefe_proyecto' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 {% elif user.rol == 'miembro_equipo_proyecto' %}bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 {% else %}bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300{% endif %}">
+                <svg
+                  class="w-3 h-3 mr-1"
+                  fill="currentColor"
+                  viewBox="0 0 20 20">
+                  {% if user.rol == 'admin' %}
+                  <path
+                    fill-rule="evenodd"
+                    d="M9.504 1.132a1 1 0 01.992 0l1.75 1a1 1 0 11-.992 1.736L10 3.152l-1.254.716a1 1 0 11-.992-1.736l1.75-1zM5.618 4.504a1 1 0 01-.372 1.364L5.016 6l.23.132a1 1 0 11-.992 1.736L3 7.723V8a1 1 0 01-2 0V6a.996.996 0 01.52-.878l1.734-.99a1 1 0 011.364.372zm8.764 0a1 1 0 011.364-.372l1.734.99A.996.996 0 0118 6v2a1 1 0 11-2 0v-.277l-1.254.145a1 1 0 11-.992-1.736L14.984 6l-.23-.132a1 1 0 01-.372-1.364zm-7 4a1 1 0 011.364-.372L10 8.848l1.254-.716a1 1 0 11.992 1.736L11 10.723V12a1 1 0 11-2 0v-1.277l-1.246-.855a1 1 0 01-.372-1.364zM3 11a1 1 0 011 1v1.277l1.254.716a1 1 0 01-.992 1.736l-1.75-1A1 1 0 012 14v-2a1 1 0 011-1zm14 0a1 1 0 011 1v2a1 1 0 01-.504.868l-1.75 1a1 1 0 11-.992-1.736L16 13.277V12a1 1 0 011-1zm-9.618 5.504a1 1 0 011.364-.372l.254.145V16a1 1 0 112 0v.277l.254-.145a1 1 0 11.992 1.736l-1.735.992a.995.995 0 01-1.022 0l-1.735-.992a1 1 0 01-.372-1.364z"
+                    clip-rule="evenodd"></path>
+                  {% elif user.rol == 'manager' %}
+                  <path
+                    d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+                  {% else %}
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                    clip-rule="evenodd"></path>
+                  {% endif %}
+                </svg>
                 {% if user.rol == 'admin' %}Administrador {% elif user.rol ==
                 'manager' %}Manager {% elif user.rol == 'controller'
                 %}Controller {% elif user.rol == 'jefe_proyecto' %}Jefe de
-                Proyecto {% else %}{{ user.rol|title }}{% endif %}
+                Proyecto {% elif user.rol == 'miembro_equipo_proyecto' %}Miembro
+                Equipo Proyecto {% else %}{{ user.rol|title }}{% endif %}
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
+              {% if user.jefe_asignado %}
+              <span class="text-sm text-[color:var(--text-primary)]">
+                {{ user.jefe_asignado }}
+              </span>
+              {% else %}
+              <span class="text-sm text-[color:var(--text-tertiary)]"> - </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
               <span
-                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                Activo
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.activo %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300{% else %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300{% endif %}">
+                <div
+                  class="w-1.5 h-1.5 rounded-full mr-1.5 {% if user.activo %}bg-green-400{% else %}bg-red-400{% endif %}"></div>
+                {% if user.activo %}Activo{% else %}Inactivo{% endif %}
               </span>
             </td>
             <td
+              class="px-6 py-4 whitespace-nowrap text-sm text-[color:var(--text-secondary)]">
+              <div class="flex items-center">
+                <svg
+                  class="w-4 h-4 mr-2 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span
+                  >{{ user.ultimo_acceso if user.ultimo_acceso else 'Nunca'
+                  }}</span
+                >
+              </div>
+            </td>
+            <td
               class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <div class="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  class="text-blue-600 hover:text-blue-900 text-sm font-medium">
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  class="text-red-600 hover:text-red-900 text-sm font-medium">
-                  Desactivar
-                </button>
+              <div class="flex justify-end items-center space-x-2">
+                <!-- Quick Actions Dropdown -->
+                <div class="relative inline-block text-left">
+                  <button
+                    type="button"
+                    onclick="toggleDropdown({{ user.id }})"
+                    class="p-2 rounded-full hover:bg-[color:var(--bg-subtle)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                    id="user-menu-{{ user.id }}">
+                    <svg
+                      class="w-4 h-4 text-[color:var(--text-secondary)]"
+                      fill="currentColor"
+                      viewBox="0 0 20 20">
+                      <path
+                        d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                    </svg>
+                  </button>
+
+                  <div
+                    id="dropdown-{{ user.id }}"
+                    class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[color:var(--bg-card)] ring-1 ring-[color:var(--border-color)] z-10">
+                    <div class="py-1">
+                      <a
+                        href="{{ url_for('admin.editar_usuario', user_id=user.id) }}"
+                        class="flex items-center px-4 py-2 text-sm text-[color:var(--text-primary)] hover:bg-[color:var(--bg-subtle)]">
+                        <svg
+                          class="w-4 h-4 mr-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        Editar Usuario
+                      </a>
+
+                      <button
+                        onclick="resetPassword({{ user.id }}, '{{ user.nombre_completo }}')"
+                        class="flex items-center w-full px-4 py-2 text-sm text-[color:var(--text-primary)] hover:bg-[color:var(--bg-subtle)]">
+                        <svg
+                          class="w-4 h-4 mr-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                        </svg>
+                        Resetear Contraseña
+                      </button>
+
+                      <div
+                        class="border-t border-[color:var(--border-color)]"></div>
+
+                      {% if user.activo %}
+                      <button
+                        type="button"
+                        onclick="desactivarUsuario({{ user.id }}, '{{ user.nombre_completo }}')"
+                        class="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20">
+                        <svg
+                          class="w-4 h-4 mr-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"></path>
+                        </svg>
+                        Desactivar
+                      </button>
+                      {% else %}
+                      <button
+                        type="button"
+                        onclick="activarUsuario({{ user.id }}, '{{ user.nombre_completo }}')"
+                        class="flex items-center w-full px-4 py-2 text-sm text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20">
+                        <svg
+                          class="w-4 h-4 mr-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Activar
+                      </button>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
               </div>
             </td>
           </tr>
@@ -169,28 +559,34 @@ block content %}
     </div>
     {% else %}
     <!-- Empty State -->
-    <div class="text-center py-12">
-      <svg
-        class="mx-auto h-12 w-12 text-gray-400"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-      </svg>
-      <h3 class="mt-2 text-sm font-medium text-gray-900">No hay usuarios</h3>
-      <p class="mt-1 text-sm text-gray-500">
-        Comience creando el primer usuario del sistema.
-      </p>
-      <div class="mt-6">
+    <div class="text-center py-16">
+      <div class="max-w-sm mx-auto">
+        <div
+          class="bg-[color:var(--bg-subtle)] rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+          <svg
+            class="w-10 h-10 text-[color:var(--text-secondary)]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-[color:var(--text-primary)] mb-2">
+          No hay usuarios registrados
+        </h3>
+        <p class="text-[color:var(--text-secondary)] mb-6">
+          Comience creando el primer usuario del sistema para poder gestionar el
+          acceso.
+        </p>
         <a
           href="{{ url_for('admin.nuevo_usuario') }}"
-          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150">
           <svg
-            class="w-4 h-4 mr-2"
+            class="w-5 h-5 mr-2"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24">
@@ -207,153 +603,619 @@ block content %}
     {% endif %}
   </div>
 
-  <!-- Summary Stats -->
-  {% if users %}
-  <div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+  <!-- No Results Message -->
+  <div id="noResults" class="hidden text-center py-8">
     <div
-      class="bg-[color:var(--bg-card)] p-4 rounded-lg shadow border border-gray-200">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <svg
-            class="h-6 w-6 text-blue-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm font-medium text-[color:var(--text-secondary)]">
-            Total Usuarios
-          </p>
-          <p class="text-lg font-semibold text-[color:var(--text-primary)]">
-            {{ stats.total if stats else users|length }}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div
-      class="bg-[color:var(--bg-card)] p-4 rounded-lg shadow border border-gray-200">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <svg
-            class="h-6 w-6 text-red-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm font-medium text-[color:var(--text-secondary)]">
-            Administradores
-          </p>
-          <p class="text-lg font-semibold text-[color:var(--text-primary)]">
-            {{ stats.admin if stats else users|selectattr("rol", "equalto",
-            "admin")|list|length }}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div
-      class="bg-[color:var(--bg-card)] p-4 rounded-lg shadow border border-gray-200">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <svg
-            class="h-6 w-6 text-green-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm font-medium text-[color:var(--text-secondary)]">
-            Controllers
-          </p>
-          <p class="text-lg font-semibold text-[color:var(--text-primary)]">
-            {{ stats.controller if stats else users|selectattr("rol", "equalto",
-            "controller")|list|length }}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div
-      class="bg-[color:var(--bg-card)] p-4 rounded-lg shadow border border-gray-200">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <svg
-            class="h-6 w-6 text-yellow-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"></path>
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm font-medium text-[color:var(--text-secondary)]">
-            Managers
-          </p>
-          <p class="text-lg font-semibold text-[color:var(--text-primary)]">
-            {{ stats.manager if stats else users|selectattr("rol", "equalto",
-            "manager")|list|length }}
-          </p>
-        </div>
-      </div>
+      class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+      <svg
+        class="w-12 h-12 text-yellow-400 mx-auto mb-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <h3 class="text-lg font-medium text-yellow-900 dark:text-yellow-200 mb-2">
+        No se encontraron usuarios
+      </h3>
+      <p class="text-yellow-700 dark:text-yellow-300">
+        Intenta ajustar los filtros de búsqueda o crear un nuevo usuario.
+      </p>
     </div>
   </div>
-  {% endif %}
 </div>
 
 <style>
-  /* Custom styles for better table appearance */
+  /* Enhanced styles for better user management interface */
   .alert {
     padding: 12px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     border: 1px solid transparent;
+    margin-bottom: 16px;
   }
 
   .alert-success {
-    color: #065f46;
-    background-color: #d1fae5;
-    border-color: #a7f3d0;
+    color: var(--success);
+    background-color: var(--success-bg);
+    border-color: var(--success);
   }
 
   .alert-danger {
-    color: #991b1b;
-    background-color: #fee2e2;
-    border-color: #fecaca;
+    color: var(--danger);
+    background-color: var(--danger-bg);
+    border-color: var(--danger);
   }
 
-  /* Hover effects for table rows */
-  tr:hover {
-    background-color: rgba(249, 250, 251, 0.5);
+  /* Enhanced table styling */
+  .user-row {
+    transition: all 0.2s ease-in-out;
   }
 
-  /* Button hover effects */
+  .user-row:hover {
+    background-color: var(--bg-subtle);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Button and link enhancements */
   button:hover,
   a:hover {
     transform: translateY(-1px);
     transition: all 0.2s ease-in-out;
   }
+
+  /* Loading states */
+  .loading {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  /* Modal styling */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: var(--shadow-lg);
+    transform: scale(0.95);
+    animation: modalShow 0.2s ease-out forwards;
+  }
+
+  @keyframes modalShow {
+    to {
+      transform: scale(1);
+    }
+  }
+
+  /* Dropdown menu styling */
+  .dropdown-menu {
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.1s ease-out;
+  }
+
+  .dropdown-menu.show {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  /* Search and filter enhancements */
+  .search-highlight {
+    background-color: var(--accent-amber-subtle);
+    color: var(--text-primary);
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+
+  /* Avatar gradient variations */
+  .avatar-gradient-1 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  .avatar-gradient-2 {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+  .avatar-gradient-3 {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+  .avatar-gradient-4 {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  }
+  .avatar-gradient-5 {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  }
+
+  /* Status indicators */
+  .status-online::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .hidden {
+    display: none;
+  }
 </style>
+
+<!-- Modal de confirmación -->
+<div id="confirmModal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="mb-4">
+      <h3 class="text-lg font-medium text-gray-900 mb-2" id="modalTitle">
+        Confirmar acción
+      </h3>
+      <p class="text-sm text-gray-500" id="modalMessage">
+        ¿Estás seguro de que quieres realizar esta acción?
+      </p>
+    </div>
+    <div class="flex justify-end space-x-3">
+      <button
+        type="button"
+        onclick="closeModal()"
+        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        id="confirmButton"
+        class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors">
+        Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Enhanced User Management System
+  let allUsers = [];
+  let filteredUsers = [];
+
+  // Initialize the page
+  document.addEventListener("DOMContentLoaded", function () {
+    initializeUserManagement();
+    setupEventListeners();
+  });
+
+  function initializeUserManagement() {
+    // Store original user data for filtering
+    const userRows = document.querySelectorAll(".user-row");
+    allUsers = Array.from(userRows).map((row) => ({
+      element: row,
+      id: row.dataset.userId,
+      name: row.dataset.userName,
+      role: row.dataset.userRole,
+      status: row.dataset.userStatus,
+    }));
+    filteredUsers = [...allUsers];
+  }
+
+  function setupEventListeners() {
+    // Close dropdowns when clicking outside
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest(".relative")) {
+        closeAllDropdowns();
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        closeModal();
+      }
+    });
+
+    // Real-time search as user types
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+      searchInput.addEventListener("input", debounce(filterUsers, 300));
+    }
+  }
+
+  // Enhanced filtering system
+  function filterUsers() {
+    const searchTerm =
+      document.getElementById("searchInput")?.value.toLowerCase() || "";
+    const roleFilter = document.getElementById("roleFilter")?.value || "";
+
+    filteredUsers = allUsers.filter((user) => {
+      const matchesSearch =
+        user.name.includes(searchTerm) || user.id.includes(searchTerm);
+      const matchesRole = !roleFilter || user.role === roleFilter;
+      return matchesSearch && matchesRole;
+    });
+
+    displayFilteredUsers();
+    updateCounters();
+  }
+
+  function displayFilteredUsers() {
+    const tbody = document.getElementById("usersTableBody");
+    const noResults = document.getElementById("noResults");
+
+    // Hide all rows first
+    allUsers.forEach((user) => (user.element.style.display = "none"));
+
+    if (filteredUsers.length === 0) {
+      noResults?.classList.remove("hidden");
+    } else {
+      noResults?.classList.add("hidden");
+      filteredUsers.forEach((user) => (user.element.style.display = ""));
+    }
+  }
+
+  function updateCounters() {
+    const activeCount = document.getElementById("activeCount");
+    const totalCount = document.getElementById("totalCount");
+
+    if (activeCount) {
+      const activeUsers = filteredUsers.filter(
+        (user) => user.status === "activo"
+      ).length;
+      activeCount.textContent = activeUsers;
+    }
+
+    if (totalCount) {
+      totalCount.textContent = filteredUsers.length;
+    }
+  }
+
+  // Sorting functionality
+  function sortUsers() {
+    const sortBy = document.getElementById("sortBy").value;
+
+    filteredUsers.sort((a, b) => {
+      switch (sortBy) {
+        case "nombre":
+          return a.name.localeCompare(b.name);
+        case "rol":
+          return a.role.localeCompare(b.role);
+        case "estado":
+          return a.status.localeCompare(b.status);
+        case "id":
+          return parseInt(a.id) - parseInt(b.id);
+        default:
+          return 0;
+      }
+    });
+
+    // Reorder DOM elements
+    const tbody = document.getElementById("usersTableBody");
+    filteredUsers.forEach((user) => {
+      tbody.appendChild(user.element);
+    });
+  }
+
+  // Dropdown management
+  function toggleDropdown(userId) {
+    closeAllDropdowns();
+    const dropdown = document.getElementById(`dropdown-${userId}`);
+    if (dropdown) {
+      dropdown.classList.remove("hidden");
+      dropdown.classList.add("show");
+    }
+  }
+
+  function closeAllDropdowns() {
+    document.querySelectorAll('[id^="dropdown-"]').forEach((dropdown) => {
+      dropdown.classList.add("hidden");
+      dropdown.classList.remove("show");
+    });
+  }
+
+  // Enhanced modal management
+  function showModal(
+    title,
+    message,
+    onConfirm,
+    confirmButtonText = "Confirmar",
+    confirmButtonClass = "bg-red-600 hover:bg-red-700"
+  ) {
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalMessage").textContent = message;
+
+    const confirmButton = document.getElementById("confirmButton");
+    confirmButton.textContent = confirmButtonText;
+    confirmButton.className = `px-4 py-2 text-sm font-medium text-white rounded-md transition-colors ${confirmButtonClass}`;
+
+    confirmButton.onclick = () => {
+      onConfirm();
+      closeModal();
+    };
+
+    document.getElementById("confirmModal").classList.remove("hidden");
+    document.body.style.overflow = "hidden"; // Prevent background scroll
+  }
+
+  function closeModal() {
+    document.getElementById("confirmModal").classList.add("hidden");
+    document.body.style.overflow = ""; // Restore scroll
+  }
+
+  // User action functions
+  function desactivarUsuario(userId, userName) {
+    showModal(
+      "Desactivar Usuario",
+      `¿Estás seguro de que quieres desactivar al usuario "${userName}"? Esta acción impedirá que el usuario acceda al sistema.`,
+      () => performUserAction(userId, "desactivar"),
+      "Desactivar",
+      "bg-red-600 hover:bg-red-700"
+    );
+  }
+
+  function activarUsuario(userId, userName) {
+    showModal(
+      "Activar Usuario",
+      `¿Estás seguro de que quieres activar al usuario "${userName}"? Esta acción permitirá que el usuario acceda al sistema.`,
+      () => performUserAction(userId, "activar"),
+      "Activar",
+      "bg-green-600 hover:bg-green-700"
+    );
+  }
+
+  function resetPassword(userId, userName) {
+    showModal(
+      "Resetear Contraseña",
+      `¿Estás seguro de que quieres resetear la contraseña del usuario "${userName}"? Se generará una nueva contraseña temporal.`,
+      () => performPasswordReset(userId),
+      "Resetear",
+      "bg-yellow-600 hover:bg-yellow-700"
+    );
+  }
+
+  // Enhanced user action with better UX
+  function performUserAction(userId, action) {
+    const button = document.querySelector(
+      `[onclick*="${userId}"][onclick*="${action}"]`
+    );
+    const originalContent = button?.innerHTML;
+
+    // Show loading state
+    if (button) {
+      button.innerHTML =
+        '<svg class="w-4 h-4 animate-spin mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+      button.disabled = true;
+    }
+
+    fetch(`{{ url_for('admin.usuarios') }}/${userId}/${action}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showFlashMessage(data.message, "success");
+          // Update user status in the UI immediately
+          updateUserStatusInUI(userId, action);
+
+          // Reload page after a short delay
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          showFlashMessage(data.message, "error");
+          restoreButton(button, originalContent);
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        showFlashMessage("Error al procesar la solicitud", "error");
+        restoreButton(button, originalContent);
+      });
+  }
+
+  function performPasswordReset(userId) {
+    fetch(`{{ url_for('admin.usuarios') }}/${userId}/reset-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showFlashMessage(
+            `Contraseña reseteada. Nueva contraseña: ${data.new_password}`,
+            "success"
+          );
+        } else {
+          showFlashMessage(data.message, "error");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        showFlashMessage("Error al resetear la contraseña", "error");
+      });
+  }
+
+  function restoreButton(button, originalContent) {
+    if (button && originalContent) {
+      button.innerHTML = originalContent;
+      button.disabled = false;
+    }
+  }
+
+  function updateUserStatusInUI(userId, action) {
+    const userRow = document.querySelector(`[data-user-id="${userId}"]`);
+    if (userRow) {
+      const statusBadge = userRow.querySelector(
+        'span[class*="bg-green-100"], span[class*="bg-red-100"]'
+      );
+      if (statusBadge) {
+        if (action === "activar") {
+          statusBadge.className = statusBadge.className.replace(
+            "bg-red-100 text-red-800",
+            "bg-green-100 text-green-800"
+          );
+          statusBadge.querySelector("div").className = statusBadge
+            .querySelector("div")
+            .className.replace("bg-red-400", "bg-green-400");
+          statusBadge.lastChild.textContent = "Activo";
+        } else {
+          statusBadge.className = statusBadge.className.replace(
+            "bg-green-100 text-green-800",
+            "bg-red-100 text-red-800"
+          );
+          statusBadge.querySelector("div").className = statusBadge
+            .querySelector("div")
+            .className.replace("bg-green-400", "bg-red-400");
+          statusBadge.lastChild.textContent = "Inactivo";
+        }
+      }
+    }
+  }
+
+  // Enhanced flash message system
+  function showFlashMessage(message, type) {
+    const flashContainer = document.querySelector(".container");
+    const flashDiv = document.createElement("div");
+    flashDiv.className = `alert alert-${
+      type === "error" ? "danger" : "success"
+    } mb-3`;
+    flashDiv.style.animation = "slideInFromTop 0.3s ease-out";
+
+    flashDiv.innerHTML = `
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            ${
+              type === "error"
+                ? '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>'
+                : '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>'
+            }
+          </svg>
+          ${message}
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-current opacity-50 hover:opacity-75">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+
+    const firstElement = flashContainer.firstElementChild;
+    flashContainer.insertBefore(flashDiv, firstElement);
+
+    // Auto-remove after 7 seconds
+    setTimeout(() => {
+      if (flashDiv.parentNode) {
+        flashDiv.style.animation = "slideOutToTop 0.3s ease-in";
+        setTimeout(() => flashDiv.remove(), 300);
+      }
+    }, 7000);
+  }
+
+  // Export functionality
+  function exportUsers() {
+    const exportData = filteredUsers.map((user) => {
+      const row = user.element;
+      return {
+        id: user.id,
+        nombre: user.name,
+        rol: user.role,
+        estado: user.status,
+      };
+    });
+
+    const csv = convertToCSV(exportData);
+    downloadCSV(csv, "usuarios_export.csv");
+    showFlashMessage("Lista de usuarios exportada exitosamente", "success");
+  }
+
+  function convertToCSV(data) {
+    const header = ["ID", "Nombre", "Rol", "Estado"];
+    const rows = data.map((item) => [
+      item.id,
+      item.nombre,
+      item.rol,
+      item.estado,
+    ]);
+    return [header, ...rows].map((row) => row.join(",")).join("\n");
+  }
+
+  function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.setAttribute("hidden", "");
+    a.setAttribute("href", url);
+    a.setAttribute("download", filename);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  // Toggle show all users function
+  function toggleShowAll(checkbox) {
+    const currentUrl = new URL(window.location);
+    if (checkbox.checked) {
+      currentUrl.searchParams.set("show_all", "true");
+    } else {
+      currentUrl.searchParams.delete("show_all");
+    }
+    window.location.href = currentUrl.toString();
+  }
+
+  // Utility function for debouncing
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Add CSS animations
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes slideInFromTop {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes slideOutToTop {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-100%); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+</script>
 {% endblock %}

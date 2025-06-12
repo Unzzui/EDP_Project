@@ -3,7 +3,7 @@ Main Controller for the EDP Management System landing page and general routes.
 """
 
 from flask import Blueprint, render_template, redirect, url_for, request
-from flask_login import current_user
+from flask_login import current_user, login_required
 from datetime import datetime
 from ..services.analytics_service import AnalyticsService
 
@@ -64,13 +64,11 @@ def index():
 
 
 @main_bp.route("/dashboard")
+@login_required
 def dashboard_redirect():
     """Redirect to appropriate dashboard based on user role."""
-    if current_user.is_authenticated:
-        # You can add role-based redirection here
-        return redirect(url_for('controller.dashboard_controller'))
-    else:
-        return redirect(url_for('auth.login'))
+    # You can add role-based redirection here
+    return redirect(url_for('controller.dashboard_controller'))
 
 
 @main_bp.route("/about")
@@ -80,6 +78,7 @@ def about():
 
 
 @main_bp.route("/help")
+@login_required
 def help_page():
     """Help and documentation page."""
     return render_template("main/help.html")

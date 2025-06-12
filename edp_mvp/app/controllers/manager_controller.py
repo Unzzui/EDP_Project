@@ -4,6 +4,7 @@ This controller replaces the monolithic dashboard/manager.py file.
 """
 
 from flask import Blueprint, render_template, request, jsonify, session, make_response, flash
+from flask_login import login_required, current_user
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 import traceback
@@ -20,6 +21,7 @@ from ..services.controller_service import ControllerService
 from ..utils.validation_utils import ValidationUtils
 from ..utils.format_utils import FormatUtils
 from ..utils.date_utils import DateUtils
+from ..utils.auth_utils import require_manager_or_above
 
 logger = logging.getLogger(__name__)
 
@@ -769,6 +771,8 @@ def _get_fallback_command_center_data() -> Dict[str, Any]:
 
 
 @manager_controller_bp.route("/dashboard")
+@login_required
+@require_manager_or_above
 def dashboard():
     """
     Manager Dashboard - Vista ejecutiva con KPIs, análisis financiero y proyecciones.
@@ -982,6 +986,7 @@ def dashboard():
 
 
 @manager_controller_bp.route("/dashboard/refresh")
+@login_required
 def dashboard_refresh():
     """
     Force refresh dashboard data and return JSON response.
@@ -1027,6 +1032,7 @@ def dashboard_refresh():
 
 
 @manager_controller_bp.route("/dashboard/status/<task_id>")
+@login_required
 def dashboard_task_status(task_id):
     """
     Check the status of an async dashboard calculation task.
@@ -1069,6 +1075,7 @@ def dashboard_task_status(task_id):
 
 
 @manager_controller_bp.route("/api/critical_projects")
+@login_required
 def api_critical_projects():
     """
     API endpoint for critical projects analysis with enhanced modal data.
@@ -1140,6 +1147,7 @@ def api_critical_projects():
 
 
 @manager_controller_bp.route("/api/financial_summary")
+@login_required
 def api_financial_summary():
     """
     API endpoint for financial summary.
@@ -1180,6 +1188,7 @@ def api_financial_summary():
 
 
 @manager_controller_bp.route("/api/cash_flow_forecast")
+@login_required
 def api_cash_flow_forecast():
     """
     API endpoint for cash flow forecast.
@@ -1222,6 +1231,7 @@ def api_cash_flow_forecast():
 
 
 @manager_controller_bp.route("/api/profitability_analysis")
+@login_required
 def api_profitability_analysis():
     """
     API endpoint for profitability analysis.
@@ -1270,6 +1280,7 @@ def api_profitability_analysis():
 
 
 @manager_controller_bp.route("/api/executive_alerts")
+@login_required
 def api_executive_alerts():
     """
     API endpoint for executive alerts.
@@ -1307,6 +1318,7 @@ def api_executive_alerts():
 
 
 @manager_controller_bp.route("/api/kpis")
+@login_required
 def api_kpis():
     """
     API endpoint for real-time KPIs data.
@@ -1382,6 +1394,7 @@ def api_kpis():
 
 
 @manager_controller_bp.route("/api/cache/status")
+@login_required
 def api_cache_status():
     """
     API endpoint to check cache status and health.
@@ -1425,6 +1438,7 @@ def api_cache_status():
 
 
 @manager_controller_bp.route("/api/cache/clear")
+@login_required
 def api_cache_clear():
     """
     API endpoint to clear specific cache patterns.
@@ -1464,6 +1478,7 @@ def api_cache_clear():
 
 
 @manager_controller_bp.route("/api/performance/metrics")
+@login_required
 def api_performance_metrics():
     """
     API endpoint for performance monitoring metrics.
@@ -1515,6 +1530,7 @@ def api_performance_metrics():
 
 
 @manager_controller_bp.route("/api/cache/status/dashboard")
+@login_required
 def api_dashboard_cache_status():
     """
     API endpoint to check dashboard cache status specifically.
@@ -1537,6 +1553,7 @@ def api_dashboard_cache_status():
 
 
 @manager_controller_bp.route("/api/cache/invalidate", methods=["POST"])
+@login_required
 def api_invalidate_cache():
     """
     API endpoint to manually invalidate dashboard cache.
@@ -1569,6 +1586,7 @@ def api_invalidate_cache():
 
 
 @manager_controller_bp.route("/api/cache/health", methods=["GET"])
+@login_required
 def api_cache_health():
     """
     API endpoint to get cache health report.
@@ -1592,6 +1610,7 @@ def api_cache_health():
 
 
 @manager_controller_bp.route("/api/cache/auto-invalidate", methods=["POST"])
+@login_required
 def api_auto_invalidate():
     """
     API endpoint to trigger automatic cache invalidation based on data changes.
@@ -1622,6 +1641,7 @@ def api_auto_invalidate():
 
 
 @manager_controller_bp.route("/webhook/data-changed", methods=["POST"])
+@login_required
 def webhook_data_changed():
     """
     Webhook endpoint for external systems to notify about data changes.
@@ -1677,6 +1697,7 @@ def webhook_data_changed():
 
 
 @manager_controller_bp.route("/api/auto-refresh/status", methods=["GET"])
+@login_required
 def api_auto_refresh_status():
     """
     Check if auto-refresh is disabled and event-based system is active.
@@ -1958,6 +1979,7 @@ def _calculate_pareto_percentages(values: list) -> list:
 
 
 @manager_controller_bp.route("/operational-dashboard")
+@login_required
 def operational_dashboard():
     """Render operational dashboard with full data for granular analysis."""
     try:
@@ -2100,6 +2122,7 @@ def operational_dashboard():
 
 
 @manager_controller_bp.route("/analytics-dashboard")
+@login_required
 def analytics_dashboard():
     """
     Analytics Dashboard - Vista de análisis avanzado con DSO, correlaciones, 

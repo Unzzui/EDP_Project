@@ -82,8 +82,11 @@ function formatCurrency(value) {
     maximumFractionDigits: 0
   });
   
+  // Reemplazar comas con puntos para separador de miles
+  const formattedWithPeriods = formatted.replace(/,/g, '.');
+  
   // Luego añade manualmente el símbolo peso si lo deseas
-  return '$' + formatted;
+  return '$' + formattedWithPeriods;
 
 }
 
