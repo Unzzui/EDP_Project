@@ -51,10 +51,17 @@
       href="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.css" />
 
     {% block head %}{% endblock %}
+    <!-- Navbar Unified Script -->
+    <script src="{{ url_for('static', filename='js/navbar_unified.js') }}"></script>
+    <!-- Navbar Unified Styles -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/navbar_unified.css') }}" />
   </head>
 
   <body class="bg-[color:var(--background)] text-[color:var(--text-primary)]">
-    {% include 'navbar.html' %} {# --- Contenido centrado --- #}
+    {% include 'components/navbar_unified.html' %} {# --- Navbar unificado ---
+    #}
     <div class="container mx-auto px-4 py-6">
       {% block content %}{% endblock %}
     </div>

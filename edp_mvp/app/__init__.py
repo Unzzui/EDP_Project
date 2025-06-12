@@ -1,7 +1,7 @@
 from flask import Flask
 from .config import get_config
 from flask_login import LoginManager
-from .extensions import socketio, login_manager
+from .extensions import socketio, login_manager, db
 from celery import Celery
 import os
 import logging
@@ -42,11 +42,15 @@ except Exception:  # pragma: no cover - optional dependency
 
 def create_app():
     app = Flask(__name__)
+    
+    # Load configuration
     config = get_config()
     app.config.from_object(config)
 
+    # Initialize extensions
     login_manager.init_app(app)
     socketio.init_app(app)
+    db.init_app(app)
 
     if os.getenv("ENABLE_PROFILER") == "1" and ProfilerMiddleware:
         app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
@@ -61,6 +65,7 @@ def create_app():
     from .controllers.controller_controller import controller_controller_bp
     from .controllers.manager_controller import manager_controller_bp
     from .controllers.edp_controller import edp_controller_bp
+    from .controllers.admin_controller import admin_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(edp_bp, url_prefix="/edp")
@@ -72,6 +77,7 @@ def create_app():
     app.register_blueprint(controller_controller_bp)
     app.register_blueprint(manager_controller_bp)
     app.register_blueprint(edp_controller_bp)
+    app.register_blueprint(admin_bp)
 
     # Old monolithic controllers (comment out when fully migrated)
     # app.register_blueprint(controller_bp)

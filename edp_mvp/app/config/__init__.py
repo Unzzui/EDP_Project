@@ -10,21 +10,36 @@ from pathlib import Path
 class DatabaseConfig:
     """Database configuration."""
     
-    # Google Sheets configuration
+    # Google Sheets configuration (for EDP data)
     credentials_file: str = "credentials.json"
     sheet_id: str = ""
     timeout: int = 30
     retry_attempts: int = 3
     
+    # SQLite configuration (for users and auth)
+    sqlite_db_path: str = ""
+    sqlalchemy_database_uri: str = ""
+    sqlalchemy_track_modifications: bool = False
+    
     @classmethod
     def from_env(cls) -> 'DatabaseConfig':
         """Create config from environment variables."""
+        # Default SQLite database path
+        base_dir = Path(__file__).parent.parent.parent.parent  # Go to project root
+        default_db_path = str(base_dir / "edp_database.db")
+        
+        sqlite_path = os.getenv('SQLITE_DB_PATH', default_db_path)
+        
         return cls(
             credentials_file=os.getenv('GOOGLE_CREDENTIALS_FILE', 'credentials.json'),
             # Cambiado para usar SHEET_ID que es lo que tienes en tu .env
             sheet_id=os.getenv('SHEET_ID', os.getenv('GOOGLE_SHEET_ID', '')),
             timeout=int(os.getenv('DB_TIMEOUT', '30')),
-            retry_attempts=int(os.getenv('DB_RETRY_ATTEMPTS', '3'))
+            retry_attempts=int(os.getenv('DB_RETRY_ATTEMPTS', '3')),
+            # SQLite config
+            sqlite_db_path=sqlite_path,
+            sqlalchemy_database_uri=os.getenv('DATABASE_URL', f"sqlite:///{sqlite_path}"),
+            sqlalchemy_track_modifications=os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', 'False').lower() == 'true'
         )
 
 @dataclass
@@ -173,6 +188,10 @@ class Config:
         self.SECRET_KEY = self.app.secret_key
         self.DEBUG = self.app.debug
         self.FLASK_ENV = self.app.environment
+        
+        # SQLAlchemy configuration for Flask
+        self.SQLALCHEMY_DATABASE_URI = self.database.sqlalchemy_database_uri
+        self.SQLALCHEMY_TRACK_MODIFICATIONS = self.database.sqlalchemy_track_modifications
         
         # Set environment-specific overrides
         if self.app.environment == 'production':

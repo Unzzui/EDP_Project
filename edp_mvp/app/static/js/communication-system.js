@@ -312,12 +312,13 @@ class EDPCommunicationSystem {
     
     this.updateCharCount();
     
-    // Show animation
+    // Show animation with proper theme restoration
     messageText.style.backgroundColor = 'var(--info)';
     messageText.style.color = 'white';
     setTimeout(() => {
-      messageText.style.backgroundColor = '';
-      messageText.style.color = '';
+      // Restore theme colors instead of removing properties
+      messageText.style.backgroundColor = 'var(--bg-card)';
+      messageText.style.color = 'var(--text-primary)';
     }, 500);
   }
 

@@ -1,0 +1,352 @@
+/**
+ * Navbar Unificado - Estilos específicos
+ * Estilos adicionales para el navbar que se adapta según el rol del usuario
+ */
+
+/* ==========================================================================
+   ESTILOS BASE DEL NAVBAR UNIFICADO
+   ========================================================================== */
+
+.navbar-unified {
+  transition: all 0.3s ease;
+}
+
+/* Animaciones para el menú móvil */
+.mobile-menu-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.mobile-menu-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.mobile-menu-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mobile-menu-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* ==========================================================================
+   EFECTOS DE HOVER Y FOCUS MEJORADOS
+   ========================================================================== */
+
+/* Efecto de hover para los enlaces del navbar */
+.nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent-blue);
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::before {
+  width: 100%;
+}
+
+/* Estado activo con mejor indicador visual */
+.nav-link.active {
+  position: relative;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+  border-radius: 1px;
+}
+
+/* ==========================================================================
+   EFECTOS PARA DIFERENTES ROLES
+   ========================================================================== */
+
+/* Navbar específico para Manager */
+.navbar-unified[data-role="manager"] {
+  background: linear-gradient(135deg, 
+    rgba(var(--accent-blue-rgb), 0.02) 0%, 
+    rgba(var(--accent-green-rgb), 0.02) 100%);
+}
+
+/* Navbar específico para Controller */
+.navbar-unified[data-role="controller"] {
+  background: rgba(var(--bg-card-rgb), 0.95);
+  backdrop-filter: blur(10px);
+}
+
+/* Navbar específico para Admin */
+.navbar-unified[data-role="admin"] {
+  background: linear-gradient(135deg, 
+    rgba(var(--accent-purple-rgb), 0.02) 0%, 
+    rgba(var(--accent-blue-rgb), 0.02) 100%);
+}
+
+/* ==========================================================================
+   INDICADORES DE ROL EN EL LOGO
+   ========================================================================== */
+
+.role-indicator {
+  position: relative;
+}
+
+.role-indicator::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-card);
+}
+
+.role-indicator[data-role="manager"]::after {
+  background: var(--accent-green);
+}
+
+.role-indicator[data-role="controller"]::after {
+  background: var(--accent-blue);
+}
+
+.role-indicator[data-role="admin"]::after {
+  background: var(--accent-purple);
+}
+
+/* ==========================================================================
+   MEJORAS RESPONSIVE
+   ========================================================================== */
+
+/* Mejoras para tablets */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .navbar-unified .nav-links {
+    gap: 1rem;
+  }
+  
+  .navbar-unified .nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Mejoras para móviles */
+@media (max-width: 767px) {
+  .mobile-menu {
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+  }
+  
+  .mobile-menu-item {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--border-color-subtle);
+  }
+  
+  .mobile-menu-item:last-child {
+    border-bottom: none;
+  }
+}
+
+/* ==========================================================================
+   NOTIFICACIONES Y BADGES
+   ========================================================================== */
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  background: var(--accent-red);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: 2px solid var(--bg-card);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--accent-red-rgb), 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(var(--accent-red-rgb), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--accent-red-rgb), 0);
+  }
+}
+
+/* ==========================================================================
+   DROPDOWN MEJORADO
+   ========================================================================== */
+
+.user-dropdown {
+  transform-origin: top right;
+  transition: all 0.2s ease;
+}
+
+.user-dropdown.enter {
+  opacity: 0;
+  transform: scale(0.95) translateY(-10px);
+}
+
+.user-dropdown.enter-active {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.user-dropdown.exit {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.user-dropdown.exit-active {
+  opacity: 0;
+  transform: scale(0.95) translateY(-10px);
+}
+
+/* ==========================================================================
+   INDICADOR DE CARGA DE NAVEGACIÓN
+   ========================================================================== */
+
+.nav-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--accent-blue), 
+    transparent);
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav-loader.active {
+  opacity: 1;
+  animation: loading 1s ease-in-out infinite;
+}
+
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ==========================================================================
+   TEMA OSCURO/CLARO - AJUSTES ESPECÍFICOS
+   ========================================================================== */
+
+[data-theme="light"] .navbar-unified {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .navbar-unified {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Efectos de glassmorphism en tema oscuro */
+[data-theme="dark"] .navbar-unified {
+  background: rgba(var(--bg-card-rgb), 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   ANIMACIONES DE ENTRADA
+   ========================================================================== */
+
+.navbar-unified {
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   ACCESIBILIDAD
+   ========================================================================== */
+
+/* Mejoras para usuarios que prefieren menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .navbar-unified,
+  .nav-link,
+  .mobile-menu,
+  .user-dropdown,
+  .notification-badge {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Mejoras para alto contraste */
+@media (prefers-contrast: high) {
+  .navbar-unified {
+    border-bottom: 2px solid;
+  }
+  
+  .nav-link.active {
+    background: var(--accent-blue);
+    color: white;
+  }
+}
+
+/* ==========================================================================
+   FOCUS VISIBLE PARA NAVEGACIÓN POR TECLADO
+   ========================================================================== */
+
+.nav-link:focus-visible,
+.mobile-menu-button:focus-visible,
+.user-dropdown-trigger:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ==========================================================================
+   UTILIDADES
+   ========================================================================== */
+
+.navbar-hidden {
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.navbar-visible {
+  transform: translateY(0);
+  transition: transform 0.3s ease;
+}
