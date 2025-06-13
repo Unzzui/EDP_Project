@@ -66,116 +66,6 @@ de Proyecto{% endblock %} {% block head_extras %}
       </div>
     </div>
 
-    <!-- Métricas Clave -->
-    <div class="flex flex-wrap gap-4 lg:gap-6">
-      <!-- Ingresos del Mes -->
-      <div class="bg-white bg-opacity-15 rounded-lg p-4 min-w-[140px]">
-        <div class="flex items-center justify-between mb-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-green-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-          </svg>
-          <span class="text-xs text-blue-100 font-medium">INGRESOS</span>
-        </div>
-        <div class="text-lg font-bold">
-          {{ format_currency(summary['total_amount_approved'] or 0) }}
-        </div>
-        <div class="text-xs text-blue-200">Aprobados</div>
-      </div>
-
-      <!-- EDPs Pendientes -->
-      <div class="bg-white bg-opacity-15 rounded-lg p-4 min-w-[140px]">
-        <div class="flex items-center justify-between mb-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-amber-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span class="text-xs text-blue-100 font-medium">PENDIENTES</span>
-        </div>
-        <div class="text-lg font-bold">
-          {{ format_currency(summary['pending_amount'] or 0) }}
-        </div>
-        <div class="text-xs text-blue-200">Por cobrar</div>
-      </div>
-
-      <!-- Proyectos Críticos -->
-      <div class="bg-white bg-opacity-15 rounded-lg p-4 min-w-[120px]">
-        <div class="flex items-center justify-between mb-2">
-          {% if projects_by_status.overdue|length > 0 %}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-red-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-          {% else %}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-green-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {% endif %}
-          <span class="text-xs text-blue-100 font-medium">ESTADO</span>
-        </div>
-        <div class="text-lg font-bold">
-          {{ projects_by_status.overdue|length }}
-        </div>
-        <div class="text-xs text-blue-200">Vencidos</div>
-      </div>
-
-      <!-- DSO Promedio -->
-      <div class="bg-white bg-opacity-15 rounded-lg p-4 min-w-[100px]">
-        <div class="flex items-center justify-between mb-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-blue-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-          <span class="text-xs text-blue-100 font-medium">DSO</span>
-        </div>
-        <div class="text-lg font-bold">
-          {{ kpis.avg_processing_days or 0 }}<span class="text-sm">d</span>
-        </div>
-        <div class="text-xs text-blue-200">Promedio</div>
-      </div>
-    </div>
-
     <!-- Acciones -->
     <div class="flex flex-col sm:flex-row gap-3 lg:flex-col lg:gap-2">
       <a
@@ -191,7 +81,7 @@ de Proyecto{% endblock %} {% block head_extras %}
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="2"
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 515.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 919.288 0M15 7a3 3 0 11-6 0 3 3 0 616 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
         </svg>
         Equipo
       </a>
@@ -208,7 +98,7 @@ de Proyecto{% endblock %} {% block head_extras %}
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="2"
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 912-2h2a2 2 0 912 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 912-2h2a2 2 0 912 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         Reportes
       </a>
@@ -219,6 +109,109 @@ de Proyecto{% endblock %} {% block head_extras %}
 <script id="trends-data" type="application/json">
   {{ trends.monthly_trends | tojson }}
 </script>
+
+<!-- Panel de Acciones Rápidas -->
+<div
+  class="bg-gradient-to-r from-[#1e3a8a] via-[#1e40af] to-[#2563eb] rounded-xl p-6 mb-8 shadow-lg border border-opacity-20 border-white">
+  <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+    <div class="text-white">
+      <h2 class="text-lg font-semibold mb-2">Centro de Control Operativo</h2>
+      <p class="text-blue-100 text-sm">
+        Gestión centralizada de problemas y comunicación con equipos
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+      <!-- Comunicación General -->
+      <button
+        onclick="quickCommunicate('General', 'info', 'Consulta general')"
+        class="flex items-center px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-all duration-300 border border-white border-opacity-20 hover:border-opacity-40">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+        Chat Rápido
+      </button>
+
+      <!-- Revisar EDPs Pendientes -->
+      {% if summary['pending_amount'] > 0 %}
+      <button
+        onclick="reviewPendingEDPs()"
+        class="flex items-center px-4 py-2 bg-[color:var(--accent-amber)] hover:bg-[color:var(--accent-amber-dark)] text-white rounded-lg transition-all duration-300 pulse-animation">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        EDPs Pendientes
+        <span
+          class="ml-2 px-2 py-0.5 bg-white bg-opacity-30 rounded-full text-xs font-bold">
+          {{ format_currency(summary['pending_amount']) }}
+        </span>
+      </button>
+      {% endif %}
+
+      <!-- Crear Reunión -->
+      <button
+        onclick="scheduleTeamMeeting()"
+        class="flex items-center px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-all duration-300 border border-white border-opacity-20 hover:border-opacity-40">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0V2a2 2 0 012-2h4a2 2 0 012 2v5m-6 0V4a2 2 0 012-2h4a2 2 0 012 2v3m-6 0V3a2 2 0 012-2h4a2 2 0 012 2v4" />
+        </svg>
+        Reunión
+      </button>
+
+      <!-- Ver Problemas Críticos -->
+      {% if projects_by_status.overdue|length > 0 %}
+      <button
+        onclick="reviewCriticalProjects()"
+        class="flex items-center px-4 py-2 bg-[color:var(--accent-red)] hover:bg-[color:var(--accent-red-dark)] text-white rounded-lg transition-all duration-300 urgent-animation">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+        Críticos
+        <span
+          class="ml-2 px-2 py-0.5 bg-white bg-opacity-30 rounded-full text-xs font-bold">
+          {{ projects_by_status.overdue|length }}
+        </span>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
 
 <!-- KPIs Financieros Principales -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
@@ -483,7 +476,7 @@ de Proyecto{% endblock %} {% block head_extras %}
               class="h-5 w-5 text-[color:var(--accent-blue)]"
               fill="none"
               viewBox="0 0 24 24"
-              stroke="currentColor">
+              stroke="white">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -516,12 +509,6 @@ de Proyecto{% endblock %} {% block head_extras %}
             <option value="monthly">Mensual</option>
             <option value="quarterly">Trimestral</option>
           </select>
-          <button
-            data-refresh
-            onclick="jpDashboard.refreshDashboard()"
-            class="px-3 py-1 bg-[color:var(--accent-blue)] text-white rounded-lg text-sm hover:bg-[color:var(--accent-blue-dark)] transition-colors">
-            ⟳ Actualizar
-          </button>
         </div>
       </div>
       <div class="chart-container">
@@ -644,25 +631,68 @@ de Proyecto{% endblock %} {% block head_extras %}
     <div class="space-y-3">
       {% for alert in alerts[:3] %}
       <div
-        class="border-l-4 {% if alert.type == 'danger' %}border-[color:var(--accent-red)]{% elif alert.type == 'warning' %}border-[color:var(--accent-amber)]{% else %}border-[color:var(--accent-blue)]{% endif %} bg-opacity-10 p-3 rounded">
-        <div class="flex items-start">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 mr-2 mt-0.5 {% if alert.type == 'danger' %}text-[color:var(--accent-red)]{% elif alert.type == 'warning' %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-blue)]{% endif %}"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-          <div class="flex-1">
-            <div class="font-medium text-sm">{{ alert.title }}</div>
-            <div class="text-xs text-[color:var(--text-secondary)] mt-1">
-              {{ alert.message }}
+        class="border-l-4 {% if alert.type == 'danger' %}border-[color:var(--accent-red)]{% elif alert.type == 'warning' %}border-[color:var(--accent-amber)]{% else %}border-[color:var(--accent-blue)]{% endif %} bg-opacity-10 p-3 rounded alert-card">
+        <div class="flex items-start justify-between">
+          <div class="flex items-start flex-1">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 mr-2 mt-0.5 {% if alert.type == 'danger' %}text-[color:var(--accent-red)]{% elif alert.type == 'warning' %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-blue)]{% endif %}"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <div class="flex-1">
+              <div class="font-medium text-sm">{{ alert.title }}</div>
+              <div class="text-xs text-[color:var(--text-secondary)] mt-1">
+                {{ alert.message }}
+              </div>
             </div>
+          </div>
+          <!-- Botones de Acción Rápida -->
+          <div class="flex gap-2 ml-3">
+            <button
+              onclick="quickCommunicate('{{ alert.project_name or 'General' }}', '{{ alert.type }}', '{{ alert.title }}')"
+              title="Comunicar problema inmediatamente"
+              class="flex items-center px-2 py-1 bg-[color:var(--accent-blue)] hover:bg-[color:var(--accent-blue-dark)] text-white rounded text-xs transition-colors duration-200">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3 w-3 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Chat
+            </button>
+            {% if alert.type == 'danger' %}
+            <button
+              onclick="escalateAlert('{{ alert.project_name or 'General' }}', '{{ alert.title }}')"
+              title="Escalar problema a supervisión"
+              class="flex items-center px-2 py-1 bg-[color:var(--accent-red)] hover:bg-[color:var(--accent-red-dark)] text-white rounded text-xs transition-colors duration-200">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3 w-3 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Escalar
+            </button>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -953,29 +983,74 @@ de Proyecto{% endblock %} {% block head_extras %}
               </span>
             </td>
             <td class="py-4 px-4 text-center">
-              <a
-                href="{{ url_for('project_manager.project_detail', manager_name=manager_name, project_name=project.project_name) }}"
-                class="inline-flex items-center px-3 py-1 bg-[color:var(--accent-blue)] text-white rounded-lg hover:bg-[color:var(--accent-blue-dark)] transition-colors text-xs font-medium"
-                title="Ver detalles del proyecto">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3 w-3 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                Ver
-              </a>
+              <div class="flex items-center justify-center gap-2">
+                <a
+                  href="{{ url_for('project_manager.project_detail', manager_name=manager_name, project_name=project.project_name) }}"
+                  class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-blue)] text-white rounded-lg hover:bg-[color:var(--accent-blue-dark)] transition-colors text-xs font-medium"
+                  title="Ver detalles del proyecto">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </a>
+
+                <!-- Botón de Comunicación si hay problemas -->
+                {% if project.pending_amount > 0 or project.avg_processing_days
+                > 45 %}
+                <button
+                  onclick="quickCommunicateProject('{{ project.project_name }}', {{ project.pending_amount }}, {{ project.avg_processing_days }})"
+                  title="Comunicar sobre problemas del proyecto"
+                  class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-amber)] hover:bg-[color:var(--accent-amber-dark)] text-white rounded-lg transition-colors text-xs font-medium pulse-animation">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </button>
+                {% endif %}
+
+                <!-- Botón de Escalación si es crítico -->
+                {% if project.status == 'critical' or
+                project.avg_processing_days > 60 %}
+                <button
+                  onclick="escalateProject('{{ project.project_name }}', '{{ project.status }}')"
+                  title="Escalar proyecto crítico"
+                  class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-red)] hover:bg-[color:var(--accent-red-dark)] text-white rounded-lg transition-colors text-xs font-medium urgent-animation">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </button>
+                {% endif %}
+              </div>
             </td>
           </tr>
           {% endfor %}
@@ -1017,6 +1092,343 @@ de Proyecto{% endblock %} {% block head_extras %}
       </svg>
     </a>
   </div>
+</div>
+
+<!-- EDPs en Proceso de Validación -->
+<div
+  class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-8">
+  <div class="flex justify-between items-center mb-6">
+    <h2
+      class="text-xl font-semibold flex items-center text-[color:var(--text-primary)]">
+      <div
+        class="bg-[color:var(--accent-amber)] bg-opacity-15 p-2 rounded-lg mr-3">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 text-[color:var(--accent-amber)]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      EDPs en Proceso de Validación
+      <span
+        class="ml-3 px-3 py-1 bg-[color:var(--accent-amber)] bg-opacity-20 text-[color:var(--accent-amber)] rounded-full text-sm font-medium">
+        {{ pending_edps|length if pending_edps else '0' }} pendientes
+      </span>
+    </h2>
+
+    <div class="flex gap-2">
+      <button
+        onclick="refreshEDPValidation()"
+        class="flex items-center px-3 py-2 bg-[color:var(--accent-blue)] text-white rounded-lg hover:bg-[color:var(--accent-blue-dark)] transition-colors text-sm">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-1"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Actualizar
+      </button>
+      <button
+        onclick="escalateAllPendingEDPs()"
+        class="flex items-center px-3 py-2 bg-[color:var(--accent-red)] text-white rounded-lg hover:bg-[color:var(--accent-red-dark)] transition-colors text-sm">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-1"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+        Escalar Todos
+      </button>
+    </div>
+  </div>
+
+  {% if pending_edps and pending_edps|length > 0 %}
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="bg-[color:var(--bg-subtle)] rounded-lg">
+        <tr class="border-b border-[color:var(--border-color)]">
+          <th
+            class="text-left py-3 px-4 font-semibold text-[color:var(--text-primary)] rounded-l-lg">
+            <div class="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              EDP
+            </div>
+          </th>
+          <th
+            class="text-left py-3 px-4 font-semibold text-[color:var(--text-primary)]">
+            <div class="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              Proyecto
+            </div>
+          </th>
+          <th
+            class="text-left py-3 px-4 font-semibold text-[color:var(--text-primary)]">
+            <div class="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Cliente
+            </div>
+          </th>
+          <th
+            class="text-left py-3 px-4 font-semibold text-[color:var(--text-primary)]">
+            <div class="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Gestor
+            </div>
+          </th>
+          <th
+            class="text-right py-3 px-4 font-semibold text-[color:var(--text-primary)]">
+            <div class="flex items-center justify-end">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+              Monto
+            </div>
+          </th>
+          <th
+            class="text-center py-3 px-4 font-semibold text-[color:var(--text-primary)]">
+            <div class="flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Días Pendiente
+            </div>
+          </th>
+          <th
+            class="text-center py-3 px-4 font-semibold text-[color:var(--text-primary)] rounded-r-lg">
+            Acciones
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for edp in pending_edps %}
+        <tr
+          class="border-b border-[color:var(--border-color-subtle)] hover:bg-[color:var(--bg-hover)] transition-all duration-200 edp-validation-row"
+          data-edp-id="{{ edp.id }}">
+          <td class="py-4 px-4">
+            <div class="flex items-center">
+              <div
+                class="w-3 h-3 rounded-full mr-3 bg-[color:var(--accent-amber)]"></div>
+              <div>
+                <div class="font-medium text-[color:var(--text-primary)]">
+                  {{ edp.codigo or edp.numero or ('EDP-' + edp.id|string) }}
+                </div>
+                <div class="text-xs text-[color:var(--text-secondary)]">
+                  {{ edp.fecha_creacion.strftime('%d/%m/%Y') if
+                  edp.fecha_creacion }}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="py-4 px-4">
+            <div class="font-medium text-[color:var(--text-primary)]">
+              {{ edp.project_name or edp.proyecto }}
+            </div>
+            <div class="text-xs text-[color:var(--text-secondary)]">
+              {{ edp.proyecto_descripcion or 'Sin descripción' }}
+            </div>
+          </td>
+          <td class="py-4 px-4">
+            <div class="font-medium text-[color:var(--text-primary)]">
+              {{ edp.cliente_nombre or edp.cliente or 'Cliente no asignado' }}
+            </div>
+            <div class="text-xs text-[color:var(--text-secondary)]">
+              {{ edp.cliente_email or 'Sin email' }}
+            </div>
+          </td>
+          <td class="py-4 px-4">
+            <div class="font-medium text-[color:var(--text-primary)]">
+              {{ edp.gestor_nombre or edp.gestor or 'Sin gestor asignado' }}
+            </div>
+            <div class="text-xs text-[color:var(--text-secondary)]">
+              {{ edp.gestor_email or 'Sin email' }}
+            </div>
+          </td>
+          <td class="py-4 px-4 text-right">
+            <div class="font-semibold text-[color:var(--accent-green)]">
+              {{ format_currency(edp.monto or 0) }}
+            </div>
+          </td>
+          <td class="py-4 px-4 text-center">
+            {% set days_pending = edp.dias_pendiente or 0 %}
+            <span
+              class="px-3 py-1 rounded-full text-xs font-medium {% if days_pending <= 15 %}bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)]{% elif days_pending <= 30 %}bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)]{% else %}bg-[color:var(--state-danger-bg)] text-[color:var(--accent-red)]{% endif %}">
+              {{ days_pending }}d
+            </span>
+          </td>
+          <td class="py-4 px-4 text-center">
+            <div class="flex items-center justify-center gap-2">
+              <!-- Contactar Cliente -->
+              <button
+                onclick="contactClient('{{ edp.codigo or edp.id }}', '{{ edp.cliente_nombre or 'Cliente' }}', '{{ edp.gestor_nombre or 'Gestor' }}', {{ days_pending }})"
+                title="Contactar cliente para seguimiento"
+                class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-blue)] hover:bg-[color:var(--accent-blue-dark)] text-white rounded-lg transition-colors text-xs font-medium">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3 w-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </button>
+
+              <!-- Contactar Gestor -->
+              <button
+                onclick="contactManager('{{ edp.codigo or edp.id }}', '{{ edp.gestor_nombre or 'Gestor' }}', '{{ edp.cliente_nombre or 'Cliente' }}', {{ days_pending }})"
+                title="Contactar gestor interno"
+                class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-green)] hover:bg-[color:var(--accent-green-dark)] text-white rounded-lg transition-colors text-xs font-medium">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3 w-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </button>
+
+              <!-- Escalar si está muy retrasado -->
+              {% if days_pending > 30 %}
+              <button
+                onclick="escalateEDP('{{ edp.codigo or edp.id }}', '{{ edp.cliente_nombre or 'Cliente' }}', {{ days_pending }})"
+                title="Escalar EDP retrasado"
+                class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-red)] hover:bg-[color:var(--accent-red-dark)] text-white rounded-lg transition-colors text-xs font-medium urgent-animation">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3 w-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center py-12">
+    <div class="flex flex-col items-center">
+      <div
+        class="w-16 h-16 bg-[color:var(--accent-green)] bg-opacity-15 rounded-full flex items-center justify-center mb-4">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-8 w-8 text-[color:var(--accent-green)]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-[color:var(--text-primary)] mb-2">
+        Excelente! No hay EDPs pendientes de validación
+      </h3>
+      <p class="text-[color:var(--text-secondary)] text-sm">
+        Todos los EDPs están procesados o en estados avanzados
+      </p>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <!-- JP Dashboard Utilities -->
@@ -1067,6 +1479,649 @@ de Proyecto{% endblock %} {% block head_extras %}
       observer.observe(el);
     });
   });
+
+  // ======= FUNCIONES DE COMUNICACIÓN RÁPIDA =======
+
+  /**
+   * Comunicación rápida desde alertas
+   */
+  function quickCommunicate(projectName, alertType, alertTitle) {
+    showCommunicationModal({
+      project: projectName,
+      type: "alert",
+      priority: alertType === "danger" ? "high" : "medium",
+      subject: `Alerta: ${alertTitle}`,
+      message: `Necesito asistencia urgente con la alerta del proyecto ${projectName}: ${alertTitle}`,
+    });
+  }
+
+  /**
+   * Escalación de alertas críticas
+   */
+  function escalateAlert(projectName, alertTitle) {
+    showCommunicationModal({
+      project: projectName,
+      type: "escalation",
+      priority: "urgent",
+      subject: `ESCALACIÓN URGENTE: ${alertTitle}`,
+      message: `Requiero escalación inmediata para el proyecto ${projectName}. Problema: ${alertTitle}`,
+      recipients: ["supervisor", "admin"],
+    });
+  }
+
+  /**
+   * Comunicación rápida desde proyectos
+   */
+  function quickCommunicateProject(projectName, pendingAmount, avgDays) {
+    let message = `Necesito asistencia con el proyecto ${projectName}.\n\n`;
+
+    if (pendingAmount > 0) {
+      message += `• Monto pendiente: ${formatCurrency(pendingAmount)}\n`;
+    }
+
+    if (avgDays > 45) {
+      message += `• DSO crítico: ${avgDays} días\n`;
+    }
+
+    message += `\nPor favor, necesito apoyo para resolver estos problemas.`;
+
+    showCommunicationModal({
+      project: projectName,
+      type: "project_issue",
+      priority: avgDays > 60 ? "high" : "medium",
+      subject: `Problemas en proyecto ${projectName}`,
+      message: message,
+    });
+  }
+
+  /**
+   * Escalación de proyectos críticos
+   */
+  function escalateProject(projectName, status) {
+    showCommunicationModal({
+      project: projectName,
+      type: "escalation",
+      priority: "urgent",
+      subject: `ESCALACIÓN: Proyecto ${projectName} en estado crítico`,
+      message: `El proyecto ${projectName} requiere atención inmediata de supervisión.\n\nEstado: ${status}\n\nSolicito intervención urgente.`,
+      recipients: ["supervisor", "admin"],
+    });
+  }
+
+  /**
+   * Mostrar modal de comunicación
+   */
+  function showCommunicationModal(params) {
+    // Crear modal dinámico
+    const modal = document.createElement("div");
+    modal.className =
+      "fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in";
+    modal.innerHTML = `
+      <div class="bg-[color:var(--bg-card)] rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-[color:var(--text-primary)] flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 ${getPriorityColor(
+                params.priority
+              )}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              ${
+                params.type === "escalation" ? "Escalación" : "Comunicación"
+              } Rápida
+            </h3>
+            <button onclick="closeModal(this)" class="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form onsubmit="sendQuickMessage(event, '${params.project}', '${
+      params.type
+    }')">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-[color:var(--text-primary)] mb-1">Proyecto</label>
+                <input type="text" value="${
+                  params.project
+                }" readonly class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-subtle)] text-[color:var(--text-primary)]">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-[color:var(--text-primary)] mb-1">Prioridad</label>
+                <select name="priority" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-card)] text-[color:var(--text-primary)]">
+                  <option value="low" ${
+                    params.priority === "low" ? "selected" : ""
+                  }>Baja</option>
+                  <option value="medium" ${
+                    params.priority === "medium" ? "selected" : ""
+                  }>Media</option>
+                  <option value="high" ${
+                    params.priority === "high" ? "selected" : ""
+                  }>Alta</option>
+                  <option value="urgent" ${
+                    params.priority === "urgent" ? "selected" : ""
+                  }>Urgente</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-[color:var(--text-primary)] mb-1">Asunto</label>
+                <input type="text" name="subject" value="${
+                  params.subject
+                }" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-card)] text-[color:var(--text-primary)]" required>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-[color:var(--text-primary)] mb-1">Mensaje</label>
+                <textarea name="message" rows="4" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-card)] text-[color:var(--text-primary)] resize-none" required>${
+                  params.message
+                }</textarea>
+              </div>
+
+              ${
+                params.recipients
+                  ? `
+              <div>
+                <label class="block text-sm font-medium text-[color:var(--text-primary)] mb-1">Destinatarios</label>
+                <div class="flex flex-wrap gap-2">
+                  ${params.recipients
+                    .map(
+                      (r) =>
+                        `<span class="px-2 py-1 bg-[color:var(--accent-blue)] text-white rounded-full text-xs">${r}</span>`
+                    )
+                    .join("")}
+                </div>
+              </div>
+              `
+                  : ""
+              }
+            </div>
+
+            <div class="flex gap-3 mt-6">
+              <button type="button" onclick="closeModal(this)" class="flex-1 px-4 py-2 border border-[color:var(--border-color)] text-[color:var(--text-primary)] rounded-lg hover:bg-[color:var(--bg-hover)] transition-colors">
+                Cancelar
+              </button>
+              <button type="submit" class="flex-1 px-4 py-2 bg-[color:var(--accent-blue)] text-white rounded-lg hover:bg-[color:var(--accent-blue-dark)] transition-colors font-medium">
+                ${params.type === "escalation" ? "Escalar" : "Enviar"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Focus en el primer input
+    setTimeout(() => {
+      modal.querySelector('input[name="subject"]').focus();
+    }, 100);
+  }
+
+  /**
+   * Cerrar modal
+   */
+  function closeModal(button) {
+    const modal = button.closest(".fixed");
+    modal.style.opacity = "0";
+    modal.style.transform = "scale(0.95)";
+    setTimeout(() => {
+      modal.remove();
+    }, 200);
+  }
+
+  /**
+   * Enviar mensaje rápido
+   */
+  function sendQuickMessage(event, project, type) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+
+    // Simular envío (aquí integrarías con tu backend)
+    const button = form.querySelector('button[type="submit"]');
+    const originalText = button.textContent;
+
+    button.disabled = true;
+    button.innerHTML =
+      '<svg class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Enviando...';
+
+    setTimeout(() => {
+      // Mostrar notificación de éxito
+      showNotification(
+        type === "escalation"
+          ? "🚨 Escalación enviada exitosamente"
+          : "💬 Mensaje enviado exitosamente",
+        "success"
+      );
+
+      closeModal(button);
+    }, 1500);
+  }
+
+  /**
+   * Obtener color según prioridad
+   */
+  function getPriorityColor(priority) {
+    const colors = {
+      low: "text-[color:var(--accent-blue)]",
+      medium: "text-[color:var(--accent-amber)]",
+      high: "text-[color:var(--accent-red)]",
+      urgent: "text-[color:var(--accent-red)] animate-pulse",
+    };
+    return colors[priority] || colors.medium;
+  }
+
+  /**
+   * Formatear moneda
+   */
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat("es-ES", {
+      style: "currency",
+      currency: "EUR",
+    }).format(amount);
+  }
+
+  /**
+   * Mostrar notificación
+   */
+  function showNotification(message, type = "info") {
+    const notification = document.createElement("div");
+    notification.className = `fixed top-4 right-4 z-60 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right ${getNotificationClasses(
+      type
+    )}`;
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.classList.add("animate-slide-out-right");
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+
+  /**
+   * Obtener clases de notificación
+   */
+  function getNotificationClasses(type) {
+    const classes = {
+      success: "bg-[color:var(--accent-green)] text-white",
+      error: "bg-[color:var(--accent-red)] text-white",
+      warning: "bg-[color:var(--accent-amber)] text-white",
+      info: "bg-[color:var(--accent-blue)] text-white",
+    };
+    return classes[type] || classes.info;
+  }
+
+  // ======= FUNCIONES DEL CENTRO DE COMANDO =======
+
+  /**
+   * Revisar EDPs pendientes
+   */
+  function reviewPendingEDPs() {
+    const pendingAmount = {{ summary['pending_amount'] or 0 }};
+
+    showCommunicationModal({
+      project: 'Revisión General',
+      type: 'pending_review',
+      priority: 'high',
+      subject: `Revisión de EDPs pendientes (${formatCurrency(pendingAmount)})`,
+      message: `Solicito revisión urgente de los EDPs pendientes por un valor total de ${formatCurrency(pendingAmount)}.\n\nNecesito conocer:\n• Estado actual de validación\n• Tiempos estimados de resolución\n• Posibles bloqueos o problemas\n\nEs importante acelerar estos procesos para mejorar el flujo de caja.`
+    });
+  }
+
+  /**
+   * Programar reunión de equipo
+   */
+  function scheduleTeamMeeting() {
+    const today = new Date();
+    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    showCommunicationModal({
+      project: 'Reunión de Equipo',
+      type: 'meeting_request',
+      priority: 'medium',
+      subject: `Solicitud de reunión - Seguimiento de proyectos`,
+      message: `Solicito programar una reunión de seguimiento para la próxima semana.\n\nTemas a tratar:\n• Revisión de proyectos en curso\n• Análisis de EDPs pendientes\n• Identificación de bloqueos\n• Planificación de próximas acciones\n\nDuración estimada: 1 hora\nFecha propuesta: ${nextWeek.toLocaleDateString('es-ES')}\n\nPor favor, confirmar disponibilidad.`,
+      recipients: ['team_leads', 'coordinators']
+    });
+  }
+
+  /**
+   * Revisar proyectos críticos
+   */
+  function reviewCriticalProjects() {
+    const criticalCount = {{ projects_by_status.overdue|length }};
+
+    showCommunicationModal({
+      project: 'Proyectos Críticos',
+      type: 'critical_review',
+      priority: 'urgent',
+      subject: `URGENTE: Revisión de ${criticalCount} proyecto(s) crítico(s)`,
+      message: `Requiero atención inmediata para ${criticalCount} proyecto(s) en estado crítico.\n\nProblemas identificados:\n• EDPs vencidos (>45 días)\n• Posibles retrasos en validación\n• Riesgo de impacto en flujo de caja\n\nNecesito:\n• Plan de acción inmediato\n• Responsables asignados\n• Cronograma de resolución\n• Escalación si es necesario\n\nEsta situación requiere resolución prioritaria.`,
+      recipients: ['supervisor', 'team_leads']
+    });
+  }
+
+  /**
+   * Mostrar detalles de contacto del equipo
+   */
+  function showTeamContacts() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in';
+    modal.innerHTML = `
+      <div class="bg-[color:var(--bg-card)] rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-[color:var(--text-primary)] flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>
+              Contactos del Equipo
+            </h3>
+            <button onclick="closeModal(this)" class="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div class="p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-hover)] transition-colors">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-medium text-[color:var(--text-primary)]">Coordinador de Validación</h4>
+                  <p class="text-sm text-[color:var(--text-secondary)]">Responsable de EDPs pendientes</p>
+                </div>
+                <button onclick="quickCommunicate('Coordinación', 'info', 'Consulta sobre validación')" class="px-3 py-1 bg-[color:var(--accent-blue)] text-white rounded-lg text-xs hover:bg-[color:var(--accent-blue-dark)] transition-colors">
+                  Contactar
+                </button>
+              </div>
+            </div>
+
+            <div class="p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-hover)] transition-colors">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-medium text-[color:var(--text-primary)]">Supervisor de Proyectos</h4>
+                  <p class="text-sm text-[color:var(--text-secondary)]">Escalación de problemas críticos</p>
+                </div>
+                <button onclick="escalateAlert('Supervisión', 'Solicitud de escalación')" class="px-3 py-1 bg-[color:var(--accent-red)] text-white rounded-lg text-xs hover:bg-[color:var(--accent-red-dark)] transition-colors">
+                  Escalar
+                </button>
+              </div>
+            </div>
+
+            <div class="p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-hover)] transition-colors">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-medium text-[color:var(--text-primary)]">Equipo de Soporte</h4>
+                  <p class="text-sm text-[color:var(--text-secondary)]">Asistencia técnica y consultas</p>
+                </div>
+                <button onclick="quickCommunicate('Soporte', 'info', 'Consulta técnica')" class="px-3 py-1 bg-[color:var(--accent-green)] text-white rounded-lg text-xs hover:bg-[color:var(--accent-green-dark)] transition-colors">
+                  Soporte
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 p-4 bg-[color:var(--bg-subtle)] rounded-lg">
+            <p class="text-sm text-[color:var(--text-secondary)] text-center">
+              💡 <strong>Tip:</strong> Para problemas urgentes, usa los botones de escalación directamente desde las alertas del dashboard.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+  }
+
+  // ======= FUNCIONES ESPECÍFICAS PARA EDPs EN VALIDACIÓN =======
+
+  /**
+   * Contactar cliente sobre EDP pendiente
+   */
+  function contactClient(edpCode, clienteName, managerName, daysPending) {
+    showCommunicationModal({
+      project: `EDP ${edpCode}`,
+      type: 'client_contact',
+      priority: daysPending > 30 ? 'high' : 'medium',
+      subject: `Seguimiento EDP ${edpCode} - Validación pendiente`,
+      message: `Estimado/a cliente,\n\nEscribo para hacer seguimiento del EDP ${edpCode} que se encuentra pendiente de validación desde hace ${daysPending} días.\n\nDetalles:\n• EDP: ${edpCode}\n• Cliente: ${clienteName}\n• Gestor asignado: ${managerName}\n• Días pendientes: ${daysPending}\n\n¿Podríamos revisar el estado de este EDP? Si hay algún problema o necesitan información adicional, estoy disponible para resolverlo.\n\nQuedo atento a su respuesta.\n\nSaludos cordiales,`,
+      recipients: ['client', 'account_manager']
+    });
+  }
+
+  /**
+   * Contactar gestor interno sobre EDP
+   */
+  function contactManager(edpCode, managerName, clienteName, daysPending) {
+    showCommunicationModal({
+      project: `EDP ${edpCode}`,
+      type: 'internal_contact',
+      priority: daysPending > 15 ? 'high' : 'medium',
+      subject: `Seguimiento interno EDP ${edpCode}`,
+      message: `Hola ${managerName},\n\nNecesito tu apoyo con el seguimiento del EDP ${edpCode}.\n\nSituación actual:\n• EDP: ${edpCode}\n• Cliente: ${clienteName}\n• Días pendientes: ${daysPending}\n\n¿Podrías ayudarme con lo siguiente?\n• Estado actual de la validación\n• Contactos realizados con el cliente\n• Posibles bloqueos o problemas\n• Plan de acción para acelerar el proceso\n\n${daysPending > 30 ? 'URGENTE: Este EDP lleva más de 30 días pendiente.' : 'Por favor, mantengamos el seguimiento activo.'}\n\nGracias por tu colaboración.`,
+      recipients: ['internal_manager', 'project_team']
+    });
+  }
+
+  /**
+   * Escalar EDP específico
+   */
+  function escalateEDP(edpCode, clienteName, daysPending) {
+    showCommunicationModal({
+      project: `EDP ${edpCode}`,
+      type: 'edp_escalation',
+      priority: 'urgent',
+      subject: `ESCALACIÓN URGENTE: EDP ${edpCode} - ${daysPending} días pendiente`,
+      message: `Requiero escalación inmediata para el EDP ${edpCode}.\n\nSITUACIÓN CRÍTICA:\n• EDP: ${edpCode}\n• Cliente: ${clienteName}\n• Días pendientes: ${daysPending}\n• Impacto: Retraso en flujo de caja\n\nACCIONES SOLICITADAS:\n• Contacto directo con cliente a nivel gerencial\n• Revisión de posibles problemas contractuales\n• Plan de acción inmediato con plazos específicos\n• Seguimiento diario hasta resolución\n\nEste retraso está afectando nuestros indicadores financieros y requiere atención de nivel superior.\n\nSolicito reunión urgente para definir estrategia de resolución.`,
+      recipients: ['supervisor', 'finance_manager', 'client_director']
+    });
+  }
+
+  /**
+   * Actualizar estado de validación de EDPs
+   */
+  function refreshEDPValidation() {
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+
+    button.disabled = true;
+    button.innerHTML = '<svg class="animate-spin h-4 w-4 mr-1" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Actualizando...';
+
+    // Simular actualización (aquí conectarías con tu backend)
+    setTimeout(() => {
+      button.disabled = false;
+      button.innerHTML = originalText;
+      showNotification('✅ Estado de EDPs actualizado', 'success');
+
+           // Simular actualización de contadores
+       const badges = document.querySelectorAll('span');
+       const badge = Array.from(badges).find(span => span.textContent.includes('pendientes'));
+       if (badge) {
+         badge.classList.add('animate-pulse');
+         setTimeout(() => badge.classList.remove('animate-pulse'), 2000);
+       }
+    }, 2000);
+  }
+
+  /**
+   * Escalar todos los EDPs pendientes
+   */
+  function escalateAllPendingEDPs() {
+    const pendingCount = {{ pending_edps|length if pending_edps else 0 }};
+
+    if (pendingCount === 0) {
+      showNotification('ℹ️ No hay EDPs pendientes para escalar', 'info');
+      return;
+    }
+
+    showCommunicationModal({
+      project: 'Escalación Masiva',
+      type: 'mass_escalation',
+      priority: 'urgent',
+      subject: `ESCALACIÓN MASIVA: ${pendingCount} EDPs pendientes de validación`,
+      message: `Solicito escalación urgente para ${pendingCount} EDPs que se encuentran pendientes de validación.\n\nPROBLEMA SISTÉMICO:\n• Total de EDPs afectados: ${pendingCount}\n• Impacto acumulado en flujo de caja\n• Posible deterioro de relaciones con clientes\n• Riesgo de incumplimiento de objetivos\n\nACCIONES REQUERIDAS:\n• Revisión inmediata de procesos de validación\n• Contacto directo con todos los clientes afectados\n• Identificación de causas raíz del retraso\n• Plan de contingencia para recuperar tiempos\n• Reunión urgente con equipo directivo\n\nEsta situación requiere intervención inmediata a nivel organizacional.\n\nSolicito reunión de crisis para abordar esta problemática.`,
+      recipients: ['ceo', 'finance_director', 'operations_manager', 'client_services']
+    });
+  }
+
+  /**
+   * Generar reporte de EDPs pendientes
+   */
+  function generateEDPReport() {
+    const pendingEDPs = document.querySelectorAll('.edp-validation-row');
+    const reportData = {
+      timestamp: new Date().toISOString(),
+      total_pending: pendingEDPs.length,
+      edps: []
+    };
+
+    pendingEDPs.forEach(row => {
+      const edpId = row.dataset.edpId;
+      const cells = row.querySelectorAll('td');
+
+      reportData.edps.push({
+        id: edpId,
+        code: cells[0]?.textContent.trim(),
+        project: cells[1]?.textContent.trim(),
+        client: cells[2]?.textContent.trim(),
+        manager: cells[3]?.textContent.trim(),
+        amount: cells[4]?.textContent.trim(),
+        days_pending: cells[5]?.textContent.trim()
+      });
+    });
+
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `edps-pendientes-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showNotification('📁 Reporte generado exitosamente', 'success');
+  }
 </script>
+
+<!-- Estilos CSS para animaciones -->
+<style>
+  .pulse-animation {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .urgent-animation {
+    animation: urgent-pulse 1s ease-in-out infinite;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .animate-slide-out-right {
+    animation: slideOutRight 0.3s ease-in;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes urgent-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideOutRight {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+  }
+
+  /* Mejorar hover de botones de acción */
+  .alert-card:hover .pulse-animation,
+  .alert-card:hover .urgent-animation {
+    animation-duration: 0.5s;
+  }
+
+  /* Estilo para indicadores de problemas */
+  .project-table-row:has(.pulse-animation) {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(245, 158, 11, 0.05),
+      transparent
+    );
+  }
+
+  .project-table-row:has(.urgent-animation) {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(239, 68, 68, 0.05),
+      transparent
+    );
+  }
+</style>
 
 {% endblock %}

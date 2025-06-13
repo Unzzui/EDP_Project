@@ -1,0 +1,657 @@
+{% extends "base_unified.html" %} {% block title %}Centro de Proyectos -
+Pagora{% endblock %} {% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        animation: {
+          "fade-in": "fadeIn 0.5s ease-in",
+          "slide-up": "slideUp 0.6s ease-out",
+          "pulse-glow": "pulseGlow 2s infinite",
+        },
+      },
+    },
+  };
+</script>
+<style>
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes slideUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes pulseGlow {
+    0%,
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+    50% {
+      transform: scale(1.02);
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+    }
+  }
+  .project-gradient {
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  }
+  .project-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+  }
+  .project-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  }
+  .metric-card {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.9),
+      rgba(255, 255, 255, 0.8)
+    );
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  .feature-card {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.95),
+      rgba(255, 255, 255, 0.9)
+    );
+    border: 1px solid rgba(59, 130, 246, 0.1);
+  }
+</style>
+{% endblock %} {% block content %}
+<div
+  class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+  <!-- Project Management Hero Section -->
+  <div class="project-gradient text-white relative overflow-hidden">
+    <!-- Decorative Background -->
+    <div class="absolute inset-0 opacity-10">
+      <div
+        class="absolute top-0 right-1/4 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+      <div
+        class="absolute bottom-0 left-1/4 w-80 h-80 bg-white rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="relative max-w-7xl mx-auto px-6 py-12">
+      <div class="flex items-center justify-between mb-10">
+        <div class="flex items-center gap-6">
+          <div
+            class="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center backdrop-blur-sm border border-white/30">
+            <svg
+              class="w-10 h-10 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-4xl font-bold mb-2">
+              Centro de Gestión de Proyectos
+            </h1>
+            <p class="text-blue-100 text-xl">
+              Bienvenido, {{ manager_name or user.nombre_completo or 'Jefe de
+              Proyecto' }}
+            </p>
+            <p class="text-blue-200 text-sm mt-1">
+              Liderazgo estratégico y gestión integral de proyectos
+            </p>
+          </div>
+        </div>
+
+        <div class="hidden lg:block text-right">
+          <p class="text-blue-200 text-sm">Centro de comando</p>
+          <p class="text-white font-medium text-lg">
+            {{ current_date.strftime('%d/%m/%Y %H:%M') }}
+          </p>
+          <div class="flex items-center justify-end gap-2 mt-2">
+            <div class="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
+            <span class="text-blue-200 text-sm">Proyectos Activos</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Metrics Dashboard -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Projects -->
+        <div class="metric-card rounded-xl p-6 border border-white/30">
+          <div class="flex items-center justify-between mb-4">
+            <div
+              class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+              <svg
+                class="w-6 h-6 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <span class="text-2xl font-bold text-white"
+              >{{ stats.total_proyectos or 0 }}</span
+            >
+          </div>
+          <h3 class="font-semibold text-white text-sm">Proyectos Total</h3>
+          <p class="text-xs text-blue-200">En gestión</p>
+        </div>
+
+        <!-- Active Projects -->
+        <div class="metric-card rounded-xl p-6 border border-white/30">
+          <div class="flex items-center justify-between mb-4">
+            <div
+              class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+              <svg
+                class="w-6 h-6 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <span class="text-2xl font-bold text-white"
+              >{{ stats.proyectos_activos or 0 }}</span
+            >
+          </div>
+          <h3 class="font-semibold text-white text-sm">Proyectos Activos</h3>
+          <p class="text-xs text-blue-200">En ejecución</p>
+        </div>
+
+        <!-- Team Members -->
+        <div class="metric-card rounded-xl p-6 border border-white/30">
+          <div class="flex items-center justify-between mb-4">
+            <div
+              class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
+              <svg
+                class="w-6 h-6 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <span class="text-2xl font-bold text-white"
+              >{{ stats.equipo_miembros or 0 }}</span
+            >
+          </div>
+          <h3 class="font-semibold text-white text-sm">Miembros del Equipo</h3>
+          <p class="text-xs text-blue-200">Colaboradores</p>
+        </div>
+
+        <!-- Progress Average -->
+        <div class="metric-card rounded-xl p-6 border border-white/30">
+          <div class="flex items-center justify-between mb-4">
+            <div
+              class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center">
+              <svg
+                class="w-6 h-6 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <span class="text-2xl font-bold text-white"
+              >{{ "%.1f" | format(stats.progreso_promedio or 0) }}%</span
+            >
+          </div>
+          <h3 class="font-semibold text-white text-sm">Progreso Promedio</h3>
+          <p class="text-xs text-blue-200">Avance general</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Project Management Dashboard -->
+  <div class="max-w-7xl mx-auto px-6 py-12">
+    <!-- Core Management Tools -->
+    <div class="mb-12">
+      <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+        Herramientas de Gestión
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Project Dashboard -->
+        <a
+          href="{{ url_for('project_manager.dashboard') }}"
+          class="project-card rounded-3xl p-8 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden">
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div class="relative">
+            <div
+              class="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:animate-pulse-glow transition-all duration-300">
+              <svg
+                class="w-8 h-8 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-3">
+              Dashboard Principal
+            </h3>
+            <p class="text-gray-600 mb-4">
+              Panel de control completo con análisis detallado, KPIs y métricas
+              de proyecto.
+            </p>
+            <div
+              class="flex items-center text-blue-600 font-medium group-hover:translate-x-2 transition-transform duration-300">
+              <span>Acceder</span>
+              <svg
+                class="w-5 h-5 ml-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </a>
+
+        <!-- Team Management -->
+        <a
+          href="{{ url_for('project_manager.team_dashboard') }}"
+          class="project-card rounded-3xl p-8 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden">
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div class="relative">
+            <div
+              class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-6 group-hover:animate-pulse-glow transition-all duration-300">
+              <svg
+                class="w-8 h-8 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-3">
+              Gestión de Equipos
+            </h3>
+            <p class="text-gray-600 mb-4">
+              Administración de personal, asignaciones y análisis de rendimiento
+              del equipo.
+            </p>
+            <div
+              class="flex items-center text-purple-600 font-medium group-hover:translate-x-2 transition-transform duration-300">
+              <span>Acceder</span>
+              <svg
+                class="w-5 h-5 ml-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </a>
+
+        <!-- Kanban View -->
+        <a
+          href="{{ url_for('project_manager.kanban_view') }}"
+          class="project-card rounded-3xl p-8 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden">
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div class="relative">
+            <div
+              class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mb-6 group-hover:animate-pulse-glow transition-all duration-300">
+              <svg
+                class="w-8 h-8 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H9a2 2 0 00-2 2" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-3">Vista Kanban</h3>
+            <p class="text-gray-600 mb-4">
+              Gestión visual de flujos de trabajo con tablero interactivo y
+              seguimiento de tareas.
+            </p>
+            <div
+              class="flex items-center text-emerald-600 font-medium group-hover:translate-x-2 transition-transform duration-300">
+              <span>Acceder</span>
+              <svg
+                class="w-5 h-5 ml-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Additional Tools -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">
+        Herramientas Adicionales
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Reports -->
+        <a
+          href="{{ url_for('project_manager.reports') }}"
+          class="feature-card rounded-2xl p-6 group hover:shadow-lg transition-all duration-300">
+          <div class="flex items-center justify-between mb-4">
+            <div
+              class="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
+              <svg
+                class="w-6 h-6 text-indigo-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <svg
+              class="w-5 h-5 text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-800 mb-2">Reportes y Análisis</h3>
+          <p class="text-gray-600 text-sm">Generación de informes ejecutivos</p>
+        </a>
+
+        <!-- Budget Tracking -->
+        <a
+          href="#"
+          class="feature-card rounded-2xl p-6 group hover:shadow-lg transition-all duration-300">
+          <div class="flex items-center justify-between mb-4">
+            <div
+              class="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center group-hover:bg-green-500/20 transition-colors">
+              <svg
+                class="w-6 h-6 text-green-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+            </div>
+            <svg
+              class="w-5 h-5 text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-800 mb-2">
+            Control Presupuestario
+          </h3>
+          <p class="text-gray-600 text-sm">Seguimiento financiero detallado</p>
+        </a>
+
+        <!-- Risk Management -->
+        <a
+          href="#"
+          class="feature-card rounded-2xl p-6 group hover:shadow-lg transition-all duration-300">
+          <div class="flex items-center justify-between mb-4">
+            <div
+              class="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+              <svg
+                class="w-6 h-6 text-red-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <svg
+              class="w-5 h-5 text-gray-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-800 mb-2">Gestión de Riesgos</h3>
+          <p class="text-gray-600 text-sm">Identificación y mitigación</p>
+        </a>
+
+        <!-- Communication Hub -->
+        <a
+          href="#"
+          class="feature-card rounded-2xl p-6 group hover:shadow-lg transition-all duration-300">
+          <div class="flex items-center justify-between mb-4">
+            <div
+              class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+              <svg
+                class="w-6 h-6 text-blue-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <svg
+              class="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-800 mb-2">
+            Centro de Comunicación
+          </h3>
+          <p class="text-gray-600 text-sm">Coordinación de equipos</p>
+        </a>
+      </div>
+    </div>
+
+    <!-- Project Overview Panel -->
+    <div class="project-card rounded-2xl p-6">
+      <div class="flex items-center gap-3 mb-6">
+        <div
+          class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+          <svg
+            class="w-4 h-4 text-blue-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800">Resumen Ejecutivo</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <h4 class="font-medium mb-2 text-gray-700">Perfil de Liderazgo</h4>
+          <p class="text-gray-600 mb-4">
+            {{ user.rol | title if user.rol else 'Jefe de Proyecto' }}
+          </p>
+
+          <h4 class="font-medium mb-2 text-gray-700">
+            Áreas de Responsabilidad
+          </h4>
+          <ul class="text-gray-600 text-sm space-y-1">
+            <li>• Planificación estratégica</li>
+            <li>• Gestión de recursos</li>
+            <li>• Control de calidad</li>
+            <li>• Coordinación de equipos</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-medium mb-2 text-gray-700">Estado de Proyectos</h4>
+          <div class="space-y-2 mb-4">
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600">Activos</span>
+              <span class="text-sm font-medium text-green-600"
+                >{{ stats.proyectos_activos or 0 }}</span
+              >
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600">Completados</span>
+              <span class="text-sm font-medium text-blue-600"
+                >{{ stats.proyectos_completados or 0 }}</span
+              >
+            </div>
+          </div>
+
+          <h4 class="font-medium mb-2 text-gray-700">Última Sincronización</h4>
+          <p class="text-gray-600 text-sm">
+            {{ current_date.strftime('%d/%m/%Y %H:%M') }}
+          </p>
+        </div>
+        <div>
+          <h4 class="font-medium mb-2 text-gray-700">Métricas Clave</h4>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+              <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span class="text-blue-700 text-sm"
+                >Progreso: {{ "%.1f" | format(stats.progreso_promedio or 0)
+                }}%</span
+              >
+            </div>
+            <div class="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+              <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span class="text-green-700 text-sm"
+                >Equipo: {{ stats.equipo_miembros or 0 }} miembros</span
+              >
+            </div>
+            {% if stats.presupuesto_total and stats.presupuesto_total > 0 %}
+            <div class="flex items-center gap-2 p-2 bg-purple-50 rounded-lg">
+              <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span class="text-purple-700 text-sm"
+                >Presupuesto gestionado</span
+              >
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Animate cards on load
+    const cards = document.querySelectorAll(".project-card, .feature-card");
+    cards.forEach((card, index) => {
+      card.style.animationDelay = `${index * 100}ms`;
+      card.classList.add("animate-slide-up");
+    });
+
+    // Add dynamic hover effects for metric cards
+    const metricCards = document.querySelectorAll(".metric-card");
+    metricCards.forEach((card) => {
+      card.addEventListener("mouseenter", function () {
+        this.style.transform = "translateY(-3px) scale(1.02)";
+      });
+      card.addEventListener("mouseleave", function () {
+        this.style.transform = "translateY(0) scale(1)";
+      });
+    });
+
+    // Add pulse effect to active project indicators
+    const activeIndicators = document.querySelectorAll(".animate-pulse");
+    setInterval(() => {
+      activeIndicators.forEach((indicator) => {
+        indicator.style.opacity =
+          indicator.style.opacity === "0.5" ? "1" : "0.5";
+      });
+    }, 1000);
+  });
+</script>
+{% endblock %}

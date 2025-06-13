@@ -376,3 +376,16 @@ input:checked + .slider:before {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
+
+/* Layout específico para managers */
+.manager-layout {
+  width: 100%;
+  padding: 1.5rem;
+  min-height: calc(100vh - 4rem);
+}
+
+@media (max-width: 768px) {
+  .manager-layout {
+    padding: 1rem;
+  }
+}

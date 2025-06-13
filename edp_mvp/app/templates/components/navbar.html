@@ -1,7 +1,13 @@
-<!-- Navegación Unificada con Animaciones Modernas -->
+<!-- Estilos del navbar -->
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/navbar.css') }}" />
+
+<!-- Script de navegación cargado desde archivo externo -->
+<script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
 <nav
   class="bg-[color:var(--bg-card)] border-b border-[color:var(--border-color)] shadow-sm sticky top-0 z-50">
-  <div class="mx-auto max-w-7xl px-4 flex items-center justify-between h-16">
+  <div class="navbar-container">
     <!-- Logo y título -->
     <div class="flex items-center">
       <a
@@ -33,9 +39,7 @@
 
     <!-- Menú móvil (hamburguesa) -->
     <div class="md:hidden">
-      <button
-        id="mobile-menu-button"
-        class="flex items-center p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-blue)]">
+      <button id="mobile-menu-button" class="mobile-menu-button">
         <svg
           class="w-6 h-6 text-[color:var(--text-primary)]"
           viewBox="0 0 24 24"
@@ -51,16 +55,16 @@
     </div>
 
     <!-- Navegación principal - Pantalla grande -->
-    <ul class="hidden md:flex space-x-6 text-sm font-medium">
+    <ul class="navbar-nav">
       {% if current_user.is_authenticated %}
 
       <!-- Dashboard Principal (siempre visible) -->
-      <li>
+      <li class="nav-item">
         <a
           href="{% if current_user.rol == 'admin' %}{{ url_for('admin.usuarios') }}{% elif current_user.rol == 'manager' %}{{ url_for('manager.dashboard') }}{% else %}{{ url_for('controller.dashboard_controller') }}{% endif %}"
-          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)]">
+          class="nav-link">
           <svg
-            class="w-4 h-4 mr-1.5"
+            class="nav-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -77,12 +81,10 @@
       <!-- Dropdown: Control Operativo (para controllers, managers y admins) -->
       {% if current_user.rol in ['controller', 'jefe_proyecto',
       'miembro_equipo_proyecto', 'manager', 'admin'] %}
-      <li class="relative">
-        <button
-          id="controller-menu-button"
-          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)]">
+      <li class="nav-item">
+        <button id="controller-menu-button" class="nav-button">
           <svg
-            class="w-4 h-4 mr-1.5"
+            class="nav-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -94,7 +96,7 @@
           </svg>
           Control Operativo
           <svg
-            class="w-4 h-4 ml-1"
+            class="nav-arrow"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -107,15 +109,13 @@
         </button>
 
         <!-- Dropdown del Control Operativo -->
-        <div
-          id="controller-menu"
-          class="hidden absolute left-0 mt-2 w-56 bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-md shadow-lg z-50">
-          <div class="py-2">
+        <div id="controller-menu" class="dropdown-menu hidden">
+          <div class="dropdown-content">
             <a
               href="{{ url_for('controller.dashboard_controller') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -130,9 +130,9 @@
 
             <a
               href="{{ url_for('controller.vista_kanban') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -147,9 +147,9 @@
 
             <a
               href="{{ url_for('controller.vista_global_encargados') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -164,9 +164,9 @@
 
             <a
               href="{{ url_for('controller.analisis_retrabajos') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -202,7 +202,7 @@
           </svg>
           Gestión de Proyectos
           <svg
-            class="w-4 h-4 ml-1"
+            class="w-4 h-4 ml-1 transform transition-transform duration-200"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -254,6 +254,23 @@
             </a>
 
             <a
+              href="{{ url_for('project_manager.kanban_view') }}"
+              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              <svg
+                class="w-4 h-4 inline mr-2"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Tablero Kanban
+            </a>
+
+            <a
               href="{{ url_for('project_manager.reports') }}"
               class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
               <svg
@@ -293,7 +310,7 @@
           </svg>
           Gestión Ejecutiva
           <svg
-            class="w-4 h-4 ml-1"
+            class="w-4 h-4 ml-1 transform transition-transform duration-200"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -387,7 +404,7 @@
           </svg>
           EDPs
           <svg
-            class="w-4 h-4 ml-1"
+            class="w-4 h-4 ml-1 transform transition-transform duration-200"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -497,7 +514,7 @@
           </svg>
           Administración
           <svg
-            class="w-4 h-4 ml-1"
+            class="w-4 h-4 ml-1 transform transition-transform duration-200"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -601,7 +618,7 @@
           </svg>
           <span>{{ current_user.nombre_completo or 'Usuario' }}</span>
           <svg
-            class="w-4 h-4 ml-1"
+            class="w-4 h-4 ml-1 transform transition-transform duration-200"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -864,6 +881,11 @@
             href="{{ url_for('project_manager.dashboard') }}"
             class="block px-3 py-2 rounded-md text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
             Dashboard JP
+          </a>
+          <a
+            href="{{ url_for('project_manager.kanban_view') }}"
+            class="block px-3 py-2 rounded-md text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+            Tablero Kanban
           </a>
           <a
             href="{{ url_for('project_manager.team_dashboard') }}"

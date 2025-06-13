@@ -3,19 +3,232 @@
  * Maneja la navegación completa incluyendo menús móviles y dropdowns
  */
 
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 Navbar script loaded and DOM ready');
+// 🚀 SCRIPT DE NAVEGACIÓN SIMPLIFICADO Y ROBUSTO
+console.log("🚀 Iniciando script de navegación...");
+
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("🚀 DOM cargado, inicializando navegación...");
+
+  // Función simple para manejar dropdowns
+  function setupSimpleDropdown(buttonId, menuId) {
+    const button = document.getElementById(buttonId);
+    const menu = document.getElementById(menuId);
+
+    // Ya verificamos la existencia antes de llamar esta función
+    if (!button || !menu) {
+      return;
+    }
+
+    // Variable para evitar clicks múltiples
+    let isProcessing = false;
+
+    // Remover cualquier listener existente clonando el elemento
+    const newButton = button.cloneNode(true);
+    button.parentNode.replaceChild(newButton, button);
+    
+    newButton.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation(); // Evitar múltiples listeners
+
+      // Evitar procesamiento múltiple
+      if (isProcessing) {
+        return;
+      }
+      
+      isProcessing = true;
+
+      // Cerrar otros menús
+      document
+        .querySelectorAll('[id$="-menu"]:not([id*="mobile"])')
+        .forEach((otherMenu) => {
+          if (otherMenu !== menu) {
+            otherMenu.classList.add("hidden");
+            otherMenu.style.cssText = ""; // Limpiar estilos inline
+          }
+        });
+
+      // Toggle del menú actual
+      const isHidden = menu.classList.contains("hidden");
+      menu.classList.toggle("hidden");
+
+      // Si se está abriendo, forzar estilos inline para asegurar visibilidad
+      if (isHidden) {
+        // Obtener colores del tema actual
+        const themeColors = getCurrentThemeColors();
+        
+        menu.style.cssText = `
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          z-index: 999999 !important;
+          position: absolute !important;
+          background: ${themeColors.bgCard} !important;
+          border: 1px solid ${themeColors.borderColor} !important;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, ${themeColors.isDarkMode ? '0.6' : '0.1'}), 0 4px 6px -2px rgba(0, 0, 0, ${themeColors.isDarkMode ? '0.4' : '0.05'}) !important;
+          min-width: 200px !important;
+          top: 100% !important;
+          left: 0 !important;
+          padding: 0.5rem 0 !important;
+          margin-top: 0.5rem !important;
+          border-radius: 0.375rem !important;
+          transform: none !important;
+          pointer-events: auto !important;
+          color: ${themeColors.textPrimary} !important;
+        `;
+      } else {
+        // Si se está cerrando, limpiar estilos inline
+        menu.style.cssText = "";
+      }
+
+      // Rotar flecha
+      const arrow = newButton.querySelector("svg:last-child");
+      if (arrow) {
+        if (isHidden) {
+          arrow.classList.add("rotate-180");
+        } else {
+          arrow.classList.remove("rotate-180");
+        }
+      }
+      
+      // Liberar el lock después de un breve delay
+      setTimeout(() => {
+        isProcessing = false;
+      }, 300);
+    });
+  }
+
+  // Configurar dropdowns con delay - solo los que existen
+  setTimeout(() => {
+    console.log("🔧 Configurando dropdowns...");
+    
+    // Lista de todos los posibles dropdowns
+    const dropdowns = [
+      { button: "controller-menu-button", menu: "controller-menu" },
+      { button: "project-manager-menu-button", menu: "project-manager-menu" },
+      { button: "manager-menu-button", menu: "manager-menu" },
+      { button: "edp-menu-button", menu: "edp-menu" },
+      { button: "admin-menu-button", menu: "admin-menu" },
+      { button: "user-menu-button", menu: "user-menu" }
+    ];
+    
+    // Configurar solo los dropdowns que existen en el DOM
+    dropdowns.forEach(dropdown => {
+      const button = document.getElementById(dropdown.button);
+      const menu = document.getElementById(dropdown.menu);
+      
+      if (button && menu) {
+        console.log(`✅ Configurando ${dropdown.button}`);
+        setupSimpleDropdown(dropdown.button, dropdown.menu);
+      } else {
+        console.log(`⏭️ Saltando ${dropdown.button} (no existe para este rol)`);
+      }
+    });
+  }, 200);
+
+  // Cerrar menús al hacer clic fuera
+  document.addEventListener("click", function (e) {
+    if (
+      !e.target.closest('[id$="-menu-button"]') &&
+      !e.target.closest('[id$="-menu"]')
+    ) {
+      document
+        .querySelectorAll('[id$="-menu"]:not([id*="mobile"])')
+        .forEach((menu) => {
+          menu.classList.add("hidden");
+          menu.style.cssText = ""; // Limpiar estilos inline
+
+          // Resetear flecha
+          const buttonId = menu.id.replace("-menu", "-menu-button");
+          const button = document.getElementById(buttonId);
+          const arrow = button?.querySelector("svg:last-child");
+          if (arrow) {
+            arrow.classList.remove("rotate-180");
+          }
+        });
+    }
+  });
+
+  // Menú móvil
+  const mobileMenuButton = document.getElementById("mobile-menu-button");
+  const mobileMenu = document.getElementById("mobile-menu");
+
+  if (mobileMenuButton && mobileMenu) {
+    mobileMenuButton.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      mobileMenu.classList.toggle("hidden");
+    });
+  }
+
+  // Configurar menús móviles desplegables
+  function setupMobileDropdown(toggleId, menuId, arrowId) {
+    const toggle = document.getElementById(toggleId);
+    const menu = document.getElementById(menuId);
+    const arrow = document.getElementById(arrowId);
+
+    if (toggle && menu) {
+      toggle.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        menu.classList.toggle("hidden");
+        
+        if (arrow) {
+          arrow.classList.toggle("rotate-180");
+        }
+      });
+    }
+  }
+
+  // Configurar menús móviles - solo los que existen
+  const mobileDropdowns = [
+    { toggle: "mobile-controller-toggle", menu: "mobile-controller-menu", arrow: "mobile-controller-arrow" },
+    { toggle: "mobile-manager-toggle", menu: "mobile-manager-menu", arrow: "mobile-manager-arrow" },
+    { toggle: "mobile-project-manager-toggle", menu: "mobile-project-manager-menu", arrow: "mobile-project-manager-arrow" },
+    { toggle: "mobile-edp-toggle", menu: "mobile-edp-menu", arrow: "mobile-edp-arrow" },
+    { toggle: "mobile-admin-toggle", menu: "mobile-admin-menu", arrow: "mobile-admin-arrow" }
+  ];
   
-  // ===== NAVEGACIÓN MÓVIL PRINCIPAL =====
-  initializeMobileNavigation();
-  
-  // ===== DROPDOWNS DE ESCRITORIO =====
-  initializeDesktopDropdowns();
-  
-  // ===== FUNCIONALIDADES ADICIONALES =====
-  initializeAccessibility();
-  initializeSmartNavigation();
+  mobileDropdowns.forEach(dropdown => {
+    const toggle = document.getElementById(dropdown.toggle);
+    const menu = document.getElementById(dropdown.menu);
+    
+    if (toggle && menu) {
+      console.log(`📱 Configurando menú móvil: ${dropdown.toggle}`);
+      setupMobileDropdown(dropdown.toggle, dropdown.menu, dropdown.arrow);
+    } else {
+      console.log(`⏭️ Saltando menú móvil ${dropdown.toggle} (no existe para este rol)`);
+    }
+  });
+
+  console.log("✅ Navegación inicializada correctamente");
+
+  // Observer para cambios de tema
+  const themeObserver = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'attributes' && 
+          (mutation.attributeName === 'data-theme' || mutation.attributeName === 'class')) {
+        // Actualizar dropdowns abiertos cuando cambie el tema
+        const openDropdowns = document.querySelectorAll('[id$="-menu"]:not(.hidden):not([id*="mobile"])');
+        openDropdowns.forEach(dropdown => {
+          const themeColors = getCurrentThemeColors();
+          dropdown.style.background = themeColors.bgCard;
+          dropdown.style.borderColor = themeColors.borderColor;
+          dropdown.style.color = themeColors.textPrimary;
+        });
+      }
+    });
+  });
+
+  // Observar cambios en el elemento html
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme', 'class']
+  });
 });
+
+console.log("📝 Script de navegación cargado");
 
 /**
  * Inicializa la navegación móvil principal
@@ -213,8 +426,8 @@ function initializeAccessibility() {
     // ESC para cerrar menús
     if (e.key === 'Escape') {
       const mobileMenu = document.getElementById('mobile-menu');
-      if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
-        mobileMenu.classList.add('hidden');
+      if (mobileMenu && mobileMenu.classList.contains('hidden')) {
+        mobileMenu.classList.remove('hidden');
         console.log('⌨️ Mobile menu closed with ESC key');
       }
       
@@ -365,3 +578,21 @@ window.NavbarUtils = {
 
 // Exponer utilidades globalmente para uso en otros scripts
 window.NavbarUnified = window.NavbarUtils;
+
+/**
+ * Obtiene los colores del tema actual
+ */
+function getCurrentThemeColors() {
+  const computedStyle = getComputedStyle(document.documentElement);
+  const isDarkMode = document.documentElement.hasAttribute('data-theme') && 
+                    document.documentElement.getAttribute('data-theme') === 'dark' ||
+                    document.documentElement.classList.contains('dark');
+  
+  return {
+    bgCard: computedStyle.getPropertyValue('--bg-card').trim() || (isDarkMode ? '#1c1c1e' : '#ffffff'),
+    borderColor: computedStyle.getPropertyValue('--border-color').trim() || (isDarkMode ? '#3a3a3c' : '#d1d5db'),
+    textPrimary: computedStyle.getPropertyValue('--text-primary').trim() || (isDarkMode ? '#f5f5f7' : '#1e293b'),
+    bgHover: computedStyle.getPropertyValue('--bg-hover').trim() || (isDarkMode ? '#2e2e30' : '#e2e8f0'),
+    isDarkMode
+  };
+}

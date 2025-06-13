@@ -7,3 +7,5 @@ edp_mvp/app/keys/*.json
 .sh
 RESTRUCTURE_PLAN.md
 .venv
+.vscode
+.rdb

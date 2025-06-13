@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
+from datetime import datetime
 from ..models.user import User
 from ..extensions import db
 
@@ -12,14 +13,54 @@ def role_required(required_role):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # Get user role from session
-            user_role = session.get('user_role', 'guest')
-            if user_role != required_role:
-                flash('No tienes permisos para acceder a esta página.', 'error')
+            # Check if user is authenticated and has the required role
+            if not current_user.is_authenticated:
+                flash('Debes iniciar sesión para acceder a esta página.', 'error')
                 return redirect(url_for('auth.login'))
+            
+            if current_user.rol != required_role:
+                flash('No tienes permisos para acceder a esta página.', 'error')
+                return redirect(url_for('main.index'))
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+@admin_bp.route('/')
+@admin_bp.route('/dashboard')
+@login_required
+@role_required('admin')
+def dashboard():
+    """Dashboard principal de administración con estadísticas y acceso rápido."""
+    try:
+        # Verificar que current_user esté disponible
+        if not current_user.is_authenticated:
+            flash('Sesión expirada. Por favor, inicia sesión nuevamente.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        # Obtener estadísticas de usuarios
+        stats = User.get_stats()
+        
+        # Obtener usuarios recientes
+        recent_users = User.get_recent_users(limit=5)
+        
+        # Obtener usuarios por rol
+        users_by_role = User.get_users_by_role()
+        
+        # Obtener fecha actual formateada
+        current_time = datetime.now().strftime('%d/%m/%Y %H:%M')
+     
+        return render_template(
+            'admin/dashboard.html',
+            stats=stats,
+            recent_users=recent_users,
+            users_by_role=users_by_role,
+            current_time=current_time
+        )
+    except Exception as e:
+        print(f"Error en dashboard admin: {str(e)}")  # Para debugging
+        flash(f'Error al cargar el dashboard: {str(e)}', 'error')
+        current_time = datetime.now().strftime('%d/%m/%Y %H:%M')
+        return render_template('admin/dashboard.html', stats={}, recent_users=[], users_by_role={}, current_time=current_time)
 
 @admin_bp.route('/usuarios')
 @login_required

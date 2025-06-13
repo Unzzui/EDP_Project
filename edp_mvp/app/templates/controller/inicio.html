@@ -1,0 +1,699 @@
+{% extends "base_unified.html" %} {% block title %}Centro de Control - Pagora{%
+endblock %} {% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .elegant-header {
+    background: linear-gradient(
+      135deg,
+      var(--accent-blue) 0%,
+      var(--accent-purple) 100%
+    );
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  .tool-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+  .tool-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent-blue);
+  }
+  .mini-tool {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  .mini-tool:hover {
+    border-color: var(--accent-blue);
+    box-shadow: var(--shadow-sm);
+  }
+  .status-indicator {
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div
+  class="min-h-screen"
+  style="background-color: var(--background); color: var(--text-primary)">
+  <!-- Elegant Header -->
+  <div class="elegant-header text-white">
+    <div class="max-w-7xl mx-auto px-6 py-12">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-6">
+          <div
+            class="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+            <svg
+              class="w-10 h-10 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-4xl font-light mb-2">Centro de Control</h1>
+            <p class="text-xl text-white/90 font-medium">
+              {{ user.nombre_completo or user.email or 'Controller' }}
+            </p>
+            <p class="text-white/70 text-sm mt-1">
+              Sistema de Gestión y Supervisión
+            </p>
+          </div>
+        </div>
+        <div class="text-right hidden lg:block">
+          <div
+            class="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/20">
+            <p class="text-white/70 text-sm mb-1">Última actualización</p>
+            <p class="text-white font-semibold text-lg">
+              {{ current_date.strftime('%d/%m/%Y') }}
+            </p>
+            <p class="text-white/80 text-sm">
+              {{ current_date.strftime('%H:%M') }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-6 py-12">
+    <!-- Key Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+      <!-- Total EDPs -->
+      <div class="stat-card p-8">
+        <div class="flex items-center justify-between mb-6">
+          <div
+            class="w-14 h-14 rounded-xl flex items-center justify-center"
+            style="
+              background: linear-gradient(
+                135deg,
+                var(--accent-blue),
+                var(--info)
+              );
+              color: white;
+            ">
+            <svg
+              class="w-7 h-7"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <span class="text-3xl font-light" style="color: var(--text-primary)"
+            >{{ stats.total_edps or 0 }}</span
+          >
+        </div>
+        <h3
+          class="font-semibold text-lg mb-2"
+          style="color: var(--text-primary)">
+          EDPs Total
+        </h3>
+        <p class="text-sm" style="color: var(--text-secondary)">
+          Documentos en sistema
+        </p>
+      </div>
+
+      <!-- En Proceso -->
+      <div class="stat-card p-8">
+        <div class="flex items-center justify-between mb-6">
+          <div
+            class="w-14 h-14 rounded-xl flex items-center justify-center"
+            style="
+              background: linear-gradient(
+                135deg,
+                var(--accent-amber),
+                var(--warning)
+              );
+              color: white;
+            ">
+            <svg
+              class="w-7 h-7"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <span class="text-3xl font-light" style="color: var(--text-primary)"
+            >{{ quick_stats.kanban_items or 0 }}</span
+          >
+        </div>
+        <h3
+          class="font-semibold text-lg mb-2"
+          style="color: var(--text-primary)">
+          En Proceso
+        </h3>
+        <p class="text-sm" style="color: var(--text-secondary)">
+          Flujo de trabajo activo
+        </p>
+      </div>
+
+      <!-- Críticos -->
+      <div class="stat-card p-8">
+        <div class="flex items-center justify-between mb-6">
+          <div
+            class="w-14 h-14 rounded-xl flex items-center justify-center"
+            style="
+              background: linear-gradient(
+                135deg,
+                var(--accent-red),
+                var(--danger)
+              );
+              color: white;
+            ">
+            <svg
+              class="w-7 h-7"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <span class="text-3xl font-light" style="color: var(--text-primary)"
+            >{{ quick_stats.critical_items or 0 }}</span
+          >
+        </div>
+        <h3
+          class="font-semibold text-lg mb-2"
+          style="color: var(--text-primary)">
+          Críticos
+        </h3>
+        <p class="text-sm" style="color: var(--text-secondary)">
+          Requieren atención inmediata
+        </p>
+      </div>
+
+      <!-- Eficiencia -->
+      <div class="stat-card p-8">
+        <div class="flex items-center justify-between mb-6">
+          <div
+            class="w-14 h-14 rounded-xl flex items-center justify-center"
+            style="
+              background: linear-gradient(
+                135deg,
+                var(--accent-purple),
+                var(--accent-pink)
+              );
+              color: white;
+            ">
+            <svg
+              class="w-7 h-7"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <span class="text-3xl font-light" style="color: var(--text-primary)"
+            >{{ "%.1f" | format(quick_stats.efficiency or 0) }}%</span
+          >
+        </div>
+        <h3
+          class="font-semibold text-lg mb-2"
+          style="color: var(--text-primary)">
+          Eficiencia
+        </h3>
+        <p class="text-sm" style="color: var(--text-secondary)">
+          Rendimiento del sistema
+        </p>
+      </div>
+    </div>
+
+    <!-- Primary Tools -->
+    <div class="mb-12">
+      <div class="text-center mb-10">
+        <h2 class="text-3xl font-light mb-3" style="color: var(--text-primary)">
+          Herramientas de Control
+        </h2>
+        <p class="text-lg" style="color: var(--text-secondary)">
+          Acceso directo a las funciones principales
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Kanban -->
+        <a
+          href="{{ url_for('controller.vista_kanban') }}"
+          class="tool-card p-8 group">
+          <div class="flex flex-col items-center text-center">
+            <div
+              class="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-300"
+              style="
+                background: linear-gradient(
+                  135deg,
+                  var(--accent-green),
+                  var(--success)
+                );
+                color: white;
+              ">
+              <svg
+                class="w-8 h-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.5">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H9a2 2 0 00-2 2" />
+              </svg>
+            </div>
+            <h3
+              class="text-xl font-semibold mb-3"
+              style="color: var(--text-primary)">
+              Vista Kanban
+            </h3>
+            <p style="color: var(--text-secondary)" class="mb-6">
+              Control visual del flujo de trabajo con seguimiento en tiempo real
+              de todos los procesos
+            </p>
+            <div
+              class="flex items-center group-hover:translate-x-1 transition-transform duration-300"
+              style="color: var(--accent-green)">
+              <span class="font-medium">Acceder</span>
+              <svg
+                class="w-5 h-5 ml-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </a>
+
+        <!-- Dashboard -->
+        <a
+          href="{{ url_for('controller.dashboard_controller') }}"
+          class="tool-card p-8 group">
+          <div class="flex flex-col items-center text-center">
+            <div
+              class="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-300"
+              style="
+                background: linear-gradient(
+                  135deg,
+                  var(--accent-blue),
+                  var(--info)
+                );
+                color: white;
+              ">
+              <svg
+                class="w-8 h-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.5">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3
+              class="text-xl font-semibold mb-3"
+              style="color: var(--text-primary)">
+              Dashboard Analítico
+            </h3>
+            <p style="color: var(--text-secondary)" class="mb-6">
+              Panel completo con métricas avanzadas, KPIs y análisis detallado
+              del rendimiento
+            </p>
+            <div
+              class="flex items-center group-hover:translate-x-1 transition-transform duration-300"
+              style="color: var(--accent-blue)">
+              <span class="font-medium">Acceder</span>
+              <svg
+                class="w-5 h-5 ml-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </a>
+
+        <!-- Teams -->
+        <a
+          href="{{ url_for('controller.vista_global_encargados') }}"
+          class="tool-card p-8 group">
+          <div class="flex flex-col items-center text-center">
+            <div
+              class="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-300"
+              style="
+                background: linear-gradient(
+                  135deg,
+                  var(--accent-purple),
+                  var(--accent-pink)
+                );
+                color: white;
+              ">
+              <svg
+                class="w-8 h-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.5">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3
+              class="text-xl font-semibold mb-3"
+              style="color: var(--text-primary)">
+              Gestión de Equipos
+            </h3>
+            <p style="color: var(--text-secondary)" class="mb-6">
+              Supervisión integral del rendimiento de equipos con análisis
+              comparativo y métricas
+            </p>
+            <div
+              class="flex items-center group-hover:translate-x-1 transition-transform duration-300"
+              style="color: var(--accent-purple)">
+              <span class="font-medium">Acceder</span>
+              <svg
+                class="w-5 h-5 ml-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Secondary Tools -->
+    <div class="mb-12">
+      <h3
+        class="text-2xl font-light mb-8 text-center"
+        style="color: var(--text-primary)">
+        Herramientas Especializadas
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <a
+          href="{{ url_for('controller.analisis_retrabajos') }}"
+          class="mini-tool p-6 group">
+          <div class="flex items-center mb-4">
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center mr-4"
+              style="background: var(--accent-orange); color: white">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h4 class="font-semibold" style="color: var(--text-primary)">
+                Análisis de Retrabajos
+              </h4>
+              <p class="text-sm" style="color: var(--text-secondary)">
+                Patrones y mejoras
+              </p>
+            </div>
+          </div>
+        </a>
+
+        <div class="mini-tool p-6">
+          <div class="flex items-center mb-4">
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center mr-4"
+              style="background: var(--accent-aqua); color: white">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h4 class="font-semibold" style="color: var(--text-primary)">
+                Monitoreo en Tiempo Real
+              </h4>
+              <p class="text-sm" style="color: var(--text-secondary)">
+                Estado de procesos
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mini-tool p-6">
+          <div class="flex items-center mb-4">
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center mr-4"
+              style="background: var(--success); color: white">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h4 class="font-semibold" style="color: var(--text-primary)">
+                Control de Calidad
+              </h4>
+              <p class="text-sm" style="color: var(--text-secondary)">
+                Validación y conformidad
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mini-tool p-6">
+          <div class="flex items-center mb-4">
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center mr-4"
+              style="background: var(--accent-pink); color: white">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h4 class="font-semibold" style="color: var(--text-primary)">
+                Reportes Avanzados
+              </h4>
+              <p class="text-sm" style="color: var(--text-secondary)">
+                Análisis detallados
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="tool-card p-8">
+      <div class="flex items-center gap-4 mb-8">
+        <div
+          class="w-12 h-12 rounded-xl flex items-center justify-center"
+          style="background: var(--success); color: white">
+          <div class="status-indicator w-2 h-2 rounded-full bg-white"></div>
+        </div>
+        <div>
+          <h3 class="text-2xl font-light" style="color: var(--text-primary)">
+            Estado del Sistema
+          </h3>
+          <p style="color: var(--text-secondary)">
+            Información operativa en tiempo real
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="space-y-6">
+          <div>
+            <h4 class="font-semibold mb-3" style="color: var(--text-primary)">
+              Perfil de Control
+            </h4>
+            <div class="flex items-center gap-3">
+              <div
+                class="w-3 h-3 rounded-full"
+                style="background-color: var(--accent-blue)"></div>
+              <span style="color: var(--text-secondary)"
+                >{{ user.rol | title if user.rol else 'Controller' }}</span
+              >
+            </div>
+          </div>
+
+          <div>
+            <h4 class="font-semibold mb-3" style="color: var(--text-primary)">
+              Funciones Activas
+            </h4>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-2 h-2 rounded-full"
+                  style="background-color: var(--success)"></div>
+                <span class="text-sm" style="color: var(--text-secondary)"
+                  >Gestión Kanban</span
+                >
+              </div>
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-2 h-2 rounded-full"
+                  style="background-color: var(--success)"></div>
+                <span class="text-sm" style="color: var(--text-secondary)"
+                  >Control de procesos</span
+                >
+              </div>
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-2 h-2 rounded-full"
+                  style="background-color: var(--success)"></div>
+                <span class="text-sm" style="color: var(--text-secondary)"
+                  >Supervisión de equipos</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div>
+            <h4 class="font-semibold mb-3" style="color: var(--text-primary)">
+              Estado Operativo
+            </h4>
+            <div
+              class="flex items-center gap-3 p-4 rounded-lg"
+              style="background-color: var(--success-bg)">
+              <div
+                class="status-indicator w-3 h-3 rounded-full"
+                style="background-color: var(--success)"></div>
+              <span class="font-medium" style="color: var(--success)"
+                >Sistema Operativo</span
+              >
+            </div>
+          </div>
+
+          <div>
+            <h4 class="font-semibold mb-3" style="color: var(--text-primary)">
+              Última Sincronización
+            </h4>
+            <div class="text-sm" style="color: var(--text-secondary)">
+              <p>{{ current_date.strftime('%d de %B, %Y') }}</p>
+              <p class="font-mono">{{ current_date.strftime('%H:%M:%S') }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div>
+            <h4 class="font-semibold mb-3" style="color: var(--text-primary)">
+              Notificaciones
+            </h4>
+            <div class="space-y-3">
+              {% if quick_stats.critical_items > 0 %}
+              <div
+                class="flex items-center gap-3 p-3 rounded-lg"
+                style="background-color: var(--danger-bg)">
+                <div
+                  class="w-2 h-2 rounded-full"
+                  style="background-color: var(--danger)"></div>
+                <span class="text-sm font-medium" style="color: var(--danger)"
+                  >{{ quick_stats.critical_items }} elementos críticos</span
+                >
+              </div>
+              {% endif %}
+              <div
+                class="flex items-center gap-3 p-3 rounded-lg"
+                style="background-color: var(--success-bg)">
+                <div
+                  class="w-2 h-2 rounded-full"
+                  style="background-color: var(--success)"></div>
+                <span class="text-sm" style="color: var(--success)"
+                  >Sistema funcionando correctamente</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

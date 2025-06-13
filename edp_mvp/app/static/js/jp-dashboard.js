@@ -789,13 +789,6 @@ class JPDashboard {
    */
   initializeKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
-      // Ctrl/Cmd + R: Refresh dashboard
-      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-        e.preventDefault();
-        this.refreshDashboard();
-        this.showNotification('🔄 Dashboard actualizado', 'info', 2000);
-      }
-      
       // Ctrl/Cmd + E: Export data
       if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
         e.preventDefault();

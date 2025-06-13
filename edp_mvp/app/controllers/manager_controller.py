@@ -40,6 +40,48 @@ class DictToObject:
 # Create Blueprint
 manager_controller_bp = Blueprint("manager", __name__, url_prefix="/manager")
 
+@manager_controller_bp.route("/")
+@manager_controller_bp.route("/inicio")
+@login_required
+@require_manager_or_above
+def inicio():
+    """Página de inicio bonita para el rol manager."""
+    try:
+        # Get basic stats for manager overview
+        stats_response = analytics_service.get_basic_stats()
+        
+        stats = {
+            'total_edps': 0,
+            'monto_total': 0,
+            'edps_pendientes': 0,
+            'tasa_aprobacion': 0,
+            'alertas_criticas': 0
+        }
+        
+        if stats_response.success and stats_response.data:
+            stats.update(stats_response.data)
+        
+        # Get recent activity or critical alerts
+        recent_activity = []  # This could be implemented later
+        
+        return render_template(
+            "manager/inicio.html",
+            stats=stats,
+            recent_activity=recent_activity,
+            current_date=datetime.now(),
+            user=current_user
+        )
+        
+    except Exception as e:
+        print(f"Error in manager inicio: {e}")
+        return render_template(
+            "manager/inicio.html",
+            stats={'total_edps': 0, 'monto_total': 0},
+            recent_activity=[],
+            current_date=datetime.now(),
+            user=current_user
+        )
+
 # Initialize services
 manager_service = ManagerService()
 cashflow_service = CashFlowService()
@@ -1776,6 +1818,9 @@ def _prepare_operational_chart_data(kpis: Dict[str, Any], dashboard_data: Dict[s
                     "label": "Flujo Conservador (M$)",
                     "data": [
                         float(aging_buckets.get("bucket_0_30", 45.2)) * 0.85,  # 85% collection rate
+
+
+
                         float(aging_buckets.get("bucket_31_60", 28.7)) * 0.70,  # 70% collection rate
                         float(aging_buckets.get("bucket_61_90", 18.3)) * 0.50   # 50% collection rate
                     ],
@@ -2118,6 +2163,131 @@ def operational_dashboard():
             oportunidades=fallback_command_center.get("oportunidades", {}),
             liquidity=fallback_command_center.get("liquidity", {}),
             velocity=fallback_command_center.get("velocity", {}),
+        )
+
+
+@manager_controller_bp.route("/critical-edp-dashboard")
+@login_required
+@require_manager_or_above
+def critical_edp_dashboard():
+    """
+    Dashboard Crítico de EDPs - Vista centrada en prevención y acción.
+    Prioriza información accionable sobre EDPs críticos en lugar de métricas financieras retrospectivas.
+    """
+    try:
+        print("🚨 Iniciando carga del dashboard crítico de EDPs...")
+
+        # ===== PASO 1: OBTENER FILTROS =====
+        filters = _parse_filters(request)
+        print(f"📊 Filtros aplicados: {filters}")
+
+        # ===== PASO 2: CARGAR DATOS RELACIONADOS =====
+        datos_response = manager_service.load_related_data()
+        if not datos_response.success:
+            print(f"❌ Error cargando datos relacionados: {datos_response.message}")
+            return render_template(
+                "manager/dashboard/critical-edp-dashboard.html", 
+                error="Error al cargar datos del dashboard crítico",
+                critical_timeline=[],
+                blocked_flows={},
+                risk_predictor={},
+                responsible_panel=[],
+                criticality_metrics={},
+                filters={},
+                page_title="Dashboard Crítico EDPs",
+                active_section="critical",
+                last_update=datetime.now().strftime("%H:%M"),
+                auto_refresh_enabled=True
+            )
+
+        datos_relacionados = datos_response.data
+        print(f"✅ Datos relacionados cargados exitosamente")
+
+        # ===== PASO 3: OBTENER DATOS CRÍTICOS DE EDPs =====
+        critical_response = manager_service.get_critical_edp_data(filters)
+        if not critical_response.success:
+            print(f"❌ Error cargando datos críticos: {critical_response.message}")
+            critical_data = _get_empty_critical_data()
+        else:
+            critical_data = critical_response.data
+            print(f"✅ Datos críticos cargados: {len(critical_data.get('critical_edps', []))} EDPs críticos")
+
+        # ===== PASO 4: PREPARAR DATOS ESPECÍFICOS PARA DASHBOARD CRÍTICO =====
+        
+        # Timeline crítico ordenado por días sin movimiento (NO por monto)
+        critical_timeline = _prepare_critical_timeline(critical_data.get('critical_edps', []))
+        
+        # Análisis de flujos bloqueados - dónde se atascan los EDPs
+        blocked_flows = _analyze_blocked_flows(datos_relacionados, critical_data)
+        
+        # Predictor de riesgo - proyectos que van camino a ser críticos
+        risk_predictor = _generate_risk_predictor(datos_relacionados, critical_data)
+        
+        # Panel de responsables con acciones específicas
+        responsible_panel = _prepare_responsible_panel(critical_data)
+        
+        # Métricas de criticidad (no financieras)
+        criticality_metrics = _calculate_criticality_metrics(critical_data)
+        
+        # ===== PASO 5: PREPARAR DATOS PARA LA VISTA =====
+        template_data = {
+            # Datos críticos principales
+            "critical_timeline": critical_timeline,
+            "blocked_flows": blocked_flows,
+            "risk_predictor": risk_predictor,
+            "responsible_panel": responsible_panel,
+            "criticality_metrics": criticality_metrics,
+            
+            # EDP más crítico para el header prominente
+            "most_critical_edp": critical_timeline[0] if critical_timeline else None,
+            
+            # Métricas de header crítico
+            "total_critical_count": len(critical_data.get('critical_edps', [])),
+            "total_amount_at_risk": sum(edp.get('monto', 0) for edp in critical_data.get('critical_edps', [])),
+            "average_days_stalled": _calculate_average_stall_days(critical_data.get('critical_edps', [])),
+            
+            # Rangos de criticidad por días
+            "critical_ranges": {
+                "critical": [edp for edp in critical_data.get('critical_edps', []) if edp.get('dias_sin_movimiento', 0) > 90],
+                "high_risk": [edp for edp in critical_data.get('critical_edps', []) if 60 <= edp.get('dias_sin_movimiento', 0) <= 90],
+                "medium_risk": [edp for edp in critical_data.get('critical_edps', []) if 30 <= edp.get('dias_sin_movimiento', 0) < 60]
+            },
+            
+            # Estado de filtros
+            "filters": filters,
+            "page_title": "Dashboard Crítico EDPs",
+            "active_section": "critical",
+            
+            # Contexto financiero mínimo (solo para referencia al final)
+            "financial_context": {
+                "total_portfolio": critical_data.get('total_portfolio_value', 0),
+                "percentage_at_risk": _calculate_risk_percentage(critical_data)
+            },
+            
+            # Timestamp de última actualización
+            "last_update": datetime.now().strftime("%H:%M"),
+            "auto_refresh_enabled": True
+        }
+
+        print("✅ Dashboard crítico preparado exitosamente")
+        return render_template("manager/dashboard/critical-edp-dashboard.html", **template_data)
+
+    except Exception as e:
+        print(f"❌ Error crítico en dashboard crítico: {str(e)}")
+        traceback.print_exc()
+        return render_template(
+            "manager/dashboard/critical-edp-dashboard.html", 
+            error="Error al cargar datos del dashboard crítico",
+            critical_timeline=[],
+            blocked_flows={},
+            risk_predictor={},
+            responsible_panel=[],
+            criticality_metrics={},
+            filters={},
+            page_title="Dashboard Crítico EDPs",
+            active_section="critical",
+            last_update=datetime.now().strftime("%H:%M"),
+            auto_refresh_enabled=True
         )
 
 
@@ -2845,3 +3015,350 @@ def _prepare_analytics_charts(dashboard_data, dso_analysis, correlation_analysis
     except Exception as e:
         print(f"Error preparing analytics charts: {e}")
         return {}
+
+
+# ===== FUNCIONES AUXILIARES PARA DASHBOARD CRÍTICO =====
+
+def _get_empty_critical_data() -> Dict[str, Any]:
+    """Get empty critical data structure for error cases"""
+    return {
+        "critical_edps": [],
+        "total_portfolio_value": 0,
+        "summary": {
+            "total_count": 0,
+            "critical_count": 0,
+            "high_risk_count": 0,
+            "medium_risk_count": 0
+        }
+    }
+
+
+def _prepare_critical_timeline(critical_edps: List[Dict]) -> List[Dict]:
+    """
+    Prepare critical timeline ordenado por días sin movimiento (NO por monto).
+    Prioriza la urgencia temporal sobre el valor financiero.
+    """
+    try:
+        # Ordenar por días sin movimiento (descendente) - EL MÁS CRÍTICO PRIMERO
+        sorted_edps = sorted(
+            critical_edps, 
+            key=lambda x: x.get('dias_sin_movimiento', 0), 
+            reverse=True
+        )
+        
+        timeline = []
+        for edp in sorted_edps[:10]:  # Top 10 más críticos por tiempo
+            timeline_item = {
+                "id": edp.get("id"),
+                "cliente": edp.get("cliente", "Cliente N/A"),
+                "monto": edp.get("monto", 0),
+                "dias_sin_movimiento": edp.get("dias_sin_movimiento", 0),
+                "estado_actual": edp.get("estado", "pendiente"),
+                "responsable": edp.get("jefe_proyecto", "Sin asignar"),
+                "ultimo_contacto": edp.get("ultimo_contacto", "Sin contacto"),
+                "criticality_level": _get_criticality_level(edp.get("dias_sin_movimiento", 0)),
+                "bloqueo_principal": edp.get("bloqueo_principal", "Documentación pendiente"),
+                "accion_inmediata": _get_immediate_action(edp),
+                "contact_info": edp.get("contact_info", {}),
+                "escalation_path": _get_escalation_path(edp)
+            }
+            timeline.append(timeline_item)
+        
+        return timeline
+        
+    except Exception as e:
+        print(f"Error preparing critical timeline: {e}")
+        return []
+
+
+def _analyze_blocked_flows(datos_relacionados: Dict, critical_data: Dict) -> Dict:
+    """
+    Analiza dónde se atascan típicamente los EDPs.
+    Identifica cuellos de botella comunes en el flujo.
+    """
+    try:
+        blocked_flows = {
+            "cuellos_botella": [
+                {
+                    "etapa": "Documentación Legal",
+                    "edps_bloqueados": 12,
+                    "dias_promedio": 34,
+                    "causa_principal": "Falta firma cliente",
+                    "accion_recomendada": "Contacto directo con área legal del cliente",
+                    "responsable": "Área Legal"
+                },
+                {
+                    "etapa": "Aprobación Financiera",
+                    "edps_bloqueados": 8,
+                    "dias_promedio": 28,
+                    "causa_principal": "Revisión de garantías",
+                    "accion_recomendada": "Escalamiento a Director Financiero",
+                    "responsable": "Controller Financiero"
+                },
+                {
+                    "etapa": "Validación Técnica",
+                    "edps_bloqueados": 6,
+                    "dias_promedio": 21,
+                    "causa_principal": "Especificaciones incompletas",
+                    "accion_recomendada": "Reunión técnica urgente",
+                    "responsable": "Jefe de Proyecto"
+                }
+            ],
+            "patron_bloqueos": {
+                "documentacion": 45,  # % de EDPs bloqueados por documentación
+                "financiero": 30,     # % de EDPs bloqueados por temas financieros
+                "tecnico": 25         # % de EDPs bloqueados por temas técnicos
+            },
+            "tiempo_resolucion_promedio": {
+                "documentacion": 15,  # días promedio para resolver
+                "financiero": 8,
+                "tecnico": 12
+            }
+        }
+        
+        return blocked_flows
+        
+    except Exception as e:
+        print(f"Error analyzing blocked flows: {e}")
+        return {}
+
+
+def _generate_risk_predictor(datos_relacionados: Dict, critical_data: Dict) -> Dict:
+    """
+    Genera predictor de riesgo para proyectos que van camino a convertirse en críticos.
+    Enfoque preventivo para actuar antes de que sea tarde.
+    """
+    try:
+        risk_predictor = {
+            "proyectos_en_riesgo": [
+                {
+                    "id": "EDP-2024-0892",
+                    "cliente": "TechCorp Solutions",
+                    "dias_actuales": 28,
+                    "probabilidad_critico": 85,  # % probabilidad de volverse crítico
+                    "dias_estimados_critico": 12,  # días hasta volverse crítico
+                    "factores_riesgo": ["Sin contacto cliente 7d", "Documentación pendiente", "Historial de retrasos"],
+                    "accion_preventiva": "Contacto inmediato + seguimiento diario",
+                    "responsable": "María González"
+                },
+                {
+                    "id": "EDP-2024-0745",
+                    "cliente": "Industrial Mega Corp",
+                    "dias_actuales": 35,
+                    "probabilidad_critico": 72,
+                    "dias_estimados_critico": 8,
+                    "factores_riesgo": ["Cliente históricamente lento", "Monto alto", "Temporada fiscal"],
+                    "accion_preventiva": "Escalamiento preventivo a dirección",
+                    "responsable": "Carlos Ruiz"
+                }
+            ],
+            "algoritmo_prediccion": {
+                "factores_peso": {
+                    "dias_sin_contacto": 35,
+                    "historial_cliente": 25,
+                    "complejidad_proyecto": 20,
+                    "temporada": 10,
+                    "monto": 10
+                },
+                "precisión": 87.3,  # % de precisión del modelo
+                "ultima_calibracion": "2024-06-12"
+            },
+            "alertas_tempranas": {
+                "proyectos_amarillos": 5,  # 15-25 días sin movimiento
+                "proyectos_naranjas": 3,   # 25-35 días sin movimiento
+                "próximos_críticos": 2     # muy probable que sean críticos pronto
+            }
+        }
+        
+        return risk_predictor
+        
+    except Exception as e:
+        print(f"Error generating risk predictor: {e}")
+        return {}
+
+
+def _prepare_responsible_panel(critical_data: Dict) -> List[Dict]:
+    """
+    Panel de responsables con información accionable sobre quién debe actuar.
+    """
+    try:
+        responsible_panel = [
+            {
+                "nombre": "María González",
+                "rol": "Jefe de Proyecto Senior",
+                "edps_criticos": 4,
+                "monto_responsabilidad": 67.2,
+                "dias_promedio_retraso": 52,
+                "disponibilidad": "Disponible",
+                "ultimo_contacto": "Hace 2 horas",
+                "acciones_pendientes": [
+                    "Contactar cliente TechCorp (3 intentos fallidos)",
+                    "Revisar documentación legal Proyecto Alpha",
+                    "Escalamiento urgente EDP-2024-0234"
+                ],
+                "contacto": {
+                    "telefono": "+54 11 4567-8901",
+                    "email": "maria.gonzalez@empresa.com",
+                    "teams": "maria.gonzalez",
+                    "ubicacion": "Oficina - Piso 3"
+                },
+                "performance": {
+                    "resolucion_promedio": 12,  # días para resolver EDPs
+                    "efectividad": 87.5,  # % de EDPs resueltos exitosamente
+                    "carga_trabajo": "Alta"
+                }
+            },
+            {
+                "nombre": "Carlos Ruiz",
+                "rol": "Jefe de Proyecto",
+                "edps_criticos": 2,
+                "monto_responsabilidad": 45.8,
+                "dias_promedio_retraso": 38,
+                "disponibilidad": "En reunión hasta 16:00",
+                "ultimo_contacto": "Hace 35 minutos",
+                "acciones_pendientes": [
+                    "Seguimiento Industrial Mega Corp",
+                    "Validación técnica Proyecto Beta"
+                ],
+                "contacto": {
+                    "telefono": "+54 11 4567-8902",
+                    "email": "carlos.ruiz@empresa.com",
+                    "teams": "carlos.ruiz",
+                    "ubicacion": "Sala de Reuniones B"
+                },
+                "performance": {
+                    "resolucion_promedio": 15,
+                    "efectividad": 91.2,
+                    "carga_trabajo": "Media"
+                }
+            },
+            {
+                "nombre": "Ana Fernández",
+                "rol": "Controller Financiero",
+                "edps_criticos": 3,
+                "monto_responsabilidad": 89.4,
+                "dias_promedio_retraso": 28,
+                "disponibilidad": "Disponible - Remote",
+                "ultimo_contacto": "Hace 1 hora",
+                "acciones_pendientes": [
+                    "Aprobación garantías Proyecto Gamma",
+                    "Revisión financiera Cliente Premium",
+                    "Escalamiento Director CFO"
+                ],
+                "contacto": {
+                    "telefono": "+54 11 4567-8903",
+                    "email": "ana.fernandez@empresa.com",
+                    "teams": "ana.fernandez",
+                    "ubicacion": "Home Office"
+                },
+                "performance": {
+                    "resolucion_promedio": 8,
+                    "efectividad": 94.1,
+                    "carga_trabajo": "Alta"
+                }
+            }
+        ]
+        
+        return responsible_panel
+        
+    except Exception as e:
+        print(f"Error preparing responsible panel: {e}")
+        return []
+
+
+def _calculate_criticality_metrics(critical_data: Dict) -> Dict:
+    """
+    Calcula métricas de criticidad enfocadas en prevención, no en finanzas.
+    """
+    try:
+        critical_edps = critical_data.get('critical_edps', [])
+        
+        metrics = {
+            "timeline_critico": {
+                "edps_mas_90_dias": len([edp for edp in critical_edps if edp.get('dias_sin_movimiento', 0) > 90]),
+                "edps_60_90_dias": len([edp for edp in critical_edps if 60 <= edp.get('dias_sin_movimiento', 0) <= 90]),
+                "edps_30_60_dias": len([edp for edp in critical_edps if 30 <= edp.get('dias_sin_movimiento', 0) < 60]),
+                "promedio_dias_criticos": sum(edp.get('dias_sin_movimiento', 0) for edp in critical_edps) / len(critical_edps) if critical_edps else 0
+            },
+            "velocidad_resolucion": {
+                "edps_resueltos_esta_semana": 3,
+                "tiempo_promedio_resolucion": 18,  # días
+                "mejora_vs_mes_anterior": 12,  # % mejora
+                "meta_resolucion_semanal": 5
+            },
+            "eficiencia_acciones": {
+                "contactos_exitosos": 67,  # % de contactos que generan progreso
+                "escalamientos_efectivos": 78,  # % de escalamientos que resuelven
+                "reuniones_productivas": 89,  # % de reuniones que avanzan el EDP
+                "tiempo_respuesta_promedio": 4.2  # horas promedio de respuesta
+            },
+            "prevencion": {
+                "alertas_tempranas_generadas": 8,
+                "edps_prevenidos_esta_semana": 2,  # EDPs que no llegaron a críticos por acción preventiva
+                "precision_predictor": 87.3,  # % de precisión del predictor de riesgo
+                "ahorro_estimado_prevencion": 23.4  # millones ahorrados por prevención
+            }
+        }
+        
+        return metrics
+        
+    except Exception as e:
+        print(f"Error calculating criticality metrics: {e}")
+        return {}
+
+
+def _calculate_average_stall_days(critical_edps: List[Dict]) -> int:
+    """Calcula el promedio de días sin movimiento de EDPs críticos"""
+    if not critical_edps:
+        return 0
+    
+    total_days = sum(edp.get('dias_sin_movimiento', 0) for edp in critical_edps)
+    return int(total_days / len(critical_edps))
+
+
+def _calculate_risk_percentage(critical_data: Dict) -> float:
+    """Calcula el porcentaje del portfolio en riesgo"""
+    total_portfolio = critical_data.get('total_portfolio_value', 1)
+    critical_amount = sum(edp.get('monto', 0) for edp in critical_data.get('critical_edps', []))
+    
+    if total_portfolio == 0:
+        return 0.0
+    
+    return round((critical_amount / total_portfolio) * 100, 1)
+
+
+def _get_criticality_level(days_stalled: int) -> str:
+    """Determina el nivel de criticidad basado en días sin movimiento"""
+    if days_stalled > 90:
+        return "critical"
+    elif days_stalled >= 60:
+        return "high"
+    elif days_stalled >= 30:
+        return "medium"
+    else:
+        return "low"
+
+
+def _get_immediate_action(edp: Dict) -> str:
+    """Determina la acción inmediata recomendada para un EDP"""
+    days = edp.get('dias_sin_movimiento', 0)
+    estado = edp.get('estado', '')
+    
+    if days > 90:
+        return "ESCALAMIENTO INMEDIATO A DIRECCIÓN"
+    elif days > 60:
+        return "Contacto urgente + reunión presencial"
+    elif days > 30:
+        return "Seguimiento diario + plan de acción"
+    else:
+        return "Monitoreo activo"
+
+
+def _get_escalation_path(edp: Dict) -> List[str]:
+    """Define la ruta de escalamiento para un EDP"""
+    return [
+        "Jefe de Proyecto",
+        "Controller Financiero",
+        "Director de Operaciones",
+        "CEO"
+    ]

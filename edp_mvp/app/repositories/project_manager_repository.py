@@ -12,6 +12,7 @@ from ..utils.date_utils import DateUtils
 import pandas as pd
 import logging
 import traceback
+from ..utils.gsheet import update_row, log_cambio_edp
 
 logger = logging.getLogger(__name__)
 
@@ -304,13 +305,164 @@ class ProjectManagerRepository:
         except Exception as e:
             logger.error(f"Error getting team performance for {manager_name}: {str(e)}")
             return {}
+
     def get_projects_cost(self, manager_name: str) -> Dict[str, Any]:
-        
-        """Get the cost of all projects for a project manager."""
+        """Get cost analysis for projects under a manager."""
         try:
-            proyectos = self.cost_repo.get_cost_by_manager(manager_name)
-         
-            return proyectos
+            costs = self.cost_repo.get_cost_by_manager(manager_name)
+            return float(costs)
         except Exception as e:
             logger.error(f"Error getting projects cost for {manager_name}: {str(e)}")
-            return 0
+            return 0.0
+
+    def get_pending_edps_for_validation(self, manager_name: str) -> List[Dict[str, Any]]:
+        """
+        Obtiene EDPs que están pendientes de validación (estados: enviado, revisión).
+        Estos son EDPs que requieren seguimiento activo del jefe de proyecto.
+        """
+        try:
+            # Obtener todos los EDPs del manager
+            proyectos = self.get_manager_projects(manager_name)
+            df = pd.DataFrame(proyectos)
+            
+            if df.empty:
+                return []
+            
+            # Filtrar solo EDPs en estados que requieren validación
+            pending_states = ['enviado', 'revisión', 'revision']  # Incluir ambas escrituras
+            
+            # Asegurar que la columna estado existe
+            if 'estado' not in df.columns:
+                return []
+            
+            # Filtrar EDPs pendientes de validación
+            pending_edps = df[df['estado'].str.lower().isin(pending_states)]
+            
+            if pending_edps.empty:
+                return []
+            
+            # Preparar datos para el template
+            result = []
+            for _, edp in pending_edps.iterrows():
+                # Calcular días pendientes usando las fechas correctas
+                dias_pendiente = 0
+                
+                # Prioridad 1: Si hay fecha_envio_cliente, calcular desde esa fecha
+                if 'fecha_envio_cliente' in edp and pd.notnull(edp['fecha_envio_cliente']):
+                    try:
+                        fecha_envio = pd.to_datetime(edp['fecha_envio_cliente'])
+                        dias_pendiente = (datetime.now() - fecha_envio).days
+                    except:
+                        pass
+                # Prioridad 2: Si no, usar fecha_emision
+                elif 'fecha_emision' in edp and pd.notnull(edp['fecha_emision']):
+                    try:
+                        fecha_emision = pd.to_datetime(edp['fecha_emision'])
+                        dias_pendiente = (datetime.now() - fecha_emision).days
+                    except:
+                        pass
+                # Prioridad 3: Si hay dias_espera calculado, usarlo
+                elif 'dias_espera' in edp and pd.notnull(edp['dias_espera']):
+                    try:
+                        dias_pendiente = int(float(edp['dias_espera']))
+                    except:
+                        pass
+                
+                # Obtener monto aprobado
+                monto = 0
+                if 'monto_aprobado' in edp and pd.notnull(edp['monto_aprobado']):
+                    try:
+                        monto = float(edp['monto_aprobado'])
+                    except:
+                        pass
+                
+                # Preparar datos del EDP usando nombres de columnas correctos
+                edp_data = {
+                    'id': edp.get('n_edp', ''),
+                    'codigo': edp.get('n_edp', ''),
+                    'numero': edp.get('n_edp', ''),
+                    'project_name': edp.get('proyecto', ''),
+                    'proyecto': edp.get('proyecto', ''),
+                    'proyecto_descripcion': edp.get('observaciones', ''),  # Usar observaciones como descripción
+                    'cliente_nombre': edp.get('cliente', ''),
+                    'cliente': edp.get('cliente', ''),
+                    'cliente_email': '',  # No disponible en la estructura actual
+                    'gestor_nombre': edp.get('gestor', ''),
+                    'gestor': edp.get('gestor', ''),
+                    'gestor_email': '',  # No disponible en la estructura actual
+                    'monto': monto,
+                    'dias_pendiente': dias_pendiente,
+                    'estado': edp.get('estado', ''),
+                    'estado_detallado': edp.get('estado_detallado', ''),
+                    'fecha_creacion': edp.get('fecha_emision') if 'fecha_emision' in edp else None,
+                    'fecha_envio_cliente': edp.get('fecha_envio_cliente') if 'fecha_envio_cliente' in edp else None
+                }
+                
+                result.append(edp_data)
+            
+            # Ordenar por días pendientes (más urgentes primero)
+            result.sort(key=lambda x: x['dias_pendiente'], reverse=True)
+            
+            logger.info(f"Found {len(result)} pending EDPs for validation for manager {manager_name}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error getting pending EDPs for validation for {manager_name}: {str(e)}")
+            logger.error(traceback.format_exc())
+            return []
+
+    def update_edp_status(self, edp_id: int, nuevo_estado: str, estado_anterior: str, usuario: str) -> bool:
+        """Update EDP status in the database."""
+        try:
+            # Get current EDP data
+            proyectos = self.get_all_projects()
+            df = pd.DataFrame(proyectos)
+            
+            if df.empty:
+                logger.error(f"No projects found to update EDP {edp_id}")
+                return False
+            
+            # Find the EDP
+            edp_row = df[df['id'] == int(edp_id)]
+            if edp_row.empty:
+                logger.error(f"EDP {edp_id} not found")
+                return False
+            
+            # Get the row index (assuming it corresponds to sheet row)
+            row_index = edp_row.index[0] + 2  # +2 because sheets are 1-indexed and have header
+            
+            # Prepare update data
+            update_data = {
+                'estado': nuevo_estado,
+                'registrado_por': usuario,
+                'fecha_registro': datetime.now().strftime('%Y-%m-%d')
+            }
+            
+            # Update in Google Sheets
+            try:
+                update_success = update_row(row_index, update_data)
+                if update_success:
+                    # Log the change
+                    log_cambio_edp(
+                        edp_id=edp_id,
+                        campo_modificado='estado',
+                        valor_anterior=estado_anterior,
+                        valor_nuevo=nuevo_estado,
+                        usuario=usuario,
+                        proyecto=edp_row.iloc[0].get('proyecto', ''),
+                        observaciones=f'Cambio desde kanban JP: {estado_anterior} → {nuevo_estado}'
+                    )
+                    logger.info(f"EDP {edp_id} status updated successfully in Google Sheets")
+                    return True
+                else:
+                    logger.error(f"Failed to update EDP {edp_id} in Google Sheets")
+                    return False
+                    
+            except Exception as sheet_error:
+                logger.error(f"Error updating Google Sheets for EDP {edp_id}: {str(sheet_error)}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error updating EDP {edp_id} status: {str(e)}")
+            logger.error(traceback.format_exc())
+            return False

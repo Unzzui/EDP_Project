@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bienvenido a Pagora | Sistema de Gestión EDP</title>
+    <meta
+      name="description"
+      content="Sistema integral de gestión de EDPs con seguimiento inteligente y análisis en tiempo real." />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: [
+                "-apple-system",
+                "BlinkMacSystemFont",
+                "Segoe UI",
+                "Roboto",
+                "sans-serif",
+              ],
+            },
+            animation: {
+              "fade-in-up": "fadeInUp 0.8s ease-out forwards",
+              float: "float 6s ease-in-out infinite",
+              gradient: "gradient 15s ease infinite",
+            },
+            keyframes: {
+              fadeInUp: {
+                "0%": { opacity: "0", transform: "translateY(30px)" },
+                "100%": { opacity: "1", transform: "translateY(0)" },
+              },
+              float: {
+                "0%, 100%": { transform: "translateY(0px)" },
+                "50%": { transform: "translateY(-20px)" },
+              },
+              gradient: {
+                "0%, 100%": { backgroundPosition: "0% 50%" },
+                "50%": { backgroundPosition: "100% 50%" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkgMTl2LTZhMiAyIDAgMDAtMi0ySDVhMiAyIDAgMDAtMiAydjZhMiAyIDAgMDAyIDJoMmEyIDIgMCAwMDItMnptMCAwVjlhMiAyIDAgMDEyLTJoMmEyIDIgMCAwMTIgMnYxMG0tNiAwYTIgMiAwIDAwMiAyaDJhMiAyIDAgMDAyLTJtMCAwVjVhMiAyIDAgMDEyLTJoMmEyIDIgMCAwMTIgMnYxNGEyIDIgMCAwMS0yIDJoLTJhMiAyIDAgMDEtMi0yeiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K" />
+
+    <style>
+      .gradient-bg {
+        background: linear-gradient(-45deg, #1a1a2e, #16213e, #0f3460, #0e2954);
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+      }
+    </style>
+  </head>
+
+  <body class="gradient-bg text-white overflow-x-hidden min-h-screen">
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 w-full px-6 lg:px-12 py-5 bg-black/20 backdrop-blur-xl z-50 border-b border-white/10">
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8">
+            <svg viewBox="0 0 24 24" class="w-full h-full" fill="none">
+              <path
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                stroke="white"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div class="text-2xl font-bold text-white">Pagora</div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <a
+            href="{{ url_for('main.landing') }}"
+            class="text-white/80 hover:text-white transition-colors duration-300">
+            Información
+          </a>
+          <a
+            href="{{ url_for('auth.login') }}"
+            class="bg-white text-black px-6 py-3 rounded-full font-semibold hover:bg-white/90 hover:-translate-y-0.5 transition-all duration-300">
+            Acceder
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section
+      class="min-h-screen flex items-center justify-center text-center px-5 relative overflow-hidden pt-20">
+      <!-- Animated Background Elements -->
+      <div class="absolute inset-0 overflow-hidden">
+        <div
+          class="absolute top-20 left-20 w-64 h-64 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full blur-3xl animate-float"></div>
+        <div
+          class="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-full blur-3xl animate-float"
+          style="animation-delay: 2s"></div>
+        <div
+          class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-full blur-3xl animate-float"
+          style="animation-delay: 4s"></div>
+      </div>
+
+      <div class="relative z-10 max-w-6xl mx-auto animate-fade-in-up">
+        <!-- Logo -->
+        <div
+          class="w-20 h-20 mx-auto mb-8 bg-white/10 rounded-2xl backdrop-blur-xl border border-white/20 flex items-center justify-center">
+          <svg viewBox="0 0 24 24" class="w-10 h-10 text-white" fill="none">
+            <path
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
+
+        <!-- Main Heading -->
+        <h1 class="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
+          Bienvenido a
+          <span
+            class="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Pagora
+          </span>
+        </h1>
+
+        <!-- Subtitle -->
+        <p
+          class="text-xl lg:text-2xl text-white/80 mb-12 max-w-3xl mx-auto leading-relaxed">
+          Sistema integral de gestión de EDPs con seguimiento inteligente,
+          análisis en tiempo real y dashboards ejecutivos.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div
+          class="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
+          <a
+            href="{{ url_for('auth.login') }}"
+            class="bg-white text-black px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/90 hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 min-w-[200px]">
+            Iniciar Sesión
+          </a>
+          <a
+            href="{{ url_for('main.landing') }}"
+            class="border-2 border-white/30 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/10 hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 min-w-[200px]">
+            Conocer Más
+          </a>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <!-- Feature 1 -->
+          <div
+            class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 animate-fade-in-up"
+            style="animation-delay: 200ms">
+            <div
+              class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
+              <svg
+                class="w-6 h-6 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">Dashboards Inteligentes</h3>
+            <p class="text-white/70">
+              Visualización en tiempo real de KPIs y métricas clave para la toma
+              de decisiones.
+            </p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div
+            class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 animate-fade-in-up"
+            style="animation-delay: 400ms">
+            <div
+              class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-4">
+              <svg
+                class="w-6 h-6 text-green-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">Automatización</h3>
+            <p class="text-white/70">
+              Flujos de trabajo automatizados que optimizan los procesos de
+              gestión.
+            </p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div
+            class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300 animate-fade-in-up"
+            style="animation-delay: 600ms">
+            <div
+              class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4">
+              <svg
+                class="w-6 h-6 text-purple-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">Control Total</h3>
+            <p class="text-white/70">
+              Seguimiento completo del ciclo de vida de cada EDP con alertas
+              inteligentes.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 py-8 px-6">
+      <div class="max-w-6xl mx-auto text-center">
+        <p class="text-white/60">
+          © {{ current_year or 2024 }} Pagora. Sistema de gestión empresarial.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

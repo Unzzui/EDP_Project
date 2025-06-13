@@ -1,0 +1,707 @@
+/* ========================================
+   🎨 NAVBAR MODERNO Y ELEGANTE
+   Compatible con manager-theme.css
+   ======================================== */
+
+/* Variables CSS específicas del navbar (sin conflictos) */
+:root {
+  --navbar-height: 4rem;
+  --navbar-blur: blur(20px) saturate(180%);
+  --navbar-transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --navbar-transition-fast: all 0.15s ease-out;
+  --navbar-border-radius: 0.75rem;
+  --navbar-primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --navbar-accent-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --navbar-success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* ========================================
+   🌟 NAVBAR BASE
+   ======================================== */
+
+nav {
+  backdrop-filter: var(--navbar-blur);
+  -webkit-backdrop-filter: var(--navbar-blur);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: var(--navbar-transition-smooth);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+nav:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Contenedor principal del navbar */
+.navbar-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--navbar-height);
+}
+
+/* ========================================
+   🎯 LOGO Y BRANDING
+   ======================================== */
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  transition: var(--navbar-transition-smooth);
+  padding: 0.5rem;
+  border-radius: var(--navbar-border-radius);
+}
+
+.navbar-logo:hover {
+  transform: translateY(-1px);
+  background: var(--bg-hover);
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-right: 0.75rem;
+  background: var(--navbar-primary-gradient);
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+  transition: var(--navbar-transition-smooth);
+}
+
+.navbar-logo:hover .logo-icon {
+  transform: rotate(5deg) scale(1.05);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+}
+
+.logo-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: white;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: var(--navbar-primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.logo-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: -0.125rem;
+}
+
+/* ========================================
+   📱 MENÚ MÓVIL
+   ======================================== */
+
+.mobile-menu-button {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  transition: var(--navbar-transition-fast);
+  cursor: pointer;
+}
+
+.mobile-menu-button:hover {
+  background: var(--bg-hover);
+  transform: scale(1.05);
+}
+
+.mobile-menu-button:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-button {
+    display: flex;
+  }
+}
+
+/* ========================================
+   🧭 NAVEGACIÓN PRINCIPAL
+   ======================================== */
+
+.navbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .navbar-nav {
+    display: none;
+  }
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-link,
+.nav-button {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: var(--navbar-border-radius);
+  text-decoration: none;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: var(--navbar-transition-smooth);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nav-link:hover,
+.nav-button:hover {
+  background: var(--bg-subtle, var(--bg-hover));
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.nav-link:focus,
+.nav-button:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+.nav-icon {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+  transition: var(--navbar-transition-fast);
+}
+
+.nav-arrow {
+  width: 1rem;
+  height: 1rem;
+  margin-left: 0.5rem;
+  transition: var(--navbar-transition-smooth);
+}
+
+.nav-button[aria-expanded="true"] .nav-arrow {
+  transform: rotate(180deg);
+}
+
+/* ========================================
+   📋 DROPDOWNS
+   ======================================== */
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 16rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px) scale(0.95);
+  transition: var(--navbar-transition-smooth);
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.dropdown-menu.show,
+.dropdown-menu:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.dropdown-content {
+  padding: 0.75rem 0;
+  background: var(--bg-card);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--border-color-subtle, var(--border-color));
+  background: var(--bg-card);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-subtle, var(--bg-hover));
+  color: var(--text-primary);
+  padding-left: 1.5rem;
+  text-decoration: none;
+}
+
+.dropdown-item:active {
+  background: var(--bg-hover);
+}
+
+.dropdown-item:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: -2px;
+}
+
+.dropdown-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-right: 0.875rem;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+}
+
+.dropdown-item:hover .dropdown-icon {
+  opacity: 1;
+  color: var(--text-primary);
+}
+
+/* ========================================
+   📱 MENÚ MÓVIL DESPLEGABLE
+   ======================================== */
+
+.mobile-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: var(--navbar-blur);
+  -webkit-backdrop-filter: var(--navbar-blur);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: var(--navbar-transition-smooth);
+}
+
+.mobile-menu.show,
+.mobile-menu:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .mobile-menu {
+    display: block;
+  }
+}
+
+.mobile-nav {
+  padding: 1rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.mobile-nav-item {
+  margin-bottom: 0.5rem;
+}
+
+.mobile-nav-link,
+.mobile-nav-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem;
+  border-radius: var(--navbar-border-radius);
+  text-decoration: none;
+  color: var(--text-primary);
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: var(--navbar-transition-fast);
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-button:hover {
+  background: var(--bg-hover);
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+.mobile-dropdown-content {
+  padding-left: 1rem;
+  margin-top: 0.5rem;
+  border-left: 2px solid var(--border-color);
+}
+
+.mobile-dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: calc(var(--navbar-border-radius) - 0.25rem);
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  transition: var(--navbar-transition-fast);
+  margin-bottom: 0.25rem;
+}
+
+.mobile-dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+/* ========================================
+   ✨ ANIMACIONES Y EFECTOS
+   ======================================== */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-menu.animate-in {
+  animation: slideDown 0.2s ease-out;
+}
+
+.mobile-menu.animate-in {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* ========================================
+   🎨 EFECTOS ESPECIALES
+   ======================================== */
+
+/* Efecto sutil en hover - más profesional */
+.nav-link,
+.nav-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link::after,
+.nav-button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--accent-blue);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.nav-link:hover::after,
+.nav-button:hover::after {
+  width: 80%;
+}
+
+/* Indicador activo */
+.nav-link.active,
+.nav-button.active {
+  background: var(--navbar-primary-gradient);
+  color: white;
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.nav-link.active:hover,
+.nav-button.active:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+}
+
+/* ========================================
+   🔧 UTILIDADES
+   ======================================== */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus visible para accesibilidad */
+.nav-link:focus-visible,
+.nav-button:focus-visible,
+.dropdown-item:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   📐 RESPONSIVE BREAKPOINTS
+   ======================================== */
+
+@media (max-width: 640px) {
+  .navbar-container {
+    padding: 0 0.75rem;
+  }
+  
+  .logo-title {
+    font-size: 1.25rem;
+  }
+  
+  .logo-subtitle {
+    font-size: 0.6875rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .navbar-nav {
+    gap: 0.75rem;
+  }
+  
+  .nav-link,
+  .nav-button {
+    padding: 0.875rem 1.25rem;
+  }
+}
+
+/* ========================================
+   🎯 ESTADOS DE CARGA
+   ======================================== */
+
+.navbar-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.navbar-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--navbar-primary-gradient);
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ========================================
+   🔧 COMPATIBILIDAD CON MANAGER-THEME
+   ======================================== */
+
+/* Asegurar que el navbar no interfiera con otros elementos */
+.navbar-nav,
+.navbar-nav *,
+.dropdown-menu,
+.dropdown-menu *,
+.mobile-menu,
+.mobile-menu * {
+  /* Resetear cualquier herencia no deseada */
+  box-sizing: border-box;
+}
+
+/* Asegurar que los dropdowns tengan la máxima prioridad visual */
+.dropdown-menu:not(.hidden) {
+  display: block !important;
+  position: absolute !important;
+  z-index: 999999 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) scale(1) !important;
+  pointer-events: auto !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+/* Estilos profesionales adicionales para dropdowns */
+.dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 20px;
+  width: 12px;
+  height: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-bottom: none;
+  border-right: none;
+  transform: rotate(45deg);
+  z-index: -1;
+}
+
+/* Separadores en el dropdown */
+.dropdown-separator {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0.5rem 0;
+}
+
+/* Títulos de sección en dropdown */
+.dropdown-header {
+  padding: 0.5rem 1.25rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--bg-subtle, var(--bg-card));
+  border-bottom: 1px solid var(--border-color-subtle, var(--border-color));
+}
+
+/* Mejorar contraste en modo oscuro */
+[data-theme="dark"] .dropdown-menu,
+.dark .dropdown-menu {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .dropdown-content,
+.dark .dropdown-content {
+  background: var(--bg-card) !important;
+}
+
+[data-theme="dark"] .dropdown-item,
+.dark .dropdown-item {
+  color: var(--text-primary) !important;
+  background: var(--bg-card) !important;
+  border-bottom-color: var(--border-color-subtle) !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover,
+.dark .dropdown-item:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .dropdown-icon,
+.dark .dropdown-icon {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover .dropdown-icon,
+.dark .dropdown-item:hover .dropdown-icon {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .dropdown-menu::before,
+.dark .dropdown-menu::before {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+/* ========================================
+   🌙 MODO OSCURO - FORZAR ESTILOS CORRECTOS
+   ======================================== */
+
+/* Forzar estilos correctos en modo oscuro cuando JavaScript aplica estilos inline */
+[data-theme="dark"] .dropdown-menu:not(.hidden),
+.dark .dropdown-menu:not(.hidden) {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Asegurar que todos los items del dropdown tengan el color correcto */
+[data-theme="dark"] .dropdown-menu a,
+[data-theme="dark"] .dropdown-menu button,
+.dark .dropdown-menu a,
+.dark .dropdown-menu button {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+}
+
+[data-theme="dark"] .dropdown-menu a:hover,
+[data-theme="dark"] .dropdown-menu button:hover,
+.dark .dropdown-menu a:hover,
+.dark .dropdown-menu button:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Estilos para iconos en modo oscuro */
+[data-theme="dark"] .dropdown-menu svg,
+.dark .dropdown-menu svg {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .dropdown-menu a:hover svg,
+[data-theme="dark"] .dropdown-menu button:hover svg,
+.dark .dropdown-menu a:hover svg,
+.dark .dropdown-menu button:hover svg {
+  color: var(--text-primary) !important;
+}
+
+/* Separadores en modo oscuro */
+[data-theme="dark"] .dropdown-separator,
+.dark .dropdown-separator {
+  background: var(--border-color) !important;
+}
+
+/* Headers en modo oscuro */
+[data-theme="dark"] .dropdown-header,
+.dark .dropdown-header {
+  color: var(--text-secondary) !important;
+  background: var(--bg-subtle) !important;
+  border-bottom-color: var(--border-color-subtle) !important;
+}

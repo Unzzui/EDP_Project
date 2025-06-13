@@ -1,0 +1,412 @@
+{% extends "base_unified.html" %} {% block title %}Dashboard General - Pagora{%
+endblock %} {% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        animation: {
+          "fade-in": "fadeIn 0.5s ease-in",
+          "slide-up": "slideUp 0.6s ease-out",
+          "pulse-slow": "pulse 3s infinite",
+        },
+      },
+    },
+  };
+</script>
+<style>
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes slideUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  .gradient-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  .glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+</style>
+{% endblock %} {% block content %}
+<div
+  class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+  <!-- Header -->
+  <div
+    class="bg-white/10 backdrop-blur-xl border-b border-white/20 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div
+            class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+            <svg
+              class="w-6 h-6 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2m-6 4h4" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-white">Dashboard General</h1>
+            <p class="text-white/70">
+              Bienvenido, {{ user.nombre_completo or 'Usuario' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <p class="text-white/70 text-sm">Última actualización</p>
+            <p class="text-white font-medium">
+              {{ current_date.strftime('%d/%m/%Y %H:%M') }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Welcome Section -->
+    <div class="mb-8 animate-fade-in">
+      <div class="gradient-card rounded-2xl p-8 text-white">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <h2 class="text-3xl font-bold mb-2">¡Bienvenido al Sistema!</h2>
+            <p class="text-white/90 text-lg mb-4">
+              Accede a todas las funcionalidades del sistema de gestión EDP
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <span class="bg-white/20 px-3 py-1 rounded-full text-sm"
+                >Sistema Integrado</span
+              >
+              <span class="bg-white/20 px-3 py-1 rounded-full text-sm"
+                >Tiempo Real</span
+              >
+              <span class="bg-white/20 px-3 py-1 rounded-full text-sm"
+                >Análisis Avanzado</span
+              >
+            </div>
+          </div>
+          <div
+            class="hidden lg:block w-32 h-32 bg-white/10 rounded-2xl flex items-center justify-center">
+            <svg
+              class="w-16 h-16 text-white animate-pulse-slow"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    {% if stats %}
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-slide-up">
+      <!-- Total EDPs -->
+      <div class="glass-card rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-white/70 text-sm font-medium">Total EDPs</h3>
+          <div
+            class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-4 h-4 text-blue-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-2xl font-bold">{{ stats.total_edps or 0 }}</p>
+        <p class="text-green-400 text-sm">Documentos activos</p>
+      </div>
+
+      <!-- Monto Total -->
+      <div class="glass-card rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-white/70 text-sm font-medium">Monto Total</h3>
+          <div
+            class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-4 h-4 text-green-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-2xl font-bold">${{ stats.monto_total or 0 }}</p>
+        <p class="text-green-400 text-sm">En gestión</p>
+      </div>
+
+      <!-- EDPs Pendientes -->
+      <div class="glass-card rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-white/70 text-sm font-medium">Pendientes</h3>
+          <div
+            class="w-8 h-8 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-4 h-4 text-yellow-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-2xl font-bold">{{ stats.edps_pendientes or 0 }}</p>
+        <p class="text-yellow-400 text-sm">En proceso</p>
+      </div>
+
+      <!-- Tasa de Aprobación -->
+      <div class="glass-card rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-white/70 text-sm font-medium">Tasa Aprobación</h3>
+          <div
+            class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-4 h-4 text-purple-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-2xl font-bold">
+          {{ "%.1f" | format(stats.tasa_aprobacion or 0) }}%
+        </p>
+        <p class="text-purple-400 text-sm">Eficiencia</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Access Panel -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-white mb-6">Acceso Rápido</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- EDP Management -->
+        <a
+          href="{{ url_for('edp_controller.lista_edps') }}"
+          class="glass-card rounded-xl p-6 text-white hover:bg-white/20 transition-all duration-300 group">
+          <div class="flex items-center justify-between mb-4">
+            <div
+              class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+              <svg
+                class="w-6 h-6 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <svg
+              class="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-lg mb-2">Gestión de EDPs</h3>
+          <p class="text-white/70 text-sm">
+            Administra y da seguimiento a todos los documentos EDP del sistema.
+          </p>
+        </a>
+
+        <!-- Analytics -->
+        <a
+          href="{{ url_for('main.landing') }}"
+          class="glass-card rounded-xl p-6 text-white hover:bg-white/20 transition-all duration-300 group">
+          <div class="flex items-center justify-between mb-4">
+            <div
+              class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+              <svg
+                class="w-6 h-6 text-green-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <svg
+              class="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-lg mb-2">Información del Sistema</h3>
+          <p class="text-white/70 text-sm">
+            Explora las características y capacidades de la plataforma.
+          </p>
+        </a>
+
+        <!-- Help & Support -->
+        <a
+          href="{{ url_for('main.help_page') }}"
+          class="glass-card rounded-xl p-6 text-white hover:bg-white/20 transition-all duration-300 group">
+          <div class="flex items-center justify-between mb-4">
+            <div
+              class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+              <svg
+                class="w-6 h-6 text-purple-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <svg
+              class="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-lg mb-2">Ayuda y Soporte</h3>
+          <p class="text-white/70 text-sm">
+            Encuentra documentación y obtén ayuda para usar el sistema.
+          </p>
+        </a>
+      </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="glass-card rounded-xl p-6 text-white">
+      <div class="flex items-center gap-3 mb-4">
+        <div
+          class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+          <svg
+            class="w-4 h-4 text-blue-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold">Información del Sistema</h3>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h4 class="font-medium mb-2">Rol de Usuario</h4>
+          <p class="text-white/70 mb-4">
+            {{ user.rol | title if user.rol else 'Usuario General' }}
+          </p>
+
+          <h4 class="font-medium mb-2">Funcionalidades Disponibles</h4>
+          <ul class="text-white/70 text-sm space-y-1">
+            <li>• Consulta de EDPs</li>
+            <li>• Acceso a información general</li>
+            <li>• Soporte y documentación</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-medium mb-2">Estado del Sistema</h4>
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span class="text-green-400 text-sm">Sistema Operativo</span>
+          </div>
+
+          <h4 class="font-medium mb-2">Contacto</h4>
+          <p class="text-white/70 text-sm">
+            Para obtener acceso a funcionalidades adicionales, contacte al
+            administrador del sistema.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Simple animation trigger
+  document.addEventListener("DOMContentLoaded", function () {
+    const cards = document.querySelectorAll(".glass-card");
+    cards.forEach((card, index) => {
+      card.style.animationDelay = `${index * 100}ms`;
+      card.classList.add("animate-slide-up");
+    });
+  });
+</script>
+{% endblock %}

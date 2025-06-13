@@ -1,0 +1,536 @@
+/* ========================================== */
+/* CRITICAL EDP DASHBOARD STYLES             */
+/* ========================================== */
+
+/* Variables específicas para el dashboard crítico */
+:root {
+  --critical-red: #dc2626;
+  --critical-orange: #ea580c;
+  --critical-yellow: #d97706;
+  --critical-green: #059669;
+  --critical-blue: #2563eb;
+  --critical-purple: #7c3aed;
+  --critical-gray: #374151;
+  
+  /* Gradientes de criticidad */
+  --gradient-critical: linear-gradient(135deg, #fca5a5 0%, #dc2626 100%);
+  --gradient-high: linear-gradient(135deg, #fed7aa 0%, #ea580c 100%);
+  --gradient-medium: linear-gradient(135deg, #fde68a 0%, #d97706 100%);
+  --gradient-low: linear-gradient(135deg, #bbf7d0 0%, #059669 100%);
+}
+
+/* ========================================== */
+/* HEADER CRÍTICO                           */
+/* ========================================== */
+.critical-timeline-header {
+  position: relative;
+  z-index: 10;
+}
+
+.critical-timeline-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(220, 38, 38, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%);
+  border-radius: 0.5rem;
+  z-index: -1;
+}
+
+/* ========================================== */
+/* ANIMACIONES CRÍTICAS                     */
+/* ========================================== */
+@keyframes pulse-critical {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shake-urgent {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+@keyframes glow-critical {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(220, 38, 38, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
+  }
+}
+
+.animate-pulse-critical {
+  animation: pulse-critical 2s infinite;
+}
+
+.animate-shake-urgent {
+  animation: shake-urgent 0.5s ease-in-out;
+}
+
+.animate-glow-critical {
+  animation: glow-critical 2s infinite;
+}
+
+/* ========================================== */
+/* ESCALAS DE RIESGO                        */
+/* ========================================== */
+.risk-scale-critical {
+  background: var(--gradient-critical);
+  border: 2px solid var(--critical-red);
+  position: relative;
+  overflow: hidden;
+}
+
+.risk-scale-critical::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shine 2s infinite;
+}
+
+.risk-scale-high {
+  background: var(--gradient-high);
+  border: 2px solid var(--critical-orange);
+}
+
+.risk-scale-medium {
+  background: var(--gradient-medium);
+  border: 2px solid var(--critical-yellow);
+}
+
+.risk-scale-low {
+  background: var(--gradient-low);
+  border: 2px solid var(--critical-green);
+}
+
+@keyframes shine {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* ========================================== */
+/* TABLA DE EDPS CRÍTICOS                   */
+/* ========================================== */
+.critical-edps-table table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.critical-edps-table tr.border-l-4 {
+  position: relative;
+}
+
+.critical-edps-table tr.border-l-4::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 0 2px 2px 0;
+}
+
+.critical-edps-table tr.border-l-4.border-red-500::before {
+  background: var(--critical-red);
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+}
+
+.critical-edps-table tr.border-l-4.border-orange-500::before {
+  background: var(--critical-orange);
+  box-shadow: 0 0 10px rgba(234, 88, 12, 0.5);
+}
+
+/* Efectos hover mejorados */
+.critical-edps-table tr:hover {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+/* ========================================== */
+/* BOTONES DE ACCIÓN                        */
+/* ========================================== */
+.action-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.action-button:hover::before {
+  left: 100%;
+}
+
+/* Botones específicos por urgencia */
+.btn-critical {
+  background: var(--critical-red);
+  border-color: var(--critical-red);
+}
+
+.btn-critical:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.btn-high {
+  background: var(--critical-orange);
+  border-color: var(--critical-orange);
+}
+
+.btn-high:hover {
+  background: #c2410c;
+  border-color: #c2410c;
+}
+
+.btn-medium {
+  background: var(--critical-yellow);
+  border-color: var(--critical-yellow);
+}
+
+.btn-medium:hover {
+  background: #b45309;
+  border-color: #b45309;
+}
+
+/* ========================================== */
+/* INDICADORES DE ESTADO                    */
+/* ========================================== */
+.status-indicator {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.status-dot::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  animation: pulse-ring 2s infinite;
+}
+
+.status-dot.critical {
+  background: var(--critical-red);
+}
+
+.status-dot.critical::before {
+  background: var(--critical-red);
+}
+
+.status-dot.high {
+  background: var(--critical-orange);
+}
+
+.status-dot.high::before {
+  background: var(--critical-orange);
+}
+
+.status-dot.medium {
+  background: var(--critical-yellow);
+}
+
+.status-dot.medium::before {
+  background: var(--critical-yellow);
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* ========================================== */
+/* CARDS DE RESPONSABLES                    */
+/* ========================================== */
+.responsible-card {
+  position: relative;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.responsible-card:hover {
+  border-left-color: var(--critical-blue);
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
+  transform: translateX(4px);
+}
+
+.responsible-avatar {
+  position: relative;
+  overflow: hidden;
+}
+
+.responsible-avatar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.responsible-card:hover .responsible-avatar::before {
+  opacity: 1;
+}
+
+/* ========================================== */
+/* MÉTRICAS FINANCIERAS COMPACTAS           */
+/* ========================================== */
+.financial-metrics-compact {
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.financial-metrics-compact:hover {
+  opacity: 1;
+}
+
+.metric-compact {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.metric-compact:hover {
+  transform: translateY(-2px);
+  border-color: var(--critical-blue);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================== */
+/* FLUJOS BLOQUEADOS                        */
+/* ========================================== */
+.blocked-flow-item {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.blocked-flow-item:hover {
+  transform: translateX(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.blocked-flow-progress {
+  position: relative;
+  overflow: hidden;
+}
+
+.blocked-flow-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: progress-shine 2s infinite;
+  width: 50px;
+}
+
+@keyframes progress-shine {
+  0% { left: -50px; }
+  100% { left: calc(100% + 50px); }
+}
+
+/* ========================================== */
+/* PREDICTOR DE RIESGO                      */
+/* ========================================== */
+.risk-predictor {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border: 2px solid #d1d5db;
+  position: relative;
+  overflow: hidden;
+}
+
+.risk-predictor::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+}
+
+.risk-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.risk-metric:hover {
+  background: rgba(124, 58, 237, 0.1);
+  padding-left: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+/* ========================================== */
+/* RESPONSIVE DESIGN                        */
+/* ========================================== */
+@media (max-width: 1024px) {
+  .critical-timeline-main {
+    grid-template-columns: 1fr;
+  }
+  
+  .blocked-flows-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .financial-metrics-compact .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .critical-timeline-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .critical-timeline-header p {
+    font-size: 1rem;
+  }
+  
+  .critical-timeline-header .text-right .text-4xl {
+    font-size: 2rem;
+  }
+  
+  .financial-metrics-compact .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .critical-edps-table {
+    overflow-x: auto;
+  }
+  
+  .critical-edps-table table {
+    min-width: 800px;
+  }
+}
+
+/* ========================================== */
+/* DARK MODE ADJUSTMENTS                    */
+/* ========================================== */
+@media (prefers-color-scheme: dark) {
+  .risk-predictor {
+    background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+    border-color: #6b7280;
+  }
+  
+  .financial-metrics-compact {
+    background: linear-gradient(90deg, #374151 0%, #4b5563 100%);
+  }
+  
+  .metric-compact:hover {
+    border-color: var(--critical-blue);
+    background: rgba(37, 99, 235, 0.1);
+  }
+}
+
+/* ========================================== */
+/* PRINT STYLES                             */
+/* ========================================== */
+@media print {
+  .action-button,
+  button {
+    display: none !important;
+  }
+  
+  .critical-timeline-header {
+    break-after: avoid;
+  }
+  
+  .critical-edps-table {
+    break-inside: avoid;
+  }
+  
+  .animate-pulse,
+  .animate-pulse-critical,
+  .animate-shake-urgent {
+    animation: none !important;
+  }
+}
+
+/* ========================================== */
+/* ACCESSIBILITY IMPROVEMENTS               */
+/* ========================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus styles para accesibilidad */
+button:focus,
+.action-button:focus {
+  outline: 2px solid var(--critical-blue);
+  outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .status-dot {
+    border: 2px solid currentColor;
+  }
+  
+  .critical-edps-table tr:hover {
+    background: #000 !important;
+    color: #fff !important;
+  }
+}

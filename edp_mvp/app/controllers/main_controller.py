@@ -16,7 +16,29 @@ analytics_service = AnalyticsService()
 
 @main_bp.route("/")
 def index():
-    """Landing page with overview statistics and navigation."""
+    """Página de inicio principal que redirige según el rol del usuario."""
+    if current_user.is_authenticated:
+        # Redirigir según el rol del usuario
+        user_role = getattr(current_user, 'rol', 'guest')
+        
+        if user_role == 'admin':
+            return redirect(url_for('admin.dashboard'))
+        elif user_role == 'manager':
+            return redirect(url_for('manager.dashboard'))
+        elif user_role == 'controller':
+            return redirect(url_for('controller.dashboard_controller'))
+        elif user_role == 'jefe_proyecto':
+            return redirect(url_for('project_manager.inicio'))
+        else:
+            return redirect(url_for('main.dashboard_general'))
+    
+    # Si no está autenticado, mostrar página de bienvenida
+    return render_template("main/welcome.html")
+
+
+@main_bp.route("/landing")
+def landing():
+    """Landing page original con estadísticas y información del sistema."""
     try:
         # Get basic statistics for the dashboard cards
         stats_response = analytics_service.get_basic_stats()
@@ -65,10 +87,40 @@ def index():
 
 @main_bp.route("/dashboard")
 @login_required
+def dashboard_general():
+    """Dashboard general para usuarios sin rol específico."""
+    try:
+        stats_response = analytics_service.get_basic_stats()
+        stats = stats_response.data if stats_response.success else {}
+        
+        return render_template(
+            "main/dashboard_general.html",
+            stats=stats,
+            current_date=datetime.now(),
+            user=current_user,
+            current_year=datetime.now().year
+        )
+    except Exception as e:
+        print(f"Error in general dashboard: {e}")
+        return render_template("main/dashboard_general.html", stats={}, current_date=datetime.now(), user=current_user)
+
+
+@main_bp.route("/dashboard/redirect")
+@login_required
 def dashboard_redirect():
     """Redirect to appropriate dashboard based on user role."""
-    # You can add role-based redirection here
-    return redirect(url_for('controller.dashboard_controller'))
+    user_role = getattr(current_user, 'rol', 'guest')
+    
+    if user_role == 'admin':
+        return redirect(url_for('admin.usuarios'))
+    elif user_role == 'manager':
+        return redirect(url_for('manager.dashboard'))
+    elif user_role == 'controller':
+        return redirect(url_for('controller.dashboard_controller'))
+    elif user_role == 'jefe_proyecto':
+        return redirect(url_for('project_manager.dashboard'))
+    else:
+        return redirect(url_for('main.dashboard_general'))
 
 
 @main_bp.route("/about")

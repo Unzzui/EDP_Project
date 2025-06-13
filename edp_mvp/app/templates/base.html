@@ -31,7 +31,7 @@
       href="{{ url_for('static', filename='css/variables.css') }}" />
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/manager-theme.css') }}" />
+      href="{{ url_for('static', filename='css/styles.css') }}" />
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
@@ -51,15 +51,12 @@
     {% block head %}{% endblock %}
     <!-- Navbar Unified Script -->
     <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
-    <!-- Navbar Unified Styles -->
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/navbar_unified.css') }}" />
-  </head>
+
+   
 
   <body class="bg-[color:var(--background)] text-[color:var(--text-primary)]">
     <!-- Incluir nueva navegación con control de roles jerárquico -->
-    {% include 'base/_navigation.html' %}
+    {% include 'components/navbar.html' %}
 
     <div class="container mx-auto px-4 py-6">
       {% block content %}{% endblock %}

@@ -122,6 +122,52 @@ def _calculate_volume_variation(resumen_proyectos: Dict) -> str:
 # Create Blueprint
 controller_controller_bp = Blueprint("controller", __name__, url_prefix="/controller")
 
+@controller_controller_bp.route("/")
+@controller_controller_bp.route("/inicio")
+@login_required
+@require_controller_or_above
+def inicio():
+    """Página de inicio bonita para el rol controller."""
+    try:
+        # Get basic stats for controller overview
+        stats_response = analytics_service.get_basic_stats()
+        
+        stats = {
+            'total_edps': 0,
+            'monto_total': 0,
+            'edps_pendientes': 0,
+            'tasa_aprobacion': 0,
+            'edps_criticos': 0
+        }
+        
+        if stats_response.success and stats_response.data:
+            stats.update(stats_response.data)
+        
+        # Get quick access items
+        quick_stats = {
+            'kanban_items': stats.get('edps_pendientes', 0),
+            'critical_items': stats.get('edps_criticos', 0),
+            'efficiency': stats.get('tasa_aprobacion', 0)
+        }
+        
+        return render_template(
+            "controller/inicio.html",
+            stats=stats,
+            quick_stats=quick_stats,
+            current_date=datetime.now(),
+            user=current_user
+        )
+        
+    except Exception as e:
+        print(f"Error in controller inicio: {e}")
+        return render_template(
+            "controller/inicio.html",
+            stats={'total_edps': 0, 'monto_total': 0},
+            quick_stats={'kanban_items': 0, 'critical_items': 0, 'efficiency': 0},
+            current_date=datetime.now(),
+            user=current_user
+        )
+
 # Initialize services
 kanban_service = KanbanService()
 analytics_service = AnalyticsService()

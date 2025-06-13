@@ -24,11 +24,10 @@
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/variables.css') }}" />
-    {% if current_user.rol == 'manager' %}
+
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/manager-theme.css') }}" />
-    {% endif %}
+      href="{{ url_for('static', filename='css/styles.css') }}" />
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
@@ -46,12 +45,12 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.css" />
 
-    {% block extra_head %}{% endblock %} {% block head %}{% endblock %}
+    {% block extra_head %}{% endblock %}
   </head>
 
   <body class="bg-[color:var(--background)] text-[color:var(--text-primary)]">
     <!-- Include Unified Navbar -->
-    {% include 'components/navbar_unified.html' %}
+    {% include 'components/navbar.html' %}
 
     <!-- Main Content -->
     <main
@@ -69,14 +68,10 @@
       {% endif %} {% endwith %}
 
       <!-- Content Container -->
-      {% if current_user.rol == 'manager' %}
-      <!-- Manager layout - full width with padding -->
-      {% block content %}{% endblock %} {% else %}
-      <!-- Controller layout - centered container -->
+
       <div class="container mx-auto px-4 py-6">
         {% block content %}{% endblock %}
       </div>
-      {% endif %}
     </main>
 
     <!-- Theme Toggle & Settings -->
@@ -93,15 +88,7 @@
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="2"
-            id="theme-icon-light"
-            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" />
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            id="theme-icon-dark"
-            class="hidden"
-            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
         </svg>
       </button>
     </div>
@@ -111,46 +98,27 @@
       document.addEventListener("DOMContentLoaded", function () {
         const root = document.documentElement;
         const toggle = document.getElementById("themeToggle");
-        const lightIcon = document.getElementById("theme-icon-light");
-        const darkIcon = document.getElementById("theme-icon-dark");
+        const moonIcon = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>`;
+        const sunIcon = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>`;
 
         function setIcon(theme) {
+          const svg = toggle.querySelector("svg");
+          if (!svg) return;
           if (theme === "dark") {
-            lightIcon.style.display = "none";
-            darkIcon.style.display = "block";
+            svg.innerHTML = sunIcon;
+            toggle.title = "Cambiar a modo claro";
           } else {
-            lightIcon.style.display = "block";
-            darkIcon.style.display = "none";
+            svg.innerHTML = moonIcon;
+            toggle.title = "Cambiar a modo oscuro";
           }
         }
 
         function applyTheme(theme) {
-          root.setAttribute("data-theme", theme);
-          localStorage.setItem("managerTheme", theme);
-          setIcon(theme);
-        }
-
-        // Initialize theme based on system preference or saved setting
-        const savedTheme = localStorage.getItem("managerTheme");
-        if (savedTheme) {
-          applyTheme(savedTheme);
-        } else if (
-          window.matchMedia &&
-          window.matchMedia("(prefers-color-scheme: light)").matches
-        ) {
-          applyTheme("light");
-        } else {
-          applyTheme("dark");
-        }
-
-        // Listen for system theme changes
-        if (window.matchMedia) {
-          window
-            .matchMedia("(prefers-color-scheme: dark)")
-            .addEventListener("change", (e) => {
-              const systemTheme = e.matches ? "dark" : "light";
-              applyTheme(systemTheme);
-            });
+          window.requestAnimationFrame(() => {
+            root.setAttribute("data-theme", theme);
+            localStorage.setItem("managerTheme", theme);
+            setIcon(theme);
+          });
         }
 
         toggle.addEventListener("click", () => {

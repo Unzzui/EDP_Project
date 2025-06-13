@@ -1934,7 +1934,7 @@ class ManagerService(BaseService):
             "tendencia_rentabilidad": 0,  # This was causing the TypeError
             "posicion_vs_benchmark": 0,
             "vs_meta_rentabilidad": 0,
-            "meta_rentabilidad": 35.0,  # Default target
+            "meta_rentabilidad": 35.0, # Default target
             "pct_meta_rentabilidad": 0,  # Percentage of target achieved
             "mejora_eficiencia": 0,
             "eficiencia_global": 0,
@@ -3698,44 +3698,127 @@ class ManagerService(BaseService):
 
             # Apply filters if provided
             df_filtered = self._apply_manager_filters(df_edp, filters or {})
-
-            # Get critical projects KPIs
-            critical_kpis = self._calculate_critical_projects_kpis(df_filtered)
             
-            # Format data for modal display
-            modal_data = {
-                "critical_projects": critical_kpis.get("critical_projects_list", []),
+            # Prepare data for critical analysis
+            df_prepared = self._prepare_kpi_data(df_filtered.copy())
+            
+            # Identificar EDPs críticos - los que están sin movimiento significativo
+            # Criterio: pendientes por más de X días (no por monto)
+            critical_edps = []
+            
+            # Estados que consideramos "sin movimiento" (pendientes de acción)
+            stalled_states = ["enviado", "revisión", "pendiente", "en_proceso"]
+            
+            # Filtrar EDPs sin movimiento
+            df_stalled = df_prepared[
+                df_prepared["estado"].str.strip().str.lower().isin([s.lower() for s in stalled_states])
+            ].copy()
+            
+            if not df_stalled.empty:
+                # Convertir días de espera a numérico
+                df_stalled["dias_espera_num"] = pd.to_numeric(df_stalled["dias_espera"], errors="coerce").fillna(0)
+                
+                # Criterio crítico: EDPs con 30+ días sin movimiento
+                df_critical = df_stalled[df_stalled["dias_espera_num"] >= 30].copy()
+                
+                # Ordenar por días sin movimiento (descendente) - MÁS CRÍTICO PRIMERO
+                df_critical = df_critical.sort_values("dias_espera_num", ascending=False)
+                
+                # Convertir a lista de diccionarios
+                for _, row in df_critical.iterrows():
+                    edp_data = {
+                        "id": row.get("n_edp", "N/A"),
+                        "cliente": row.get("cliente", "Cliente N/A"),
+                        "proyecto": row.get("proyecto", "Proyecto N/A"),
+                        "monto": float(row.get("monto_aprobado", 0)),
+                        "dias_sin_movimiento": int(row.get("dias_espera_num", 0)),
+                        "estado": row.get("estado", "pendiente"),
+                        "jefe_proyecto": row.get("jefe_proyecto", "Sin asignar"),
+                        "fecha_ultimo_movimiento": self._calculate_last_movement_date(row),
+                        "bloqueo_principal": self._identify_main_blockage(row),
+                        "contact_info": self._extract_contact_info(row),
+                        "urgency_score": self._calculate_urgency_score(row)
+                    }
+                    critical_edps.append(edp_data)
+            
+            # Calcular portfolio total para contexto
+            total_portfolio_value = df_prepared["monto_aprobado"].sum()
+            
+            # Preparar datos de respuesta
+            critical_data = {
+                "critical_edps": critical_edps,
+                "total_portfolio_value": total_portfolio_value,
                 "summary": {
-                    "total_count": critical_kpis.get("critical_projects_count", 0),
-                    "total_amount": critical_kpis.get("critical_projects_amount", 0.0),
-                    "high_risk_count": critical_kpis.get("high_risk_count", 0),
-                    "medium_risk_count": critical_kpis.get("medium_risk_count", 0),
-                    "low_risk_count": critical_kpis.get("low_risk_count", 0),
-                    "avg_progress": critical_kpis.get("avg_progress", 0.0),
-                },
-                "timeline_distribution": {
-                    "0_10_days": critical_kpis.get("timeline_0_10_pct", 0),
-                    "11_20_days": critical_kpis.get("timeline_11_20_pct", 0),
-                    "21_30_days": critical_kpis.get("timeline_21_30_pct", 0),
-                    "30_plus_days": critical_kpis.get("timeline_30_plus_pct", 0),
-                },
-                "resource_analysis": {
-                    "recursos_criticos": critical_kpis.get("recursos_criticos", 0),
-                    "recursos_limitados": critical_kpis.get("recursos_limitados", 0),
-                    "recursos_disponibles": critical_kpis.get("recursos_disponibles", 0),
+                    "total_count": len(df_prepared),
+                    "critical_count": len([edp for edp in critical_edps if edp["dias_sin_movimiento"] > 90]),
+                    "high_risk_count": len([edp for edp in critical_edps if 60 <= edp["dias_sin_movimiento"] <= 90]),
+                    "medium_risk_count": len([edp for edp in critical_edps if 30 <= edp["dias_sin_movimiento"] < 60])
                 }
             }
-
+            
             return ServiceResponse(
                 success=True,
-                message="Critical projects data retrieved successfully",
-                data=modal_data,
+                message=f"Critical EDP data retrieved: {len(critical_edps)} critical EDPs found",
+                data=critical_data,
             )
 
         except Exception as e:
-            logger.error(f"Error getting critical projects data: {str(e)}")
+            logger.error(f"Error getting critical EDP data: {str(e)}")
             return ServiceResponse(
                 success=False,
-                message=f"Error getting critical projects data: {str(e)}",
+                message=f"Error getting critical EDP data: {str(e)}",
                 data=None,
             )
+    
+    
+    def _calculate_last_movement_date(self, row: pd.Series) -> str:
+        """Calculate the last movement date for an EDP"""
+        try:
+            dias_espera = row.get("dias_espera_num", 0)
+            if dias_espera > 0:
+                last_date = datetime.now() - timedelta(days=int(dias_espera))
+                return last_date.strftime("%Y-%m-%d")
+            return datetime.now().strftime("%Y-%m-%d")
+        except:
+            return "Sin fecha"
+    
+    
+    def _identify_main_blockage(self, row: pd.Series) -> str:
+        """Identify the main blockage type for an EDP"""
+        estado = str(row.get("estado", "")).lower().strip()
+        
+        blockage_map = {
+            "enviado": "Esperando respuesta del cliente",
+            "revisión": "En revisión interna",
+            "pendiente": "Documentación pendiente",
+            "en_proceso": "Procesamiento administrativo"
+        }
+        
+        return blockage_map.get(estado, "Bloqueo no identificado")
+    
+    
+    def _extract_contact_info(self, row: pd.Series) -> Dict[str, str]:
+        """Extract contact information for an EDP"""
+        return {
+            "jefe_proyecto": row.get("jefe_proyecto", "Sin asignar"),
+            "cliente": row.get("cliente", "Sin cliente"),
+            "email": f"{row.get('jefe_proyecto', 'sin-asignar').lower().replace(' ', '.')}@empresa.com",
+            "telefono": "+54 11 4567-890X"  # Mock phone number
+        }
+    
+    
+    def _calculate_urgency_score(self, row: pd.Series) -> int:
+        """Calculate urgency score (0-100) based on days and amount"""
+        try:
+            dias = row.get("dias_espera_num", 0)
+            monto = row.get("monto_aprobado", 0)
+            
+            # Score based primarily on time stalled (70% weight)
+            time_score = min(100, (dias / 120) * 70)  # 120 days = max time score
+            
+            # Score based on amount (30% weight)
+            amount_score = min(30, (monto / 50_000_000) * 30)  # 50M = max amount score
+            
+            return int(time_score + amount_score)
+        except:
+            return 50  # Default moderate urgency

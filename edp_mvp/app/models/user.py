@@ -102,13 +102,17 @@ class User(UserMixin, db.Model):
 
     @staticmethod
     def get_stats():
-        """Get user statistics by role."""
-        stats = {}
+        """Get user statistics."""
+        stats = {
+            'total_usuarios': User.query.count(),
+            'usuarios_activos': User.query.filter_by(activo=True).count(),
+            'usuarios_inactivos': User.query.filter_by(activo=False).count()
+        }
+        
+        # Add role-based stats
         for rol in ['admin', 'controller', 'manager', 'jefe_proyecto', 'miembro_equipo_proyecto']:
-            stats[rol] = User.query.filter_by(rol=rol, activo=True).count()
-        stats['total'] = User.query.filter_by(activo=True).count()
-        stats['total_all'] = User.query.count()  # Including inactive users
-        stats['inactive'] = User.query.filter_by(activo=False).count()
+            stats[f'{rol}_count'] = User.query.filter_by(rol=rol, activo=True).count()
+        
         return stats
     
     @staticmethod
@@ -180,6 +184,21 @@ class User(UserMixin, db.Model):
         except Exception as e:
             db.session.rollback()
             return False, f"Error al activar usuario: {str(e)}"
+
+    @staticmethod
+    def get_recent_users(limit=5):
+        """Get recently created users."""
+        return User.query.order_by(User.fecha_creacion.desc()).limit(limit).all()
+    
+    @staticmethod
+    def get_users_by_role():
+        """Get count of users by role."""
+        roles = {}
+        for rol in ['admin', 'controller', 'manager', 'jefe_proyecto', 'miembro_equipo_proyecto']:
+            count = User.query.filter_by(rol=rol, activo=True).count()
+            if count > 0:
+                roles[rol] = count
+        return roles
 
     def __repr__(self):
         return f'<User {self.username} ({self.rol})>'

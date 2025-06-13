@@ -21,26 +21,85 @@ from datetime import datetime, timedelta
 import traceback
 import logging
 import json
-
+import pandas as pd
+from ..extensions import socketio
 from ..services.project_manager_service import ProjectManagerService
 from ..services.edp_service import EDPService
+from ..services.controller_service import ControllerService
+from ..services.kanban_service import KanbanService
 from ..services.analytics_service import AnalyticsService
 from ..utils.auth_utils import require_project_manager_or_above
 from ..utils.validation_utils import ValidationUtils
 from ..utils.format_utils import FormatUtils
 from ..utils.date_utils import DateUtils
+from ..utils.gsheet import update_row, log_cambio_edp, read_log
+
 
 # Create blueprint
 project_manager_bp = Blueprint('project_manager', __name__, url_prefix='/jefe-proyecto')
-
+_kanban_cache = {"ts": 0, "data": None}
 # Initialize services
 pm_service = ProjectManagerService()
 edp_service = EDPService()
 analytics_service = AnalyticsService()
+kanban_service = KanbanService()
+controller_service = ControllerService()
+
+
+
 
 logger = logging.getLogger(__name__)
 
 @project_manager_bp.route('/')
+@project_manager_bp.route('/inicio')
+@login_required
+@require_project_manager_or_above
+def inicio():
+    """Página de inicio bonita para el rol jefe de proyecto."""
+    try:
+        # Get manager name
+        manager_name = _get_manager_name()
+        
+        # Get project stats
+        dashboard_data = pm_service.get_dashboard_data(manager_name)
+        
+        stats = {
+            'total_proyectos': 0,
+            'proyectos_activos': 0,
+            'proyectos_completados': 0,
+            'equipo_miembros': 0,
+            'presupuesto_total': 0,
+            'progreso_promedio': 0
+        }
+        
+        if dashboard_data:
+            stats['total_proyectos'] = len(dashboard_data.get('projects', []))
+            stats['proyectos_activos'] = len([p for p in dashboard_data.get('projects', []) if p.get('estado') == 'En Proceso'])
+            stats['proyectos_completados'] = len([p for p in dashboard_data.get('projects', []) if p.get('estado') == 'Completado'])
+            stats['equipo_miembros'] = len(dashboard_data.get('team_members', []))
+            stats['presupuesto_total'] = dashboard_data.get('total_budget', 0)
+            stats['progreso_promedio'] = dashboard_data.get('overall_progress', 0)
+        
+        return render_template(
+            'JP/inicio.html',
+            stats=stats,
+            manager_name=manager_name,
+            current_date=datetime.now(),
+            user=current_user
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in project manager inicio: {e}")
+        return render_template(
+            'JP/inicio.html',
+            stats={'total_proyectos': 0, 'proyectos_activos': 0, 'proyectos_completados': 0, 'equipo_miembros': 0, 'presupuesto_total': 0, 'progreso_promedio': 0},
+            manager_name='',
+            current_date=datetime.now(),
+            user=current_user
+        )
+
+
+@project_manager_bp.route('/dashboard')
 @login_required
 @require_project_manager_or_above
 def dashboard():
@@ -179,6 +238,67 @@ def reports():
         logger.error(f"Error in reports for {current_user.username}: {str(e)}")
         flash('Error al cargar los reportes', 'error')
         return redirect(url_for('project_manager.dashboard'))
+
+@project_manager_bp.route('/kanban')
+@login_required
+@require_project_manager_or_above
+def kanban_view():
+    """Kanban board view filtered for the current project manager."""
+    try:
+        # Determine the manager name based on user role
+        try:
+            manager_name = _get_manager_name()
+        except ValueError as e:
+            flash(str(e) + '. Contacte al administrador.', 'error')
+            return redirect(url_for('main.index'))
+        
+        # Parse filters from request
+        filters = _parse_kanban_filters(request)
+        
+        # Add manager filter to ensure only their projects are shown
+        filters['jefe_proyecto'] = manager_name
+        
+        # Get kanban data filtered for this manager
+        kanban_data = pm_service.get_kanban_data(manager_name, filters)
+        
+        if not kanban_data:
+            flash('No se encontraron datos para el tablero kanban', 'warning')
+            return redirect(url_for('project_manager.dashboard'))
+        
+        template_data = {
+            'manager_name': manager_name,
+            'columnas': kanban_data.get('columnas', {}),
+            'filtros': filters,
+            'meses': kanban_data.get('filter_options', {}).get('meses', []),
+            'proyectos': kanban_data.get('filter_options', {}).get('proyectos', []),
+            'clientes': kanban_data.get('filter_options', {}).get('clientes', []),
+            'estados_detallados': kanban_data.get('filter_options', {}).get('estados_detallados', []),
+            'estadisticas': kanban_data.get('estadisticas', {}),
+            'current_date': datetime.now(),
+            'is_project_manager_view': True  # Flag to identify this as PM view
+        }
+        
+        return render_template('JP/kanban.html', **template_data)
+        
+    except Exception as e:
+        logger.error(f"Error in project manager kanban view for {current_user.username}: {str(e)}")
+        logger.error(traceback.format_exc())
+        flash('Error al cargar el tablero kanban', 'error')
+        return redirect(url_for('project_manager.dashboard'))
+
+def _parse_kanban_filters(request) -> Dict[str, Any]:
+    """Parse kanban filters from request parameters."""
+    return {
+        'mes': request.args.get('mes', ''),
+        'proyecto': request.args.get('proyecto', ''),
+        'cliente': request.args.get('cliente', ''),
+        'estado_detallado': request.args.get('estado_detallado', ''),
+        'monto_min': request.args.get('monto_min', ''),
+        'monto_max': request.args.get('monto_max', ''),
+        'dias_min': request.args.get('dias_min', ''),
+        'dias_max': request.args.get('dias_max', ''),
+        'buscar': request.args.get('buscar', '').strip()
+    }
 
 # API Endpoints
 
@@ -349,7 +469,181 @@ def api_get_charts():
             'message': str(e)
         }), 500
 
+@project_manager_bp.route('/kanban/update_estado', methods=['POST'])
+@login_required
+@require_project_manager_or_above
+def update_edp_status():
+    """Update EDP status from project manager kanban board."""
+    """Update EDP status from kanban board."""
 
+    try:
+        data = request.get_json()
+        edp_id = data.get("edp_id")
+        nuevo_estado = data.get("nuevo_estado").lower()
+        estado_anterior = data.get("estado_anterior", "").lower()  # Changed from estado_origen
+        conformidad_enviada = data.get("conformidad_enviada", False)
+        proyecto = data.get("proyecto", None)
+
+        if not edp_id or not nuevo_estado:
+            return jsonify({"error": "Datos incompletos"}), 400
+
+        # Obtener el usuario real desde Flask-Login antes de ir a background
+        usuario = "Sistema"  # Default
+        if current_user.is_authenticated:
+            # Prioridad: nombre_completo > email > username > User ID
+            if hasattr(current_user, 'nombre_completo') and current_user.nombre_completo:
+                usuario = current_user.nombre_completo
+            elif hasattr(current_user, 'email') and current_user.email:
+                usuario = current_user.email
+            elif hasattr(current_user, 'username') and current_user.username:
+                usuario = current_user.username
+            else:
+                usuario = f"User ID: {current_user.id}"
+
+        socketio.start_background_task(
+            _procesar_actualizacion_estado,
+            edp_id,
+            nuevo_estado,
+            conformidad_enviada,
+            usuario,
+            estado_anterior,
+            proyecto,
+        )
+
+        return jsonify({"success": True, "queued": True}), 202
+    except Exception as e:
+        print(f"🔥 Error al actualizar estado de EDP: {str(e)}")
+        print(traceback.format_exc())
+        return (
+            jsonify({"success": False, "message": f"Error al actualizar: {str(e)}"}),
+            500,
+        )
+@project_manager_bp.route("/kanban/update_estado_detallado", methods=["POST"])
+@login_required
+def actualizar_estado_detallado():
+    """
+    Procesa actualizaciones detalladas de estado con campos adicionales
+    específicos para cada transición de estado.
+    """
+    try:
+        # Obtener datos del formulario
+        edp_id = request.form.get("edp_id")
+        nuevo_estado = request.form.get("nuevo_estado", "").lower()
+
+        if not edp_id or not nuevo_estado:
+            return jsonify({"success": False, "message": "Datos incompletos"}), 400
+
+        # Leer datos actuales
+        df = controller_service.load_related_data()
+        datos_relacionados = df.data
+        df = pd.DataFrame(datos_relacionados.get("edps", []))
+
+        edp = df[df["n_edp"] == str(edp_id)]
+
+        if edp.empty:
+            return (
+                jsonify({"success": False, "message": f"EDP {edp_id} no encontrado"}),
+                404,
+            )
+
+        row_idx = edp.index[0] + 2  # +2 por encabezado y 0-indexado
+        edp_data = edp.iloc[0].to_dict()
+
+        # Preparar cambios base
+        cambios = {"estado": nuevo_estado}
+
+        # Procesar campos especiales según el estado
+        if nuevo_estado == "pagado":
+            cambios["fecha_conformidad"] = request.form.get("fecha_pago")
+            cambios["n_conformidad"] = request.form.get("n_conformidad")
+            cambios["conformidad_enviada"] = "Sí"
+
+        elif nuevo_estado == "validado":
+            cambios["fecha_estimada_pago"] = request.form.get("fecha_estimada_pago")
+            cambios["conformidad_enviada"] = "Sí"
+
+        elif nuevo_estado == "revision" and request.form.get("contacto_cliente"):
+            # Campos para revisión de cliente
+            # (opcional: estos campos no existen en el modelo original,
+            # puedes decidir si añadirlos o no)
+            # cambios["Contacto Cliente"] = request.form.get("contacto_cliente")
+            # cambios["Fecha Estimada Respuesta"] = request.form.get("fecha_estimada_respuesta")
+            pass
+
+        # Quitar campos vacíos
+        cambios = {k: v for k, v in cambios.items() if v is not None and v != ""}
+
+        # Obtener el usuario real desde Flask-Login
+        usuario = "Sistema"  # Default
+        if current_user.is_authenticated:
+            # Prioridad: nombre_completo > email > username > User ID
+            if hasattr(current_user, 'nombre_completo') and current_user.nombre_completo:
+                usuario = current_user.nombre_completo
+            elif hasattr(current_user, 'email') and current_user.email:
+                usuario = current_user.email
+            elif hasattr(current_user, 'username') and current_user.username:
+                usuario = current_user.username
+            else:
+                usuario = f"User ID: {current_user.id}"
+        
+        # Registrar cambios en log - ahora con auto-detección de usuario
+        for campo, nuevo_valor in cambios.items():
+            valor_anterior = edp_data.get(campo)
+            if str(nuevo_valor) != str(valor_anterior):
+                log_cambio_edp(
+                    n_edp=edp_id,
+                    proyecto=edp_data.get(
+                        "proyecto", "Sin proyecto"
+                    ),  # Añadir proyecto
+                    campo=campo,
+                    antes=valor_anterior,
+                    despues=nuevo_valor,
+                    # usuario se auto-detecta automáticamente
+                )
+
+        # Actualizar en Google Sheets
+        update_row(row_idx, cambios, "edp", usuario, force_update=True)
+
+        # Invalidar cache automáticamente
+        from ..services.cache_invalidation_service import CacheInvalidationService
+        cache_invalidation = CacheInvalidationService()
+        cache_invalidation.register_data_change('edp_state_changed', [edp_id], 
+                                              {'updated_fields': list(cambios.keys())})
+
+        # Notificar via Socket.IO - emitir ambos eventos para compatibilidad
+        socketio.emit("edp_actualizado", {
+            "edp_id": edp_id, 
+            "updates": cambios,
+            "usuario": usuario,
+            "timestamp": datetime.now().isoformat()
+        })
+        socketio.emit("estado_actualizado", {
+            "edp_id": edp_id, 
+            "nuevo_estado": nuevo_estado, 
+            "cambios": cambios
+        })
+        socketio.emit("cache_invalidated", {
+            "type": "edp_state_changed",
+            "affected_ids": [edp_id],
+            "timestamp": datetime.now().isoformat()
+        })
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"EDP {edp_id} actualizado correctamente con detalles adicionales",
+            }
+        )
+
+    except Exception as e:
+        import traceback
+
+        print(f"Error en actualizar_estado_detallado: {str(e)}")
+        print(traceback.format_exc())
+        return (
+            jsonify({"success": False, "message": f"Error al actualizar: {str(e)}"}),
+            500,
+        )
 
 # Helper functions for chart generation
 
@@ -551,3 +845,106 @@ def _get_manager_name():
     else:
         # For higher roles (director, admin), use their own name
         return current_user.nombre_completo or current_user.username
+def _procesar_actualizacion_estado(edp_id: str, nuevo_estado: str, conformidad: bool, usuario: str, estado_anterior: str = None, proyecto: str = None):
+    """Tarea en segundo plano para persistir el cambio de estado."""
+    global _kanban_cache
+    try:
+        from ..services.cache_invalidation_service import CacheInvalidationService
+        from ..utils.gsheet import log_cambio_edp, read_sheet
+        
+        print(f"🔄 Procesando actualización de estado para EDP {edp_id}:")
+        print(f"   - Nuevo estado: {nuevo_estado}")
+        print(f"   - Estado anterior: {estado_anterior}")
+        print(f"   - Conformidad: {conformidad}")
+        print(f"   - Usuario: {usuario}")
+
+        # Obtener proyecto por id del edp
+        df = controller_service.load_related_data().data
+        df_edps = pd.DataFrame(df.get("edps", []))
+        proyecto = df_edps[df_edps["n_edp"] == edp_id]["proyecto"].values[0] if not df_edps[df_edps["n_edp"] == edp_id].empty else None
+      
+        print(f"   - Proyecto asociado: {proyecto}")
+        additional = {"conformidad_enviada": "Sí"} if conformidad else None
+        resp = kanban_service.update_edp_status(edp_id, nuevo_estado, additional)
+
+        print(f"🔍 Respuesta del servicio kanban:")
+        print(f"   - Success: {resp.success}")
+        print(f"   - Message: {resp.message}")
+        if hasattr(resp, 'data'):
+            print(f"   - Data: {resp.data}")
+        
+        if resp.success:
+            # Registrar TODOS los cambios en el log con el usuario detectado
+            try:
+                # Obtener los cambios reales desde la respuesta del servicio
+                updates_realizados = resp.data.get("updates", {})
+                print(f"🔍 Cambios realizados: {updates_realizados}")
+                
+                # Obtener valores anteriores del EDP
+                edp_anterior = df_edps[df_edps["n_edp"] == edp_id]
+                valores_anteriores = {}
+                if not edp_anterior.empty:
+                    valores_anteriores = {
+                        "estado": estado_anterior or edp_anterior.iloc[0]["estado"],
+                        "conformidad_enviada": edp_anterior.iloc[0]["conformidad_enviada"],
+                        "n_conformidad": edp_anterior.iloc[0]["n_conformidad"],
+                        "fecha_conformidad": edp_anterior.iloc[0]["fecha_conformidad"],
+                        "fecha_estimada_pago": edp_anterior.iloc[0]["fecha_estimada_pago"],
+                    }
+                
+                # Registrar cada campo que cambió
+                for campo, nuevo_valor in updates_realizados.items():
+                    valor_anterior = valores_anteriores.get(campo, "")
+                    
+                    # Solo registrar si realmente cambió
+                    if str(nuevo_valor) != str(valor_anterior):
+                        log_cambio_edp(
+                            n_edp=edp_id,
+                            proyecto=proyecto,
+                            campo=campo,
+                            antes=valor_anterior,
+                            despues=nuevo_valor,
+                            usuario=usuario
+                        )
+                        print(f"📝 Cambio registrado en log: EDP {edp_id} {campo} {valor_anterior} → {nuevo_valor} por {usuario}")
+                        
+            except Exception as log_error:
+                print(f"⚠️ Error al registrar cambios en log: {log_error}")
+                import traceback
+                print(traceback.format_exc())
+            
+            _kanban_cache["ts"] = 0
+            
+            # Invalidar cache automáticamente
+            cache_invalidation = CacheInvalidationService()
+            updated_fields = list(resp.data.get("updates", {}).keys())
+            cache_invalidation.register_data_change('edp_state_changed', [edp_id], 
+                                                  {'updated_fields': updated_fields})
+            
+            # Emit events for both manager dashboard and kanban board
+            socketio.emit("edp_actualizado", {
+                "edp_id": edp_id, 
+                "updates": {"estado": nuevo_estado, **resp.data.get("updates", {})},
+                "usuario": usuario,
+                "timestamp": datetime.now().isoformat()
+            })
+            socketio.emit("estado_actualizado", {
+                "edp_id": edp_id, 
+                "nuevo_estado": nuevo_estado, 
+                "cambios": resp.data.get("updates", {})
+            })
+            socketio.emit("cache_invalidated", {
+                "type": "edp_state_changed",
+                "affected_ids": [edp_id],
+                "timestamp": datetime.now().isoformat()
+            })
+            print(f"✅ Actualización de estado completada exitosamente para EDP {edp_id}")
+        else:
+            print(f"❌ Error en actualización de estado: {resp.message}")
+            logger.error(f"Error en background update: {resp.message}")
+    except Exception as exc:
+        print(f"💥 Excepción en _procesar_actualizacion_estado: {exc}")
+        print(traceback.format_exc())
+        logger.error(f"Excepción en tarea de actualización: {exc}")
+        logger.error(traceback.format_exc())
+
