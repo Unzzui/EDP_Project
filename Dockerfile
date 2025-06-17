@@ -13,10 +13,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     curl \
     gosu \
-    wget \
-    && rm -rf /var/lib/apt/lists/* \
-    && wget -O /usr/local/bin/su-exec https://github.com/ncopa/su-exec/releases/download/v0.2/su-exec.static-$(dpkg --print-architecture) \
-    && chmod +x /usr/local/bin/su-exec
+    && rm -rf /var/lib/apt/lists/*
 
 # Crear directorio de trabajo
 WORKDIR /app

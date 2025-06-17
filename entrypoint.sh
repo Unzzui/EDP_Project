@@ -13,7 +13,7 @@ if [ "$(id -u)" = "0" ]; then
     # Cambiar a usuario no-root para ejecutar la aplicación
     export HOME=/app
     echo "👤 Cambiando a usuario appuser..."
-    exec su-exec appuser "$0" "$@"
+    exec gosu appuser "$0" "$@"
 else
     echo "� Ejecutando como usuario no-root"
 fi
