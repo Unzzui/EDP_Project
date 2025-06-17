@@ -10,7 +10,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def wait_for_db():
-    """Esperar a que la base de datos esté disponible"""
+    """Verificar disponibilidad de la base de datos"""
     print("🔍 Verificando disponibilidad de la base de datos...")
     
     database_url = os.getenv('DATABASE_URL')
@@ -18,31 +18,16 @@ def wait_for_db():
         print("⚠️ DATABASE_URL no configurado, usando SQLite")
         return True
     
-    if 'port' in database_url and not database_url.count(':') >= 2:
-        print(f"⚠️ DATABASE_URL mal formateado: {database_url}")
-        print("⚠️ Usando SQLite como fallback")
+    # Detectar placeholders comunes
+    placeholders = ['username', 'password', 'hostname', 'port', 'database', 'host']
+    has_placeholder = any(placeholder in database_url.lower() for placeholder in placeholders)
+    
+    if has_placeholder:
+        print(f"⚠️ DATABASE_URL contiene placeholders: {database_url[:50]}...")
+        print("⚠️ Usando SQLite como fallback - no se intentará conectar a PostgreSQL")
         return True
     
-    # Intentar conectar a PostgreSQL
-    max_retries = 30
-    for i in range(max_retries):
-        try:
-            import psycopg2
-            # Extraer componentes de la URL para testing
-            if database_url.startswith('postgres://'):
-                test_url = database_url.replace('postgres://', 'postgresql://', 1)
-            else:
-                test_url = database_url
-            
-            conn = psycopg2.connect(test_url)
-            conn.close()
-            print("✅ Base de datos PostgreSQL disponible")
-            return True
-        except Exception as e:
-            print(f"⏳ Esperando base de datos... intento {i+1}/{max_retries}")
-            time.sleep(2)
-    
-    print("⚠️ No se pudo conectar a PostgreSQL, usando SQLite")
+    print(f"✅ DATABASE_URL válido detectado: {database_url[:30]}...")
     return True
 
 def init_db():

@@ -33,5 +33,5 @@ USER appuser
 # Exponer puerto
 EXPOSE 5000
 
-# Inicializar base de datos y luego iniciar la aplicación
-CMD ["sh", "-c", "python init_db.py && gunicorn --config gunicorn_config.py wsgi:application"] 
+# Comando simplificado para debugging y luego iniciar la aplicación
+CMD ["sh", "-c", "echo '🔍 Iniciando debug...' && python debug_env.py && echo '🔍 Iniciando init_db...' && python init_db.py && echo '🚀 Iniciando Gunicorn...' && gunicorn --config gunicorn_config.py wsgi:application"] 

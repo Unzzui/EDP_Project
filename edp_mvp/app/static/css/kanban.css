@@ -508,18 +508,10 @@ transform: none !important; /* Prevenir rotaciones que causan desalineación */
   transform: rotate(5deg);
 }
 
-/* Efectos hover para columnas */
-.kanban-column:hover {
-  background: linear-gradient(135deg, var(--bg-card), var(--bg-highlight));
-}
-
-.kanban-column:hover .estado-pill {
-  transform: scale(1.1);
-}
+/* Efectos hover para columnas - ELIMINADOS para evitar parpadeo */
 
 /* Indicadores de estado mejorados */
 .estado-pill {
-  transition: all 0.3s ease;
   backdrop-filter: blur(10px);
 }
 
@@ -545,21 +537,6 @@ transform: none !important; /* Prevenir rotaciones que causan desalineación */
   animation: shimmer 1.5s infinite;
 }
 
-
-/* Efectos de foco mejorados */
-.kanban-item:focus-within {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 2px;
-}
-
-/* Transiciones suaves para el panel KPI */
-#summary-panel .grid > div {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#summary-panel .grid > div:hover {
-  background: linear-gradient(135deg, var(--bg-highlight), var(--bg-card));
-}
 
 /* Efectos de gradiente de texto */
 .gradient-text {

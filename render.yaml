@@ -1,6 +1,19 @@
 # Render.yaml - Configuración para deployment en Render con Docker
+# IMPORTANTE: Los servicios se deben crear en este orden específico
 services:
-  # Aplicación web principal
+  # 1. Base de datos PostgreSQL (CREAR PRIMERO)
+  - type: pserv
+    name: edp-database
+    databaseName: edp_mvp_db
+    plan: starter
+
+  # 2. Redis para cache y Celery (CREAR SEGUNDO)
+  - type: redis
+    name: edp-redis
+    ipAllowList: []
+    plan: starter
+
+  # 3. Aplicación web principal (CREAR ÚLTIMO)
   - type: web
     name: edp-mvp-app
     env: docker
@@ -31,18 +44,6 @@ services:
           type: redis
           name: edp-redis
           property: connectionString
-
-  # Base de datos PostgreSQL
-  - type: pserv
-    name: edp-database
-    databaseName: edp_mvp_db
-    plan: starter
-
-  # Redis para cache y Celery
-  - type: redis
-    name: edp-redis
-    ipAllowList: []
-    plan: starter
 
   # Worker de Celery (opcional, puede ejecutarse en el mismo servicio web)
   - type: worker

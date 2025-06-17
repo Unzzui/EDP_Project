@@ -33,18 +33,21 @@ class DatabaseConfig:
         # Fix DATABASE_URL handling for production
         database_url = os.getenv('DATABASE_URL')
         if database_url and database_url != "":
-            # Fix for PostgreSQL URLs that start with postgres:// (Render uses this)
-            if database_url.startswith('postgres://'):
-                database_url = database_url.replace('postgres://', 'postgresql://', 1)
+            print(f"🔍 DATABASE_URL detectado: {database_url[:50]}...")
             
-            # Validar que la URL no tenga placeholders
-            if 'port' in database_url and not database_url.count(':') >= 2:
-                print(f"⚠️ DATABASE_URL parece tener placeholders: {database_url}")
-                print("⚠️ Usando SQLite como fallback")
+            # Detectar placeholders comunes en DATABASE_URL
+            placeholders = ['username', 'password', 'hostname', 'port', 'database', 'host']
+            has_placeholder = any(placeholder in database_url.lower() for placeholder in placeholders)
+            
+            if has_placeholder:
+                print(f"⚠️ DATABASE_URL contiene placeholders, usando SQLite")
                 sqlalchemy_uri = f"sqlite:///{sqlite_path}"
             else:
+                # Fix for PostgreSQL URLs that start with postgres:// (Render uses this)
+                if database_url.startswith('postgres://'):
+                    database_url = database_url.replace('postgres://', 'postgresql://', 1)
                 sqlalchemy_uri = database_url
-                print(f"✅ Usando PostgreSQL: {database_url[:20]}...")
+                print(f"✅ Usando PostgreSQL validado")
         else:
             sqlalchemy_uri = f"sqlite:///{sqlite_path}"
             print(f"⚠️ DATABASE_URL no configurado, usando SQLite: {sqlite_path}")

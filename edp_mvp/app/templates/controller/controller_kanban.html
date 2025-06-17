@@ -622,7 +622,7 @@
     </div>
   </div>
   <div class="grid grid-cols-1 gap-2">
-    <div class="group bg-gradient-to-r from-[color:var(--accent-green)]/10 to-[color:var(--accent-blue)]/10 px-3 py-2 rounded-lg border border-[color:var(--border-color-subtle)] hover:scale-105 transition-transform duration-200">
+    <div class="bg-gradient-to-r from-[color:var(--accent-green)]/10 to-[color:var(--accent-blue)]/10 px-3 py-2 rounded-lg border border-[color:var(--border-color-subtle)]">
       <div class="flex items-center gap-1 mb-1">
         <div class="w-1.5 h-1.5 bg-[color:var(--accent-green)] rounded-full"></div>
         <span class="text-xs text-[color:var(--text-secondary)] font-medium">Monto</span>
@@ -648,7 +648,7 @@
               </p>
             </div>
             <div class="group relative">
-              <span class="text-xs px-3 py-1.5 rounded-full bg-gradient-to-r from-[color:var(--accent-green)]/20 to-[color:var(--accent-blue)]/20 text-[color:var(--text-primary)] font-semibold border border-[color:var(--border-color-subtle)] backdrop-blur-sm hover:scale-105 transition-transform duration-200"
+              <span class="text-xs px-3 py-1.5 rounded-full bg-gradient-to-r from-[color:var(--accent-green)]/20 to-[color:var(--accent-blue)]/20 text-[color:var(--text-primary)] font-semibold border border-[color:var(--border-color-subtle)] backdrop-blur-sm"
                     data-tooltip='Obs: {{ edp["observaciones"] }}'>
                 ${{ "{:,.0f}".format(edp["monto_aprobado"]|float).replace(",", ".") }}
               </span>
