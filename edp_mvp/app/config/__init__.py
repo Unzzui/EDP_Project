@@ -30,6 +30,16 @@ class DatabaseConfig:
         
         sqlite_path = os.getenv('SQLITE_DB_PATH', default_db_path)
         
+        # Fix DATABASE_URL handling for production
+        database_url = os.getenv('DATABASE_URL')
+        if database_url:
+            # Fix for PostgreSQL URLs that start with postgres:// (Render uses this)
+            if database_url.startswith('postgres://'):
+                database_url = database_url.replace('postgres://', 'postgresql://', 1)
+            sqlalchemy_uri = database_url
+        else:
+            sqlalchemy_uri = f"sqlite:///{sqlite_path}"
+        
         return cls(
             credentials_file=os.getenv('GOOGLE_CREDENTIALS_FILE', 'credentials.json'),
             # Cambiado para usar SHEET_ID que es lo que tienes en tu .env
@@ -38,7 +48,7 @@ class DatabaseConfig:
             retry_attempts=int(os.getenv('DB_RETRY_ATTEMPTS', '3')),
             # SQLite config
             sqlite_db_path=sqlite_path,
-            sqlalchemy_database_uri=os.getenv('DATABASE_URL', f"sqlite:///{sqlite_path}"),
+            sqlalchemy_database_uri=sqlalchemy_uri,
             sqlalchemy_track_modifications=os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', 'False').lower() == 'true'
         )
 

@@ -21,13 +21,9 @@ install: ## Instalar dependencias
 
 dev: ## Iniciar en modo desarrollo (script optimizado)
 	@echo "🚀 Iniciando modo desarrollo..."
-	@chmod +x start_app_optimized.sh
-	@./start_app_optimized.sh
-
-dev-original: ## Iniciar con script original
-	@echo "🚀 Iniciando modo desarrollo (original)..."
 	@chmod +x start_app.sh
 	@./start_app.sh
+
 
 prod: ## Iniciar en modo producción
 	@echo "🚀 Iniciando modo producción..."
