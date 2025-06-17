@@ -204,7 +204,8 @@ class Config:
         self.kpi = KPIConfig.from_env()
         
         # Add compatibility attributes for legacy code
-        self.GOOGLE_CREDENTIALS = os.getenv('GOOGLE_CREDENTIALS')
+        # Buscar credenciales de Google en múltiples ubicaciones (para Render Secret Files)
+        self.GOOGLE_CREDENTIALS = self._get_google_credentials_path()
         # Usar SHEET_ID de tu .env
         self.SHEET_ID = os.getenv('SHEET_ID', os.getenv('GOOGLE_SHEET_ID', ''))
         self.SECRET_KEY = self.app.secret_key
@@ -312,6 +313,45 @@ class Config:
             'issues': issues,
             'warnings': warnings
         }
+    
+    def _get_google_credentials_path(self):
+        """
+        Buscar credenciales de Google en múltiples ubicaciones para compatibilidad con Render Secret Files
+        
+        Returns:
+            str: Ruta al archivo de credenciales o None si no se encuentra
+        """
+        # Ubicaciones posibles para las credenciales, en orden de prioridad
+        possible_paths = [
+            # 1. Variable de entorno directa (desarrollo local)
+            os.getenv('GOOGLE_APPLICATION_CREDENTIALS'),
+            # 2. Render Secret Files (producción)
+            '/etc/secrets/edp-control-system-f3cfafc0093a.json',
+            '/etc/secrets/google-credentials.json',
+            # 3. Ubicación local del proyecto (desarrollo)
+            'edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json',
+            './edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json',
+            # 4. Ubicación relativa en contenedor
+            '/app/edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json',
+            # 5. Ubicación alternativa en contenedor
+             '/etc/secrets/edp-control-system-9ac742cb2fb0.json',
+            
+            
+        ]
+        
+        for path in possible_paths:
+            if path and os.path.exists(path):
+                print(f"✅ Credenciales de Google encontradas en: {path}")
+                return path
+        
+        print("⚠️ No se encontraron credenciales de Google en ninguna ubicación")
+        print("📍 Ubicaciones buscadas:")
+        for i, path in enumerate(possible_paths, 1):
+            if path:
+                exists_status = "✅" if os.path.exists(path) else "❌"
+                print(f"   {i}. {exists_status} {path}")
+        
+        return None
 
 
 # Global configuration instance

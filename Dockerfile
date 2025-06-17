@@ -25,6 +25,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código fuente
 COPY . .
 
+# Verificar que las credenciales de Google estén presentes
+RUN if [ -f "edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json" ]; then \
+        echo "✅ Credenciales de Google Sheets encontradas"; \
+    else \
+        echo "⚠️ Credenciales de Google Sheets NO encontradas - funcionalidad limitada"; \
+    fi
+
 # Crear usuario no-root para seguridad
 RUN adduser --disabled-password --gecos '' appuser && \
     chown -R appuser:appuser /app
@@ -33,5 +40,5 @@ USER appuser
 # Exponer puerto
 EXPOSE 5000
 
-# Comando simplificado para debugging y luego iniciar la aplicación
-CMD ["sh", "-c", "echo '🔍 Iniciando debug...' && python debug_env.py && echo '🔍 Iniciando init_db...' && python init_db.py && echo '🚀 Iniciando Gunicorn...' && gunicorn --config gunicorn_config.py wsgi:application"] 
+# Comando que incluye verificación completa
+CMD ["sh", "-c", "echo '🔍 Iniciando verificaciones...' && python debug_env.py && echo '🔐 Verificando Secret Files...' && python verify_secrets.py && echo '🔍 Iniciando init_db...' && python init_db.py && echo '🚀 Iniciando Gunicorn...' && gunicorn --config gunicorn_config.py wsgi:application"] 

@@ -355,6 +355,16 @@ def _get_empty_dashboard_data() -> Dict[str, Any]:
         "rentabilidad_clientes": [],
         "rentabilidad_gestores": [],
         "top_edps": [],
+        # Agregar filtros faltantes para el template
+        "filtros": DictToObject({
+            "estado": "todos",
+            "departamento": "todos", 
+            "cliente": "todos",
+            "fecha_inicio": None,
+            "fecha_fin": None,
+            "periodo_rapido": None,
+            "vista": "general"
+        })
     }
 
 

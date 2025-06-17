@@ -44,7 +44,18 @@ Significa que `DATABASE_URL` tiene un placeholder en lugar de valores reales.
 FLASK_ENV=production
 SECRET_KEY=una-clave-muy-segura-de-32-caracteres-cambiar-esto
 DEBUG=False
+SHEET_ID=tu-google-sheet-id-aqui
 ```
+
+#### 🔐 **Secret Files (para Google Sheets):**
+
+1. **En el Web Service → Settings → Secret Files**
+2. **Add Secret File**:
+   - **Filename**: `edp-control-system-f3cfafc0093a.json`
+   - **File Content**: Pegar el contenido del archivo JSON de credenciales
+3. **Save Secret File**
+
+**⚠️ IMPORTANTE**: El archivo estará disponible en `/etc/secrets/edp-control-system-f3cfafc0093a.json`
 
 #### Conectar servicios:
 
@@ -113,3 +124,43 @@ Luego revisa los logs y vuelve a poner `DEBUG=False` cuando funcione.
 4. ✅ Fallback a SQLite si PostgreSQL falla
 5. ✅ Manejo robusto de errores
 6. ✅ Usuario no-root para seguridad
+7. ✅ Modo demo sin Google Sheets
+8. ✅ Manejo de template errors
+
+## 🎭 **Modo Demo (sin Google Sheets):**
+
+Si no configuras Google Sheets, la aplicación funcionará con datos demo:
+
+- ✅ 50 proyectos EDP de ejemplo
+- ✅ 100 entradas de log simuladas
+- ✅ KPIs calculados con datos demo
+- ✅ Dashboard funcional completo
+
+### 📊 Para habilitar Google Sheets en producción:
+
+**Opción A: Usando Secret Files (RECOMENDADO):**
+
+1. **Obtener credenciales Google:**
+
+   - Ve a Google Cloud Console
+   - Crea/selecciona un proyecto
+   - Habilita Google Sheets API
+   - Crea credenciales de Service Account
+   - Descarga el archivo JSON
+
+2. **En Render Web Service:**
+
+   - Settings → Secret Files → Add Secret File
+   - Filename: `edp-control-system-f3cfafc0093a.json`
+   - Content: Pegar el JSON completo
+   - La app lo buscará automáticamente en `/etc/secrets/`
+
+3. **Configurar variables:**
+   ```bash
+   SHEET_ID=1ABC123def456GHI789jkl0MNO1pqr2STU3vwx4YZ5
+   ```
+
+**Opción B: Modo Demo (sin configuración):**
+
+- No hagas nada, la app usará datos simulados
+- Perfecto para testing o demostración

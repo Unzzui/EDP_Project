@@ -44,6 +44,11 @@ services:
           type: redis
           name: edp-redis
           property: connectionString
+      # Google Sheets configuration
+      # IMPORTANTE: Sube el archivo JSON como Secret File en Render con nombre:
+      # "edp-control-system-f3cfafc0093a.json" (estará en /etc/secrets/)
+      - key: SHEET_ID
+        value: "TU_GOOGLE_SHEET_ID_AQUI"
 
   # Worker de Celery (opcional, puede ejecutarse en el mismo servicio web)
   - type: worker

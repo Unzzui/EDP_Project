@@ -1118,10 +1118,10 @@ function setupKPIPanel() {
             if (!isNaN(monto)) {
                 totalMontoGeneral += monto;
 
-                if (estado.toLowerCase() === "pagado" || estado.toLowerCase() === "validado") {
+                if (estado.toLowerCase() === "pagado") {
                     totalMontoPagado += monto;
                 }
-                if (estado.toLowerCase() === "revisión" || estado.toLowerCase() === "enviado") {
+                if (estado.toLowerCase() === "revisión" || estado.toLowerCase() === "enviado" || estado.toLowerCase() === "validado") {
                     totalPendiente += monto;
                 }
             }
@@ -1158,18 +1158,25 @@ function setupKPIPanel() {
     const tendenciaMes = Math.random() > 0.5 ? '+5%' : '-3%'; 
     const esTendenciaPositiva = tendenciaMes.startsWith('+');
     
-    // Actualizar métricas adicionales con verificación de elementos
+    // Actualizar métricas adicionales con verificación de elementos y cambios
     const edpsCriticosEl = document.getElementById('edps-criticos');
-    if (edpsCriticosEl) edpsCriticosEl.textContent = edpsCriticos;
+    if (edpsCriticosEl && edpsCriticosEl.textContent !== edpsCriticos.toString()) {
+        edpsCriticosEl.textContent = edpsCriticos;
+    }
     
     const diasPromedioEl = document.getElementById('dias-promedio');
-    if (diasPromedioEl) diasPromedioEl.textContent = diasPromedio;
+    if (diasPromedioEl && diasPromedioEl.textContent !== diasPromedio.toString()) {
+        diasPromedioEl.textContent = diasPromedio;
+    }
     
     const metaMensualEl = document.getElementById('meta-mensual');
-    if (metaMensualEl) metaMensualEl.textContent = formatCurrency_Kanban(1200000000); // Meta 20% superior
+    const metaFormatted = formatCurrency_Kanban(1200000000);
+    if (metaMensualEl && metaMensualEl.textContent !== metaFormatted) {
+        metaMensualEl.textContent = metaFormatted;
+    }
     
     const proyeccionElement = document.getElementById('proyeccion-tendencia');
-    if (proyeccionElement) {
+    if (proyeccionElement && proyeccionElement.textContent !== tendenciaMes) {
         proyeccionElement.textContent = tendenciaMes;
         proyeccionElement.className = `text-lg font-bold ${esTendenciaPositiva ? 'text-[color:var(--accent-green)]' : 'text-[color:var(--accent-red)]'}`;
         
@@ -1383,8 +1390,8 @@ function generarDistribucionHTML(columns) {
     const estados = {
         'revisión': 'bg-[color:var(--accent-blue)]',
         'enviado': 'bg-[color:var(--accent-amber)]',
-        'validado': 'bg-[color:var(--accent-green)]',
-        'pagado': 'bg-[color:var(--accent-emerald)]'
+        'validado': 'bg-[color:var(--accent-emerald)]',
+        'pagado': 'bg-[color:var(--accent-green)]'
     };
     
     columns.forEach(col => {
@@ -1409,8 +1416,14 @@ function formatCurrency_Kanban(amount) {
  * Actualiza todos los contadores y métricas de manera centralizada
  */
 function actualizarContadoresTablero() {
-	// Aplicar animación para indicar actualización
-	const metricas = document.querySelectorAll(".metric-value");
+	// Evitar actualizaciones excesivas
+	if (window.actualizacionEnProceso) {
+		return;
+	}
+	window.actualizacionEnProceso = true;
+
+	// Aplicar animación para indicar actualización (solo si no hay animación activa)
+	const metricas = document.querySelectorAll(".metric-value:not(.highlight)");
 	metricas.forEach((metrica) => {
 		metrica.classList.add("highlight");
 		setTimeout(() => {
@@ -1430,6 +1443,11 @@ function actualizarContadoresTablero() {
 		const estaVacia = col.querySelectorAll(".kanban-item").length === 0;
 		col.setAttribute("data-empty", estaVacia);
 	});
+
+	// Liberar el flag después de un breve retraso
+	setTimeout(() => {
+		window.actualizacionEnProceso = false;
+	}, 100);
 }
 
 /**
@@ -1438,10 +1456,21 @@ function actualizarContadoresTablero() {
 function observarCambiosTablero() {
 	// Crear un observador más potente que detecte cualquier cambio en el tablero
 	const observer = new MutationObserver((mutations) => {
+		// Evitar actualizaciones si ya hay una en proceso
+		if (window.actualizacionEnProceso) {
+			return;
+		}
+
 		// Flag para evitar múltiples actualizaciones en rápida sucesión
 		let debeTriggerActualizacion = false;
 
 		mutations.forEach((mutation) => {
+			// Ignorar cambios en el panel de resumen para evitar bucles
+			if (mutation.target.closest('#summary-panel') || 
+				mutation.target.id === 'summary-panel') {
+				return;
+			}
+
 			// Detectar cambios en contenido DOM que afecten a las tarjetas
 			if (
 				mutation.type === "childList" &&
@@ -1467,9 +1496,10 @@ function observarCambiosTablero() {
 				}
 			}
 
-			// Detectar cambios de atributos (como data-empty)
+			// Detectar cambios de atributos (como data-empty) pero no en elementos de métricas
 			if (
 				mutation.type === "attributes" &&
+				!mutation.target.closest('#summary-panel') &&
 				(mutation.attributeName === "data-empty" ||
 					(mutation.attributeName === "class" &&
 						mutation.target.classList.contains("column-hidden")))
@@ -1483,7 +1513,7 @@ function observarCambiosTablero() {
 			clearTimeout(window.contadoresTimeout);
 			window.contadoresTimeout = setTimeout(() => {
 				actualizarContadoresTablero();
-			}, 250);
+			}, 500); // Aumentar el retraso para evitar actualizaciones excesivas
 		}
 	});
 
@@ -1500,9 +1530,8 @@ function observarCambiosTablero() {
 
 	observer.observe(kanbanBoard, config);
 
-	// También observar el panel de resumen para detectar cambios allí
-	const summaryPanel = document.getElementById("summary-panel");
-	observer.observe(summaryPanel, config);
+	// NO observar el panel de resumen para evitar bucles infinitos
+	// El panel se actualiza cuando cambian las tarjetas del kanban
 }
 
 /**

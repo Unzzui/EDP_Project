@@ -203,9 +203,34 @@ def validar_edp(edp_original, updates):
             raise ValueError(f"Al marcar Conformidad Enviada como 'Sí', debes completar: {', '.join(faltan)}")
 
 def get_service():
-    config = get_config()
-    creds = Credentials.from_service_account_file(config.GOOGLE_CREDENTIALS, scopes=SCOPES)
-    return build('sheets', 'v4', credentials=creds)
+    """Obtener servicio de Google Sheets con manejo de errores mejorado"""
+    try:
+        config = get_config()
+        
+        # Verificar que las credenciales existan
+        if not hasattr(config, 'GOOGLE_CREDENTIALS') or not config.GOOGLE_CREDENTIALS:
+            print("❌ GOOGLE_CREDENTIALS no configurado en config")
+            return None
+            
+        if not isinstance(config.GOOGLE_CREDENTIALS, str):
+            print(f"❌ GOOGLE_CREDENTIALS debe ser string, recibido: {type(config.GOOGLE_CREDENTIALS)}")
+            return None
+            
+        # Verificar que el archivo exista
+        import os
+        if not os.path.exists(config.GOOGLE_CREDENTIALS):
+            print(f"❌ Archivo de credenciales no encontrado: {config.GOOGLE_CREDENTIALS}")
+            return None
+            
+        print(f"✅ Intentando cargar credenciales desde: {config.GOOGLE_CREDENTIALS}")
+        creds = Credentials.from_service_account_file(config.GOOGLE_CREDENTIALS, scopes=SCOPES)
+        service = build('sheets', 'v4', credentials=creds)
+        print("✅ Servicio de Google Sheets inicializado correctamente")
+        return service
+        
+    except Exception as e:
+        print(f"❌ Error al inicializar servicio de Google Sheets: {e}")
+        return None
 
 def read_sheet(range_name, apply_transformations=True):
     """
@@ -252,7 +277,17 @@ def read_sheet(range_name, apply_transformations=True):
     if values is None:
         try:
             service = get_service()
+            if service is None:
+                print(f"❌ No se pudo obtener servicio de Google Sheets para {range_name}")
+                print(f"💥 No hay datos disponibles para {range_name}, retornando DataFrame vacío")
+                return pd.DataFrame()
+                
             config = get_config()
+            if not hasattr(config, 'SHEET_ID') or not config.SHEET_ID:
+                print(f"❌ SHEET_ID no configurado para {range_name}")
+                print(f"💥 No hay datos disponibles para {range_name}, retornando DataFrame vacío") 
+                return pd.DataFrame()
+                
             sheet = service.spreadsheets()
             result = sheet.values().get(spreadsheetId=config.SHEET_ID, range=range_name).execute()
             values = result.get('values', [])
@@ -289,7 +324,19 @@ def read_sheet(range_name, apply_transformations=True):
                     pass
             
             if values is None:
-                print(f"💥 No hay datos disponibles para {range_name}, retornando DataFrame vacío")
+                print(f"💥 No hay datos disponibles para {range_name}, intentando modo demo...")
+                
+                # Intentar usar datos demo
+                try:
+                    from .demo_data import get_demo_data
+                    demo_df = get_demo_data(range_name)
+                    if not demo_df.empty:
+                        print(f"🎭 Usando datos demo para {range_name}")
+                        return demo_df
+                except Exception as demo_error:
+                    print(f"❌ Error generando datos demo: {demo_error}")
+                
+                print(f"💥 Retornando DataFrame vacío para {range_name}")
                 return pd.DataFrame()  # Retornar DataFrame vacío si no hay datos
     
     # Log de origen de datos para debugging
