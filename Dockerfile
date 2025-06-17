@@ -7,12 +7,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     FLASK_ENV=production
 
-# Instalar dependencias del sistema
+# Instalar dependencias del sistema incluyendo gosu para cambio seguro de usuario
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    gosu \
+    wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && wget -O /usr/local/bin/su-exec https://github.com/ncopa/su-exec/releases/download/v0.2/su-exec.static-$(dpkg --print-architecture) \
+    && chmod +x /usr/local/bin/su-exec
 
 # Crear directorio de trabajo
 WORKDIR /app

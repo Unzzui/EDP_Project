@@ -2,6 +2,7 @@
 Configuration management for the EDP application.
 """
 import os
+import json
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from pathlib import Path
@@ -325,28 +326,46 @@ class Config:
         possible_paths = [
             # 1. Variable de entorno directa (desarrollo local)
             os.getenv('GOOGLE_APPLICATION_CREDENTIALS'),
-            # 2. Render Secret Files (producción)
+            # 2. Secret Files copiados por el script fix_render_secrets.py (producción)
+            '/app/secrets/edp-control-system-f3cfafc0093a.json',
+            '/app/secrets/google-credentials.json',
+            # 3. Render Secret Files originales (si tenemos permisos)
             '/etc/secrets/edp-control-system-f3cfafc0093a.json',
             '/etc/secrets/google-credentials.json',
-            # 3. Ubicación local del proyecto (desarrollo)
+            # 4. Ubicación local del proyecto (desarrollo)
             'edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json',
             './edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json',
-            # 4. Ubicación relativa en contenedor
+            # 5. Ubicación relativa en contenedor
             '/app/edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json',
-            # 5. Ubicación alternativa en contenedor
-             '/etc/secrets/edp-control-system-9ac742cb2fb0.json',
-            
-            
+            # 6. Ubicación alternativa en contenedor
+            '/etc/secrets/edp-control-system-9ac742cb2fb0.json',
+            # 7. Buscar cualquier archivo JSON en /app/secrets (Secret Files copiados)
+            *[str(p) for p in Path('/app/secrets').glob('*.json') if Path('/app/secrets').exists()],
         ]
         
         for path in possible_paths:
             if path and os.path.exists(path):
-                print(f"✅ Credenciales de Google encontradas en: {path}")
-                return path
+                # Verificar que el archivo sea legible y tenga formato JSON válido
+                try:
+                    with open(path, 'r') as f:
+                        data = json.load(f)
+                    
+                    # Verificar que tenga campos de Google Service Account
+                    required_fields = ['client_email', 'private_key', 'project_id']
+                    if all(field in data for field in required_fields):
+                        print(f"✅ Credenciales de Google válidas encontradas en: {path}")
+                        return path
+                    else:
+                        print(f"⚠️ Archivo JSON encontrado pero sin campos requeridos: {path}")
+                        continue
+                        
+                except (json.JSONDecodeError, PermissionError, Exception) as e:
+                    print(f"⚠️ Error verificando {path}: {e}")
+                    continue
         
-        print("⚠️ No se encontraron credenciales de Google en ninguna ubicación")
+        print("⚠️ No se encontraron credenciales de Google válidas en ninguna ubicación")
         print("📍 Ubicaciones buscadas:")
-        for i, path in enumerate(possible_paths, 1):
+        for i, path in enumerate(possible_paths[:8], 1):  # Solo mostrar las principales
             if path:
                 exists_status = "✅" if os.path.exists(path) else "❌"
                 print(f"   {i}. {exists_status} {path}")

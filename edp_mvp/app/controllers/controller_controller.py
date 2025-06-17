@@ -532,9 +532,15 @@ def vista_kanban():
         # Agregar cualquier dato adicional del dashboard context si está disponible
         if dashboard_context:
             # Agregar datos que puedan ser útiles para la tabla
-            for key in ['kpis', 'charts', 'alertas']:
+            for key in ['kpis', 'charts', 'alertas', 'dso_global', 'dso_var']:
                 if key in dashboard_context:
                     template_context[key] = dashboard_context[key]
+                    
+            # Asegurar que dso_global esté disponible (con valor por defecto si no existe)
+            if 'dso_global' not in template_context:
+                template_context['dso_global'] = dashboard_context.get('dso_global', 0)
+                
+            print(f"🔍 DSO Global incluido en template: {template_context.get('dso_global', 'No disponible')}")
 
         print(f"🎯 Vista kanban cargada exitosamente con {len(registros)} registros para tabla")
         return render_template("controller/controller_kanban.html", **template_context)

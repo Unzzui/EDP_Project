@@ -1,48 +1,31 @@
 #!/bin/bash
 
-#!/bin/bash
-
-# Entrypoint script para manejar Secret Files y verificaciones en Render
+# Entrypoint script para manejar permisos de Secret Files en Render
 echo "🔧 Iniciando entrypoint script..."
 
-# Función para verificar permisos y contenido de Secret Files
-check_secret_files() {
-    if [ -d "/etc/secrets" ]; then
-        echo "📁 Directorio /etc/secrets encontrado"
-        echo "👤 Usuario actual: $(whoami) (UID: $(id -u))"
-        echo "📋 Listando Secret Files disponibles:"
-        ls -la /etc/secrets/ 2>/dev/null || echo "⚠️ No se puede listar /etc/secrets/ - verificando acceso..."
-        
-        # Intentar leer archivos específicos si existen
-        for secret_file in "/etc/secrets/GOOGLE_CREDENTIALS" "/etc/secrets/google-credentials.json"; do
-            if [ -f "$secret_file" ]; then
-                echo "✅ Secret File encontrado: $secret_file"
-                echo "📄 Permisos: $(ls -l "$secret_file" 2>/dev/null || echo 'No se pueden ver permisos')"
-                # Verificar si es legible
-                if [ -r "$secret_file" ]; then
-                    echo "✅ Archivo legible"
-                    head -c 50 "$secret_file" 2>/dev/null && echo "..." || echo "⚠️ No se puede leer contenido"
-                else
-                    echo "❌ Archivo no legible"
-                fi
-            fi
-        done
-    else
-        echo "📁 Directorio /etc/secrets no encontrado - usando modo demo"
-    fi
-}
+# Verificar si somos root y ejecutar corrección de Secret Files
+if [ "$(id -u)" = "0" ]; then
+    echo "� Ejecutando como root - corrigiendo Secret Files..."
+    
+    # Ejecutar script de corrección de Secret Files
+    python fix_render_secrets.py
+    
+    # Cambiar a usuario no-root para ejecutar la aplicación
+    export HOME=/app
+    echo "👤 Cambiando a usuario appuser..."
+    exec su-exec appuser "$0" "$@"
+else
+    echo "� Ejecutando como usuario no-root"
+fi
 
-# Ejecutar verificación de Secret Files
-check_secret_files
-
-# Verificaciones de entorno
+# Verificaciones de entorno (como usuario appuser)
 echo "🔍 Iniciando verificaciones..."
 python debug_env.py
 
 echo "🔐 Verificando Secret Files..."
 python verify_secrets.py
 
-echo "🔍 Iniciando init_db..."
+echo "🔍 Inicializando base de datos..."
 python init_db.py
 
 echo "🚀 Iniciando Gunicorn..."

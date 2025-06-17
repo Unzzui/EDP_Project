@@ -203,7 +203,7 @@ def validar_edp(edp_original, updates):
             raise ValueError(f"Al marcar Conformidad Enviada como 'Sí', debes completar: {', '.join(faltan)}")
 
 def get_service():
-    """Obtener servicio de Google Sheets con manejo de errores mejorado"""
+    """Obtener servicio de Google Sheets con manejo robusto de errores y Secret Files de Render"""
     try:
         config = get_config()
         
@@ -223,22 +223,82 @@ def get_service():
             return None
             
         print(f"✅ Intentando cargar credenciales desde: {config.GOOGLE_CREDENTIALS}")
+        
+        # Estrategia múltiple para leer credenciales en Render
+        creds_data = None
+        
+        # Método 1: Lectura directa (funciona en desarrollo)
         try:
-            creds = Credentials.from_service_account_file(config.GOOGLE_CREDENTIALS, scopes=SCOPES)
-            service = build('sheets', 'v4', credentials=creds)
-            print("✅ Servicio de Google Sheets inicializado correctamente")
-            return service
-        except PermissionError as pe:
-            print(f"❌ Error de permisos leyendo credenciales: {pe}")
-            print("💡 Esto puede ocurrir con Secret Files en contenedores")
-            print("🎭 La aplicación continuará en modo demo")
+            with open(config.GOOGLE_CREDENTIALS, 'r') as f:
+                creds_data = json.load(f)
+            print("✅ Credenciales leídas directamente")
+        except PermissionError:
+            print("⚠️ Error de permisos con lectura directa, intentando métodos alternativos...")
+            
+            # Método 2: Usar subprocess cat (en caso de que el proceso tenga otros permisos)
+            try:
+                import subprocess
+                result = subprocess.run(['cat', config.GOOGLE_CREDENTIALS], 
+                                      capture_output=True, text=True, check=True)
+                creds_data = json.loads(result.stdout)
+                print("✅ Credenciales leídas con subprocess")
+            except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
+                print(f"❌ Falló lectura con subprocess: {e}")
+                
+                # Método 3: Intentar copiar el archivo a una ubicación temporal con permisos de escritura
+                try:
+                    import shutil
+                    import tempfile
+                    
+                    with tempfile.NamedTemporaryFile(mode='w+', suffix='.json', delete=False) as temp_file:
+                        # Intentar copiar el archivo
+                        subprocess.run(['cp', config.GOOGLE_CREDENTIALS, temp_file.name], check=True)
+                        # Ahora intentar leer desde la copia temporal
+                        with open(temp_file.name, 'r') as f:
+                            creds_data = json.load(f)
+                        # Limpiar archivo temporal
+                        os.unlink(temp_file.name)
+                        print("✅ Credenciales leídas desde copia temporal")
+                except Exception as copy_error:
+                    print(f"❌ Falló copia temporal: {copy_error}")
+        
+        except json.JSONDecodeError as e:
+            print(f"❌ Error: Archivo no es JSON válido: {e}")
             return None
         except Exception as e:
-            print(f"❌ Error cargando credenciales: {e}")
+            print(f"❌ Error inesperado leyendo credenciales: {e}")
+            return None
+        
+        # Si no pudimos leer las credenciales de ninguna manera
+        if not creds_data:
+            print("❌ No se pudieron leer las credenciales con ningún método")
+            print("💡 Esto es común en contenedores con Secret Files restrictivos")
+            print("🎭 La aplicación continuará en modo demo")
+            return None
+        
+        # Verificar que el JSON tiene los campos requeridos
+        required_fields = ['client_email', 'private_key', 'project_id']
+        missing_fields = [field for field in required_fields if field not in creds_data]
+        
+        if missing_fields:
+            print(f"❌ Faltan campos requeridos en credenciales: {missing_fields}")
+            return None
+        
+        # Crear credenciales desde los datos leídos
+        try:
+            creds = Credentials.from_service_account_info(creds_data, scopes=SCOPES)
+            service = build('sheets', 'v4', credentials=creds)
+            print("✅ Servicio de Google Sheets inicializado correctamente")
+            print(f"   📧 Client Email: {creds_data.get('client_email', 'N/A')}")
+            return service
+        except Exception as e:
+            print(f"❌ Error creando servicio con credenciales: {e}")
             return None
         
     except Exception as e:
         print(f"❌ Error al inicializar servicio de Google Sheets: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def read_sheet(range_name, apply_transformations=True):
