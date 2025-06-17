@@ -545,16 +545,6 @@ transform: none !important; /* Prevenir rotaciones que causan desalineación */
   animation: shimmer 1.5s infinite;
 }
 
-/* Micro-interacciones */
-.metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-.metric-card:active {
-  transform: translateY(0);
-  transition: transform 0.1s ease;
-}
 
 /* Efectos de foco mejorados */
 .kanban-item:focus-within {

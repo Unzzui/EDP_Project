@@ -408,16 +408,16 @@
     </div>
   </div>
   
-  <!-- Grid de métricas principales con animaciones -->
+  <!-- Grid de métricas principales -->
   <div id="metrics-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0 divide-x divide-[color:var(--border-color-subtle)]">
     <!-- Métrica 1: Total EDPs -->
-    <div class="p-6 hover:bg-[color:var(--bg-highlight)] transition-all duration-200 group">
+    <div class="p-6">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">Total EDPs</p>
-          <p id="total-edps" class="text-2xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-blue)] transition-colors">0</p>
+          <p id="total-edps" class="text-2xl font-bold text-[color:var(--text-primary)]">0</p>
         </div>
-        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] rounded-xl shadow-lg">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
@@ -426,13 +426,13 @@
     </div>
 
     <!-- Métrica 2: Pendientes -->
-    <div class="p-6 hover:bg-[color:var(--bg-highlight)] transition-all duration-200 group">
+    <div class="p-6">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">Pendientes</p>
-          <p id="total-pendientes" class="text-2xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-amber)] transition-colors">0</p>
+          <p id="total-pendientes" class="text-2xl font-bold text-[color:var(--text-primary)]">0</p>
         </div>
-        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-amber)] to-[color:var(--accent-orange)] rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-amber)] to-[color:var(--accent-orange)] rounded-xl shadow-lg">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -441,13 +441,13 @@
     </div>
 
     <!-- Métrica 3: Validados -->
-    <div class="p-6 hover:bg-[color:var(--bg-highlight)] transition-all duration-200 group">
+    <div class="p-6">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">Validados</p>
-          <p id="total-validados" class="text-2xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-green)] transition-colors">0</p>
+          <p id="total-validados" class="text-2xl font-bold text-[color:var(--text-primary)]">0</p>
         </div>
-        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-green)] to-[color:var(--accent-blue)] rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-green)] to-[color:var(--accent-blue)] rounded-xl shadow-lg">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -456,13 +456,13 @@
     </div>
 
     <!-- Métrica 4: Monto Total -->
-    <div class="p-6 hover:bg-[color:var(--bg-highlight)] transition-all duration-200 group">
+    <div class="p-6">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">Monto Total</p>
-          <p id="monto-total" class="text-2xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-purple)] transition-colors">$0</p>
+          <p id="monto-total" class="text-2xl font-bold text-[color:var(--text-primary)]">$0</p>
         </div>
-        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-purple)] to-[color:var(--accent-blue)] rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-purple)] to-[color:var(--accent-blue)] rounded-xl shadow-lg">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
           </svg>
@@ -471,13 +471,13 @@
     </div>
 
     <!-- Métrica 5: Críticos -->
-    <div class="p-6 hover:bg-[color:var(--bg-highlight)] transition-all duration-200 group">
+    <div class="p-6">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">Críticos</p>
-          <p id="total-criticos" class="text-2xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-red)] transition-colors">0</p>
+          <p id="total-criticos" class="text-2xl font-bold text-[color:var(--text-primary)]">0</p>
         </div>
-        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-red)] to-[color:var(--accent-orange)] rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-red)] to-[color:var(--accent-orange)] rounded-xl shadow-lg">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
@@ -486,38 +486,38 @@
     </div>
   </div>
   
-  <!-- Sección inferior con métricas adicionales mejorada -->
+  <!-- Sección inferior con métricas adicionales -->
   <div class="border-t border-[color:var(--border-color-subtle)] bg-gradient-to-r from-[color:var(--bg-subtle)] to-[color:var(--bg-card)] px-6 py-4">
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-8">
-      <div class="flex flex-col items-center group hover:scale-105 transition-transform duration-200">
+      <div class="flex flex-col items-center">
         <div class="flex items-center gap-2 mb-1">
           <div class="w-2 h-2 bg-[color:var(--accent-red)] rounded-full"></div>
           <span class="text-xs font-medium text-[color:var(--text-secondary)]">EDPs Críticos</span>
         </div>
-        <span id="edps-criticos" class="text-xl font-bold text-[color:var(--accent-red)] group-hover:text-[color:var(--accent-red-dark)] transition-colors">0</span>
+        <span id="edps-criticos" class="text-xl font-bold text-[color:var(--accent-red)]">0</span>
       </div>
-      <div class="flex flex-col items-center group hover:scale-105 transition-transform duration-200">
+      <div class="flex flex-col items-center">
         <div class="flex items-center gap-2 mb-1">
           <div class="w-2 h-2 bg-[color:var(--accent-amber)] rounded-full"></div>
           <span class="text-xs font-medium text-[color:var(--text-secondary)]">Días Promedio</span>
         </div>
-        <span id="dias-promedio" class="text-xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-blue)] transition-colors">0</span>
+        <span id="dias-promedio" class="text-xl font-bold text-[color:var(--text-primary)]">0</span>
       </div>
-      <div class="flex flex-col items-center group hover:scale-105 transition-transform duration-200">
+      <div class="flex flex-col items-center">
         <div class="flex items-center gap-2 mb-1">
           <div class="w-2 h-2 bg-[color:var(--accent-purple)] rounded-full"></div>
           <span class="text-xs font-medium text-[color:var(--text-secondary)]">Meta Mensual</span>
         </div>
-        <span id="meta-mensual" class="text-xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-purple)] transition-colors">$0</span>
+        <span id="meta-mensual" class="text-xl font-bold text-[color:var(--text-primary)]">$0</span>
       </div>
-      <div class="flex flex-col items-center group hover:scale-105 transition-transform duration-200">
+      <div class="flex flex-col items-center">
         <div class="flex items-center gap-2 mb-1">
           <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full"></div>
           <span class="text-xs font-medium text-[color:var(--text-secondary)]">Proyección</span>
         </div>
         <div class="flex items-center gap-1">
-          <span id="proyeccion-tendencia" class="text-xl font-bold text-[color:var(--accent-green)] group-hover:text-[color:var(--accent-green-dark)] transition-colors">+5%</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-green)] group-hover:translate-y-[-2px] transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <span id="proyeccion-tendencia" class="text-xl font-bold text-[color:var(--accent-green)]">+5%</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
         </div>

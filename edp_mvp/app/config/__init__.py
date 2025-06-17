@@ -32,13 +32,22 @@ class DatabaseConfig:
         
         # Fix DATABASE_URL handling for production
         database_url = os.getenv('DATABASE_URL')
-        if database_url:
+        if database_url and database_url != "":
             # Fix for PostgreSQL URLs that start with postgres:// (Render uses this)
             if database_url.startswith('postgres://'):
                 database_url = database_url.replace('postgres://', 'postgresql://', 1)
-            sqlalchemy_uri = database_url
+            
+            # Validar que la URL no tenga placeholders
+            if 'port' in database_url and not database_url.count(':') >= 2:
+                print(f"⚠️ DATABASE_URL parece tener placeholders: {database_url}")
+                print("⚠️ Usando SQLite como fallback")
+                sqlalchemy_uri = f"sqlite:///{sqlite_path}"
+            else:
+                sqlalchemy_uri = database_url
+                print(f"✅ Usando PostgreSQL: {database_url[:20]}...")
         else:
             sqlalchemy_uri = f"sqlite:///{sqlite_path}"
+            print(f"⚠️ DATABASE_URL no configurado, usando SQLite: {sqlite_path}")
         
         return cls(
             credentials_file=os.getenv('GOOGLE_CREDENTIALS_FILE', 'credentials.json'),
