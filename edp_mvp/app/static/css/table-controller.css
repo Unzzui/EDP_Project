@@ -1,0 +1,178 @@
+  /* Estilos para cabeceras ordenables */
+  .sortable {
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+  }
+  .sortable:hover {
+    background-color: var(--bg-highlight);
+  }
+  .sortable::after {
+    content: '↕';
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+    opacity: 0.5;
+  }
+  .sortable.sort-asc::after {
+    content: '↑';
+    opacity: 1;
+  }
+  .sortable.sort-desc::after {
+    content: '↓';
+    opacity: 1;
+  }
+  
+  /* Estilos para tarjetas de métricas */
+  .metric-card {
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color-subtle);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+  }
+  
+  .metric-card:hover {
+    border-color: var(--border-color);
+    transform: translateY(-2px);
+  }
+  
+  .metric-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+  
+  .metric-value {
+    font-weight: bold;
+    font-size: 1.5rem;
+  }
+  
+  /* Estilos para tabla mejorada */
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  
+  .data-table th {
+    background-color: var(--background);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  .data-table td {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border-color-subtle);
+  }
+  
+  .data-table tr:hover td {
+    background-color: var(--bg-highlight);
+  }
+  
+  .data-table-row-critical td {
+    background-color: var(--state-error-bg);
+  }
+  
+  .data-table-row-validated td {
+    background-color: var(--state-success-bg);
+  }
+  
+  /* Efecto de transición para filas */
+  .data-table tbody tr {
+    transition: background-color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;
+  }
+   
+  .data-table tbody tr:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  
+  /* Visual indication that EDP number is clickable */
+  .data-table td.edp-number {
+    color: var(--accent-blue);
+    font-weight: 500;
+    text-decoration: none;
+  }
+  
+  .data-table tr:hover td.edp-number {
+    text-decoration: underline;
+  }
+  /* Estilos para estados */
+  .estado-pill {
+    display: inline-flex;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+  
+  .estado-pendiente {
+    background-color: var(--state-warning-bg);
+    color: var(--accent-amber);
+  }
+  
+  .estado-revisión {
+    background-color: var(--state-info-bg);
+    color: var(--accent-white);
+    font-weight: bold;
+  }
+  
+  .estado-enviado {
+    background-color: var(--state-progress-bg);
+    color: var(--accent-white);
+    font-weight: bold;
+  }
+  
+  .estado-pagado {
+    background-color: var(--state-success-bg);
+    color: var(--accent-white);
+    font-weight: bold;
+  }
+  
+  .estado-validado {
+    background-color: var(--state-success-bg);
+    color: var(--accent-white);
+    font-weight: bold;
+  }
+  
+  /* Estilos para tabla responsive */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Animaciones para elementos */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Animaciones sutiles para la sección de atención inmediata */
+  @keyframes gentlePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  
+  @keyframes fadeInSoft {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  
+  .urgent-indicator {
+    animation: gentlePulse 3s ease-in-out infinite;
+  }
+  
+  .critical-edp-card {
+    animation: fadeInSoft 0.3s ease-out;
+  }
+  
+  #critical-alert-section {
+    animation: fadeInSoft 0.5s ease-out;
+  }

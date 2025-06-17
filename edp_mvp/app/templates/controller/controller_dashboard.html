@@ -351,7 +351,7 @@
        <select name="estado" id="estado" class="form-select w-full pl-9">
     <option value="pendientes" {% if filtros.estado == 'pendientes' %}selected{% endif %}>Pendientes</option>
     <option value="todos" {% if filtros.estado == 'todos' %}selected{% endif %}>Todos</option>
-    {% for estado in ["revisión", "enviado", "pagado", "validado"] %}
+    {% for estado in ["revisión", "enviado", "validado", "pagado"] %}
       <option value="{{ estado }}" {% if filtros.estado == estado %}selected{% endif %}>{{ estado }}</option>
     {% endfor %}
   </select>

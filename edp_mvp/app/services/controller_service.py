@@ -314,7 +314,7 @@ class ControllerService(BaseService):
             df_datos["fecha_emision"], errors="coerce"
         )
         df_pendientes = df_datos[
-            df_datos["estado"].isin(["enviado", "pendiente", "revisión"])
+            df_datos["estado"].isin(["enviado", "pendiente", "revisión", "validado"])
         ].copy()
 
         if not df_pendientes.empty:
@@ -762,7 +762,7 @@ class ControllerService(BaseService):
             hoy_90d = hoy + timedelta(days=90)
 
             # Filter pending EDPs
-            df_pendientes = df[~df["estado"].str.strip().isin(["pagado", "validado"])]
+            df_pendientes = df[df["estado"].str.strip() != "pagado"]
 
             if df_pendientes.empty:
                 return {"labels": ["30 días", "60 días", "90 días"], "datasets": []}
@@ -1018,7 +1018,7 @@ class ControllerService(BaseService):
                 logger.info(f"⚠️ Could not load cost data for trend: {e}")
 
             df_completados = df_copia[
-                df_copia["estado"].str.strip().isin(["pagado", "validado"])
+                df_copia["estado"].str.strip() == "pagado"
             ]
             ingresos_mensuales = (
                 df_completados.groupby("mes")["monto_aprobado"].sum() / 1_000_000
@@ -2110,7 +2110,7 @@ class ControllerService(BaseService):
             }
 
             # Métricas Financieras
-            total_pagado_global = df_full[df_full["estado"].isin(["pagado", "validado"])][
+            total_pagado_global = df_full[df_full["estado"] == "pagado"][
                 "monto_aprobado"
             ].sum()
             total_propuesto_global = df_full["monto_propuesto"].sum()

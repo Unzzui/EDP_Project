@@ -112,7 +112,7 @@ def get_redirect_for_role(user_role):
         URL to redirect to based on role
     """
     role_redirects = {
-        'admin': 'admin.usuarios',
+        'admin': 'admin.dashboard',
         'manager': 'manager.dashboard',
         'controller': 'controller.dashboard_controller',
         'jefe_proyecto': 'project_manager.dashboard',

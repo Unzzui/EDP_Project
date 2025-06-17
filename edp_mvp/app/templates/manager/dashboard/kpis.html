@@ -1,5 +1,5 @@
 <!-- KPIs Principales - Primera fila con contexto aumentado -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
   <!-- KPI: Ingresos totales - REDISEÑADO SIN TOOLTIPS 🟩 -->
   <div
     class="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-4 sm:p-5 text-white shadow-lg relative overflow-hidden">
@@ -94,7 +94,7 @@
       <canvas
         id="ingresosSparkline"
         class="w-full h-full opacity-80"
-        data-sparkline="{{ kpis.historial_6_meses | default([28.5, 31.2, 27.8, 35.1, 39.3, 42.7]) | tojson }}"></canvas>
+        data-sparkline="{{ (kpis.historial_6_meses | default([28.5, 31.2, 27.8, 35.1, 39.3, 42.7])) | tojson | safe }}"></canvas>
       <div class="absolute bottom-0 left-0 text-xs text-white/60">6M trend</div>
     </div>
 
@@ -276,7 +276,7 @@
       <canvas
         id="recuperacionSparkline"
         class="w-full h-full opacity-70"
-        data-sparkline="{{ kpis.historial_recuperacion_6_meses | default([85.2, 78.9, 82.1, 76.5, 79.8, 78.5]) | tojson }}"
+        data-sparkline="{{ (kpis.historial_recuperacion_6_meses | default([85.2, 78.9, 82.1, 76.5, 79.8, 78.5])) | tojson | safe }}"
         data-labels="{{ ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'] | tojson }}"></canvas>
     </div>
 
@@ -448,8 +448,8 @@
       <canvas
         id="proyectosCriticosSparkline"
         class="w-full h-full opacity-70"
-        data-sparkline="{{ kpis.historial_proyectos_criticos_6_meses | default([5, 7, 4, 6, 8, 6]) | tojson }}"
-        data-labels="{{ ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'] | tojson }}"></canvas>
+        data-sparkline="{{ (kpis.historial_proyectos_criticos_6_meses | default([5, 7, 4, 6, 8, 6])) | tojson | safe }}"
+        data-labels="{{ (['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun']) | tojson | safe }}"></canvas>
     </div>
 
     <!-- Icono de proyecto/alerta -->
@@ -467,267 +467,116 @@
     </div>
   </div>
 
-  <!-- KPI: Rentabilidad General - COMPACTO MEJORADO -->
-  <div
-    class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl p-4 sm:p-5 text-white shadow-lg relative">
-    <!-- Benchmark badge compacto en esquina -->
-    <div class="absolute top-2 right-2">
-      <div
-        class="bg-white/25 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-full border border-white/30">
-        <div class="flex items-center space-x-1">
-          {% if kpis.posicion_vs_benchmark|default(5.2) >= 0 %}
-          <svg
-            class="w-3 h-3 text-emerald-300"
-            fill="currentColor"
-            viewBox="0 0 20 20">
-            <path
-              fill-rule="evenodd"
-              d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-              clip-rule="evenodd"></path>
-          </svg>
-          <span class="text-emerald-200"
-            >+{{ kpis.posicion_vs_benchmark|default(5.2) }}%</span
-          >
-          {% else %}
-          <svg
-            class="w-3 h-3 text-red-300 rotate-180"
-            fill="currentColor"
-            viewBox="0 0 20 20">
-            <path
-              fill-rule="evenodd"
-              d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-              clip-rule="evenodd"></path>
-          </svg>
-          <span class="text-red-200"
-            >{{ kpis.posicion_vs_benchmark|default(5.2) }}%</span
-          >
-          {% endif %}
-        </div>
-      </div>
-    </div>
+  <script>
+    // Initialize all sparkline charts after DOM load
+    document.addEventListener("DOMContentLoaded", function () {
+      try {
+        // Initialize existing sparklines
+        initializeSparkline("rentabilidadSparkline");
 
-    <div class="flex justify-between items-start">
-      <div class="flex-1">
-        <!-- Título principal -->
-        <p class="text-white/95 text-xs sm:text-sm font-medium">
-          Rentabilidad General
-        </p>
-
-        <!-- Valor principal con tendencia más destacado -->
-        <div class="flex items-baseline space-x-3 mt-2">
-          <p class="text-white text-3xl sm:text-4xl font-bold leading-none">
-            {{ kpis.rentabilidad_general|default(28.5) }}%
-          </p>
-          <div class="flex items-center bg-white/15 px-2 py-1 rounded-full">
-            <svg
-              class="w-3 h-3 mr-1 {% if kpis.tendencia_rentabilidad|default(3.2) < 0 %}rotate-180 text-red-300{% else %}text-emerald-300{% endif %}"
-              fill="currentColor"
-              viewBox="0 0 20 20">
-              <path
-                fill-rule="evenodd"
-                d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                clip-rule="evenodd"></path>
-            </svg>
-            <span
-              class="text-xs font-semibold {% if kpis.tendencia_rentabilidad|default(3.2) < 0 %}text-red-300{% else %}text-emerald-300{% endif %}">
-              {{ kpis.tendencia_rentabilidad|default(3.2)|abs }}%
-            </span>
-          </div>
-        </div>
-
-        <!-- Métricas clave con mejor jerarquía visual -->
-        <div class="grid grid-cols-2 gap-3 mt-4">
-          <div class="bg-white/10 rounded-lg p-2">
-            <div class="text-white/70 text-xs mb-1">Margen Bruto</div>
-            <div class="text-white font-bold text-sm">
-              ${{ kpis.margen_bruto_absoluto|default(42.3) }}M
-            </div>
-          </div>
-          <div class="bg-white/10 rounded-lg p-2">
-            <div class="text-white/70 text-xs mb-1">ROI Anualizado</div>
-            <div class="text-white font-bold text-sm text-emerald-300">
-              {{ kpis.roi_calculado|default(24.8) }}%
-            </div>
-          </div>
-          <div class="bg-white/10 rounded-lg p-2">
-            <div class="text-white/70 text-xs mb-1">Costos Totales</div>
-            <div class="text-white font-bold text-sm">
-              ${{ kpis.costos_totales|default(78.1) }}M
-            </div>
-          </div>
-          <div class="bg-white/10 rounded-lg p-2">
-            <div class="text-white/70 text-xs mb-1">EBITDA</div>
-            <div class="text-white font-bold text-sm text-emerald-300">
-              {{ kpis.ebitda_porcentaje|default(32.1) }}%
-            </div>
-          </div>
-        </div>
-
-        <!-- Progreso vs meta mejorado -->
-        <div class="mt-4 pt-3 border-t border-white/20">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-sm text-white/90 font-medium">
-              Meta: {{ kpis.meta_rentabilidad|default(25) }}%
-            </span>
-            <span
-              class="text-sm font-bold {% if kpis.vs_meta_rentabilidad|default(3.5) >= 0 %}text-emerald-300{% else %}text-red-300{% endif %}">
-              {% if kpis.vs_meta_rentabilidad|default(3.5) >= 0 %}+{% endif %}{{
-              kpis.vs_meta_rentabilidad|default(3.5) }}%
-            </span>
-          </div>
-          <div class="w-full bg-purple-700/40 rounded-full h-2">
-            <div
-              class="bg-gradient-to-r from-emerald-400 to-emerald-300 h-2 rounded-full transition-all duration-500"
-              style="width: {{ [kpis.pct_meta_rentabilidad|default(114), 100]|min }}%"></div>
-          </div>
-          <div class="text-xs text-white/60 mt-1">
-            {{ kpis.pct_meta_rentabilidad|default(114) }}% de cumplimiento anual
-          </div>
-        </div>
-      </div>
-
-      <!-- Gráfico de estructura de costos mejorado -->
-      <div class="flex flex-col items-center ml-4">
-        <span
-          class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mb-3 border border-white/30">
-          <svg
-            class="w-5 h-5 text-white"
-            fill="currentColor"
-            viewBox="0 0 20 20">
-            <path
-              fill-rule="evenodd"
-              d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
-              clip-rule="evenodd"></path>
-          </svg>
-        </span>
-
-        <!-- Estructura de costos con etiquetas claras -->
-        <div class="bg-white/15 rounded-lg p-3 w-full min-w-[120px]">
-          <div class="text-xs text-white/95 mb-3 text-center font-semibold">
-            Estructura de Costos
-          </div>
-
-          <div class="space-y-2">
-            <!-- Personal -->
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <div
-                  class="w-3 h-3 bg-gradient-to-r from-blue-500 to-blue-400 rounded"></div>
-                <span class="text-xs text-white/80">Personal</span>
-              </div>
-              <span class="text-xs font-bold text-white"
-                >{{ kpis.costos_personal_pct|default(42) }}%</span
-              >
-            </div>
-
-            <!-- Overhead -->
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <div
-                  class="w-3 h-3 bg-gradient-to-r from-emerald-500 to-emerald-400 rounded"></div>
-                <span class="text-xs text-white/80">Overhead</span>
-              </div>
-              <span class="text-xs font-bold text-white"
-                >{{ kpis.costos_overhead_pct|default(18) }}%</span
-              >
-            </div>
-
-            <!-- Tecnología -->
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <div
-                  class="w-3 h-3 bg-gradient-to-r from-amber-500 to-amber-400 rounded"></div>
-                <span class="text-xs text-white/80">Tecnología</span>
-              </div>
-              <span class="text-xs font-bold text-white"
-                >{{ kpis.costos_tech_pct|default(12) }}%</span
-              >
-            </div>
-
-            <!-- Margen -->
-            <div
-              class="flex items-center justify-between border-t border-white/20 pt-2">
-              <div class="flex items-center space-x-2">
-                <div
-                  class="w-3 h-3 bg-gradient-to-r from-purple-400 to-white rounded"></div>
-                <span class="text-xs text-white/80 font-medium"
-                  >Margen Neto</span
-                >
-              </div>
-              <span class="text-xs font-bold text-emerald-300"
-                >{{ kpis.margen_neto_pct|default(28) }}%</span
-              >
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  // Initialize all sparkline charts after DOM load
-  document.addEventListener("DOMContentLoaded", function () {
-    // Initialize existing sparklines
-    initializeSparkline("rentabilidadSparkline");
-
-    // Initialize new sparklines for enhanced cards
-    initializeSparkline("ingresosSparkline");
-    initializeSparkline("recuperacionSparkline");
-    initializeSparkline("proyectosCriticosSparkline");
-  });
-
-  function initializeSparkline(canvasId) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    const data = JSON.parse(canvas.dataset.sparkline || "[]");
-    const labels = JSON.parse(canvas.dataset.labels || "[]");
-
-    if (data.length === 0) return;
-
-    const width = canvas.offsetWidth;
-    const height = canvas.offsetHeight;
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-    const padding = 4;
-    const chartWidth = width - padding * 2;
-    const chartHeight = height - padding * 2;
-
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    const range = max - min || 1;
-
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.lineWidth = 1.5;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    ctx.beginPath();
-    data.forEach((value, index) => {
-      const x = padding + (index / (data.length - 1)) * chartWidth;
-      const y = padding + chartHeight - ((value - min) / range) * chartHeight;
-
-      if (index === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
+        // Initialize new sparklines for enhanced cards
+        initializeSparkline("ingresosSparkline");
+        initializeSparkline("recuperacionSparkline");
+        initializeSparkline("proyectosCriticosSparkline");
+      } catch (error) {
+        console.error("Error initializing sparklines:", error);
       }
     });
-    ctx.stroke();
 
-    // Add dots for last point
-    const lastIndex = data.length - 1;
-    const lastX = padding + (lastIndex / (data.length - 1)) * chartWidth;
-    const lastY =
-      padding + chartHeight - ((data[lastIndex] - min) / range) * chartHeight;
+    function initializeSparkline(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.beginPath();
-    ctx.arc(lastX, lastY, 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-</script>
+      const ctx = canvas.getContext("2d");
+
+      // Safe JSON parsing with error handling
+      let data = [];
+      let labels = [];
+
+      try {
+        const sparklineData = canvas.dataset.sparkline || "[]";
+        data = sparklineData ? JSON.parse(sparklineData) : [];
+      } catch (e) {
+        console.warn(`Failed to parse sparkline data for ${canvasId}:`, e);
+        data = [];
+      }
+
+      try {
+        const labelsData = canvas.dataset.labels || "[]";
+        labels = labelsData ? JSON.parse(labelsData) : [];
+      } catch (e) {
+        console.warn(`Failed to parse labels data for ${canvasId}:`, e);
+        labels = [];
+      }
+
+      if (!Array.isArray(data) || data.length === 0) {
+        console.warn(`No valid data for sparkline ${canvasId}`);
+        return;
+      }
+
+      // Filter out invalid data points
+      const validData = data.filter(
+        (value) =>
+          value !== null && value !== undefined && !isNaN(parseFloat(value))
+      );
+
+      if (validData.length === 0) {
+        console.warn(`No valid numeric data for sparkline ${canvasId}`);
+        return;
+      }
+
+      const width = canvas.offsetWidth;
+      const height = canvas.offsetHeight;
+      canvas.width = width * window.devicePixelRatio;
+      canvas.height = height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+      const padding = 4;
+      const chartWidth = width - padding * 2;
+      const chartHeight = height - padding * 2;
+
+      const min = Math.min(...validData);
+      const max = Math.max(...validData);
+      const range = max - min || 1;
+
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      ctx.beginPath();
+      validData.forEach((value, index) => {
+        const x =
+          padding +
+          (validData.length > 1 ? index / (validData.length - 1) : 0) *
+            chartWidth;
+        const y = padding + chartHeight - ((value - min) / range) * chartHeight;
+
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.stroke();
+
+      // Add dots for last point only if we have data
+      if (validData.length > 0) {
+        const lastIndex = validData.length - 1;
+        const lastX =
+          padding +
+          (validData.length > 1 ? lastIndex / (validData.length - 1) : 0) *
+            chartWidth;
+        const lastY =
+          padding +
+          chartHeight -
+          ((validData[lastIndex] - min) / range) * chartHeight;
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  </script>
+</div>

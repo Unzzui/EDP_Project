@@ -433,7 +433,7 @@ class ValidationUtils:
         if "estado" in data:
             rules["estado"] = [
                 RequiredValidator(),
-                ChoiceValidator(["revisión", "enviado", "pagado", "validado"]),
+                ChoiceValidator(["revisión", "enviado", "validado", "pagado"]),
             ]
 
         if "conformidad_enviada" in data:

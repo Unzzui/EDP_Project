@@ -6,6 +6,74 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
 {% include "controller/modal_edp_template.html" %}
 
+<!-- Set initial filter for table controller JavaScript -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.setAttribute('data-initial-filter', '{{ filtros.estado|default("pendientes") }}');
+    
+    // Debug: verificar datos disponibles
+    console.log('🔍 Datos del kanban:', {
+      estadisticas: {{ estadisticas|tojson|safe }},
+      filtros: {{ filtros|tojson|safe }},
+      registros: {{ registros|length if registros else 0 }}
+    });
+    
+    // Llenar panel de resumen con datos reales
+    const estadisticas = {{ estadisticas|tojson|safe }};
+    const registros = {{ registros|tojson|safe }};
+    
+    if (estadisticas) {
+      // Actualizar estadísticas básicas
+      const edpsCriticos = document.getElementById('edps-criticos');
+      const diasPromedio = document.getElementById('dias-promedio');
+      const metaMensual = document.getElementById('meta-mensual');
+      const proyeccionTendencia = document.getElementById('proyeccion-tendencia');
+      
+      if (edpsCriticos) edpsCriticos.textContent = estadisticas.total_criticos || 0;
+      if (diasPromedio) diasPromedio.textContent = Math.round(estadisticas.dias_promedio || 0);
+      if (metaMensual) metaMensual.textContent = '$' + (estadisticas.meta_mensual || 0).toLocaleString();
+      if (proyeccionTendencia) proyeccionTendencia.textContent = '+' + (estadisticas.proyeccion_crecimiento || 5) + '%';
+      
+      // Actualizar fecha de última actualización
+      const lastUpdated = document.getElementById('last-updated-date');
+      if (lastUpdated) {
+        lastUpdated.textContent = 'Actualizado: ' + new Date().toLocaleTimeString();
+      }
+    }
+    
+         // Si hay registros, calcular métricas adicionales
+     if (registros && Array.isArray(registros)) {
+       const totalRegistros = registros.length;
+       const totalMonto = registros.reduce((sum, r) => sum + (parseFloat(r.monto_aprobado) || 0), 0);
+       const criticos = registros.filter(r => r.dias_espera > 60).length;
+       const pendientes = registros.filter(r => r.estado && ['enviado', 'revisión', 'pendiente'].includes(r.estado.toLowerCase())).length;
+       const validados = registros.filter(r => r.estado && ['validado', 'pagado'].includes(r.estado.toLowerCase())).length;
+       
+       // Actualizar métricas en el panel principal
+       const totalEdpsEl = document.getElementById('total-edps');
+       const totalPendientesEl = document.getElementById('total-pendientes');
+       const totalValidadosEl = document.getElementById('total-validados');
+       const montoTotalEl = document.getElementById('monto-total');
+       const totalCriticosEl = document.getElementById('total-criticos');
+       
+       if (totalEdpsEl) totalEdpsEl.textContent = totalRegistros.toLocaleString();
+       if (totalPendientesEl) totalPendientesEl.textContent = pendientes.toLocaleString();
+       if (totalValidadosEl) totalValidadosEl.textContent = validados.toLocaleString();
+       if (montoTotalEl) montoTotalEl.textContent = '$' + totalMonto.toLocaleString();
+       if (totalCriticosEl) totalCriticosEl.textContent = criticos.toLocaleString();
+       
+       console.log('📊 Métricas calculadas y actualizadas:', {
+         total: totalRegistros,
+         pendientes: pendientes,
+         validados: validados,
+         monto: totalMonto,
+         criticos: criticos
+       });
+     } else {
+       console.warn('⚠️ No hay registros disponibles para calcular métricas');
+     }
+  });
+</script>
 
 {% endblock %}
 <!-- Modal para acciones rápidas -->
@@ -26,15 +94,31 @@
         </svg>
       </div>
       <div>
-        <h1 class="text-2xl font-bold tracking-tight">Vista Kanban</h1>
+        <h1 class="text-2xl font-bold tracking-tight">
+          <span id="view-title">Vista Kanban</span>
+        </h1>
         <p class="text-[color:var(--text-secondary)] max-w-2xl">
-          Arrastra las tarjetas entre columnas para actualizar su estado.
+          <span id="view-description">Arrastra las tarjetas entre columnas para actualizar su estado.</span>
         </p>
       </div>
     </div>
     
-    <div class="flex space-x-3">
-     
+    <div class="flex items-center space-x-3">
+      <!-- Toggle Vista Lista/Kanban -->
+      <div class="flex items-center bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color)] p-1">
+        <button id="toggle-lista" class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 view-toggle">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+          Lista
+        </button>
+        <button id="toggle-kanban" class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 view-toggle active">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Kanban
+        </button>
+      </div>
       
       <a href="{{ url_for('controller.dashboard_controller') }}" 
          class="flex items-center bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-xl text-sm border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
@@ -155,8 +239,81 @@
   </div>
   
   <!-- Grid de métricas principales con animaciones -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0 divide-x divide-[color:var(--border-color-subtle)]">
-    <!-- Las tarjetas se llenarán con JavaScript -->
+  <div id="metrics-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0 divide-x divide-[color:var(--border-color-subtle)]">
+    <!-- Métrica 1: Total EDPs -->
+    <div class="p-6 hover:bg-[color:var(--bg-highlight)] transition-all duration-200 group">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">Total EDPs</p>
+          <p id="total-edps" class="text-2xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-blue)] transition-colors">0</p>
+        </div>
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Métrica 2: Pendientes -->
+    <div class="p-6 hover:bg-[color:var(--bg-highlight)] transition-all duration-200 group">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">Pendientes</p>
+          <p id="total-pendientes" class="text-2xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-amber)] transition-colors">0</p>
+        </div>
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-amber)] to-[color:var(--accent-orange)] rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Métrica 3: Validados -->
+    <div class="p-6 hover:bg-[color:var(--bg-highlight)] transition-all duration-200 group">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">Validados</p>
+          <p id="total-validados" class="text-2xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-green)] transition-colors">0</p>
+        </div>
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-green)] to-[color:var(--accent-blue)] rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Métrica 4: Monto Total -->
+    <div class="p-6 hover:bg-[color:var(--bg-highlight)] transition-all duration-200 group">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">Monto Total</p>
+          <p id="monto-total" class="text-2xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-purple)] transition-colors">$0</p>
+        </div>
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-purple)] to-[color:var(--accent-blue)] rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Métrica 5: Críticos -->
+    <div class="p-6 hover:bg-[color:var(--bg-highlight)] transition-all duration-200 group">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">Críticos</p>
+          <p id="total-criticos" class="text-2xl font-bold text-[color:var(--text-primary)] group-hover:text-[color:var(--accent-red)] transition-colors">0</p>
+        </div>
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-red)] to-[color:var(--accent-orange)] rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+      </div>
+    </div>
   </div>
   
   <!-- Sección inferior con métricas adicionales mejorada -->
@@ -522,6 +679,285 @@
 <!-- Antes del cierre de body -->
 <script src="{{ url_for('static', filename='js/modal_edp_scripts.js') }}"></script>
 <script src="{{ url_for('static', filename='js/controller_kanban.js') }}"></script>
+<script src="{{ url_for('static', filename='js/table-controller.js') }}"></script>
+
+
+
+<!-- Toggle View Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos del toggle
+    const toggleKanban = document.getElementById('toggle-kanban');
+    const toggleLista = document.getElementById('toggle-lista');
+    const viewTitle = document.getElementById('view-title');
+    const viewDescription = document.getElementById('view-description');
+    
+    // Contenedores de las vistas
+    const kanbanBoard = document.getElementById('kanban-board');
+    const tablaContainer = document.getElementById('tabla-view');
+    
+    console.log('🔍 Elementos encontrados:');
+    console.log('- Kanban board:', kanbanBoard ? '✅ Encontrado' : '❌ No encontrado');
+    console.log('- Tabla container:', tablaContainer ? '✅ Encontrado' : '❌ No encontrado');
+    console.log('- Toggle kanban:', toggleKanban ? '✅ Encontrado' : '❌ No encontrado');
+    console.log('- Toggle lista:', toggleLista ? '✅ Encontrado' : '❌ No encontrado');
+    
+    // Función helper para encontrar elementos de forma más robusta
+    function findKanbanSections() {
+        const sections = [];
+        
+        // 1. Panel principal del kanban (buscar por ID)
+        const kanbanBoard = document.getElementById('kanban-board');
+        if (kanbanBoard) {
+            // Buscar el contenedor padre más cercano
+            let parent = kanbanBoard.parentElement;
+            while (parent && !parent.classList.contains('bg-gradient-to-br')) {
+                parent = parent.parentElement;
+                if (parent === document.body) break; // Evitar bucle infinito
+            }
+            if (parent && parent !== document.body) {
+                sections.push(parent);
+            } else {
+                sections.push(kanbanBoard); // Fallback al kanban board mismo
+            }
+        }
+        
+        // 2. Sección de título del tablero kanban (buscar por texto)
+        const titleSections = document.querySelectorAll('.section-title-modern h2');
+        titleSections.forEach(title => {
+            if (title.textContent.includes('Tablero Kanban')) {
+                sections.push(title.closest('.section-title-modern'));
+            }
+        });
+        
+        // 3. Buscador de EDPs (buscar por ID)
+        const buscador = document.getElementById('buscar-edp');
+        if (buscador) {
+            // Buscar el contenedor padre usando una clase más simple
+            let parent = buscador.closest('div[class*="bg-"]');
+            if (parent) {
+                sections.push(parent);
+            }
+        }
+        
+        // 4. Toggle de columnas (buscar por texto "Mostrar columnas")
+        const toggleText = Array.from(document.querySelectorAll('span')).find(span => 
+            span.textContent && span.textContent.includes('Mostrar columnas:')
+        );
+        if (toggleText) {
+            sections.push(toggleText.closest('.flex'));
+        }
+        
+        // 5. Contador de validados antiguos (buscar por ID del botón)
+        const toggleValidados = document.getElementById('toggle-validados-antiguos');
+        if (toggleValidados) {
+            sections.push(toggleValidados.closest('.flex'));
+        }
+        
+        // 6. Panel de resumen (buscar por ID)
+        const summaryPanel = document.getElementById('summary-panel');
+        if (summaryPanel) {
+            sections.push(summaryPanel);
+        }
+        
+        return sections.filter(el => el !== null);
+    }
+    
+    // Obtener las secciones del kanban
+    const kanbanSections = findKanbanSections();
+    console.log(`📊 Secciones del kanban encontradas: ${kanbanSections.length}`);
+    kanbanSections.forEach((section, index) => {
+        console.log(`  ${index + 1}. ${section.tagName} - ${section.id || 'sin ID'} - clases: ${section.className}`);
+    });
+    
+    // Estado inicial
+    let currentView = 'kanban';
+    
+    // Función para cambiar a vista Kanban
+    function showKanbanView() {
+        currentView = 'kanban';
+        console.log('🔄 Cambiando a vista Kanban...');
+        
+        // Actualizar botones
+        if (toggleKanban && toggleLista) {
+            toggleKanban.classList.remove('bg-[color:var(--bg-card-hover)]', 'text-[color:var(--text-primary)]');
+            toggleKanban.classList.add('bg-[color:var(--accent-blue)]', 'text-white');
+            toggleLista.classList.remove('bg-[color:var(--accent-blue)]', 'text-white');
+            toggleLista.classList.add('bg-[color:var(--bg-card-hover)]', 'text-[color:var(--text-primary)]');
+        }
+        
+        // Actualizar título y descripción
+        if (viewTitle) viewTitle.textContent = 'Vista Kanban';
+        if (viewDescription) viewDescription.textContent = 'Arrastra las tarjetas entre columnas para actualizar su estado.';
+        
+        // Mostrar secciones del kanban
+        console.log(`📊 Mostrando ${kanbanSections.length} secciones del kanban`);
+        kanbanSections.forEach((section, index) => {
+            if (section) {
+                section.style.display = '';
+                section.classList.remove('hidden');
+                console.log(`✅ Sección ${index + 1} mostrada:`, section.tagName, section.className);
+            }
+        });
+        
+        // Ocultar tabla
+        if (tablaContainer) {
+            tablaContainer.style.display = 'none';
+            tablaContainer.classList.add('hidden');
+            console.log('🚫 Tabla ocultada');
+        }
+        
+        console.log('✅ Vista cambiada a: Kanban');
+    }
+    
+    // Función para cambiar a vista Lista/Tabla
+    function showListaView() {
+        currentView = 'lista';
+        console.log('🔄 Cambiando a vista Lista...');
+        
+        // Actualizar botones
+        if (toggleKanban && toggleLista) {
+            toggleLista.classList.remove('bg-[color:var(--bg-card-hover)]', 'text-[color:var(--text-primary)]');
+            toggleLista.classList.add('bg-[color:var(--accent-blue)]', 'text-white');
+            toggleKanban.classList.remove('bg-[color:var(--accent-blue)]', 'text-white');
+            toggleKanban.classList.add('bg-[color:var(--bg-card-hover)]', 'text-[color:var(--text-primary)]');
+        }
+        
+        // Actualizar título y descripción
+        if (viewTitle) viewTitle.textContent = 'Vista Lista';
+        if (viewDescription) viewDescription.textContent = 'Tabla detallada con filtros avanzados y funciones de exportación.';
+        
+        // Ocultar secciones del kanban
+        console.log(`🚫 Ocultando ${kanbanSections.length} secciones del kanban`);
+        kanbanSections.forEach((section, index) => {
+            if (section) {
+                section.style.display = 'none';
+                section.classList.add('hidden');
+                console.log(`🚫 Sección ${index + 1} ocultada:`, section.tagName, section.className);
+            }
+        });
+        
+        // Mostrar tabla
+        if (tablaContainer) {
+            tablaContainer.style.display = '';
+            tablaContainer.classList.remove('hidden');
+            console.log('✅ Tabla mostrada');
+            
+            // Pequeño delay para asegurar que la tabla se renderice correctamente
+            setTimeout(() => {
+                // Trigger resize event para que la tabla se ajuste
+                window.dispatchEvent(new Event('resize'));
+                console.log('🔄 Tabla reajustada');
+            }, 100);
+        } else {
+            console.warn('⚠️ No se encontró el contenedor de la tabla');
+        }
+        
+        console.log('✅ Vista cambiada a: Lista/Tabla');
+    }
+    
+    // Event listeners para los toggles
+    if (toggleKanban) {
+        toggleKanban.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🔘 Click en toggle Kanban');
+            if (currentView !== 'kanban') {
+                showKanbanView();
+            }
+        });
+    }
+    
+    if (toggleLista) {
+        toggleLista.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🔘 Click en toggle Lista');
+            if (currentView !== 'lista') {
+                showListaView();
+            }
+        });
+    }
+    
+    // Indicador de atajos de teclado
+    const keyboardHint = document.getElementById('keyboard-hint');
+    let hintTimeout;
+    
+    // Mostrar hint cuando se presiona Alt
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && !e.repeat) {
+            keyboardHint.classList.add('show');
+            clearTimeout(hintTimeout);
+        }
+        
+        // Alt + K para Kanban
+        if (e.altKey && e.key === 'k') {
+            e.preventDefault();
+            showKanbanView();
+            showTemporaryFeedback('Kanban');
+        }
+        // Alt + L para Lista
+        if (e.altKey && e.key === 'l') {
+            e.preventDefault();
+            showListaView();
+            showTemporaryFeedback('Lista');
+        }
+    });
+    
+    // Ocultar hint cuando se suelta Alt
+    document.addEventListener('keyup', function(e) {
+        if (!e.altKey) {
+            hintTimeout = setTimeout(() => {
+                keyboardHint.classList.remove('show');
+            }, 1000);
+        }
+    });
+    
+    // Función para mostrar feedback temporal
+    function showTemporaryFeedback(viewName) {
+        // Crear elemento de feedback temporal
+        const feedback = document.createElement('div');
+        feedback.textContent = `✓ Cambiado a vista ${viewName}`;
+        feedback.className = 'fixed top-4 right-4 bg-[color:var(--accent-green)] text-white px-4 py-2 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+        document.body.appendChild(feedback);
+        
+        // Animar entrada
+        setTimeout(() => {
+            feedback.classList.remove('translate-x-full');
+        }, 10);
+        
+        // Animar salida y remover
+        setTimeout(() => {
+            feedback.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(feedback);
+            }, 300);
+        }, 2000);
+    }
+    
+    // Función para mantener la vista actual al recargar (opcional)
+    const savedView = localStorage.getItem('kanban_view_preference');
+    if (savedView === 'lista') {
+        showListaView();
+    } else {
+        showKanbanView();
+    }
+    
+    // Guardar preferencia de vista
+    toggleKanban.addEventListener('click', () => {
+        localStorage.setItem('kanban_view_preference', 'kanban');
+    });
+    
+    toggleLista.addEventListener('click', () => {
+        localStorage.setItem('kanban_view_preference', 'lista');
+    });
+    
+    console.log('🎯 Toggle de vistas Kanban/Lista inicializado');
+});
+</script>
+
+<!-- Tabla de EDPs - Al mismo nivel que el contenido principal para alinearse con base.html -->
+<div id="tabla-view" class="hidden">
+  {% include 'controller/table-controller.html' %}
+</div>
 
 <!-- Template del modal para edición de EDP -->
 <div id="edpModalOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
@@ -530,241 +966,16 @@
   </div>
 </div>
 
-<style>
-/* Mejoras visuales adicionales para el Kanban */
-.line-clamp-1 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-}
-
-/* Animaciones de entrada para tarjetas */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.kanban-item {
-  animation: slideInUp 0.3s ease-out forwards;
-  animation-delay: calc(var(--item-index, 0) * 0.05s);
-}
-
-.kanban-column {
-  animation: fadeInScale 0.4s ease-out forwards;
-  animation-delay: calc(var(--column-index, 0) * 0.1s);
-}
-
-/* Efectos de drag & drop mejorados */
-.kanban-item.sortable-ghost {
-  opacity: 0.3;
-  transform: scale(1.05);
-  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-  border: 2px dashed var(--accent-blue);
-}
-
-.kanban-item.sortable-chosen {
-  transform: rotate(3deg) scale(1.02);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  z-index: 1000;
-}
-
-.kanban-item.sortable-drag {
-  opacity: 0.8;
-  transform: rotate(5deg);
-}
-
-/* Efectos hover para columnas */
-.kanban-column:hover {
-  background: linear-gradient(135deg, var(--bg-card), var(--bg-highlight));
-}
-
-.kanban-column:hover .estado-pill {
-  transform: scale(1.1);
-}
-
-/* Indicadores de estado mejorados */
-.estado-pill {
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.estado-pendiente { background: linear-gradient(135deg, var(--accent-amber), var(--accent-orange)); }
-.estado-revisión { background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark)); }
-.estado-enviado { background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple-dark)); }
-.estado-validado { background: linear-gradient(135deg, var(--accent-green), var(--accent-green-dark)); }
-.estado-pagado { background: linear-gradient(135deg, var(--accent-green-dark), var(--accent-green)); }
-
-/* Efectos de shimmer para carga */
-@keyframes shimmer {
-  0% { background-position: -200px 0; }
-  100% { background-position: 200px 0; }
-}
-
-.loading-shimmer {
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255,255,255,0.4), 
-    transparent
-  );
-  background-size: 200px 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-/* Micro-interacciones */
-.metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-.metric-card:active {
-  transform: translateY(0);
-  transition: transform 0.1s ease;
-}
-
-/* Efectos de foco mejorados */
-.kanban-item:focus-within {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 2px;
-}
-
-/* Transiciones suaves para el panel KPI */
-#summary-panel .grid > div {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#summary-panel .grid > div:hover {
-  background: linear-gradient(135deg, var(--bg-highlight), var(--bg-card));
-}
-
-/* Efectos de gradiente de texto */
-.gradient-text {
-  background: linear-gradient(135deg, var(--text-primary), var(--accent-blue));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Responsividad mejorada */
-@media (max-width: 768px) {
-  .kanban-item {
-    transform: none !important;
-  }
-  
-  .kanban-item:hover {
-    transform: scale(1.01) !important;
-  }
-  
-  .kanban-column {
-    margin-bottom: 1rem;
-  }
-}
-
-/* Estados de búsqueda */
-.kanban-item.search-highlight {
-  animation: searchPulse 2s infinite;
-  border: 2px solid var(--accent-blue);
-}
-
-@keyframes searchPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-  50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-}
-
-/* Efectos de carga para métricas */
-.metric-loading {
-  background: linear-gradient(90deg, var(--bg-highlight), var(--bg-card), var(--bg-highlight));
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-/* Animación para cuando se actualiza el contenido de una tarjeta */
-.contenido-actualizado {
-  animation: contenidoActualizado 2s ease-out;
-  border: 2px solid var(--accent-blue);
-}
-
-@keyframes contenidoActualizado {
-  0% {
-    background: var(--accent-blue);
-    color: white;
-    transform: scale(1.02);
-  }
-  50% {
-    background: var(--bg-highlight);
-    transform: scale(1.01);
-  }
-  100% {
-    background: transparent;
-    color: var(--text-primary);
-    transform: scale(1);
-  }
-}
-
-/* Mejoras para tooltips */
-.custom-tooltip {
-  position: relative;
-}
-
-.custom-tooltip::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 120%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  z-index: 1000;
-}
-
-.custom-tooltip::before {
-  content: '';
-  position: absolute;
-  bottom: 114%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 5px solid var(--border-color);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  z-index: 1001;
-}
-
-.custom-tooltip:hover::after,
-.custom-tooltip:hover::before {
-  opacity: 1;
-  visibility: visible;
-}
-</style>
-
+<!-- Indicador de atajos de teclado -->
+<div class="container mx-auto px-4 py-6">
+<div id="keyboard-hint" class="keyboard-hint">
+  <div class="flex items-center gap-2">
+    <span>📌 Atajos:</span>
+    <kbd class="px-1 py-0.5 bg-[color:var(--bg-highlight)] rounded text-[10px]">Alt+K</kbd>
+    <span class="text-[10px]">Kanban</span>
+    <kbd class="px-1 py-0.5 bg-[color:var(--bg-highlight)] rounded text-[10px]">Alt+L</kbd>
+    <span class="text-[10px]">Lista</span>
+  </div>
+</div>
+</div>
 {% endblock %}

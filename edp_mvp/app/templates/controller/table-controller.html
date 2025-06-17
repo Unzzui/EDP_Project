@@ -1,0 +1,410 @@
+<!-- Tabla de EDPs Mejorada -->
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/table-controller.css') }}" />
+
+<div class="container mx-auto px-4 py-6">
+  <div class="section-title-modern mb-5">
+      <h2 class="text-xl font-semibold flex items-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]"
+          viewBox="0 0 20 20"
+          fill="currentColor">
+          <path
+            fill-rule="evenodd"
+            d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9v-1h5v2H5a1 1 0 01-1-1zm7 1h4a1 1 0 001-1v-1h-5v2zm0-4h5V8h-5v2zM9 8H4v2h5V8z"
+            clip-rule="evenodd" />
+        </svg>
+        Listado de EDPs
+      </h2>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- Opciones de tabla y Quick Filters -->
+    <div
+      class="flex flex-col md:flex-row justify-between mb-4 bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-3">
+      <div class="flex flex-wrap gap-2 mb-3 md:mb-0">
+        <button
+          id="filter-all"
+          class="px-3 py-1 text-sm rounded-full bg-[color:var(--accent-blue)] text-white hover:bg-[color:var(--accent-blue-dark)] transition-colors">
+          Todos
+        </button>
+        <button
+          id="filter-criticos"
+          class="px-3 py-1 text-sm rounded-full bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] transition-colors">
+          Críticos
+        </button>
+        <button
+          id="filter-recientes"
+          class="px-3 py-1 text-sm rounded-full bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] transition-colors">
+          Últimos 30 días
+        </button>
+        <button
+          id="filter-pendientes"
+          class="px-3 py-1 text-sm rounded-full bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] transition-colors">
+          Pendientes
+        </button>
+        <button
+          id="filter-validados"
+          class="px-3 py-1 text-sm rounded-full bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] transition-colors">
+          Validados
+        </button>
+      </div>
+
+      <div class="flex gap-2">
+        <div class="relative">
+          <input
+            id="table-search"
+            type="text"
+            placeholder="Buscar en tabla"
+            class="form-input pl-8 py-1 text-sm" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--text-secondary)] absolute left-2.5 top-1/2 transform -translate-y-1/2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        <button
+          id="toggle-columns"
+          class="px-3 py-1 text-sm bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)] rounded hover:bg-[color:var(--bg-highlight)] transition-colors flex items-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-1"
+            viewBox="0 0 20 20"
+            fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+              clip-rule="evenodd" />
+          </svg>
+          Columnas
+        </button>
+      </div>
+    </div>
+
+    <!-- Dropdown menu para selección de columnas (oculto por defecto) -->
+    <div
+      id="columns-dropdown"
+      class="hidden bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-3 shadow-lg mb-4">
+      <div class="grid grid-cols-3 gap-3">
+        <label class="flex items-center">
+          <input type="checkbox" checked data-column="proyecto" class="mr-2" />
+          Proyecto
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" checked data-column="jefe" class="mr-2" />
+          Jefe Proyecto
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" checked data-column="cliente" class="mr-2" />
+          Cliente
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" checked data-column="mes" class="mr-2" />
+          Mes
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" checked data-column="edp" class="mr-2" />
+          N° EDP
+        </label>
+        <label class="flex items-center">
+          <input
+            type="checkbox"
+            checked
+            data-column="conformidad"
+            class="mr-2" />
+          N° Conf.
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" checked data-column="estado" class="mr-2" />
+          Estado
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" checked data-column="dias" class="mr-2" />
+          Días
+        </label>
+        <label class="flex items-center">
+          <input
+            type="checkbox"
+            checked
+            data-column="diashabiles"
+            class="mr-2" />
+          Días Hábiles
+        </label>
+        <label class="flex items-center">
+          <input
+            type="checkbox"
+            checked
+            data-column="montopropuesto"
+            class="mr-2" />
+          M. Propuesto
+        </label>
+        <label class="flex items-center">
+          <input
+            type="checkbox"
+            checked
+            data-column="montoaprobado"
+            class="mr-2" />
+          M. Aprobado
+        </label>
+      </div>
+    </div>
+
+    <!-- Tabla con mejor interactividad -->
+    <div
+      class="table-responsive shadow-md rounded-xl overflow-hidden border border-[color:var(--border-color)]">
+      <table id="edp-table" class="data-table w-full">
+        <thead>
+          <tr class="bg-[color:var(--background)]">
+            <th class="sortable p-3" data-sort="proyecto">Proyecto</th>
+            <th class="sortable" data-sort="jefe">Jefe de Proyecto</th>
+            <th class="sortable" data-sort="cliente">Cliente</th>
+            <th class="sortable" data-sort="mes">Mes</th>
+            <th class="sortable" data-sort="edp">N° EDP</th>
+            <th class="sortable" data-sort="n-conformidad">N° Conf.</th>
+            <th class="sortable" data-sort="estado">Estado</th>
+            <th class="sortable sort-desc text-center" data-sort="dias">
+              Días
+            </th>
+            <th class="sortable text-center" data-sort="dias-habiles">
+              Días Hábiles
+            </th>
+            <th class="sortable text-right" data-sort="monto-propuesto">
+              M. Propuesto
+            </th>
+            <th class="sortable text-right" data-sort="monto-aprobado">
+              M. Aprobado
+            </th>
+            <th>Observaciones</th>
+            <th></th>
+          </tr>
+        </thead>
+        <!-- Replace the table row content with this fixed version -->
+
+        <tbody>
+          {% for registro in registros %}
+          <tr
+            data-proyecto="{{ registro.get('proyecto', '') }}"
+            data-jefe="{{ registro.get('jefe_proyecto', '') }}"
+            data-cliente="{{ registro.get('cliente', '') }}"
+            data-mes="{{ registro.get('mes', '') }}"
+            data-edp="{{ registro.get('n_edp', '') }}"
+            data-n-conformidad="{{ registro.get('n_conformidad', '') }}"
+            data-estado="{{ registro.get('estado', '') }}"
+            data-dias="{{ registro.get('dias_espera', 0) }}"
+            data-dias-habiles="{{ registro.get('dias_habiles', 0) }}"
+            data-monto-propuesto="{{ registro.get('monto_propuesto', 0)|default(0) }}"
+            data-monto-aprobado="{{ registro.get('monto_aprobado', 0)|default(0) }}"
+            class="{% if registro.get('critico', False) %}data-table-row-critical{% endif %}{% if registro.get('estado', '') == 'pagado' %}data-table-row-validated{% endif %}">
+            <td class="font-medium">{{ registro.get('proyecto', '-') }}</td>
+            <td>{{ registro.get('jefe_proyecto', '-') }}</td>
+            <td>{{ registro.get('cliente', '-') }}</td>
+            <td>{{ registro.get('mes', '-') }}</td>
+            <td>{{ registro.get('n_edp', '-') }}</td>
+            <td>{{ registro.get('n_conformidad', '-') }}</td>
+            <td>
+              <span
+                class="estado-pill estado-{{ registro.get('estado', 'pendiente') }}">
+                {{ registro.get('estado', 'pendiente') }}
+              </span>
+            </td>
+
+            {% set dias = registro.get('dias_espera', 0)|int %}
+            <td
+              class="text-center {% if dias > 30 %}text-[color:var(--accent-red)] font-medium{% elif dias > 20 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-green)]{% endif %}">
+              {{ dias }}
+            </td>
+
+            <td class="text-center">{{ registro.get('dias_habiles', 0) }}</td>
+            <td class="text-right">
+              ${{ "{:,.0f}".format(registro.get('monto_propuesto',
+              0)|default(0)).replace(",",".") }}
+            </td>
+            <td class="text-right">
+              ${{ "{:,.0f}".format(registro.get('monto_aprobado',
+              0)|default(0)).replace(",",".") }}
+            </td>
+            <td
+              class="max-w-xs truncate"
+              title="{{ registro.get('observaciones', '') }}">
+              {{ registro.get('observaciones', '-')[:15] ~ ('...' if
+              registro.get('observaciones') and
+              registro.get('observaciones')|length > 50 else '') }}
+            </td>
+
+            <td>
+              <a
+                href="{{ url_for('controller.detalle_edp', n_edp=registro.get('id', '')) }}"
+                class="flex items-center justify-center text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] bg-[color:var(--bg-card-hover)] hover:bg-[color:var(--bg-highlight)] p-1.5 rounded-full transition-colors"
+                title="Ver detalles del EDP">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor">
+                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                  <path
+                    fill-rule="evenodd"
+                    d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                    clip-rule="evenodd" />
+                </svg>
+              </a>
+            </td>
+          </tr>
+          {% endfor %} {% if not registros %}
+          <tr>
+            <td
+              colspan="14"
+              class="py-8 text-center text-[color:var(--text-secondary)]">
+              <div class="flex flex-col items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-12 w-12 mb-3 text-[color:var(--text-secondary)] opacity-30"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-base font-medium">No se encontraron registros</p>
+                <p class="text-sm mt-1">
+                  Prueba con diferentes criterios de búsqueda
+                </p>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Información de la tabla y controles de paginación -->
+    <div
+      class="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 space-y-4 md:space-y-0">
+      <!-- Información de registros -->
+      <div class="flex flex-col space-y-2">
+        <div class="text-sm text-[color:var(--text-secondary)]">
+          Mostrando <span id="showing-from">1</span> -
+          <span id="showing-to">10</span> de
+          <span id="total-count">{{ registros|length }}</span> EDPs
+          <span id="filtered-info" class="hidden"
+            >(filtrado de
+            <span id="original-count">{{ registros|length }}</span> total)</span
+          >
+        </div>
+        <div class="flex items-center space-x-2">
+          <label
+            for="page-size"
+            class="text-xs text-[color:var(--text-secondary)]"
+            >Mostrar:</label
+          >
+          <select id="page-size" class="form-select text-xs py-1 px-2 w-20">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <span class="text-xs text-[color:var(--text-secondary)]"
+            >por página</span
+          >
+        </div>
+      </div>
+
+      <!-- Controles de paginación -->
+      <div class="flex items-center space-x-4">
+        <!-- Exportar -->
+        <button
+          id="exportar-excel"
+          class="flex items-center text-[color:var(--accent-green)] hover:text-[color:var(--accent-green-dark)] transition-colors">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Exportar a CSV
+        </button>
+
+        <!-- Navegación de páginas -->
+        <div class="flex items-center space-x-2">
+          <button
+            id="prev-page"
+            class="px-3 py-1 text-sm bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded hover:bg-[color:var(--bg-highlight)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <div class="flex items-center space-x-1" id="page-numbers">
+            <!-- Los números de página se generarán dinámicamente -->
+          </div>
+
+          <button
+            id="next-page"
+            class="px-3 py-1 text-sm bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded hover:bg-[color:var(--bg-highlight)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Ir a página específica -->
+        <div class="flex items-center space-x-2">
+          <span class="text-xs text-[color:var(--text-secondary)]">Ir a:</span>
+          <input
+            id="goto-page"
+            type="number"
+            min="1"
+            class="form-input text-xs py-1 px-2 w-16 text-center"
+            placeholder="1" />
+          <button
+            id="goto-page-btn"
+            class="px-2 py-1 text-xs bg-[color:var(--accent-blue)] text-white rounded hover:bg-blue-600 transition-colors">
+            Ir
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Incluir el modal -->
+    <!-- Incluir el modal -->
+    {% include "controller/modal_edp_template.html" %}
+  </div>
+</div>
+</div>

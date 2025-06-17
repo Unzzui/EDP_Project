@@ -1383,8 +1383,8 @@ function generarDistribucionHTML(columns) {
     const estados = {
         'revisión': 'bg-[color:var(--accent-blue)]',
         'enviado': 'bg-[color:var(--accent-amber)]',
-        'pagado': 'bg-[color:var(--accent-amber-dark)]',
-        'validado': 'bg-[color:var(--accent-green)]'
+        'validado': 'bg-[color:var(--accent-green)]',
+        'pagado': 'bg-[color:var(--accent-emerald)]'
     };
     
     columns.forEach(col => {
@@ -2068,7 +2068,7 @@ function initKanbanBoard() {
 				) {
 					if (
 						!confirm(
-							"¿Estás seguro? Normalmente debes pasar por otro estado intermedio."
+							"¿Estás seguro? Normalmente debes pasar por 'enviado' primero."
 						)
 					) {
 						return false;
@@ -2105,10 +2105,7 @@ function initKanbanBoard() {
 				// Definir qué estados requieren confirmación con modal
 				if (estadoDestino.toLowerCase() === "pagado") {
 					mostrarModal = true;
-					tipoModal = "confirmarPago";
-				} else if (estadoDestino.toLowerCase() === "validado") {
-					mostrarModal = true;
-					tipoModal = "confirmarValidacion";
+					tipoModal = "confirmarValidacion"; // Ahora pagado usa el modal que antes era de validado
 				} else if (
 					estadoDestino.toLowerCase() === "revision" &&
 					estadoOrigen.toLowerCase() === "enviado"
@@ -2222,6 +2219,15 @@ function initKanbanBoard() {
 
 					// Aplicar reglas de negocio automáticas
 					if (estadoDestino.toLowerCase() === "pagado") {
+						// En el flujo correcto (revisión → enviado → validado → pagado)
+						// Si llega a pagado, debería ya tener conformidad desde "validado"
+						conformidadEnviada = true;
+						showToast(
+							"EDP marcado como pagado - Conformidad confirmada",
+							"success"
+						);
+					} else if (estadoDestino.toLowerCase() === "validado") {
+						// Cuando se mueve a validado, automáticamente marca conformidad
 						conformidadEnviada = true;
 						showToast(
 							"Conformidad marcada como enviada automáticamente",
@@ -2717,23 +2723,34 @@ function mostrarModalContextual(
       `;
 			break;
 		case "confirmarValidacion":
-			titulo = "Confirmar Validación de EDP";
+			titulo = "Confirmar Pago de EDP";
 			contenidoHTML = `
         <div class="space-y-4">
-          <p class="text-sm">Para validar el EDP, verifica que los siguientes datos sean correctos:</p>
+          <p class="text-sm">Para marcar como pagado, confirma los siguientes datos:</p>
           
-          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+          <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
             <div class="flex">
               <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                 </svg>
               </div>
               <div class="ml-3">
-                <p class="text-sm text-yellow-700">
-                  Revisa que estos datos estén correctos antes de validar el EDP.
+                <p class="text-sm text-green-700">
+                  Se marcará automáticamente "Sí" en Conformidad Enviada.
                 </p>
               </div>
+            </div>
+          </div>
+          
+          <!-- Fecha de Pago -->
+          <div class="form-group">
+            <label class="form-label">Fecha de Pago</label>
+            <div class="relative">
+              <input type="date" name="fecha_pago" class="form-input pl-9" required>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             </div>
           </div>
           
@@ -2760,34 +2777,6 @@ function mostrarModalContextual(
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-            </div>
-          </div>
-          
-          <!-- Fecha Estimada de Pago -->
-          <div class="form-group">
-            <label class="form-label">Fecha Estimada de Pago</label>
-            <div class="relative">
-              <input type="date" name="fecha_estimada_pago" class="form-input pl-9" value="${formatFecha(
-								edpData["fecha_estimada_pago"] || ""
-							)}" required>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          </div>
-          
-          <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mt-3">
-            <div class="flex">
-              <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                </svg>
-              </div>
-              <div class="ml-3">
-                <p class="text-sm text-blue-700">
-                  Al validar se marcará automáticamente "Sí" en Conformidad Enviada y se registrará el usuario que realiza la acción.
-                </p>
-              </div>
             </div>
           </div>
         </div>
@@ -2884,6 +2873,11 @@ function mostrarModalContextual(
 		const formData = new FormData(form);
 		formData.append("edp_id", edpId);
 		formData.append("nuevo_estado", estadoDestino);
+		
+		// Si estamos confirmando pago, automáticamente marcar conformidad como "Sí"
+		if (estadoDestino.toLowerCase() === "pagado") {
+			formData.append("conformidad_enviada", "Sí");
+		}
 
 		// Enviar datos al servidor
 		fetch("/controller/kanban/update_estado_detallado", {

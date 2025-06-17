@@ -447,9 +447,11 @@ def dashboard_controller():
 def vista_kanban():
     """Kanban board view with filtering and real-time updates."""
     try:
+        print("🚀 Iniciando carga de vista kanban...")
+        
         # ===== PASO 1: OBTENER FILTROS =====
         filters = _parse_filters(request)
-      
+        print(f"📋 Filtros aplicados: {filters}")
 
         # ===== PASO 2: CARGAR DATOS CRUDOS =====
         now_ts = time()
@@ -459,46 +461,76 @@ def vista_kanban():
         else:
             datos_response = controller_service.load_related_data()
             _kanban_cache = {"ts": now_ts, "data": datos_response}
-        # if not datos_response.success:
-        #     print(f"❌ Error cargando datos relacionados: {datos_response.message}")
-        #     return render_template('controller/controller_dashboard.html', **_get_empty_dashboard_data())
+            
+        if not datos_response.success:
+            print(f"❌ Error cargando datos relacionados: {datos_response.message}")
+            return render_template('controller/controller_kanban.html', **_get_empty_dashboard_data())
 
         datos_relacionados = datos_response.data
-     
+        print(f"📊 Datos cargados: {len(datos_relacionados.get('edps', []))} EDPs")
 
         # Extract raw DataFrames
         df_edp_raw = pd.DataFrame(datos_relacionados.get("edps", []))
+        df_log_raw = pd.DataFrame(datos_relacionados.get("logs", []))
 
+        # ===== PASO 3: OBTENER DATOS DEL KANBAN =====
         kanban_response = kanban_service.get_kanban_board_data(df_edp_raw, filters)
-
-     
+        
         if not kanban_response.success:
-            print(f"❌ Motivo fallo: {kanban_response.message}")
+            print(f"❌ Error en kanban service: {kanban_response.message}")
             return render_template(
-                "controller/controller_dashboard.html", **_get_empty_dashboard_data()
+                "controller/controller_kanban.html", **_get_empty_dashboard_data()
             )
 
         kanban_data = kanban_response.data
 
-        return render_template(
-            "controller/controller_kanban.html",
-            columnas=kanban_data.get("columnas", {}),
-            filtros=filters,
-            meses=kanban_data.get("filter_options", {}).get("meses", []),
-            jefe_proyectos=kanban_data.get("filter_options", {}).get(
-                "jefe_proyectos", []
-            ),
-            clientes=kanban_data.get("filter_options", {}).get("clientes", []),
-            estados_detallados=kanban_data.get("filter_options", {}).get(
-                "estados_detallados", []
-            ),
-            now=datetime.now(),
-            estadisticas=kanban_data.get("estadisticas", {}),
+        # ===== PASO 4: OBTENER DATOS PROCESADOS DEL DASHBOARD (PARA LA TABLA) =====
+        dashboard_response = controller_service.get_processed_dashboard_context(
+            df_edp_raw, df_log_raw, filters
         )
+
+        if not dashboard_response.success:
+            print(f"❌ Error procesando dashboard context: {dashboard_response.message}")
+            # Continuar con datos básicos del kanban si falla la tabla
+            registros = []
+            dashboard_context = {}
+        else:
+            dashboard_context = dashboard_response.data
+            registros = dashboard_context.get('registros', [])
+            print(f"📋 Registros para tabla: {len(registros)}")
+
+        # ===== PASO 5: COMBINAR DATOS PARA EL TEMPLATE =====
+        template_context = {
+            # Datos del Kanban
+            "columnas": kanban_data.get("columnas", {}),
+            "estadisticas": kanban_data.get("estadisticas", {}),
+            
+            # Datos para la tabla (del dashboard)
+            "registros": registros,
+            
+            # Filtros y opciones
+            "filtros": filters,
+            "meses": kanban_data.get("filter_options", {}).get("meses", []),
+            "jefe_proyectos": kanban_data.get("filter_options", {}).get("jefe_proyectos", []),
+            "clientes": kanban_data.get("filter_options", {}).get("clientes", []),
+            "estados_detallados": kanban_data.get("filter_options", {}).get("estados_detallados", []),
+            
+            # Datos adicionales del dashboard (si están disponibles)
+            "now": datetime.now(),
+        }
+        
+        # Agregar cualquier dato adicional del dashboard context si está disponible
+        if dashboard_context:
+            # Agregar datos que puedan ser útiles para la tabla
+            for key in ['kpis', 'charts', 'alertas']:
+                if key in dashboard_context:
+                    template_context[key] = dashboard_context[key]
+
+        print(f"🎯 Vista kanban cargada exitosamente con {len(registros)} registros para tabla")
+        return render_template("controller/controller_kanban.html", **template_context)
 
     except Exception as e:
         import traceback
-
         print("🔥 Error atrapado en try-except de vista_kanban:")
         print(traceback.format_exc())
         flash(f"Error al cargar tablero Kanban: {str(e)}", "error")
@@ -2100,6 +2132,82 @@ def descargar_log_csv(n_edp):
     except Exception as e:
         flash(f"Error al descargar CSV: {str(e)}", "error")
         return redirect(url_for("controller.ver_log_edp", n_edp=n_edp))
+
+
+@controller_controller_bp.route("/api/export-all-csv")
+@login_required
+def export_all_csv():
+    """Export all EDPs to CSV for download."""
+    try:
+        # Cargar datos usando el mismo servicio
+        datos_response = controller_service.load_related_data()
+        if not datos_response.success:
+            return jsonify({"error": "Error cargando datos"}), 500
+
+        datos_relacionados = datos_response.data
+        df_edp_raw = pd.DataFrame(datos_relacionados.get("edps", []))
+        
+        if df_edp_raw.empty:
+            return jsonify({"error": "No hay datos para exportar"}), 404
+
+        # Obtener filtros si se pasan (opcional)
+        filters = _parse_filters(request)
+        
+        # Procesar datos para obtener registros formateados
+        dashboard_response = controller_service.get_processed_dashboard_context(
+            df_edp_raw, pd.DataFrame(), filters
+        )
+        
+        if not dashboard_response.success:
+            return jsonify({"error": "Error procesando datos"}), 500
+            
+        registros = dashboard_response.data.get('registros', [])
+        
+        # Crear CSV
+        csv_lines = []
+        
+        # Headers
+        headers = [
+            "Proyecto", "Jefe de Proyecto", "Cliente", "Mes", "N° EDP", 
+            "N° Conf.", "Estado", "Días", "Días Hábiles", "M. Propuesto", 
+            "M. Aprobado", "Observaciones"
+        ]
+        csv_lines.append(",".join(f'"{header}"' for header in headers))
+        
+        # Data rows
+        for registro in registros:
+            row = [
+                registro.get('proyecto', ''),
+                registro.get('jefe_proyecto', ''),
+                registro.get('cliente', ''),
+                registro.get('mes', ''),
+                registro.get('n_edp', ''),
+                registro.get('n_conformidad', ''),
+                registro.get('estado', ''),
+                str(registro.get('dias_espera', 0)),
+                str(registro.get('dias_habiles', 0)),
+                str(registro.get('monto_propuesto', 0)),
+                str(registro.get('monto_aprobado', 0)),
+                registro.get('observaciones', '')
+            ]
+            # Escape quotes and wrap in quotes
+            escaped_row = [f'"{str(cell).replace('"', '""')}"' for cell in row]
+            csv_lines.append(",".join(escaped_row))
+        
+        csv_content = "\n".join(csv_lines)
+        
+        # Create response
+        response = make_response(csv_content)
+        response.headers["Content-Disposition"] = f"attachment; filename=edp_export_completo_{datetime.now().strftime('%Y%m%d')}.csv"
+        response.headers["Content-Type"] = "text/csv; charset=utf-8"
+        
+        return response
+
+    except Exception as e:
+        import traceback
+        print(f"Error en export_all_csv: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({"error": f"Error interno: {str(e)}"}), 500
 
 
 def time_ago(fecha_datetime):

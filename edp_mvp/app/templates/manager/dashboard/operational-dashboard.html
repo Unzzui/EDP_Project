@@ -505,250 +505,257 @@ EDP Manager{% endblock %} {% block extra_head %}
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- ========== PRIORITY PROJECT (Left Side - 8 cols) ========== -->
       <div class="lg:col-span-8">
-        <!-- Enhanced Priority Project Container with Better Spacing -->
+        <!-- Executive Priority Project Container -->
         <div
-          class="priority-project-container relative overflow-hidden"
+          class="relative overflow-hidden rounded-2xl h-full min-h-[520px]"
           style="
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-          "
-          class="rounded-xl shadow-lg h-full min-h-[750px]">
-          <!-- Left Critical Border with Gradient -->
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+          ">
+          <!-- Elegant Critical Border -->
           <div
-            class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-red-500 via-red-600 to-red-700 shadow-lg"
-            style="box-shadow: 2px 0 8px rgba(239, 68, 68, 0.3)"></div>
+            class="absolute left-0 top-0 bottom-0 w-1"
+            style="background: var(--danger)"></div>
 
-          <!-- Secondary Border Effect -->
-          <div
-            class="absolute left-1 top-0 bottom-0 w-0.5 bg-gradient-to-b from-red-400/60 to-red-600/60"></div>
-
-          <!-- Content Container with Proper Padding -->
-          <div class="relative pl-8 pr-6 py-6 h-full flex flex-col">
-            <!-- Project Header with Enhanced Visual Hierarchy -->
-            <div class="project-header flex items-start gap-6 mb-8">
-              <div
-                style="background: var(--danger)"
-                class="w-12 h-12 rounded-lg flex items-center justify-center shadow-md">
-                <svg
-                  class="w-6 h-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <div>
-                <h2
-                  style="color: var(--danger)"
-                  class="text-2xl font-bold mb-1">
-                  PROYECTO PRIORITARIO
-                </h2>
-                <p style="color: var(--text-secondary)" class="text-sm">
-                  Mayor impacto financiero del portfolio actual
-                </p>
-                <div class="flex items-center gap-4 mt-2">
-                  <span
-                    style="color: var(--danger)"
-                    class="text-xs font-medium bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded">
-                    Estado crítico
-                  </span>
-                  <span
-                    style="color: var(--warning)"
-                    class="text-xs font-medium bg-orange-100 dark:bg-orange-900/30 px-2 py-1 rounded">
-                    Acción inmediata
-                  </span>
+          <!-- Content Container -->
+          <div class="p-8">
+            <!-- Executive Header -->
+            <div class="flex items-start justify-between mb-8">
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
+                  style="background: var(--danger)">
+                  <svg
+                    class="w-7 h-7 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
                 </div>
+                <div>
+                  <h2
+                    style="color: var(--danger)"
+                    class="text-2xl font-bold mb-1">
+                    PROYECTO PRIORITARIO
+                  </h2>
+                  <p style="color: var(--text-secondary)" class="text-base">
+                    Decisión ejecutiva requerida
+                  </p>
+                </div>
+              </div>
+
+              <!-- Priority Badge -->
+              <div
+                class="px-4 py-2 rounded-full shadow-lg"
+                style="background: var(--danger)">
+                <span class="text-white text-sm font-bold">🚨 CRÍTICO</span>
               </div>
             </div>
 
-            <!-- Enhanced Project Details with Better Visual Separation -->
+            <!-- Executive Project Details -->
             <div
-              class="project-details relative overflow-hidden"
+              class="rounded-xl p-6 mb-8 shadow-sm"
               style="
-                background: var(--bg-card);
+                background: var(--bg-subtle);
                 border: 1px solid var(--border-color);
-                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
-              "
-              class="rounded-xl mb-8">
-              <!-- Subtle Top Border -->
-              <div
-                class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-red-600 to-red-500"></div>
+              ">
+              {% if kpis.critical_projects_list and
+              kpis.critical_projects_list|length > 0 %} {% set critical_project
+              = kpis.critical_projects_list[0] %}
 
-              <!-- Content Container with Proper Spacing -->
-              <div class="p-8">
-                {% if kpis.critical_projects_list and
-                kpis.critical_projects_list[0] %} {% set critical_project =
-                kpis.critical_projects_list[0] %}
-
-                <h3 style="color: var(--danger)" class="text-xl font-bold mb-3">
-                  {{ critical_project.cliente|default('Cliente A') }} - {{
-                  critical_project.proyecto|default('Contrato Crítico Vencido')
-                  }}
-                </h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <span style="color: var(--text-secondary)" class="text-sm"
-                      >Días pendiente</span
-                    >
-                    <div
-                      style="color: var(--danger)"
-                      class="text-2xl font-bold">
-                      {{ critical_project.dias_pendiente|default('180') }} días
-                    </div>
-                  </div>
-                  <div>
-                    <span style="color: var(--text-secondary)" class="text-sm"
-                      >Monto en riesgo</span
-                    >
-                    <div
-                      style="color: var(--danger)"
-                      class="text-2xl font-bold">
-                      ${{ critical_project.monto|default('45') }}M
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  style="background: var(--danger-bg)"
-                  class="p-4 rounded-lg mb-4">
-                  <div class="text-sm space-y-1">
-                    <div>
-                      <strong>EDP:</strong> {{
-                      critical_project.id|default('EDP-001') }}
-                    </div>
-                    <div>
-                      <strong>Gestor responsable:</strong> {{
-                      critical_project.jefe_proyecto|default('María González')
-                      }}
-                    </div>
-                    <div>
-                      <strong>Estado:</strong> {{
-                      critical_project.estado|default('pendiente') }}
-                    </div>
-                    <div>
-                      <strong>Riesgo:</strong> {{
-                      critical_project.riesgo|default('Alto') }}
-                    </div>
-                    <div>
-                      <strong>Progreso:</strong> {{
-                      critical_project.progreso|default('20') }}%
-                    </div>
-                  </div>
-                </div>
-
-                {% else %}
-
-                <h3 style="color: var(--danger)" class="text-xl font-bold mb-3">
-                  Cliente A - Contrato Crítico Vencido
-                </h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <span style="color: var(--text-secondary)" class="text-sm"
-                      >Días vencido</span
-                    >
-                    <div
-                      style="color: var(--danger)"
-                      class="text-2xl font-bold">
-                      180 días
-                    </div>
-                  </div>
-                  <div>
-                    <span style="color: var(--text-secondary)" class="text-sm"
-                      >Monto en riesgo</span
-                    >
-                    <div
-                      style="color: var(--danger)"
-                      class="text-2xl font-bold">
-                      $45M
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  style="background: var(--danger-bg)"
-                  class="p-4 rounded-lg mb-4">
-                  <div class="text-sm space-y-1">
-                    <div><strong>Contacto:</strong> María González (CFO)</div>
-                    <div>
-                      <strong>Teléfono:</strong> +34 91 xxx-xxxx | Ext: 1234
-                    </div>
-                    <div>
-                      <strong>Email:</strong> maria.gonzalez@clientea.com
-                    </div>
-                    <div>
-                      <strong>Último contacto:</strong> Hace 45 días (sin
-                      respuesta)
-                    </div>
-                  </div>
-                </div>
-
-                {% endif %}
-
-                <!-- Impact Analysis -->
-                <div
-                  class="impact-analysis"
-                  style="background: var(--bg-subtle)"
-                  class="p-4 rounded-lg mb-6">
-                  <h4
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex-1">
+                  <h3
                     style="color: var(--text-primary)"
-                    class="text-sm font-bold mb-2">
-                    Análisis de Impacto
-                  </h4>
-                  <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span style="color: var(--text-secondary)"
-                        >Impacto DSO</span
-                      >
-                      <div style="color: var(--danger)" class="font-bold">
-                        +18 días
-                      </div>
-                    </div>
-                    <div>
-                      <span style="color: var(--text-secondary)"
-                        >Impacto liquidez</span
-                      >
-                      <div style="color: var(--danger)" class="font-bold">
-                        -$45M inmediato
-                      </div>
-                    </div>
-                    <div>
-                      <span style="color: var(--text-secondary)"
-                        >Riesgo legal</span
-                      >
-                      <div style="color: var(--warning)" class="font-bold">
-                        Medio-Alto
-                      </div>
-                    </div>
-                    <div>
-                      <span style="color: var(--text-secondary)"
-                        >Probabilidad cobro</span
-                      >
-                      <div style="color: var(--danger)" class="font-bold">
-                        65% y bajando
-                      </div>
-                    </div>
+                    class="text-xl font-bold mb-2">
+                    {{ critical_project.cliente if critical_project.cliente else
+                    'Cliente No Especificado' }}
+                  </h3>
+                  <p
+                    style="color: var(--text-secondary)"
+                    class="text-base mb-4">
+                    {{ critical_project.proyecto if critical_project.proyecto
+                    else 'Proyecto Sin Título' }}
+                  </p>
+                </div>
+                <div
+                  class="px-3 py-1 rounded-full text-sm font-bold text-white"
+                  style="background: var(--danger)">
+                  {% if critical_project.dias_pendiente %} {{
+                  critical_project.dias_pendiente }} días {% else %} 45 días {%
+                  endif %}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-6">
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    EDP
+                  </div>
+                  <div
+                    style="color: var(--text-primary)"
+                    class="text-lg font-bold">
+                    {% if critical_project.id %} #{{ critical_project.id }} {%
+                    else %} #EDP-001 {% endif %}
                   </div>
                 </div>
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    Valor en Riesgo
+                  </div>
+                  <div style="color: var(--danger)" class="text-2xl font-bold">
+                    {% if critical_project.monto %} ${{
+                    "%.1f"|format(critical_project.monto|float) }}M {% else %}
+                    $2.8M {% endif %}
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    Estado
+                  </div>
+                  <div
+                    class="text-lg font-bold"
+                    style="color: {% if critical_project.estado == 'completado' %}var(--success){% elif critical_project.estado == 'en_progreso' %}var(--warning){% else %}var(--danger){% endif %};">
+                    {% if critical_project.estado %} {{
+                    critical_project.estado|upper|replace('_', ' ') }} {% else
+                    %} PENDIENTE {% endif %}
+                  </div>
+                </div>
+              </div>
 
-                <!-- Action Center -->
+              {% else %}
+
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex-1">
+                  <h3
+                    style="color: var(--text-primary)"
+                    class="text-xl font-bold mb-2">
+                    No hay proyectos críticos
+                  </h3>
+                  <p
+                    style="color: var(--text-secondary)"
+                    class="text-base mb-4">
+                    Todos los proyectos están dentro de los parámetros normales
+                  </p>
+                </div>
                 <div
-                  class="action-center"
+                  class="px-3 py-1 rounded-full text-sm font-bold text-white"
+                  style="background: var(--success)">
+                  ✅ OK
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-6">
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    Total EDPs
+                  </div>
+                  <div
+                    style="color: var(--text-primary)"
+                    class="text-lg font-bold">
+                    {{ kpis.total_projects if kpis.total_projects else '0' }}
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    En Seguimiento
+                  </div>
+                  <div style="color: var(--info)" class="text-2xl font-bold">
+                    {{ kpis.projects_in_progress if kpis.projects_in_progress
+                    else '0' }}
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    Estado General
+                  </div>
+                  <div style="color: var(--success)" class="text-lg font-bold">
+                    ESTABLE
+                  </div>
+                </div>
+              </div>
+
+              {% endif %}
+            </div>
+
+            <!-- Executive Action Center -->
+            <div class="text-center">
+              <h4
+                style="color: var(--text-primary)"
+                class="text-lg font-bold mb-6">
+                💼 Centro de Decisiones Ejecutivas
+              </h4>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Consultar JP Button -->
+                <button
+                  onclick="openCommunicationModal('jp', '{{ critical_project.jefe_proyecto if critical_project and critical_project.jefe_proyecto else 'Jefe de Proyecto' }}', 'project-status')"
+                  class="group relative overflow-hidden text-white p-6 rounded-xl hover:scale-105 transform transition-all duration-300 font-semibold shadow-lg"
                   style="
-                    background: var(--bg-card);
-                    border: 1px solid var(--border-color);
-                  "
-                  class="p-4 rounded-lg">
-                  <h4
-                    style="color: var(--text-primary)"
-                    class="text-sm font-bold mb-4 flex items-center gap-2">
+                    background: var(--info);
+                    border: 2px solid transparent;
+                  ">
+                  <!-- Button overlay on hover -->
+                  <div
+                    class="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+                    style="background: var(--text-primary)"></div>
+
+                  <div class="relative flex items-center justify-center gap-3">
                     <svg
-                      class="w-4 h-4"
+                      class="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span class="text-lg">💬 Consultar JP</span>
+                  </div>
+
+                  <div class="relative mt-2 text-sm opacity-90">
+                    {% if critical_project and critical_project.jefe_proyecto %}
+                    Contactar: {{ critical_project.jefe_proyecto }} {% else %}
+                    Estado actual del proyecto {% endif %}
+                  </div>
+                </button>
+
+                <!-- Escalar Controller Button -->
+                <button
+                  onclick="openCommunicationModal('controller', 'Controller Financiero', 'escalation')"
+                  class="group relative overflow-hidden text-white p-6 rounded-xl hover:scale-105 transform transition-all duration-300 font-semibold shadow-lg"
+                  style="
+                    background: var(--danger);
+                    border: 2px solid transparent;
+                  ">
+                  <!-- Button overlay on hover -->
+                  <div
+                    class="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+                    style="background: var(--text-primary)"></div>
+
+                  <div class="relative flex items-center justify-center gap-3">
+                    <svg
+                      class="w-6 h-6"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24">
@@ -758,240 +765,33 @@ EDP Manager{% endblock %} {% block extra_head %}
                         stroke-width="2"
                         d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    Centro de Acciones
-                  </h4>
-
-                  <div class="space-y-3">
-                    <!-- Primary Actions -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <button
-                        onclick="openCommunicationModal('jp', '{{ critical_project.jefe_proyecto|default('María González') }}', 'project-status')"
-                        style="background: var(--danger); color: white"
-                        class="flex items-center gap-3 p-3 rounded-lg hover:opacity-90 transition-all duration-200">
-                        <svg
-                          class="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        <div class="text-left">
-                          <div class="text-sm font-semibold">
-                            Consultar a JP
-                          </div>
-                          <div class="text-xs opacity-80">
-                            Estado actual del proyecto
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        onclick="openCommunicationModal('controller', 'Controller Financiero', 'escalation')"
-                        style="background: var(--warning); color: white"
-                        class="flex items-center gap-3 p-3 rounded-lg hover:opacity-90 transition-all duration-200">
-                        <svg
-                          class="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                        </svg>
-                        <div class="text-left">
-                          <div class="text-sm font-semibold">
-                            Escalar a Controller
-                          </div>
-                          <div class="text-xs opacity-80">
-                            Revisión financiera urgente
-                          </div>
-                        </div>
-                      </button>
-                    </div>
-
-                    <!-- Secondary Actions -->
-                    <div class="grid grid-cols-3 gap-2">
-                      <button
-                        onclick="openCommunicationModal('legal', 'Departamento Legal', 'legal-review')"
-                        style="background: var(--info); color: white"
-                        class="flex flex-col items-center gap-1 p-2 rounded-lg hover:opacity-90 transition-all duration-200">
-                        <svg
-                          class="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span class="text-xs font-medium">Legal</span>
-                      </button>
-
-                      <button
-                        onclick="scheduleCall('{{ critical_project.cliente|default('Cliente A') }}')"
-                        style="background: var(--success); color: white"
-                        class="flex flex-col items-center gap-1 p-2 rounded-lg hover:opacity-90 transition-all duration-200">
-                        <svg
-                          class="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        <span class="text-xs font-medium">Llamar</span>
-                      </button>
-
-                      <button
-                        onclick="openCommunicationModal('direction', 'Dirección General', 'critical-escalation')"
-                        style="background: var(--accent-purple); color: white"
-                        class="flex flex-col items-center gap-1 p-2 rounded-lg hover:opacity-90 transition-all duration-200">
-                        <svg
-                          class="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 17h5l-5 5v-5zM4 19h8a2 2 0 002-2v-1M4 19H2v-2a2 2 0 012-2h1m0 4v-1a1 1 0 011-1h1m-2 0V9a2 2 0 012-2h5" />
-                        </svg>
-                        <span class="text-xs font-medium">Dirección</span>
-                      </button>
-                    </div>
-
-                    <!-- Communication History & Quick Stats -->
-                    <div
-                      class="communication-history"
-                      style="
-                        background: var(--bg-subtle);
-                        border: 1px solid var(--border-color);
-                      "
-                      class="p-3 rounded-lg">
-                      <div class="flex items-center justify-between mb-3">
-                        <span
-                          style="color: var(--text-primary)"
-                          class="text-sm font-medium">
-                          Historial de Comunicación
-                        </span>
-                        <button
-                          onclick="openCommunicationHistory()"
-                          style="color: var(--info)"
-                          class="text-xs hover:underline">
-                          Ver todo
-                        </button>
-                      </div>
-
-                      <div class="space-y-2 text-xs">
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-2">
-                            <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                            <span style="color: var(--text-secondary)"
-                              >Último contacto:</span
-                            >
-                          </div>
-                          <span
-                            style="color: var(--text-primary)"
-                            class="font-medium">
-                            Hace 45 días (sin respuesta)
-                          </span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-2">
-                            <div
-                              class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                            <span style="color: var(--text-secondary)"
-                              >Próxima acción:</span
-                            >
-                          </div>
-                          <span
-                            style="color: var(--warning)"
-                            class="font-medium">
-                            Pendiente de programar
-                          </span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-2">
-                            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            <span style="color: var(--text-secondary)"
-                              >Comunicaciones activas:</span
-                            >
-                          </div>
-                          <span style="color: var(--info)" class="font-medium"
-                            >2 pendientes</span
-                          >
-                        </div>
-                      </div>
-
-                      <!-- Quick Action Bar -->
-                      <div
-                        class="flex items-center gap-2 mt-3 pt-3 border-t"
-                        style="border-color: var(--border-color)">
-                        <button
-                          onclick="openScheduleMeeting()"
-                          style="background: var(--info); color: white"
-                          class="flex-1 py-1.5 px-2 rounded text-xs font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-1">
-                          <svg
-                            class="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          Reunión
-                        </button>
-                        <button
-                          onclick="openTaskCreate()"
-                          style="background: var(--success); color: white"
-                          class="flex-1 py-1.5 px-2 rounded text-xs font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-1">
-                          <svg
-                            class="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                          </svg>
-                          Tarea
-                        </button>
-                        <button
-                          onclick="openNotificationCenter()"
-                          style="background: var(--accent-purple); color: white"
-                          class="py-1.5 px-2 rounded text-xs font-medium hover:opacity-90 transition-opacity flex items-center justify-center">
-                          <svg
-                            class="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M15 17h5l-5 5v-5zM4 19h8a2 2 0 002-2v-1M4 19H2v-2a2 2 0 012-2h1m0 4v-1a1 1 0 011-1h1m-2 0V9a2 2 0 012-2h5" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
+                    <span class="text-lg">🚨 Escalar Controller</span>
                   </div>
+
+                  <div class="relative mt-2 text-sm opacity-90">
+                    {% if critical_project and critical_project.monto %} Riesgo:
+                    ${{ "%.1f"|format(critical_project.monto|float) }}M {% else
+                    %} Revisión financiera urgente {% endif %}
+                  </div>
+                </button>
+              </div>
+
+              <!-- Status Indicator -->
+              <div
+                class="mt-6 p-4 rounded-lg"
+                style="
+                  background: var(--bg-subtle);
+                  border: 1px solid var(--border-color);
+                ">
+                <div class="flex items-center justify-center gap-2 text-sm">
+                  <div
+                    class="w-2 h-2 rounded-full animate-pulse"
+                    style="background: var(--success)"></div>
+                  <span style="color: var(--text-secondary)">
+                    {% if critical_project %} Sistema de comunicación activo •
+                    Proyecto crítico detectado {% else %} Sistema de
+                    comunicación activo • Todo en orden {% endif %}
+                  </span>
                 </div>
               </div>
             </div>

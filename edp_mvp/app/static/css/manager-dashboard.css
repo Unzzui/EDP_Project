@@ -1,0 +1,409 @@
+
+/* ===== ANIMACIONES AVANZADAS PARA FILTROS ===== */
+
+/* Contenedor principal de filtros */
+#filters-section {
+    overflow: hidden;
+    will-change: max-height, opacity, transform;
+}
+
+/* Estados de animación para filtros principales */
+#filters-section.filter-hidden {
+    display: none !important;
+}
+
+#filters-section.filter-showing,
+#filters-section.filter-hiding {
+    display: block !important;
+}
+
+#filters-section.filter-visible {
+    display: block !important;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* Chevron con animación suave */
+#filter-chevron {
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform-origin: center;
+}
+
+/* Botón toggle con efectos avanzados */
+#toggle-filters-btn {
+    position: relative;
+    overflow: hidden;
+    will-change: transform, box-shadow;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+#toggle-filters-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    pointer-events: none;
+}
+
+#toggle-filters-btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+#toggle-filters-btn.filter-btn-animating {
+    transform: scale(0.98) !important;
+}
+
+/* Hover avanzado para el botón */
+#toggle-filters-btn:hover {
+    background-color: rgb(37, 99, 235) !important;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Animaciones para textos */
+#filter-text,
+#filter-text-mobile {
+    transition: opacity 0.3s ease;
+}
+
+/* Animaciones para filtros avanzados */
+#advanced-filters {
+    will-change: opacity, transform;
+}
+
+/* Efecto de aparición suave para elementos del formulario */
+#filters-section .form-group {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: slideInForm 0.6s ease forwards;
+}
+
+#filters-section .form-group:nth-child(1) { animation-delay: 0.1s; }
+#filters-section .form-group:nth-child(2) { animation-delay: 0.15s; }
+#filters-section .form-group:nth-child(3) { animation-delay: 0.2s; }
+#filters-section .form-group:nth-child(4) { animation-delay: 0.25s; }
+
+@keyframes slideInForm {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animación de entrada para botones de rango rápido */
+#filters-section .quick-date-btn {
+    opacity: 0;
+    transform: scale(0.9);
+    animation: bounceIn 0.4s ease forwards;
+}
+
+#filters-section .quick-date-btn:nth-child(1) { animation-delay: 0.3s; }
+#filters-section .quick-date-btn:nth-child(2) { animation-delay: 0.35s; }
+#filters-section .quick-date-btn:nth-child(3) { animation-delay: 0.4s; }
+#filters-section .quick-date-btn:nth-child(4) { animation-delay: 0.45s; }
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    60% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Efecto hover mejorado para inputs y selects */
+.form-input:focus,
+.form-select:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    transition: all 0.2s ease;
+}
+
+/* Animación sutil para el botón de filtros avanzados */
+#toggle-advanced {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+#toggle-advanced:hover {
+    transform: translateX(2px);
+}
+
+#toggle-advanced::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: currentColor;
+    transition: width 0.3s ease;
+}
+
+#toggle-advanced:hover::after {
+    width: 100%;
+}
+
+/* Animación para el botón de aplicar filtros */
+.btn-primary {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+}
+
+.btn-primary:active::before {
+    width: 200px;
+    height: 200px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+/* Animación suave para elementos que aparecen */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Clase utility para animaciones */
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Mejoras para dispositivos móviles */
+@media (max-width: 640px) {
+    #filters-section .form-group {
+        animation-delay: 0s !important;
+    }
+    
+    #filters-section .quick-date-btn {
+        animation-delay: 0.1s !important;
+    }
+    
+    #toggle-filters-btn:active {
+        transform: scale(0.95);
+    }
+}
+
+.btn-primary {
+    @apply bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center;
+}
+
+/* Event-based refresh system styles */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes kpi-update {
+    0% { transform: scale(1); background-color: transparent; }
+    50% { transform: scale(1.05); background-color: rgba(34, 197, 94, 0.1); }
+    100% { transform: scale(1); background-color: transparent; }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.kpi-updated {
+    animation: kpi-update 1s ease-in-out;
+}
+
+/* Disabled button state */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Notification styles */
+#dashboard-notification {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+    .container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    /* Touch-friendly targets */
+    button, select, input {
+        min-height: 44px;
+    }
+    
+    /* Better spacing for mobile */
+    .space-y-4 > * + * {
+        margin-top: 1rem;
+    }
+    
+    /* Improved mobile cards */
+    .mobile-card {
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    }
+    
+    .mobile-card:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease-in-out;
+    }
+    
+    /* Better mobile table alternative */
+    .mobile-edp-card {
+        border-left: 4px solid var(--accent-blue);
+    }
+    
+    /* System status indicator mobile adjustments */
+    #system-status-indicator {
+        bottom: 0.75rem;
+        right: 0.5rem;
+        left: 0.5rem;
+        width: auto;
+        font-size: 0.75rem;
+    }
+    
+    /* Mobile-friendly form inputs */
+    .form-input, .form-select {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 0.75rem 0.5rem;
+    }
+    
+    /* Mobile notifications */
+    #dashboard-notification {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+        border-radius: 0.5rem;
+    }
+    
+    /* Better mobile KPI cards */
+    .kpi-card {
+        min-height: 120px;
+    }
+    
+    /* Mobile chart containers */
+    canvas {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    /* Improved mobile scrolling */
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    
+    .overflow-x-auto::-webkit-scrollbar {
+        height: 3px;
+    }
+    
+    .overflow-x-auto::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 3px;
+    }
+    
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 3px;
+    }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1023px) {
+    /* Better grid layouts for tablets */
+    .tablet-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Ensure proper touch targets */
+@media (hover: none) and (pointer: coarse) {
+    /* Mobile/touch devices */
+    button, a, select, input {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Reduce hover effects on touch devices */
+    .hover\:underline:hover {
+        text-decoration: none;
+    }
+    
+    .hover\:shadow-md:hover {
+        box-shadow: none;
+    }
+}
+
+/* Improved focus states for accessibility */
+@media (prefers-reduced-motion: no-preference) {
+    .focus-visible\:ring-2:focus-visible {
+        ring-width: 2px;
+        ring-color: var(--accent-blue);
+        ring-offset: 2px;
+    }
+}
+
+/* Dark mode adjustments for mobile */
+@media (prefers-color-scheme: dark) {
+    .mobile-card {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .mobile-edp-card {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* Sharper borders and shadows */
+    .mobile-card {
+        border-width: 0.5px;
+    }
+}
+    

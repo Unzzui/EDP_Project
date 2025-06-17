@@ -446,3 +446,239 @@ transform: none !important; /* Prevenir rotaciones que causan desalineación */
   pointer-events: none;
   z-index: 10;
 }
+
+
+/* Mejoras visuales adicionales para el Kanban */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+/* Animaciones de entrada para tarjetas */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.kanban-item {
+  animation: slideInUp 0.3s ease-out forwards;
+  animation-delay: calc(var(--item-index, 0) * 0.05s);
+}
+
+.kanban-column {
+  animation: fadeInScale 0.4s ease-out forwards;
+  animation-delay: calc(var(--column-index, 0) * 0.1s);
+}
+
+/* Efectos de drag & drop mejorados */
+.kanban-item.sortable-ghost {
+  opacity: 0.3;
+  transform: scale(1.05);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  border: 2px dashed var(--accent-blue);
+}
+
+.kanban-item.sortable-chosen {
+  transform: rotate(3deg) scale(1.02);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+
+.kanban-item.sortable-drag {
+  opacity: 0.8;
+  transform: rotate(5deg);
+}
+
+/* Efectos hover para columnas */
+.kanban-column:hover {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-highlight));
+}
+
+.kanban-column:hover .estado-pill {
+  transform: scale(1.1);
+}
+
+/* Indicadores de estado mejorados */
+.estado-pill {
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.estado-pendiente { background: linear-gradient(135deg, var(--accent-amber), var(--accent-orange)); }
+.estado-revisión { background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark)); }
+.estado-enviado { background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple-dark)); }
+.estado-validado { background: linear-gradient(135deg, var(--accent-green), var(--accent-green-dark)); }
+.estado-pagado { background: linear-gradient(135deg, var(--accent-green-dark), var(--accent-green)); }
+
+/* Efectos de shimmer para carga */
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+.loading-shimmer {
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255,255,255,0.4), 
+    transparent
+  );
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Micro-interacciones */
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.metric-card:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* Efectos de foco mejorados */
+.kanban-item:focus-within {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* Transiciones suaves para el panel KPI */
+#summary-panel .grid > div {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#summary-panel .grid > div:hover {
+  background: linear-gradient(135deg, var(--bg-highlight), var(--bg-card));
+}
+
+/* Efectos de gradiente de texto */
+.gradient-text {
+  background: linear-gradient(135deg, var(--text-primary), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Responsividad mejorada */
+@media (max-width: 768px) {
+  .kanban-item {
+    transform: none !important;
+  }
+  
+  .kanban-item:hover {
+    transform: scale(1.01) !important;
+  }
+  
+  .kanban-column {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Estados de búsqueda */
+.kanban-item.search-highlight {
+  animation: searchPulse 2s infinite;
+  border: 2px solid var(--accent-blue);
+}
+
+@keyframes searchPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+}
+
+/* Efectos de carga para métricas */
+.metric-loading {
+  background: linear-gradient(90deg, var(--bg-highlight), var(--bg-card), var(--bg-highlight));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Animación para cuando se actualiza el contenido de una tarjeta */
+.contenido-actualizado {
+  animation: contenidoActualizado 2s ease-out;
+  border: 2px solid var(--accent-blue);
+}
+
+@keyframes contenidoActualizado {
+  0% {
+    background: var(--accent-blue);
+    color: white;
+    transform: scale(1.02);
+  }
+  50% {
+    background: var(--bg-highlight);
+    transform: scale(1.01);
+  }
+  100% {
+    background: transparent;
+    color: var(--text-primary);
+    transform: scale(1);
+  }
+}
+
+/* Mejoras para tooltips */
+.custom-tooltip {
+  position: relative;
+}
+
+.custom-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+}
+
+.custom-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 114%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--border-color);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1001;
+}
+
+.custom-tooltip:hover::after,
+.custom-tooltip:hover::before {
+  opacity: 1;
+  visibility: visible;
+}

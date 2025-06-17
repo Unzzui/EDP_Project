@@ -124,7 +124,7 @@
               📋 ¿Cuál es el estado actual? <span class="text-[color:var(--accent-red)]">*</span>
             </label>
             <select name="estado" id="estado" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-md shadow-sm focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] bg-[color:var(--bg-input)] text-[color:var(--text-primary)]" required>
-              {% for e in ['revisión','enviado','pagado','validado'] %}
+              {% for e in ['revisión','enviado','validado','pagado'] %}
                 <option value="{{ e }}" {{ 'selected' if edp['estado']==e else '' }}>
                   {{ e|title }}
                   {% if e == 'revisión' %} - En proceso interno

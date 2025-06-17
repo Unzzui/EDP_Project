@@ -152,7 +152,7 @@ class KanbanService(BaseService):
                     df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
             # Group by status (SINGLE LOOP OPTIMIZATION)
-            estados = ["revisión", "enviado", "pagado", "validado"]
+            estados = ["revisión", "enviado", "validado", "pagado"]
             columnas = {estado: [] for estado in estados}
 
             # Variables para análisis de carga de datos
@@ -389,7 +389,7 @@ class KanbanService(BaseService):
 
     def _group_edps_by_status(self, df: pd.DataFrame) -> Dict[str, List[Dict]]:
         """Group EDPs by status for Kanban columns."""
-        status_columns = ["revisión", "enviado", "pagado", "validado"]
+        status_columns = ["revisión", "enviado", "validado", "pagado"]
         columns = {status: [] for status in status_columns}
 
         # Convert numeric columns

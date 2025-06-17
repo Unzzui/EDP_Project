@@ -121,7 +121,7 @@
           : new Date().toLocaleTimeString();
 
         if (data.updates) {
-          // Handle the 4 main EDP states: revisión, enviado, pagado, validado
+          // Handle the 4 main EDP states: revisión, enviado, validado, pagado
           if (data.updates.estado === "pagado") {
             // PAGADO - Most important state (payment completed)
             notificationType = "payment";
