@@ -6,12 +6,29 @@ from celery import Celery
 import os
 import logging
 
-# Celery application
-celery = Celery(
-    __name__,
-    broker=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
-    backend=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
-)
+# Celery application with improved error handling
+def create_celery():
+    """Create Celery instance with better error handling for production."""
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    
+    # Test Redis connection
+    try:
+        import redis
+        r = redis.from_url(redis_url)
+        r.ping()
+        print("✅ Redis conectado correctamente")
+    except Exception as e:
+        print(f"⚠️ Redis no disponible para cache: {e}")
+        # En producción sin Redis, usar un broker en memoria (no recomendado para producción real)
+        # Render debería proporcionar Redis
+        
+    return Celery(
+        __name__,
+        broker=redis_url,
+        backend=redis_url,
+    )
+
+celery = create_celery()
 
 # Configure task imports
 celery.conf.imports = [

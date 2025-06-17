@@ -1,0 +1,71 @@
+# Render.yaml - Configuración para deployment en Render
+services:
+  # Aplicación web principal
+  - type: web
+    name: edp-mvp-app
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn --config gunicorn_config.py wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: FLASK_ENV
+        value: production
+      - key: WEB_CONCURRENCY
+        value: 2
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: edp-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: edp-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: edp-redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: edp-database
+          property: connectionString
+
+  # Redis para cache y Celery
+  - type: redis
+    name: edp-redis
+    ipAllowList: []
+    plan: starter
+
+  # Base de datos PostgreSQL
+  - type: pserv
+    name: edp-database
+    env: postgresql
+    plan: starter
+
+  # Worker de Celery (opcional, puede ejecutarse en el mismo servicio web)
+  - type: worker
+    name: edp-celery-worker
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "celery -A edp_mvp.app.celery worker --loglevel=info --concurrency=1"
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: edp-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: edp-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: edp-redis
+          property: connectionString
