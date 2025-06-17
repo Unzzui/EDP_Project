@@ -23,7 +23,7 @@
     const registros = {{ registros|tojson|safe }};
     
     if (estadisticas) {
-      // Actualizar estadísticas básicas
+      // Actualizar estadísticas básicas (panel inferior)
       const edpsCriticos = document.getElementById('edps-criticos');
       const diasPromedio = document.getElementById('dias-promedio');
       const metaMensual = document.getElementById('meta-mensual');
@@ -34,10 +34,27 @@
       if (metaMensual) metaMensual.textContent = '$' + (estadisticas.meta_mensual || 0).toLocaleString();
       if (proyeccionTendencia) proyeccionTendencia.textContent = '+' + (estadisticas.proyeccion_crecimiento || 5) + '%';
       
+      // Actualizar KPIs del banner principal
+      const totalEdpsBanner = document.getElementById('total-edps-banner');
+      const criticosBanner = document.getElementById('criticos-banner');
+      const pendientesBanner = document.getElementById('pendientes-banner');
+      const validadosBanner = document.getElementById('validados-banner');
+      
+      if (totalEdpsBanner) totalEdpsBanner.textContent = estadisticas.total_edps || 0;
+      if (criticosBanner) criticosBanner.textContent = estadisticas.total_criticos || 0;
+      if (pendientesBanner) pendientesBanner.textContent = estadisticas.total_pendientes || 0;
+      if (validadosBanner) validadosBanner.textContent = estadisticas.total_validados || 0;
+      
       // Actualizar fecha de última actualización
       const lastUpdated = document.getElementById('last-updated-date');
+      const lastUpdatedBanner = document.getElementById('last-updated-banner');
+      const currentTime = new Date().toLocaleTimeString();
+      
       if (lastUpdated) {
-        lastUpdated.textContent = 'Actualizado: ' + new Date().toLocaleTimeString();
+        lastUpdated.textContent = 'Actualizado: ' + currentTime;
+      }
+      if (lastUpdatedBanner) {
+        lastUpdatedBanner.textContent = 'Actualizado: ' + currentTime;
       }
     }
     
@@ -62,6 +79,26 @@
        if (montoTotalEl) montoTotalEl.textContent = '$' + totalMonto.toLocaleString();
        if (totalCriticosEl) totalCriticosEl.textContent = criticos.toLocaleString();
        
+       // Actualizar también los KPIs del banner
+       const totalEdpsBanner = document.getElementById('total-edps-banner');
+       const criticosBanner = document.getElementById('criticos-banner');
+       const pendientesBanner = document.getElementById('pendientes-banner');
+       const validadosBanner = document.getElementById('validados-banner');
+       
+       if (totalEdpsBanner) totalEdpsBanner.textContent = totalRegistros.toLocaleString();
+       if (criticosBanner) criticosBanner.textContent = criticos.toLocaleString();
+       if (pendientesBanner) pendientesBanner.textContent = pendientes.toLocaleString();
+       if (validadosBanner) validadosBanner.textContent = validados.toLocaleString();
+       
+       // Actualizar barra de progreso
+       const progressBar = document.getElementById('progress-bar');
+       const progressPercentage = document.getElementById('progress-percentage');
+       if (progressBar && progressPercentage && totalRegistros > 0) {
+         const progressValue = Math.round((validados / totalRegistros) * 100);
+         progressBar.style.width = progressValue + '%';
+         progressPercentage.textContent = progressValue + '%';
+       }
+       
        console.log('📊 Métricas calculadas y actualizadas:', {
          total: totalRegistros,
          pendientes: pendientes,
@@ -83,63 +120,165 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/kanban.css') }}">
 
-<div class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn">
-
-  <!-- Encabezado con stats y navegación -->
-  <div class="flex flex-col md:flex-row justify-between items-start mb-6 pb-5 border-b border-[color:var(--border-color-subtle)]">
-    <div class="flex items-center mb-4 md:mb-0">
-      <div class="mr-3 p-2 bg-[color:var(--bg-card)] rounded-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      </div>
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">
-          <span id="view-title">Vista Kanban</span>
-        </h1>
-        <p class="text-[color:var(--text-secondary)] max-w-2xl">
-          <span id="view-description">Arrastra las tarjetas entre columnas para actualizar su estado.</span>
-        </p>
-      </div>
-    </div>
-    
-    <div class="flex space-x-3">
-      <button id="toggle-filters-btn" class="flex items-center px-2.5 py-1.5 text-sm bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white rounded-md transition-colors shadow-sm">
-        <svg id="filter-icon" class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
-        </svg>
-        <span id="filter-text">Mostrar filtros</span>
-        <svg id="filter-chevron" class="w-3.5 h-3.5 ml-1 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-        </svg>
-      </button>
-      
-      <!-- Toggle Vista Lista/Kanban -->
-      <div class="flex items-center bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color)] p-1">
-        <button id="toggle-lista" class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 view-toggle">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-          </svg>
-          Lista
-        </button>
-        <button id="toggle-kanban" class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 view-toggle active">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          Kanban
-        </button>
-      </div>
-      
-      <a href="{{ url_for('controller.dashboard_controller') }}" 
-         class="flex items-center bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-xl text-sm border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Dashboard
-      </a>
-    </div>
+<!-- BANNER PRINCIPAL REDISEÑADO - CENTRO DE COMANDO PAGORA -->
+<div class="relative overflow-hidden bg-gradient-to-br from-[color:var(--bg-card)] via-[color:var(--background)] to-[color:var(--bg-highlight)] border border-[color:var(--border-color)] rounded-3xl shadow-2xl mb-8 animate__animated animate__fadeIn">
+  
+  <!-- Patrón de fondo decorativo -->
+  <div class="absolute inset-0 opacity-5">
+    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-purple)]"></div>
+    <svg class="absolute top-0 right-0 w-96 h-96 transform translate-x-16 -translate-y-16" viewBox="0 0 100 100" fill="none">
+      <circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="25" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+      <circle cx="50" cy="50" r="10" stroke="currentColor" stroke-width="0.2" opacity="0.1"/>
+    </svg>
   </div>
 
+  <!-- Header principal con branding y navegación -->
+  <div class="relative z-10 p-8">
+    <div class="flex flex-col lg:flex-row justify-between items-start gap-6">
+      
+      <!-- Sección de branding y título -->
+      <div class="flex items-center space-x-4">
+        <div class="relative">
+          <!-- Logo/Icono principal con efecto glow -->
+          <div class="p-4 bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] rounded-2xl shadow-xl relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white relative z-10 transform group-hover:scale-110 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <!-- Efecto de pulso -->
+          <div class="absolute inset-0 bg-[color:var(--accent-blue)] rounded-2xl animate-ping opacity-20"></div>
+        </div>
+        
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-[color:var(--text-primary)] via-[color:var(--accent-blue)] to-[color:var(--accent-purple)] bg-clip-text text-transparent">
+              <span id="view-title">Pagora</span>
+            </h1>
+            <!-- Badge de estado en vivo -->
+            <div class="flex items-center gap-2 px-3 py-1 bg-[color:var(--accent-green)]/10 border border-[color:var(--accent-green)]/20 rounded-full">
+              <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full animate-pulse"></div>
+              <span class="text-xs font-medium text-[color:var(--accent-green)]">En vivo</span>
+            </div>
+          </div>
+          <p class="text-[color:var(--text-secondary)] max-w-2xl text-lg font-medium">
+            <span id="view-description">Centro de Comando - Gestión Visual de EDPs</span>
+          </p>
+          <!-- Indicador de última actualización -->
+          <div class="flex items-center gap-2 mt-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span id="last-updated-banner" class="text-sm text-[color:var(--text-tertiary)]">Actualizado ahora</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Panel de controles y acciones -->
+      <div class="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+        
+        <!-- KPIs rápidos integrados -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-[color:var(--bg-card)]/60 backdrop-blur-sm border border-[color:var(--border-color-subtle)] rounded-2xl">
+          <!-- KPI 1: Total EDPs -->
+          <div class="text-center">
+            <div class="text-2xl font-bold text-[color:var(--accent-blue)]" id="total-edps-banner">0</div>
+            <div class="text-xs text-[color:var(--text-secondary)] font-medium">Total EDPs</div>
+          </div>
+          <!-- KPI 2: Críticos -->
+          <div class="text-center">
+            <div class="text-2xl font-bold text-[color:var(--accent-red)]" id="criticos-banner">0</div>
+            <div class="text-xs text-[color:var(--text-secondary)] font-medium">Críticos</div>
+          </div>
+          <!-- KPI 3: Pendientes -->
+          <div class="text-center">
+            <div class="text-2xl font-bold text-[color:var(--accent-amber)]" id="pendientes-banner">0</div>
+            <div class="text-xs text-[color:var(--text-secondary)] font-medium">Pendientes</div>
+          </div>
+          <!-- KPI 4: Validados -->
+          <div class="text-center">
+            <div class="text-2xl font-bold text-[color:var(--accent-green)]" id="validados-banner">0</div>
+            <div class="text-xs text-[color:var(--text-secondary)] font-medium">Validados</div>
+          </div>
+        </div>
+        
+        <!-- Controles de acción -->
+        <div class="flex flex-wrap gap-3">
+          <!-- Botón de filtros -->
+          <button id="toggle-filters-btn" class="flex items-center px-4 py-2.5 text-sm bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105">
+            <svg id="filter-icon" class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
+            </svg>
+            <span id="filter-text">Filtros</span>
+            <svg id="filter-chevron" class="w-4 h-4 ml-2 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+          </button>
+          
+          <!-- Toggle Vista Lista/Kanban -->
+          <div class="flex items-center bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color)] p-1 shadow-lg">
+            <button id="toggle-lista" class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 view-toggle">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+              <span class="hidden sm:inline">Lista</span>
+            </button>
+            <button id="toggle-kanban" class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 view-toggle active">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span class="hidden sm:inline">Kanban</span>
+            </button>
+          </div>
+          
+          <!-- Botón de actualización -->
+          <button id="refresh-all-btn" class="flex items-center px-4 py-2.5 text-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)] rounded-xl border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-all duration-200 shadow-lg hover:shadow-xl group">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 group-hover:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span class="hidden sm:inline">Actualizar</span>
+          </button>
+          
+          <!-- Botón de exportación -->
+          <button id="export-btn" class="flex items-center px-4 py-2.5 text-sm bg-[color:var(--accent-green)] hover:bg-green-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span class="hidden sm:inline">Exportar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Barra de progreso/estado global -->
+  <div class="relative z-10 px-8 pb-6">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-medium text-[color:var(--text-secondary)]">Progreso Global</span>
+      <span class="text-sm font-bold text-[color:var(--accent-blue)]" id="progress-percentage">75%</span>
+    </div>
+    <div class="relative h-3 bg-[color:var(--bg-input)] rounded-full overflow-hidden">
+      <!-- Fondo con patrón -->
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+      <!-- Barra de progreso principal -->
+      <div id="progress-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-[color:var(--accent-blue)] via-[color:var(--accent-purple)] to-[color:var(--accent-green)] rounded-full transition-all duration-1000 ease-out" style="width: 75%">
+        <!-- Efecto de brillo -->
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+      </div>
+    </div>
+    <div class="flex justify-between text-xs text-[color:var(--text-tertiary)] mt-2">
+      <span>0%</span>
+      <span>25%</span>
+      <span>50%</span>
+      <span>75%</span>
+      <span>100%</span>
+    </div>
+  </div>
+  </div>
+
+<!-- CONTENEDOR PRINCIPAL PARA TODO EL CONTENIDO KANBAN -->
+<div class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6">
+  
   <!-- Sección de filtros - OCULTA POR DEFECTO -->
   <div id="filters-section" class="hidden">
     <!-- Animación suave al mostrar -->
@@ -682,7 +821,9 @@
     </div>
     {% endfor %}
   </div>
+
 </div>
+<!-- FIN DEL CONTENEDOR PRINCIPAL KANBAN -->
 
 <!-- Toast de notificación mejorado -->
 <div id="toast-notification" class="fixed bottom-4 right-4 hidden animate__animated z-50">
@@ -1058,12 +1199,160 @@ document.addEventListener('DOMContentLoaded', function() {
                                     (filtros.estado and filtros.estado != '' and filtros.estado != 'todos' and filtros.estado != 'pendientes') else 0 }};
     const savedVisibility = localStorage.getItem('filtersVisible');
     
-    if (savedVisibility === 'true' && hasCustomFilters) {
+        if (savedVisibility === 'true' && hasCustomFilters) {
         // Si había filtros visibles en la sesión anterior y hay filtros personalizados, restaurar
         setTimeout(window.toggleFilters, 100);
     }
 });
-  </script>
+
+// === FUNCIONALIDAD PARA LOS BOTONES DEL BANNER ===
+document.addEventListener('DOMContentLoaded', function() {
+    // Botón de actualización
+    const refreshBtn = document.getElementById('refresh-all-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            // Mostrar indicador de carga
+            const originalHTML = this.innerHTML;
+            this.innerHTML = `
+                <svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="hidden sm:inline">Actualizando...</span>
+            `;
+            this.disabled = true;
+            
+            // Simular actualización (recargar página)
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        });
+    }
+    
+    // Botón de exportación
+    const exportBtn = document.getElementById('export-btn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            // Crear modal de exportación simple
+            const modalHTML = `
+                <div id="export-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center animate__animated animate__fadeIn">
+                    <div class="bg-[color:var(--bg-card)] rounded-xl shadow-xl p-6 w-full max-w-md animate__animated animate__zoomIn">
+                        <h3 class="text-lg font-bold mb-4">Exportar Datos</h3>
+                        <p class="text-[color:var(--text-secondary)] mb-6">Selecciona el formato de exportación:</p>
+                        
+                        <div class="grid grid-cols-1 gap-3 mb-6">
+                            <button class="export-option flex items-center p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-highlight)] transition-colors" data-format="csv">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[color:var(--accent-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <div class="text-left">
+                                    <div class="font-medium">Exportar a CSV</div>
+                                    <div class="text-sm text-[color:var(--text-secondary)]">Archivo de Excel compatible</div>
+                                </div>
+                            </button>
+                            
+                            <button class="export-option flex items-center p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-highlight)] transition-colors" data-format="pdf">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[color:var(--accent-red)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                <div class="text-left">
+                                    <div class="font-medium">Exportar a PDF</div>
+                                    <div class="text-sm text-[color:var(--text-secondary)]">Reporte ejecutivo</div>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button id="cancel-export-modal" class="px-4 py-2 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Event listeners para el modal
+            const modal = document.getElementById('export-modal');
+            const cancelBtn = document.getElementById('cancel-export-modal');
+            const exportOptions = document.querySelectorAll('.export-option');
+            
+            cancelBtn.addEventListener('click', () => modal.remove());
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+            
+            exportOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const format = option.dataset.format;
+                    modal.remove();
+                    
+                    // Simular exportación
+                    showToast(`Exportando datos en formato ${format.toUpperCase()}...`, 'info');
+                    setTimeout(() => {
+                        showToast(`Archivo ${format.toUpperCase()} exportado correctamente`, 'success');
+                    }, 2000);
+                });
+            });
+        });
+    }
+    
+    // Función para mostrar notificaciones toast
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 animate__animated animate__fadeInUp`;
+        
+        if (type === 'success') {
+            toast.classList.add('bg-green-600');
+            message = `✅ ${message}`;
+        } else if (type === 'error') {
+            toast.classList.add('bg-red-600');
+            message = `❌ ${message}`;
+        } else if (type === 'warning') {
+            toast.classList.add('bg-amber-500');
+            message = `⚠️ ${message}`;
+        } else {
+            toast.classList.add('bg-blue-600');
+            message = `ℹ️ ${message}`;
+        }
+        
+        toast.innerHTML = `
+            <div class="flex items-center">
+                <span class="flex-grow">${message}</span>
+                <button class="ml-4 hover:text-gray-300 focus:outline-none" onclick="this.parentElement.parentElement.remove()">
+                    &times;
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.replace('animate__fadeInUp', 'animate__fadeOutDown');
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 500);
+        }, 5000);
+    }
+    
+    // Actualizar texto del botón de filtros
+    const filterText = document.getElementById('filter-text');
+    if (filterText) {
+        filterText.textContent = 'Filtros';
+    }
+    
+    // Actualizar timestamp cada minuto
+    setInterval(() => {
+        const lastUpdatedBanner = document.getElementById('last-updated-banner');
+        if (lastUpdatedBanner) {
+            lastUpdatedBanner.textContent = 'Actualizado: ' + new Date().toLocaleTimeString();
+        }
+    }, 60000);
+});
+</script>
 
 <!-- Estilos para animaciones de filtros (mismo estilo que el dashboard) -->
 <style>
@@ -1104,6 +1393,78 @@ document.addEventListener('DOMContentLoaded', function() {
 #filters-section:not(.hidden) {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* Estilos específicos para el nuevo banner */
+.banner-glow {
+    box-shadow: 0 0 50px rgba(59, 130, 246, 0.1);
+}
+
+/* Animaciones para los KPIs del banner */
+#total-edps-banner, #criticos-banner, #pendientes-banner, #validados-banner {
+    transition: all 0.3s ease;
+}
+
+#total-edps-banner:hover, #criticos-banner:hover, #pendientes-banner:hover, #validados-banner:hover {
+    transform: scale(1.1);
+}
+
+/* Efecto glassmorphism para el panel de KPIs */
+.backdrop-blur-sm {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Animación para la barra de progreso */
+#progress-bar {
+    background: linear-gradient(90deg, 
+        var(--accent-blue), 
+        var(--accent-purple), 
+        var(--accent-green)
+    );
+    background-size: 200% 100%;
+    animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* Mejoras para botones del banner */
+button:hover {
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Efecto de resplandor para el logo principal */
+.logo-glow {
+    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .text-3xl {
+        font-size: 1.875rem;
+    }
+    
+    .grid-cols-2.lg\\:grid-cols-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+}
+
+/* Mejoras para el estado "En vivo" */
+@keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.animate-pulse {
+    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 </style>
 

@@ -6,9 +6,10 @@ bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"
 backlog = 2048
 
 # Worker processes
-workers = int(os.environ.get('GUNICORN_WORKERS', '2'))
-worker_class = 'eventlet'  # Para compatibilidad con SocketIO
+workers = int(os.environ.get('GUNICORN_WORKERS', '1'))
+worker_class = 'sync'  # Usar workers síncronos para mayor estabilidad
 worker_connections = 1000
+threads = 2  # Añadir threads para manejar SocketIO con threading mode
 timeout = 30
 keepalive = 2
 

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script de inicio para producción en Render
+# Script de inicio con Waitress (más estable para SocketIO)
 set -e
 
-echo "🚀 Iniciando aplicación EDP MVP en producción..."
+echo "🚀 Iniciando aplicación EDP MVP en producción con Waitress..."
 
 # Verificar variables de entorno críticas
 if [ -z "$REDIS_URL" ]; then
@@ -20,19 +20,6 @@ fi
 export FLASK_ENV=production
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 
-# Ejecutar migraciones si es necesario
-if [ "$RUN_MIGRATIONS" = "true" ]; then
-    echo "🔄 Ejecutando migraciones de base de datos..."
-    python -c "
-from edp_mvp.app import create_app
-from edp_mvp.app.extensions import db
-app = create_app()
-with app.app_context():
-    db.create_all()
-    print('✅ Base de datos inicializada')
-"
-fi
-
 # Verificar conectividad de Redis
 echo "🔍 Verificando conectividad de Redis..."
 python -c "
@@ -48,6 +35,9 @@ except Exception as e:
     print('La aplicación continuará pero sin funcionalidades de cache')
 "
 
-# Iniciar la aplicación con Gunicorn
-echo "🌐 Iniciando servidor web con Gunicorn + Gevent..."
-exec gunicorn --config gunicorn_config.py wsgi:application
+# Usar puerto de la variable de entorno o 5000 por defecto
+PORT=${PORT:-5000}
+
+# Iniciar la aplicación con Waitress
+echo "🌐 Iniciando servidor web con Waitress en puerto $PORT..."
+exec waitress-serve --host=0.0.0.0 --port=$PORT --threads=4 wsgi:application

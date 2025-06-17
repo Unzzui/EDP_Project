@@ -12,3 +12,4 @@ RESTRUCTURE_PLAN.md
 CONTEXT.md
 .python-version
 celerybeat-schedule
+env.production.example
