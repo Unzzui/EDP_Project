@@ -24,9 +24,23 @@ def fix_render_secret_files():
     # Crear directorio de secrets en la app si no existe
     app_secrets_dir.mkdir(exist_ok=True)
     
+    # Verificar variables de entorno importantes
+    print("🔍 Variables de entorno relacionadas con credenciales:")
+    env_vars = ['GOOGLE_APPLICATION_CREDENTIALS', 'GOOGLE_CREDENTIALS', 'GOOGLE_CREDENTIALS_FILE']
+    target_files = []
+    
+    for var in env_vars:
+        value = os.getenv(var)
+        if value:
+            print(f"   ✅ {var}={value}")
+            if value.startswith('/etc/secrets/'):
+                target_files.append(value)
+        else:
+            print(f"   ❌ {var}=NOT_SET")
+    
     if not secrets_dir.exists():
         print("📁 Directorio /etc/secrets no encontrado - funcionando en desarrollo")
-        return True
+        return len(target_files) > 0
     
     print(f"📁 Directorio Secret Files encontrado: {secrets_dir}")
     
@@ -43,41 +57,84 @@ def fix_render_secret_files():
         print(f"❌ Error listando Secret Files: {e}")
         return False
     
-    # Buscar y copiar archivo de credenciales Google
-    google_creds_patterns = [
-        "edp-control-system-f3cfafc0093a.json",
-        "edp-control-system-*.json", 
-        "google-credentials.json",
-        "*.json"
-    ]
-    
+    # 1. Copiar archivos específicos mencionados en variables de entorno
     copied_files = []
     
-    for pattern in google_creds_patterns:
-        matching_files = list(secrets_dir.glob(pattern))
-        for source_file in matching_files:
-            if source_file.is_file():
+    for target_file in target_files:
+        source_file = Path(target_file)
+        if source_file.exists():
+            dest_file = app_secrets_dir / source_file.name
+            try:
+                print(f"🎯 Copiando archivo específico: {source_file.name}")
+                shutil.copy2(source_file, dest_file)
+                dest_file.chmod(0o644)
+                
+                # Verificar que se puede leer como JSON
                 try:
-                    dest_file = app_secrets_dir / source_file.name
+                    with open(dest_file, 'r') as f:
+                        data = json.load(f)
                     
-                    # Copiar archivo
-                    shutil.copy2(source_file, dest_file)
-                    
-                    # Cambiar permisos para que sea legible por appuser
-                    dest_file.chmod(0o644)
-                    
-                    # Verificar que se puede leer como JSON
-                    try:
-                        with open(dest_file, 'r') as f:
-                            json.load(f)
+                    required_fields = ['client_email', 'private_key', 'project_id']
+                    if all(field in data for field in required_fields):
                         print(f"✅ Copiado y verificado: {source_file.name} → {dest_file}")
+                        print(f"   📧 Client Email: {data.get('client_email', 'N/A')}")
                         copied_files.append(str(dest_file))
-                    except json.JSONDecodeError as e:
-                        print(f"❌ Archivo {source_file.name} no es JSON válido: {e}")
+                    else:
+                        missing = [f for f in required_fields if f not in data]
+                        print(f"❌ Archivo {source_file.name} no tiene campos requeridos: {missing}")
                         dest_file.unlink()  # Eliminar archivo inválido
-                    
-                except Exception as e:
-                    print(f"❌ Error copiando {source_file}: {e}")
+                        
+                except json.JSONDecodeError as e:
+                    print(f"❌ Archivo {source_file.name} no es JSON válido: {e}")
+                    dest_file.unlink()  # Eliminar archivo inválido
+                
+            except Exception as e:
+                print(f"❌ Error copiando {source_file}: {e}")
+        else:
+            print(f"⚠️ Archivo mencionado en variable de entorno no existe: {target_file}")
+    
+    # 2. Buscar y copiar otros archivos JSON que puedan ser credenciales
+    if not copied_files:  # Solo si no hemos copiado archivos específicos
+        print("🔍 Buscando otros archivos de credenciales...")
+        google_creds_patterns = [
+            "edp-control-system-*.json", 
+            "google-credentials.json",
+            "*credentials*.json",
+            "*.json"
+        ]
+        
+        for pattern in google_creds_patterns:
+            matching_files = list(secrets_dir.glob(pattern))
+            for source_file in matching_files:
+                if source_file.is_file() and source_file.name not in [f.split('/')[-1] for f in copied_files]:
+                    try:
+                        dest_file = app_secrets_dir / source_file.name
+                        
+                        # Copiar archivo
+                        shutil.copy2(source_file, dest_file)
+                        dest_file.chmod(0o644)
+                        
+                        # Verificar que se puede leer como JSON
+                        try:
+                            with open(dest_file, 'r') as f:
+                                data = json.load(f)
+                            
+                            # Verificar si es un archivo de credenciales Google
+                            required_fields = ['client_email', 'private_key', 'project_id']
+                            if all(field in data for field in required_fields):
+                                print(f"✅ Copiado y verificado: {source_file.name} → {dest_file}")
+                                print(f"   📧 Client Email: {data.get('client_email', 'N/A')}")
+                                copied_files.append(str(dest_file))
+                            else:
+                                print(f"⚠️ {source_file.name} es JSON pero no credenciales Google")
+                                dest_file.unlink()  # Eliminar archivo que no es de credenciales
+                                
+                        except json.JSONDecodeError as e:
+                            print(f"❌ Archivo {source_file.name} no es JSON válido: {e}")
+                            dest_file.unlink()  # Eliminar archivo inválido
+                        
+                    except Exception as e:
+                        print(f"❌ Error copiando {source_file}: {e}")
     
     if copied_files:
         print(f"✅ Secret Files copiados exitosamente: {len(copied_files)}")

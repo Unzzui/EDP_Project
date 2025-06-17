@@ -32,6 +32,18 @@
 - **Solución**: Detección automática de placeholders + fallback a SQLite
 - **Archivos**: `edp_mvp/app/config/__init__.py`
 
+### 6. **GOOGLE_CREDENTIALS es None o vacío en Render**
+
+- **Problema**: Las variables `GOOGLE_APPLICATION_CREDENTIALS` y `GOOGLE_CREDENTIALS` no se están respetando correctamente
+- **Solución**: Priorización de variables de entorno de Render + diagnóstico mejorado
+- **Archivos**: `edp_mvp/app/config/__init__.py`, `entrypoint.sh`, `diagnose_render.py`
+
+### 7. **Entrypoint con caracteres corruptos**
+
+- **Problema**: Archivo `entrypoint.sh` tenía caracteres Unicode corruptos
+- **Solución**: Recreado completamente con mejor logging y verificaciones
+- **Archivos**: `entrypoint.sh` (recreado)
+
 ## 🚀 **ARCHIVOS CLAVE PARA DEPLOY**
 
 ### **Configuración Docker**
@@ -46,6 +58,13 @@
 - `verify_secrets.py` - Verificación robusta de credenciales
 - `debug_env.py` - Diagnóstico de variables de entorno
 - `test_local.py` - Tests locales de funcionalidad
+
+### **Scripts de Diagnóstico Avanzado**
+
+- `diagnose_render.py` - Diagnóstico completo del entorno Render
+- `quick_check.py` - Verificación rápida de credenciales
+- `test_render_simulation.py` - Simulación local del entorno Render
+- `diagnostic_endpoint.py` - Endpoint web para diagnóstico en producción
 
 ### **Scripts de Testing**
 

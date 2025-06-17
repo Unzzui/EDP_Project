@@ -324,8 +324,10 @@ class Config:
         """
         # Ubicaciones posibles para las credenciales, en orden de prioridad
         possible_paths = [
-            # 1. Variable de entorno directa (desarrollo local)
+            # 1. Variables de entorno de Render (PRIORIDAD MÁXIMA)
             os.getenv('GOOGLE_APPLICATION_CREDENTIALS'),
+            os.getenv('GOOGLE_CREDENTIALS'),
+            os.getenv('GOOGLE_CREDENTIALS_FILE'),
             # 2. Secret Files copiados por el script fix_render_secrets.py (producción)
             '/app/secrets/edp-control-system-f3cfafc0093a.json',
             '/app/secrets/google-credentials.json',
@@ -339,12 +341,24 @@ class Config:
             '/app/edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json',
             # 6. Ubicación alternativa en contenedor
             '/etc/secrets/edp-control-system-9ac742cb2fb0.json',
-            # 7. Buscar cualquier archivo JSON en /app/secrets (Secret Files copiados)
-            *[str(p) for p in Path('/app/secrets').glob('*.json') if Path('/app/secrets').exists()],
         ]
         
-        for path in possible_paths:
-            if path and os.path.exists(path):
+        # Buscar cualquier archivo JSON en /app/secrets (Secret Files copiados)
+        if Path('/app/secrets').exists():
+            json_files_in_app = list(Path('/app/secrets').glob('*.json'))
+            possible_paths.extend([str(p) for p in json_files_in_app])
+        
+        print(f"🔍 Buscando credenciales Google en {len(possible_paths)} ubicaciones...")
+        
+        for i, path in enumerate(possible_paths, 1):
+            if not path:  # Skip None values
+                continue
+                
+            print(f"   {i}. Verificando: {path}")
+            
+            if os.path.exists(path):
+                print(f"      ✅ Archivo existe")
+                
                 # Verificar que el archivo sea legible y tenga formato JSON válido
                 try:
                     with open(path, 'r') as f:
@@ -353,22 +367,37 @@ class Config:
                     # Verificar que tenga campos de Google Service Account
                     required_fields = ['client_email', 'private_key', 'project_id']
                     if all(field in data for field in required_fields):
-                        print(f"✅ Credenciales de Google válidas encontradas en: {path}")
+                        print(f"      ✅ Credenciales válidas encontradas")
+                        print(f"      📧 Client Email: {data.get('client_email', 'N/A')}")
+                        print(f"✅ USANDO CREDENCIALES: {path}")
                         return path
                     else:
-                        print(f"⚠️ Archivo JSON encontrado pero sin campos requeridos: {path}")
+                        missing = [f for f in required_fields if f not in data]
+                        print(f"      ❌ Archivo JSON sin campos requeridos: {missing}")
                         continue
                         
-                except (json.JSONDecodeError, PermissionError, Exception) as e:
-                    print(f"⚠️ Error verificando {path}: {e}")
+                except PermissionError as pe:
+                    print(f"      ⚠️ Error de permisos: {pe}")
+                    # Para archivos en /etc/secrets, esto es esperado, continuar
+                    if '/etc/secrets/' in path:
+                        print(f"      💡 Archivo en /etc/secrets/, esperando que fix_render_secrets.py lo copie")
+                        continue
+                    else:
+                        continue
+                except (json.JSONDecodeError, Exception) as e:
+                    print(f"      ❌ Error verificando {path}: {e}")
                     continue
+            else:
+                print(f"      ❌ No existe")
         
         print("⚠️ No se encontraron credenciales de Google válidas en ninguna ubicación")
-        print("📍 Ubicaciones buscadas:")
-        for i, path in enumerate(possible_paths[:8], 1):  # Solo mostrar las principales
-            if path:
-                exists_status = "✅" if os.path.exists(path) else "❌"
-                print(f"   {i}. {exists_status} {path}")
+        print("📍 Variables de entorno verificadas:")
+        for var in ['GOOGLE_APPLICATION_CREDENTIALS', 'GOOGLE_CREDENTIALS', 'GOOGLE_CREDENTIALS_FILE']:
+            value = os.getenv(var)
+            if value:
+                print(f"   ✅ {var}={value}")
+            else:
+                print(f"   ❌ {var}=NOT_SET")
         
         return None
 
