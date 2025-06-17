@@ -208,28 +208,37 @@ def get_service():
         config = get_config()
         
         # Verificar que las credenciales existan
-        if not hasattr(config, 'GOOGLE_CREDENTIALS') or not config.GOOGLE_CREDENTIALS:
+        if not hasattr(config, 'GOOGLE_CREDENTIALS'):
             print("❌ GOOGLE_CREDENTIALS no configurado en config")
+            print("🎭 Activando modo demo")
             return None
             
-        if not isinstance(config.GOOGLE_CREDENTIALS, str):
-            print(f"❌ GOOGLE_CREDENTIALS debe ser string, recibido: {type(config.GOOGLE_CREDENTIALS)}")
+        google_creds_path = config.GOOGLE_CREDENTIALS
+        if not google_creds_path:
+            print("❌ GOOGLE_CREDENTIALS es None o vacío")
+            print("🎭 Activando modo demo")
+            return None
+            
+        if not isinstance(google_creds_path, str):
+            print(f"❌ GOOGLE_CREDENTIALS debe ser string, recibido: {type(google_creds_path)}")
+            print("🎭 Activando modo demo")
             return None
             
         # Verificar que el archivo exista
         import os
-        if not os.path.exists(config.GOOGLE_CREDENTIALS):
-            print(f"❌ Archivo de credenciales no encontrado: {config.GOOGLE_CREDENTIALS}")
+        if not os.path.exists(google_creds_path):
+            print(f"❌ Archivo de credenciales no encontrado: {google_creds_path}")
+            print("🎭 Activando modo demo")
             return None
             
-        print(f"✅ Intentando cargar credenciales desde: {config.GOOGLE_CREDENTIALS}")
+        print(f"✅ Intentando cargar credenciales desde: {google_creds_path}")
         
         # Estrategia múltiple para leer credenciales en Render
         creds_data = None
         
         # Método 1: Lectura directa (funciona en desarrollo)
         try:
-            with open(config.GOOGLE_CREDENTIALS, 'r') as f:
+            with open(google_creds_path, 'r') as f:
                 creds_data = json.load(f)
             print("✅ Credenciales leídas directamente")
         except PermissionError:
@@ -238,7 +247,7 @@ def get_service():
             # Método 2: Usar subprocess cat (en caso de que el proceso tenga otros permisos)
             try:
                 import subprocess
-                result = subprocess.run(['cat', config.GOOGLE_CREDENTIALS], 
+                result = subprocess.run(['cat', google_creds_path], 
                                       capture_output=True, text=True, check=True)
                 creds_data = json.loads(result.stdout)
                 print("✅ Credenciales leídas con subprocess")
@@ -252,7 +261,7 @@ def get_service():
                     
                     with tempfile.NamedTemporaryFile(mode='w+', suffix='.json', delete=False) as temp_file:
                         # Intentar copiar el archivo
-                        subprocess.run(['cp', config.GOOGLE_CREDENTIALS, temp_file.name], check=True)
+                        subprocess.run(['cp', google_creds_path, temp_file.name], check=True)
                         # Ahora intentar leer desde la copia temporal
                         with open(temp_file.name, 'r') as f:
                             creds_data = json.load(f)
@@ -264,9 +273,11 @@ def get_service():
         
         except json.JSONDecodeError as e:
             print(f"❌ Error: Archivo no es JSON válido: {e}")
+            print("🎭 Activando modo demo")
             return None
         except Exception as e:
             print(f"❌ Error inesperado leyendo credenciales: {e}")
+            print("🎭 Activando modo demo")
             return None
         
         # Si no pudimos leer las credenciales de ninguna manera
@@ -282,6 +293,7 @@ def get_service():
         
         if missing_fields:
             print(f"❌ Faltan campos requeridos en credenciales: {missing_fields}")
+            print("🎭 Activando modo demo")
             return None
         
         # Crear credenciales desde los datos leídos
@@ -293,10 +305,12 @@ def get_service():
             return service
         except Exception as e:
             print(f"❌ Error creando servicio con credenciales: {e}")
+            print("🎭 Activando modo demo")
             return None
         
     except Exception as e:
         print(f"❌ Error al inicializar servicio de Google Sheets: {e}")
+        print("🎭 Activando modo demo")
         import traceback
         traceback.print_exc()
         return None
@@ -348,13 +362,51 @@ def read_sheet(range_name, apply_transformations=True):
             service = get_service()
             if service is None:
                 print(f"❌ No se pudo obtener servicio de Google Sheets para {range_name}")
+                print(f"🎭 Intentando modo demo para {range_name}...")
+                
+                # Intentar usar datos demo cuando no hay servicio
+                try:
+                    if range_name.startswith('edp!'):
+                        from .demo_data import get_demo_edp_data
+                        demo_df = get_demo_edp_data()
+                        if not demo_df.empty:
+                            print(f"✅ Usando datos demo de EDP para {range_name}")
+                            return demo_df
+                    elif range_name.startswith('log!'):
+                        from .demo_data import get_demo_logs_data
+                        demo_df = get_demo_logs_data()
+                        if not demo_df.empty:
+                            print(f"✅ Usando datos demo de logs para {range_name}")
+                            return demo_df
+                except Exception as demo_error:
+                    print(f"❌ Error generando datos demo: {demo_error}")
+                
                 print(f"💥 No hay datos disponibles para {range_name}, retornando DataFrame vacío")
                 return pd.DataFrame()
                 
             config = get_config()
             if not hasattr(config, 'SHEET_ID') or not config.SHEET_ID:
                 print(f"❌ SHEET_ID no configurado para {range_name}")
-                print(f"💥 No hay datos disponibles para {range_name}, retornando DataFrame vacío") 
+                print(f"🎭 Intentando modo demo para {range_name}...")
+                
+                # Intentar usar datos demo cuando no hay SHEET_ID
+                try:
+                    if range_name.startswith('edp!'):
+                        from .demo_data import get_demo_edp_data
+                        demo_df = get_demo_edp_data()
+                        if not demo_df.empty:
+                            print(f"✅ Usando datos demo de EDP para {range_name}")
+                            return demo_df
+                    elif range_name.startswith('log!'):
+                        from .demo_data import get_demo_logs_data
+                        demo_df = get_demo_logs_data()
+                        if not demo_df.empty:
+                            print(f"✅ Usando datos demo de logs para {range_name}")
+                            return demo_df
+                except Exception as demo_error:
+                    print(f"❌ Error generando datos demo: {demo_error}")
+                
+                print(f"💥 No hay datos disponibles para {range_name}, retornando DataFrame vacío")
                 return pd.DataFrame()
                 
             sheet = service.spreadsheets()
@@ -395,15 +447,27 @@ def read_sheet(range_name, apply_transformations=True):
             if values is None:
                 print(f"💥 No hay datos disponibles para {range_name}, intentando modo demo...")
                 
-                # Intentar usar datos demo
+                # Intentar usar datos demo basado en el tipo de rango
                 try:
-                    from .demo_data import get_demo_data
-                    demo_df = get_demo_data(range_name)
-                    if not demo_df.empty:
-                        print(f"🎭 Usando datos demo para {range_name}")
-                        return demo_df
+                    if range_name.startswith('edp!'):
+                        from .demo_data import get_demo_edp_data
+                        demo_df = get_demo_edp_data()
+                        if not demo_df.empty:
+                            print(f"🎭 Usando datos demo de EDP para {range_name}")
+                            return demo_df
+                    elif range_name.startswith('log!'):
+                        from .demo_data import get_demo_logs_data
+                        demo_df = get_demo_logs_data()
+                        if not demo_df.empty:
+                            print(f"🎭 Usando datos demo de logs para {range_name}")
+                            return demo_df
+                    else:
+                        print(f"⚠️ Tipo de rango {range_name} no soportado para datos demo")
+                        
                 except Exception as demo_error:
                     print(f"❌ Error generando datos demo: {demo_error}")
+                    import traceback
+                    traceback.print_exc()
                 
                 print(f"💥 Retornando DataFrame vacío para {range_name}")
                 return pd.DataFrame()  # Retornar DataFrame vacío si no hay datos

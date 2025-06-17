@@ -86,6 +86,15 @@ def get_demo_data(range_name):
             'columna3': ['Demo', 'Data', 'Mode']
         })
 
+# Funciones alias para compatibilidad con el código existente
+def get_demo_edp_data():
+    """Alias para generate_demo_edp_data()"""
+    return generate_demo_edp_data()
+
+def get_demo_logs_data():
+    """Alias para generate_demo_log_data()"""
+    return generate_demo_log_data()
+
 if __name__ == "__main__":
     # Test
     print("Generando datos demo de EDP...")

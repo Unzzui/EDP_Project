@@ -22,7 +22,10 @@ fi
 echo "🔍 Iniciando verificaciones..."
 python debug_env.py
 
-echo "🔐 Verificando Secret Files..."
+echo "� Diagnóstico completo de Render..."
+python diagnose_render.py
+
+echo "�🔐 Verificando Secret Files..."
 python verify_secrets.py
 
 echo "🔍 Inicializando base de datos..."
