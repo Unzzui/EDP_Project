@@ -223,10 +223,19 @@ def get_service():
             return None
             
         print(f"✅ Intentando cargar credenciales desde: {config.GOOGLE_CREDENTIALS}")
-        creds = Credentials.from_service_account_file(config.GOOGLE_CREDENTIALS, scopes=SCOPES)
-        service = build('sheets', 'v4', credentials=creds)
-        print("✅ Servicio de Google Sheets inicializado correctamente")
-        return service
+        try:
+            creds = Credentials.from_service_account_file(config.GOOGLE_CREDENTIALS, scopes=SCOPES)
+            service = build('sheets', 'v4', credentials=creds)
+            print("✅ Servicio de Google Sheets inicializado correctamente")
+            return service
+        except PermissionError as pe:
+            print(f"❌ Error de permisos leyendo credenciales: {pe}")
+            print("💡 Esto puede ocurrir con Secret Files en contenedores")
+            print("🎭 La aplicación continuará en modo demo")
+            return None
+        except Exception as e:
+            print(f"❌ Error cargando credenciales: {e}")
+            return None
         
     except Exception as e:
         print(f"❌ Error al inicializar servicio de Google Sheets: {e}")

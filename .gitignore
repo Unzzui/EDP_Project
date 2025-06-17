@@ -13,3 +13,5 @@ CONTEXT.md
 .python-version
 celerybeat-schedule
 env.production.example
+.env.production
+.env.development

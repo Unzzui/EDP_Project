@@ -7,10 +7,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     FLASK_ENV=production
 
-# Instalar dependencias del sistema
+# Instalar dependencias del sistema incluyendo su-exec para cambio seguro de usuario
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
+    su-exec \
     && rm -rf /var/lib/apt/lists/*
 
 # Crear directorio de trabajo
@@ -35,10 +36,12 @@ RUN if [ -f "edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json" ]; then \
 # Crear usuario no-root para seguridad
 RUN adduser --disabled-password --gecos '' appuser && \
     chown -R appuser:appuser /app
-USER appuser
+
+# Hacer el entrypoint script ejecutable
+RUN chmod +x entrypoint.sh
 
 # Exponer puerto
 EXPOSE 5000
 
-# Comando que incluye verificación completa
-CMD ["sh", "-c", "echo '🔍 Iniciando verificaciones...' && python debug_env.py && echo '🔐 Verificando Secret Files...' && python verify_secrets.py && echo '🔍 Iniciando init_db...' && python init_db.py && echo '🚀 Iniciando Gunicorn...' && gunicorn --config gunicorn_config.py wsgi:application"] 
+# Usar entrypoint script que maneja permisos de Secret Files
+ENTRYPOINT ["./entrypoint.sh"] 
