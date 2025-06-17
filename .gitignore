@@ -11,3 +11,4 @@ RESTRUCTURE_PLAN.md
 .rdb
 CONTEXT.md
 .python-version
+celerybeat-schedule

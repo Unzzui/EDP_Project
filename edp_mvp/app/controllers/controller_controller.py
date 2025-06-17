@@ -2191,7 +2191,7 @@ def export_all_csv():
                 registro.get('observaciones', '')
             ]
             # Escape quotes and wrap in quotes
-            escaped_row = [f'"{str(cell).replace('"', '""')}"' for cell in row]
+            escaped_row = [f"\"{str(cell).replace('\"', '\"\"')}\"" for cell in row]
             csv_lines.append(",".join(escaped_row))
         
         csv_content = "\n".join(csv_lines)
