@@ -8,6 +8,9 @@
 
 <!-- Set initial filter for table controller JavaScript -->
 <script>
+  // Variables globales para JavaScript
+  window.dsoGlobal = {{ dso_global|default(0) }};
+  
   document.addEventListener('DOMContentLoaded', function() {
     document.body.setAttribute('data-initial-filter', '{{ filtros.estado|default("pendientes") }}');
     
@@ -24,21 +27,16 @@
     
     if (estadisticas) {
       // Actualizar estadísticas básicas (panel inferior)
-      const edpsCriticos = document.getElementById('edps-criticos');
-      const diasPromedio = document.getElementById('dias-promedio');
       const metaMensual = document.getElementById('meta-mensual');
-      const proyeccionTendencia = document.getElementById('proyeccion-tendencia');
       
-      if (edpsCriticos) edpsCriticos.textContent = estadisticas.total_criticos || 0;
-      if (diasPromedio) diasPromedio.textContent = Math.round(estadisticas.dias_promedio || 0);
       if (metaMensual) metaMensual.textContent = '$' + (estadisticas.meta_mensual || 0).toLocaleString();
-      if (proyeccionTendencia) proyeccionTendencia.textContent = '+' + (estadisticas.proyeccion_crecimiento || 5) + '%';
       
       // Actualizar KPIs del banner principal
       const totalEdpsBanner = document.getElementById('total-edps-banner');
       const criticosBanner = document.getElementById('criticos-banner');
       const pendientesBanner = document.getElementById('pendientes-banner');
       const validadosBanner = document.getElementById('validados-banner');
+      const dsoBanner = document.getElementById('dso-banner');
       
       if (totalEdpsBanner) totalEdpsBanner.textContent = estadisticas.total_edps || 0;
       if (criticosBanner) criticosBanner.textContent = estadisticas.total_criticos || 0;
@@ -66,29 +64,75 @@
        const pendientes = registros.filter(r => r.estado && ['enviado', 'revisión', 'pendiente'].includes(r.estado.toLowerCase())).length;
        const validados = registros.filter(r => r.estado && ['validado', 'pagado'].includes(r.estado.toLowerCase())).length;
        
+       // Usar DSO global calculado en el servidor
+       const dso = {{ dso_global|default(0) }};
+       
        // Actualizar métricas en el panel principal
        const totalEdpsEl = document.getElementById('total-edps');
        const totalPendientesEl = document.getElementById('total-pendientes');
        const totalValidadosEl = document.getElementById('total-validados');
        const montoTotalEl = document.getElementById('monto-total');
-       const totalCriticosEl = document.getElementById('total-criticos');
+       const dsoPrincipalEl = document.getElementById('dso-principal');
        
        if (totalEdpsEl) totalEdpsEl.textContent = totalRegistros.toLocaleString();
        if (totalPendientesEl) totalPendientesEl.textContent = pendientes.toLocaleString();
        if (totalValidadosEl) totalValidadosEl.textContent = validados.toLocaleString();
        if (montoTotalEl) montoTotalEl.textContent = '$' + totalMonto.toLocaleString();
-       if (totalCriticosEl) totalCriticosEl.textContent = criticos.toLocaleString();
+       
+       // Actualizar DSO con colores según el valor
+       if (dsoPrincipalEl) {
+         dsoPrincipalEl.textContent = dso;
+         if (dso <= 30) {
+           dsoPrincipalEl.className = 'text-2xl font-bold text-[color:var(--accent-green)]'; // Excelente
+         } else if (dso <= 45) {
+           dsoPrincipalEl.className = 'text-2xl font-bold text-[color:var(--text-primary)]'; // Bueno
+         } else if (dso <= 60) {
+           dsoPrincipalEl.className = 'text-2xl font-bold text-[color:var(--accent-amber)]'; // Regular
+         } else {
+           dsoPrincipalEl.className = 'text-2xl font-bold text-[color:var(--accent-red)]'; // Crítico
+         }
+       }
+       
+       // Actualizar DSO en el banner también
+       const dsoBannerEl = document.getElementById('dso-banner');
+       if (dsoBannerEl) {
+         dsoBannerEl.textContent = dso;
+         if (dso <= 30) {
+           dsoBannerEl.className = 'text-2xl font-bold text-[color:var(--accent-green)]'; // Excelente
+         } else if (dso <= 45) {
+           dsoBannerEl.className = 'text-2xl font-bold text-[color:var(--text-primary)]'; // Bueno
+         } else if (dso <= 60) {
+           dsoBannerEl.className = 'text-2xl font-bold text-[color:var(--accent-amber)]'; // Regular
+         } else {
+           dsoBannerEl.className = 'text-2xl font-bold text-[color:var(--accent-red)]'; // Crítico
+         }
+       }
        
        // Actualizar también los KPIs del banner
        const totalEdpsBanner = document.getElementById('total-edps-banner');
        const criticosBanner = document.getElementById('criticos-banner');
        const pendientesBanner = document.getElementById('pendientes-banner');
        const validadosBanner = document.getElementById('validados-banner');
+       const dsoBanner = document.getElementById('dso-banner');
        
        if (totalEdpsBanner) totalEdpsBanner.textContent = totalRegistros.toLocaleString();
        if (criticosBanner) criticosBanner.textContent = criticos.toLocaleString();
        if (pendientesBanner) pendientesBanner.textContent = pendientes.toLocaleString();
        if (validadosBanner) validadosBanner.textContent = validados.toLocaleString();
+       
+       // Actualizar DSO en el banner con colores según el valor
+       if (dsoBanner) {
+         dsoBanner.textContent = dso;
+         if (dso <= 30) {
+           dsoBanner.className = 'text-2xl font-bold text-[color:var(--accent-green)]'; // Excelente
+         } else if (dso <= 45) {
+           dsoBanner.className = 'text-2xl font-bold text-[color:var(--text-primary)]'; // Bueno
+         } else if (dso <= 60) {
+           dsoBanner.className = 'text-2xl font-bold text-[color:var(--accent-amber)]'; // Regular
+         } else {
+           dsoBanner.className = 'text-2xl font-bold text-[color:var(--accent-red)]'; // Crítico
+         }
+       }
        
        // Actualizar barra de progreso
        const progressBar = document.getElementById('progress-bar');
@@ -104,7 +148,8 @@
          pendientes: pendientes,
          validados: validados,
          monto: totalMonto,
-         criticos: criticos
+         criticos: criticos,
+         dso: dso
        });
      } else {
        console.warn('⚠️ No hay registros disponibles para calcular métricas');
@@ -179,7 +224,7 @@
       <div class="flex flex-col lg:flex-row items-start lg:items-center gap-4">
         
         <!-- KPIs rápidos integrados -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-[color:var(--bg-card)]/60 backdrop-blur-sm border border-[color:var(--border-color-subtle)] rounded-2xl">
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 p-4 bg-[color:var(--bg-card)]/60 backdrop-blur-sm border border-[color:var(--border-color-subtle)] rounded-2xl">
           <!-- KPI 1: Total EDPs -->
           <div class="text-center">
             <div class="text-2xl font-bold text-[color:var(--accent-blue)]" id="total-edps-banner">0</div>
@@ -199,6 +244,11 @@
           <div class="text-center">
             <div class="text-2xl font-bold text-[color:var(--accent-green)]" id="validados-banner">0</div>
             <div class="text-xs text-[color:var(--text-secondary)] font-medium">Validados</div>
+          </div>
+          <!-- KPI 5: DSO (Días de Cobro) -->
+          <div class="text-center">
+            <div class="text-2xl font-bold text-[color:var(--text-primary)]" id="dso-banner">0</div>
+            <div class="text-xs text-[color:var(--text-secondary)] font-medium">DSO (días)</div>
           </div>
         </div>
         
@@ -470,16 +520,16 @@
       </div>
     </div>
 
-    <!-- Métrica 5: Críticos -->
+    <!-- Métrica 5: DSO (Días de Cobro) -->
     <div class="p-6">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">Críticos</p>
-          <p id="total-criticos" class="text-2xl font-bold text-[color:var(--text-primary)]">0</p>
+          <p class="text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wide">DSO (Días de Cobro)</p>
+          <p id="dso-principal" class="text-2xl font-bold text-[color:var(--text-primary)]">0</p>
         </div>
-        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-red)] to-[color:var(--accent-orange)] rounded-xl shadow-lg">
+        <div class="p-3 bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] rounded-xl shadow-lg">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
       </div>
@@ -488,39 +538,13 @@
   
   <!-- Sección inferior con métricas adicionales -->
   <div class="border-t border-[color:var(--border-color-subtle)] bg-gradient-to-r from-[color:var(--bg-subtle)] to-[color:var(--bg-card)] px-6 py-4">
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-8">
-      <div class="flex flex-col items-center">
-        <div class="flex items-center gap-2 mb-1">
-          <div class="w-2 h-2 bg-[color:var(--accent-red)] rounded-full"></div>
-          <span class="text-xs font-medium text-[color:var(--text-secondary)]">EDPs Críticos</span>
-        </div>
-        <span id="edps-criticos" class="text-xl font-bold text-[color:var(--accent-red)]">0</span>
-      </div>
-      <div class="flex flex-col items-center">
-        <div class="flex items-center gap-2 mb-1">
-          <div class="w-2 h-2 bg-[color:var(--accent-amber)] rounded-full"></div>
-          <span class="text-xs font-medium text-[color:var(--text-secondary)]">Días Promedio</span>
-        </div>
-        <span id="dias-promedio" class="text-xl font-bold text-[color:var(--text-primary)]">0</span>
-      </div>
+    <div class="flex justify-center">
       <div class="flex flex-col items-center">
         <div class="flex items-center gap-2 mb-1">
           <div class="w-2 h-2 bg-[color:var(--accent-purple)] rounded-full"></div>
           <span class="text-xs font-medium text-[color:var(--text-secondary)]">Meta Mensual</span>
         </div>
         <span id="meta-mensual" class="text-xl font-bold text-[color:var(--text-primary)]">$0</span>
-      </div>
-      <div class="flex flex-col items-center">
-        <div class="flex items-center gap-2 mb-1">
-          <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full"></div>
-          <span class="text-xs font-medium text-[color:var(--text-secondary)]">Proyección</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <span id="proyeccion-tendencia" class="text-xl font-bold text-[color:var(--accent-green)]">+5%</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-        </div>
       </div>
     </div>
   </div>
@@ -926,11 +950,9 @@ document.addEventListener('DOMContentLoaded', function() {
             sections.push(toggleValidados.closest('.flex'));
         }
         
-        // 6. Panel de resumen (buscar por ID)
-        const summaryPanel = document.getElementById('summary-panel');
-        if (summaryPanel) {
-            sections.push(summaryPanel);
-        }
+        // 6. Panel de resumen - NO incluir para que permanezca visible en ambas vistas
+        // const summaryPanel = document.getElementById('summary-panel');
+        // El panel de resumen debe mantenerse visible en ambas vistas
         
         return sections.filter(el => el !== null);
     }
@@ -1451,9 +1473,22 @@ button:active {
         font-size: 1.875rem;
     }
     
-    .grid-cols-2.lg\\:grid-cols-4 {
+    .grid-cols-2.lg\\:grid-cols-5 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.75rem;
+    }
+}
+
+/* Mejores breakpoints para 5 columnas */
+@media (max-width: 640px) {
+    .grid-cols-2.lg\\:grid-cols-5 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+    .grid-cols-2.lg\\:grid-cols-5 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 

@@ -7,11 +7,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     FLASK_ENV=production
 
-# Instalar dependencias del sistema incluyendo su-exec para cambio seguro de usuario
+# Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
-    su-exec \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Crear directorio de trabajo
@@ -33,15 +33,22 @@ RUN if [ -f "edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json" ]; then \
         echo "⚠️ Credenciales de Google Sheets NO encontradas - funcionalidad limitada"; \
     fi
 
-# Crear usuario no-root para seguridad
+# Crear usuario no-root para seguridad (pero configurar permisos flexibles)
 RUN adduser --disabled-password --gecos '' appuser && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    chmod -R 755 /app
 
 # Hacer el entrypoint script ejecutable
 RUN chmod +x entrypoint.sh
 
+# Cambiar al usuario no-root por defecto
+USER appuser
+
+# Configurar HOME para el usuario
+ENV HOME=/app
+
 # Exponer puerto
 EXPOSE 5000
 
-# Usar entrypoint script que maneja permisos de Secret Files
+# Usar entrypoint script que maneja verificaciones
 ENTRYPOINT ["./entrypoint.sh"] 

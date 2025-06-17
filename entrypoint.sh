@@ -1,27 +1,39 @@
 #!/bin/bash
 
-# Entrypoint script para manejar permisos de Secret Files en Render
+#!/bin/bash
+
+# Entrypoint script para manejar Secret Files y verificaciones en Render
 echo "🔧 Iniciando entrypoint script..."
 
-# Verificar y ajustar permisos de Secret Files si existen
-if [ -d "/etc/secrets" ]; then
-    echo "📁 Directorio /etc/secrets encontrado"
-    # Listar contenido con permisos
-    ls -la /etc/secrets/ || echo "⚠️ No se puede listar /etc/secrets/"
-    
-    # Intentar cambiar permisos si somos root
-    if [ "$(id -u)" = "0" ]; then
-        echo "🔧 Ejecutando como root - ajustando permisos..."
-        chmod -R 644 /etc/secrets/* 2>/dev/null || echo "⚠️ No se pudieron cambiar permisos de archivos en /etc/secrets/"
-        # Cambiar a usuario no-root después de ajustar permisos
-        export HOME=/app
-        exec su-exec appuser "$@"
+# Función para verificar permisos y contenido de Secret Files
+check_secret_files() {
+    if [ -d "/etc/secrets" ]; then
+        echo "📁 Directorio /etc/secrets encontrado"
+        echo "👤 Usuario actual: $(whoami) (UID: $(id -u))"
+        echo "📋 Listando Secret Files disponibles:"
+        ls -la /etc/secrets/ 2>/dev/null || echo "⚠️ No se puede listar /etc/secrets/ - verificando acceso..."
+        
+        # Intentar leer archivos específicos si existen
+        for secret_file in "/etc/secrets/GOOGLE_CREDENTIALS" "/etc/secrets/google-credentials.json"; do
+            if [ -f "$secret_file" ]; then
+                echo "✅ Secret File encontrado: $secret_file"
+                echo "📄 Permisos: $(ls -l "$secret_file" 2>/dev/null || echo 'No se pueden ver permisos')"
+                # Verificar si es legible
+                if [ -r "$secret_file" ]; then
+                    echo "✅ Archivo legible"
+                    head -c 50 "$secret_file" 2>/dev/null && echo "..." || echo "⚠️ No se puede leer contenido"
+                else
+                    echo "❌ Archivo no legible"
+                fi
+            fi
+        done
     else
-        echo "👤 Ejecutando como usuario no-root"
+        echo "📁 Directorio /etc/secrets no encontrado - usando modo demo"
     fi
-else
-    echo "📁 Directorio /etc/secrets no encontrado"
-fi
+}
+
+# Ejecutar verificación de Secret Files
+check_secret_files
 
 # Verificaciones de entorno
 echo "🔍 Iniciando verificaciones..."

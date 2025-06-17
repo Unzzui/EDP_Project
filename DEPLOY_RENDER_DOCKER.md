@@ -1,5 +1,14 @@
 # 🐳 Deploy en Render con Docker
 
+## 📋 **RESUMEN DE CAMBIOS RECIENTES**
+
+**✅ RESUELTO:** Problema con `su-exec` no disponible en Debian Bookworm
+
+- Removido `su-exec` del Dockerfile
+- Implementada estrategia simplificada de permisos compatible con Render
+- Mejorado el entrypoint script para verificación de Secret Files
+- Actualizada configuración de Gunicorn para mejor rendimiento en Render
+
 ## ⚠️ IMPORTANTE: Variables de Entorno
 
 ### El problema de "port" en DATABASE_URL

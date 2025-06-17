@@ -1154,9 +1154,8 @@ function setupKPIPanel() {
         ? Math.round(diasTotales / tarjetasConDias) 
         : 0;
     
-    // Calcular tendencia (simulada - en producción obtendría datos históricos)
-    const tendenciaMes = Math.random() > 0.5 ? '+5%' : '-3%'; 
-    const esTendenciaPositiva = tendenciaMes.startsWith('+');
+    // Usar DSO global calculado en el servidor (disponible como variable global)
+    const diasDSO = window.dsoGlobal || 0;
     
     // Actualizar métricas adicionales con verificación de elementos y cambios
     const edpsCriticosEl = document.getElementById('edps-criticos');
@@ -1175,21 +1174,35 @@ function setupKPIPanel() {
         metaMensualEl.textContent = metaFormatted;
     }
     
-    const proyeccionElement = document.getElementById('proyeccion-tendencia');
-    if (proyeccionElement && proyeccionElement.textContent !== tendenciaMes) {
-        proyeccionElement.textContent = tendenciaMes;
-        proyeccionElement.className = `text-lg font-bold ${esTendenciaPositiva ? 'text-[color:var(--accent-green)]' : 'text-[color:var(--accent-red)]'}`;
+    // Actualizar DSO principal con los mismos colores
+    const dsoPrincipalElement = document.getElementById('dso-principal');
+    if (dsoPrincipalElement && dsoPrincipalElement.textContent !== diasDSO.toString()) {
+        dsoPrincipalElement.textContent = diasDSO;
         
-        // Actualizar icono de tendencia
-        const iconoTendencia = proyeccionElement.nextElementSibling;
-        if (iconoTendencia) {
-            if (esTendenciaPositiva) {
-                iconoTendencia.classList.replace('text-[color:var(--accent-red)]', 'text-[color:var(--accent-green)]');
-                iconoTendencia.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />';
-            } else {
-                iconoTendencia.classList.replace('text-[color:var(--accent-green)]', 'text-[color:var(--accent-red)]');
-                iconoTendencia.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" />';
-            }
+        if (diasDSO <= 30) {
+            dsoPrincipalElement.className = 'text-2xl font-bold text-[color:var(--accent-green)]'; // Excelente
+        } else if (diasDSO <= 45) {
+            dsoPrincipalElement.className = 'text-2xl font-bold text-[color:var(--text-primary)]'; // Bueno
+        } else if (diasDSO <= 60) {
+            dsoPrincipalElement.className = 'text-2xl font-bold text-[color:var(--accent-amber)]'; // Regular
+        } else {
+            dsoPrincipalElement.className = 'text-2xl font-bold text-[color:var(--accent-red)]'; // Crítico
+        }
+    }
+    
+    // Actualizar DSO en el banner con los mismos colores
+    const dsoBannerElement = document.getElementById('dso-banner');
+    if (dsoBannerElement && dsoBannerElement.textContent !== diasDSO.toString()) {
+        dsoBannerElement.textContent = diasDSO;
+        
+        if (diasDSO <= 30) {
+            dsoBannerElement.className = 'text-2xl font-bold text-[color:var(--accent-green)]'; // Excelente
+        } else if (diasDSO <= 45) {
+            dsoBannerElement.className = 'text-2xl font-bold text-[color:var(--text-primary)]'; // Bueno
+        } else if (diasDSO <= 60) {
+            dsoBannerElement.className = 'text-2xl font-bold text-[color:var(--accent-amber)]'; // Regular
+        } else {
+            dsoBannerElement.className = 'text-2xl font-bold text-[color:var(--accent-red)]'; // Crítico
         }
     }
 
