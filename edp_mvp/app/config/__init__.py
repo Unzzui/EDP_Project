@@ -318,32 +318,27 @@ class Config:
     
     def _get_google_credentials_path(self):
         """
-        Buscar credenciales de Google con prioridad en variables de entorno separadas.
-        Si las variables separadas están completas, SOLO usar esas (no buscar archivos).
-        Si no están completas, buscar archivos como fallback.
+        Usar EXCLUSIVAMENTE variables de entorno separadas para las credenciales de Google.
+        No buscar archivos. Para Render deploy solo usar .env variables.
         
         Returns:
-            str: Ruta al archivo de credenciales o None si no se encuentra
+            str: "ENV_VARS" si las variables están completas, None si no
         """
         
-        # MÉTODO 1: Verificar si tenemos variables de entorno separadas (Claude method)
-        # Esta es la estrategia más robusta para Render
+        # SOLO verificar variables de entorno separadas (método Claude/Render)
         google_project_id = os.getenv('GOOGLE_PROJECT_ID')
         google_client_email = os.getenv('GOOGLE_CLIENT_EMAIL')
         google_private_key = os.getenv('GOOGLE_PRIVATE_KEY')
         google_key_id = os.getenv('GOOGLE_PRIVATE_KEY_ID')
         google_client_id = os.getenv('GOOGLE_CLIENT_ID')
         
-        
         if google_project_id and google_client_email and google_private_key:
-            print("🔑 Detectadas variables de entorno separadas de Google (Claude method)")
+            print("🔑 Variables de entorno separadas de Google configuradas")
             print(f"   📧 Client Email: {google_client_email}")
             print(f"   🆔 Project ID: {google_project_id}")
-            print(f"   🔐 Private Key: {'***' + google_private_key[-20:] if len(google_private_key) > 20 else '***'}")
-            print("🎯 USANDO EXCLUSIVAMENTE variables de entorno separadas (gsheet.py manejará esto)")
+            print("✅ Usando EXCLUSIVAMENTE variables de entorno (.env)")
             
-            # Retornar un indicador de que se usan variables de entorno
-            # gsheet.py detectará esto y usará las variables directamente
+            # Retornar indicador para que gsheet.py use las variables directamente
             return "ENV_VARS"
         else:
             missing_vars = []
@@ -357,107 +352,10 @@ class Config:
                 missing_vars.append('GOOGLE_PRIVATE_KEY_ID')
             if not google_client_id:
                 missing_vars.append('GOOGLE_CLIENT_ID')
-
-            if missing_vars:
-                print(f"ℹ️ Variables de entorno separadas no completas (faltan: {', '.join(missing_vars)})")
-                print("🔍 Buscando archivos de credenciales como fallback...")
-        
-        # MÉTODO 2: Buscar archivos de credenciales en ubicaciones conocidas
-        possible_paths = [
-            # 1. Variables de entorno que apuntan a archivos
-            os.getenv('GOOGLE_APPLICATION_CREDENTIALS'),
-            os.getenv('GOOGLE_CREDENTIALS'),
-            os.getenv('GOOGLE_CREDENTIALS_FILE'),
-            # 2. Secret Files copiados por el script fix_render_secrets.py (producción)
-            '/app/secrets/edp-control-system-f3cfafc0093a.json',
-            '/app/secrets/google-credentials.json',
-            # 3. Render Secret Files originales (si tenemos permisos)
-            '/etc/secrets/edp-control-system-f3cfafc0093a.json',
-            '/etc/secrets/google-credentials.json',
-            # 4. Ubicación local del proyecto (desarrollo)
-            'edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json',
-            './edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json',
-            # 5. Ubicación relativa en contenedor
-            '/app/edp_mvp/app/keys/edp-control-system-f3cfafc0093a.json',
-            # 6. Ubicación alternativa en contenedor
-            '/etc/secrets/edp-control-system-9ac742cb2fb0.json',
-        ]
-        
-        # Buscar cualquier archivo JSON en /app/secrets (Secret Files copiados)
-        if Path('/app/secrets').exists():
-            json_files_in_app = list(Path('/app/secrets').glob('*.json'))
-            possible_paths.extend([str(p) for p in json_files_in_app])
-        
-        print(f"🔍 Buscando credenciales Google en {len(possible_paths)} ubicaciones...")
-        
-        for i, path in enumerate(possible_paths, 1):
-            if not path:  # Skip None values
-                continue
-                
-            print(f"   {i}. Verificando: {path}")
             
-            if os.path.exists(path):
-                print(f"      ✅ Archivo existe")
-                
-                # Verificar que el archivo sea legible y tenga formato JSON válido
-                try:
-                    with open(path, 'r') as f:
-                        data = json.load(f)
-                    
-                    # Verificar que tenga campos de Google Service Account
-                    required_fields = ['client_email', 'private_key', 'project_id']
-                    if all(field in data for field in required_fields):
-                        print(f"      ✅ Credenciales válidas encontradas")
-                        print(f"      📧 Client Email: {data.get('client_email', 'N/A')}")
-                        print(f"✅ USANDO CREDENCIALES DESDE ARCHIVO: {path}")
-                        return path
-                    else:
-                        missing = [f for f in required_fields if f not in data]
-                        print(f"      ❌ Archivo JSON sin campos requeridos: {missing}")
-                        continue
-                        
-                except PermissionError as pe:
-                    print(f"      ⚠️ Error de permisos: {pe}")
-                    # Para archivos en /etc/secrets, esto es esperado, continuar
-                    if '/etc/secrets/' in path:
-                        print(f"      💡 Archivo en /etc/secrets/, esperando que fix_render_secrets.py lo copie")
-                        continue
-                    else:
-                        continue
-                except (json.JSONDecodeError, Exception) as e:
-                    print(f"      ❌ Error verificando {path}: {e}")
-                    continue
-            else:
-                print(f"      ❌ No existe")
-        
-        print("⚠️ No se encontraron credenciales de Google válidas en ninguna ubicación")
-        print("📍 Variables de entorno verificadas:")
-        
-        # Mostrar estado de variables de archivos
-        for var in ['GOOGLE_APPLICATION_CREDENTIALS', 'GOOGLE_CREDENTIALS', 'GOOGLE_CREDENTIALS_FILE']:
-            value = os.getenv(var)
-            if value:
-                print(f"   ✅ {var}={value}")
-            else:
-                print(f"   ❌ {var}=NOT_SET")
-        
-        # Mostrar estado de variables separadas (Claude method)
-        print("📍 Variables de entorno separadas (Claude method):")
-        for var in ['GOOGLE_PROJECT_ID', 'GOOGLE_CLIENT_EMAIL', 'GOOGLE_PRIVATE_KEY']:
-            value = os.getenv(var)
-            if value:
-                if var == 'GOOGLE_PRIVATE_KEY':
-                    display_value = '***' + value[-10:] if len(value) > 10 else '***'
-                else:
-                    display_value = value
-                print(f"   ✅ {var}={display_value}")
-            else:
-                print(f"   ❌ {var}=NOT_SET")
-        
-        print("💡 Para usar Render con variables separadas, configura GOOGLE_PROJECT_ID, GOOGLE_CLIENT_EMAIL y GOOGLE_PRIVATE_KEY")
-        print("💡 Para usar archivos, configura GOOGLE_APPLICATION_CREDENTIALS o coloca archivos en ubicaciones válidas")
-        
-        return None
+            print(f"❌ Variables de entorno faltantes: {', '.join(missing_vars)}")
+            print("🎭 Activando modo demo (sin Google Sheets)")
+            return None
 
 
 # Global configuration instance

@@ -1,17 +1,80 @@
+# Python
 __pycache__/
 *.pyc
-app/config.py
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
 venv/
+.venv/
+env/
+.env/
+
+# Configuration files with secrets
 .env
-edp_mvp/app/keys/*.json
-.sh
-RESTRUCTURE_PLAN.md
-.venv
-.vscode
-.rdb
-CONTEXT.md
-.python-version
-celerybeat-schedule
-env.production.example
+.env.local
 .env.production
 .env.development
+edp_mvp/app/keys/*.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Redis/Database
+*.rdb
+dump*.rdb
+celerybeat-schedule
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+/tmp/
+*.tmp
+temp/
+test_*.py
+debug_*.py
+diagnose_*.py
+verify_*.py
+*_test.py
+*_debug.py
+
+# Documentation drafts
+CONTEXT.md
+RESTRUCTURE_PLAN.md
+*.draft.md
+
+# Build and deployment artifacts
+*.tar.gz
+*.zip
+node_modules/
+
+# Google credentials (backup safety)
+*credentials*.json
+service-account*.json
+google-*.json

@@ -203,11 +203,14 @@ def validar_edp(edp_original, updates):
             raise ValueError(f"Al marcar Conformidad Enviada como 'Sí', debes completar: {', '.join(faltan)}")
 
 def get_service():
-    """Obtener servicio de Google Sheets usando variables de entorno separadas directamente"""
+    """
+    Obtener servicio de Google Sheets usando EXCLUSIVAMENTE variables de entorno (.env)
+    No busca archivos, solo usa las variables: GOOGLE_PROJECT_ID, GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY
+    """
     try:
         import os
         
-        # MÉTODO 1: Usar variables de entorno separadas directamente (Claude method)
+        # Usar SOLO variables de entorno separadas
         google_project_id = os.getenv('GOOGLE_PROJECT_ID')
         google_client_email = os.getenv('GOOGLE_CLIENT_EMAIL')
         google_private_key = os.getenv('GOOGLE_PRIVATE_KEY')
@@ -215,20 +218,17 @@ def get_service():
         google_client_id = os.getenv('GOOGLE_CLIENT_ID')
         
         if google_project_id and google_client_email and google_private_key:
-            print("🔑 Usando variables de entorno separadas de Google directamente")
+            print("🔑 Usando variables de entorno de Google (.env)")
             print(f"   📧 Client Email: {google_client_email}")
             print(f"   🆔 Project ID: {google_project_id}")
             
             # Procesar la clave privada para asegurar formato correcto
-            processed_private_key = google_private_key
+            processed_private_key = google_private_key.strip()
             
             # Si la clave contiene \n literales, convertirlos a saltos de línea reales
             if '\\n' in processed_private_key:
                 processed_private_key = processed_private_key.replace('\\n', '\n')
                 print("   🔧 Procesando \\n literales en private key")
-            
-            # Asegurar que la clave esté bien formateada
-            processed_private_key = processed_private_key.strip()
             
             # Crear el diccionario de credenciales directamente
             try:
@@ -248,11 +248,11 @@ def get_service():
                 # Crear credenciales directamente desde el diccionario
                 creds = Credentials.from_service_account_info(credentials_data, scopes=SCOPES)
                 service = build('sheets', 'v4', credentials=creds)
-                print("✅ Servicio de Google Sheets creado desde variables de entorno separadas")
+                print("✅ Servicio de Google Sheets creado exitosamente")
                 return service
                 
             except Exception as e:
-                print(f"❌ Error creando servicio con variables de entorno separadas: {e}")
+                print(f"❌ Error creando servicio con variables de entorno: {e}")
                 print("🎭 Activando modo demo")
                 return None
         else:
@@ -264,116 +264,8 @@ def get_service():
             if not google_private_key:
                 missing_vars.append('GOOGLE_PRIVATE_KEY')
             
-            print(f"ℹ️ Variables de entorno separadas no completas (faltan: {', '.join(missing_vars)})")
-            print("🔍 Intentando método de archivos...")
-        
-        # MÉTODO 2: Fallback a archivos (método original)
-        config = get_config()
-        
-        # Verificar que las credenciales existan
-        if not hasattr(config, 'GOOGLE_CREDENTIALS'):
-            print("❌ GOOGLE_CREDENTIALS no configurado en config")
-            print("🎭 Activando modo demo")
-            return None
-            
-        google_creds_path = config.GOOGLE_CREDENTIALS
-        if not google_creds_path:
-            print("❌ GOOGLE_CREDENTIALS es None o vacío")
-            print("🎭 Activando modo demo")
-            return None
-            
-        # Si config devuelve "ENV_VARS", significa que debemos usar variables de entorno
-        # pero ya las procesamos arriba, así que activar modo demo
-        if google_creds_path == "ENV_VARS":
-            print("❌ Config indica usar ENV_VARS pero ya se procesaron arriba sin éxito")
-            print("🎭 Activando modo demo")
-            return None
-            
-        if not isinstance(google_creds_path, str):
-            print(f"❌ GOOGLE_CREDENTIALS debe ser string, recibido: {type(google_creds_path)}")
-            print("🎭 Activando modo demo")
-            return None
-            
-        # Verificar que el archivo exista
-        if not os.path.exists(google_creds_path):
-            print(f"❌ Archivo de credenciales no encontrado: {google_creds_path}")
-            print("🎭 Activando modo demo")
-            return None
-            
-        print(f"✅ Intentando cargar credenciales desde archivo: {google_creds_path}")
-        
-        # Estrategia múltiple para leer credenciales en Render
-        creds_data = None
-        
-        # Método 1: Lectura directa (funciona en desarrollo)
-        try:
-            with open(google_creds_path, 'r') as f:
-                creds_data = json.load(f)
-            print("✅ Credenciales leídas directamente desde archivo")
-        except PermissionError:
-            print("⚠️ Error de permisos con lectura directa, intentando métodos alternativos...")
-            
-            # Método 2: Usar subprocess cat (en caso de que el proceso tenga otros permisos)
-            try:
-                import subprocess
-                result = subprocess.run(['cat', google_creds_path], 
-                                      capture_output=True, text=True, check=True)
-                creds_data = json.loads(result.stdout)
-                print("✅ Credenciales leídas con subprocess")
-            except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
-                print(f"❌ Falló lectura con subprocess: {e}")
-                
-                # Método 3: Intentar copiar el archivo a una ubicación temporal con permisos de escritura
-                try:
-                    import shutil
-                    import tempfile
-                    
-                    with tempfile.NamedTemporaryFile(mode='w+', suffix='.json', delete=False) as temp_file:
-                        # Intentar copiar el archivo
-                        subprocess.run(['cp', google_creds_path, temp_file.name], check=True)
-                        # Ahora intentar leer desde la copia temporal
-                        with open(temp_file.name, 'r') as f:
-                            creds_data = json.load(f)
-                        # Limpiar archivo temporal
-                        os.unlink(temp_file.name)
-                        print("✅ Credenciales leídas desde copia temporal")
-                except Exception as copy_error:
-                    print(f"❌ Falló copia temporal: {copy_error}")
-        
-        except json.JSONDecodeError as e:
-            print(f"❌ Error: Archivo no es JSON válido: {e}")
-            print("🎭 Activando modo demo")
-            return None
-        except Exception as e:
-            print(f"❌ Error inesperado leyendo credenciales: {e}")
-            print("🎭 Activando modo demo")
-            return None
-        
-        # Si no pudimos leer las credenciales de ninguna manera
-        if not creds_data:
-            print("❌ No se pudieron leer las credenciales con ningún método")
-            print("💡 Esto es común en contenedores con Secret Files restrictivos")
-            print("🎭 La aplicación continuará en modo demo")
-            return None
-        
-        # Verificar que el JSON tiene los campos requeridos
-        required_fields = ['client_email', 'private_key', 'project_id']
-        missing_fields = [field for field in required_fields if field not in creds_data]
-        
-        if missing_fields:
-            print(f"❌ Faltan campos requeridos en credenciales: {missing_fields}")
-            print("🎭 Activando modo demo")
-            return None
-        
-        # Crear credenciales desde los datos leídos
-        try:
-            creds = Credentials.from_service_account_info(creds_data, scopes=SCOPES)
-            service = build('sheets', 'v4', credentials=creds)
-            print("✅ Servicio de Google Sheets inicializado correctamente desde archivo")
-            print(f"   📧 Client Email: {creds_data.get('client_email', 'N/A')}")
-            return service
-        except Exception as e:
-            print(f"❌ Error creando servicio con credenciales desde archivo: {e}")
+            print(f"❌ Variables de entorno faltantes: {', '.join(missing_vars)}")
+            print("💡 Configura estas variables en tu archivo .env")
             print("🎭 Activando modo demo")
             return None
         
