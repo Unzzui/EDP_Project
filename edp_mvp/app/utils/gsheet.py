@@ -205,30 +205,42 @@ def validar_edp(edp_original, updates):
 def get_service():
     """
     Obtener servicio de Google Sheets usando EXCLUSIVAMENTE variables de entorno (.env)
-    No busca archivos, solo usa las variables: GOOGLE_PROJECT_ID, GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY
+    Solo requiere: GOOGLE_PROJECT_ID, GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY
     """
     try:
         import os
         
-        # Usar SOLO variables de entorno separadas
+        # Usar SOLO variables de entorno separadas (las 3 esenciales)
         google_project_id = os.getenv('GOOGLE_PROJECT_ID')
         google_client_email = os.getenv('GOOGLE_CLIENT_EMAIL')
         google_private_key = os.getenv('GOOGLE_PRIVATE_KEY')
-        google_key_id = os.getenv('GOOGLE_PRIVATE_KEY_ID')
-        google_client_id = os.getenv('GOOGLE_CLIENT_ID')
+        
+        # Variables opcionales (si existen las usamos, si no las generamos)
+        google_key_id = os.getenv('GOOGLE_PRIVATE_KEY_ID', 'auto-generated-from-env')
+        google_client_id = os.getenv('GOOGLE_CLIENT_ID', 'auto-generated-from-env')
         
         if google_project_id and google_client_email and google_private_key:
             print("🔑 Usando variables de entorno de Google (.env)")
             print(f"   📧 Client Email: {google_client_email}")
             print(f"   🆔 Project ID: {google_project_id}")
+            print(f"   🔐 Private Key ID: {google_key_id}")
+            print(f"   👤 Client ID: {google_client_id}")
             
             # Procesar la clave privada para asegurar formato correcto
             processed_private_key = google_private_key.strip()
+            
+            # Remover comillas si existen
+            if processed_private_key.startswith('"') and processed_private_key.endswith('"'):
+                processed_private_key = processed_private_key[1:-1]
+                print("   🔧 Removiendo comillas de private key")
             
             # Si la clave contiene \n literales, convertirlos a saltos de línea reales
             if '\\n' in processed_private_key:
                 processed_private_key = processed_private_key.replace('\\n', '\n')
                 print("   🔧 Procesando \\n literales en private key")
+            
+            # Limpiar espacios adicionales
+            processed_private_key = processed_private_key.strip()
             
             # Crear el diccionario de credenciales directamente
             try:
@@ -265,8 +277,7 @@ def get_service():
                 missing_vars.append('GOOGLE_PRIVATE_KEY')
             
             print(f"❌ Variables de entorno faltantes: {', '.join(missing_vars)}")
-            print("💡 Configura estas variables en tu archivo .env")
-            print("🎭 Activando modo demo")
+            print("🎭 Activando modo demo (sin Google Sheets)")
             return None
         
     except Exception as e:

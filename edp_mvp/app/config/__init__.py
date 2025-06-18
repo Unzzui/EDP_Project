@@ -8,6 +8,14 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from pathlib import Path
 
+# Cargar variables de entorno desde .env
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("✅ Variables de entorno cargadas desde .env")
+except ImportError:
+    print("⚠️ python-dotenv no instalado, usando variables de entorno del sistema")
+
 @dataclass
 class DatabaseConfig:
     """Database configuration."""
