@@ -3,6 +3,7 @@ Configuration management for the EDP application.
 """
 import os
 import json
+import tempfile
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from pathlib import Path
@@ -317,14 +318,53 @@ class Config:
     
     def _get_google_credentials_path(self):
         """
-        Buscar credenciales de Google en múltiples ubicaciones para compatibilidad con Render Secret Files
+        Buscar credenciales de Google con prioridad en variables de entorno separadas.
+        Si las variables separadas están completas, SOLO usar esas (no buscar archivos).
+        Si no están completas, buscar archivos como fallback.
         
         Returns:
             str: Ruta al archivo de credenciales o None si no se encuentra
         """
-        # Ubicaciones posibles para las credenciales, en orden de prioridad
+        
+        # MÉTODO 1: Verificar si tenemos variables de entorno separadas (Claude method)
+        # Esta es la estrategia más robusta para Render
+        google_project_id = os.getenv('GOOGLE_PROJECT_ID')
+        google_client_email = os.getenv('GOOGLE_CLIENT_EMAIL')
+        google_private_key = os.getenv('GOOGLE_PRIVATE_KEY')
+        google_key_id = os.getenv('GOOGLE_PRIVATE_KEY_ID')
+        google_client_id = os.getenv('GOOGLE_CLIENT_ID')
+        
+        
+        if google_project_id and google_client_email and google_private_key:
+            print("🔑 Detectadas variables de entorno separadas de Google (Claude method)")
+            print(f"   📧 Client Email: {google_client_email}")
+            print(f"   🆔 Project ID: {google_project_id}")
+            print(f"   🔐 Private Key: {'***' + google_private_key[-20:] if len(google_private_key) > 20 else '***'}")
+            print("🎯 USANDO EXCLUSIVAMENTE variables de entorno separadas (gsheet.py manejará esto)")
+            
+            # Retornar un indicador de que se usan variables de entorno
+            # gsheet.py detectará esto y usará las variables directamente
+            return "ENV_VARS"
+        else:
+            missing_vars = []
+            if not google_project_id:
+                missing_vars.append('GOOGLE_PROJECT_ID')
+            if not google_client_email:
+                missing_vars.append('GOOGLE_CLIENT_EMAIL')
+            if not google_private_key:
+                missing_vars.append('GOOGLE_PRIVATE_KEY')
+            if not google_key_id:
+                missing_vars.append('GOOGLE_PRIVATE_KEY_ID')
+            if not google_client_id:
+                missing_vars.append('GOOGLE_CLIENT_ID')
+
+            if missing_vars:
+                print(f"ℹ️ Variables de entorno separadas no completas (faltan: {', '.join(missing_vars)})")
+                print("🔍 Buscando archivos de credenciales como fallback...")
+        
+        # MÉTODO 2: Buscar archivos de credenciales en ubicaciones conocidas
         possible_paths = [
-            # 1. Variables de entorno de Render (PRIORIDAD MÁXIMA)
+            # 1. Variables de entorno que apuntan a archivos
             os.getenv('GOOGLE_APPLICATION_CREDENTIALS'),
             os.getenv('GOOGLE_CREDENTIALS'),
             os.getenv('GOOGLE_CREDENTIALS_FILE'),
@@ -369,7 +409,7 @@ class Config:
                     if all(field in data for field in required_fields):
                         print(f"      ✅ Credenciales válidas encontradas")
                         print(f"      📧 Client Email: {data.get('client_email', 'N/A')}")
-                        print(f"✅ USANDO CREDENCIALES: {path}")
+                        print(f"✅ USANDO CREDENCIALES DESDE ARCHIVO: {path}")
                         return path
                     else:
                         missing = [f for f in required_fields if f not in data]
@@ -392,12 +432,30 @@ class Config:
         
         print("⚠️ No se encontraron credenciales de Google válidas en ninguna ubicación")
         print("📍 Variables de entorno verificadas:")
+        
+        # Mostrar estado de variables de archivos
         for var in ['GOOGLE_APPLICATION_CREDENTIALS', 'GOOGLE_CREDENTIALS', 'GOOGLE_CREDENTIALS_FILE']:
             value = os.getenv(var)
             if value:
                 print(f"   ✅ {var}={value}")
             else:
                 print(f"   ❌ {var}=NOT_SET")
+        
+        # Mostrar estado de variables separadas (Claude method)
+        print("📍 Variables de entorno separadas (Claude method):")
+        for var in ['GOOGLE_PROJECT_ID', 'GOOGLE_CLIENT_EMAIL', 'GOOGLE_PRIVATE_KEY']:
+            value = os.getenv(var)
+            if value:
+                if var == 'GOOGLE_PRIVATE_KEY':
+                    display_value = '***' + value[-10:] if len(value) > 10 else '***'
+                else:
+                    display_value = value
+                print(f"   ✅ {var}={display_value}")
+            else:
+                print(f"   ❌ {var}=NOT_SET")
+        
+        print("💡 Para usar Render con variables separadas, configura GOOGLE_PROJECT_ID, GOOGLE_CLIENT_EMAIL y GOOGLE_PRIVATE_KEY")
+        print("💡 Para usar archivos, configura GOOGLE_APPLICATION_CREDENTIALS o coloca archivos en ubicaciones válidas")
         
         return None
 
