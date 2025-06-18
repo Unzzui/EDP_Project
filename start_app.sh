@@ -224,7 +224,7 @@ start_celery_services() {
     
     {
         sleep 2
-        if command -v celery &> /dev/null && celery help | grep -q flower; then
+        if command -v celery &> /dev/null && celery --help | grep -q flower; then
             celery -A edp_mvp.app.celery flower \
                 --broker="$REDIS_URL" \
                 --port=5555 \

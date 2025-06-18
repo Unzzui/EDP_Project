@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}Vista Kanban{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+{% include "controller/modal_edp_template.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[color:var(--background)]">
+  
+  <!-- Header -->
+  <div class="bg-[color:var(--bg-card)] border-b border-[color:var(--border-color)] mb-6">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-[color:var(--text-primary)]">
+            Vista Kanban
+            {% if user_access_level == 'restricted' %}
+            - {{ manager_name }}
+            {% endif %}
+          </h1>
+          <p class="text-[color:var(--text-secondary)] mt-2">
+            {% if user_access_level == 'full' %}
+            Vista completa de todos los EDPs del sistema
+            {% else %}
+            Vista filtrada de tus proyectos asignados
+            {% endif %}
+          </p>
+        </div>
+        
+        <!-- Indicador de acceso -->
+        <div class="flex items-center space-x-4">
+          <div class="px-3 py-1 rounded-full text-xs font-medium
+                      {% if user_access_level == 'full' %}
+                      bg-[color:var(--accent-blue)]/10 text-[color:var(--accent-blue)]
+                      {% else %}
+                      bg-[color:var(--accent-amber)]/10 text-[color:var(--accent-amber)]
+                      {% endif %}">
+            {% if user_access_level == 'full' %}
+            Acceso Completo
+            {% else %}
+            Acceso Restringido
+            {% endif %}
+          </div>
+          
+          <div class="flex items-center text-xs text-[color:var(--text-secondary)]">
+            <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full animate-pulse mr-2"></div>
+            Actualizado: {{ now.strftime('%H:%M') }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Contenido Principal -->
+  <div class="max-w-7xl mx-auto px-4">
+    
+    <!-- Panel de Estadísticas -->
+    {% if estadisticas %}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      
+      <div class="bg-[color:var(--bg-card)] p-6 rounded-xl border border-[color:var(--border-color)]">
+        <div class="flex items-center">
+          <div class="p-3 bg-[color:var(--accent-blue)]/10 rounded-lg">
+            <svg class="w-6 h-6 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-[color:var(--text-secondary)]">Total EDPs</p>
+            <p class="text-2xl font-bold text-[color:var(--text-primary)]">
+              {{ estadisticas.get('total_registros', 0) }}
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-[color:var(--bg-card)] p-6 rounded-xl border border-[color:var(--border-color)]">
+        <div class="flex items-center">
+          <div class="p-3 bg-[color:var(--accent-amber)]/10 rounded-lg">
+            <svg class="w-6 h-6 text-[color:var(--accent-amber)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-[color:var(--text-secondary)]">Filtrados</p>
+            <p class="text-2xl font-bold text-[color:var(--text-primary)]">
+              {{ estadisticas.get('registros_filtrados', 0) }}
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-[color:var(--bg-card)] p-6 rounded-xl border border-[color:var(--border-color)]">
+        <div class="flex items-center">
+          <div class="p-3 bg-[color:var(--accent-green)]/10 rounded-lg">
+            <svg class="w-6 h-6 text-[color:var(--accent-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-[color:var(--text-secondary)]">Columnas</p>
+            <p class="text-2xl font-bold text-[color:var(--text-primary)]">
+              {{ columnas.keys()|length }}
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-[color:var(--bg-card)] p-6 rounded-xl border border-[color:var(--border-color)]">
+        <div class="flex items-center">
+          <div class="p-3 bg-[color:var(--accent-purple)]/10 rounded-lg">
+            <svg class="w-6 h-6 text-[color:var(--accent-purple)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-[color:var(--text-secondary)]">DSO</p>
+            <p class="text-2xl font-bold text-[color:var(--text-primary)]">
+              {{ dso_global|default(0)|round }}
+            </p>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    {% endif %}
+    
+    <!-- Filtros -->
+    <div class="bg-[color:var(--bg-card)] rounded-xl p-6 border border-[color:var(--border-color)] mb-8">
+      <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <div>
+          <label class="block text-sm font-medium text-[color:var(--text-secondary)] mb-2">Mes</label>
+          <select name="mes" class="w-full p-2 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-card)]">
+            <option value="">Todos</option>
+            {% for mes in meses %}
+            <option value="{{ mes }}" {% if filtros.mes == mes %}selected{% endif %}>{{ mes }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        {% if user_access_level == 'full' %}
+        <div>
+          <label class="block text-sm font-medium text-[color:var(--text-secondary)] mb-2">Jefe de Proyecto</label>
+          <select name="jefe_proyecto" class="w-full p-2 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-card)]">
+            <option value="">Todos</option>
+            {% for jp in jefe_proyectos %}
+            <option value="{{ jp }}" {% if filtros.jefe_proyecto == jp %}selected{% endif %}>{{ jp }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        
+        <div>
+          <label class="block text-sm font-medium text-[color:var(--text-secondary)] mb-2">Cliente</label>
+          <select name="cliente" class="w-full p-2 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-card)]">
+            <option value="">Todos</option>
+            {% for cliente in clientes %}
+            <option value="{{ cliente }}" {% if filtros.cliente == cliente %}selected{% endif %}>{{ cliente }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="flex items-end">
+          <button type="submit" class="w-full bg-[color:var(--accent-blue)] text-white px-4 py-2 rounded-lg hover:bg-[color:var(--accent-blue-dark)] transition-colors">
+            Filtrar
+          </button>
+        </div>
+        
+      </form>
+    </div>
+    
+    <!-- Tablero Kanban -->
+    {% if columnas %}
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+      
+      {% for estado, edps in columnas.items() %}
+      <div class="bg-[color:var(--bg-card)] rounded-xl p-4 border border-[color:var(--border-color)]">
+        
+        <!-- Header de Columna -->
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-[color:var(--border-color-subtle)]">
+          <h3 class="text-lg font-semibold text-[color:var(--text-primary)] capitalize">
+            {{ estado }}
+          </h3>
+          <span class="px-2 py-1 text-xs font-medium bg-[color:var(--accent-blue)]/10 text-[color:var(--accent-blue)] rounded-full">
+            {{ edps|length }}
+          </span>
+        </div>
+        
+        <!-- Lista de EDPs -->
+        <div class="space-y-3 min-h-[400px]" id="column-{{ estado }}">
+          
+          {% for edp in edps %}
+          <div class="bg-[color:var(--bg-secondary)] p-4 rounded-lg border border-[color:var(--border-color-subtle)] hover:shadow-md transition-all duration-200 cursor-pointer"
+               data-edp-id="{{ edp.n_edp }}">
+            
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-semibold text-[color:var(--accent-blue)]">
+                EDP-{{ edp.n_edp }}
+              </span>
+              <span class="text-xs text-[color:var(--text-secondary)]">
+                ${{ "{:,.0f}".format(edp.monto_aprobado|float) if edp.monto_aprobado else '0' }}
+              </span>
+            </div>
+            
+            <h4 class="text-sm font-medium text-[color:var(--text-primary)] mb-2 line-clamp-2">
+              {{ edp.proyecto }}
+            </h4>
+            
+            <div class="text-xs text-[color:var(--text-secondary)] space-y-1">
+              <p>Cliente: {{ edp.cliente }}</p>
+              {% if user_access_level == 'full' or edp.jefe_proyecto == manager_name %}
+              <p>JP: {{ edp.jefe_proyecto }}</p>
+              {% endif %}
+              {% if edp.dias_espera %}
+              <p class="{% if edp.dias_espera > 60 %}text-[color:var(--accent-red)]{% elif edp.dias_espera > 30 %}text-[color:var(--accent-amber)]{% endif %}">
+                {{ edp.dias_espera }} días
+              </p>
+              {% endif %}
+            </div>
+            
+          </div>
+          {% endfor %}
+          
+          {% if not edps %}
+          <div class="text-center py-8 text-[color:var(--text-secondary)]">
+            <svg class="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m-1 0V9a2 2 0 012-2h2m2 0h2" />
+            </svg>
+            <p>Sin elementos</p>
+          </div>
+          {% endif %}
+          
+        </div>
+        
+      </div>
+      {% endfor %}
+      
+    </div>
+    {% else %}
+    <div class="bg-[color:var(--bg-card)] rounded-xl p-12 border border-[color:var(--border-color)] text-center">
+      <svg class="w-16 h-16 mx-auto mb-4 text-[color:var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+      <h3 class="text-lg font-semibold text-[color:var(--text-primary)] mb-2">
+        No hay datos disponibles
+      </h3>
+      <p class="text-[color:var(--text-secondary)]">
+        No se encontraron EDPs con los filtros aplicados.
+      </p>
+    </div>
+    {% endif %}
+    
+  </div>
+  
+</div>
+
+<!-- Modal para detalles de EDP -->
+<div id="edpModalOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+  <div id="edpModalContent" class="bg-[color:var(--bg-card)] rounded-xl shadow-xl border border-[color:var(--border-color)] w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+    <!-- El contenido se llenará dinámicamente -->
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+window.userAccessLevel = '{{ user_access_level }}';
+window.managerName = '{{ manager_name }}';
+
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Vista Kanban cargada');
+  console.log('Nivel de acceso:', window.userAccessLevel);
+  
+  // Manejar clicks en las tarjetas de EDP
+  document.querySelectorAll('[data-edp-id]').forEach(card => {
+    card.addEventListener('click', function() {
+      const edpId = this.getAttribute('data-edp-id');
+      console.log('Click en EDP:', edpId);
+      // Aquí se puede agregar la funcionalidad del modal
+    });
+  });
+  
+  // Auto-refresh cada 5 minutos
+  setInterval(function() {
+    if (window.userAccessLevel === 'full') {
+      // Solo auto-refresh para usuarios con acceso completo
+      console.log('Auto-refresh iniciado...');
+      window.location.reload();
+    }
+  }, 300000); // 5 minutos
+});
+</script>
+{% endblock %}

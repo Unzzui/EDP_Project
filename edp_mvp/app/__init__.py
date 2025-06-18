@@ -87,6 +87,9 @@ def create_app():
     from .controllers.edp_controller import edp_controller_bp
     from .controllers.admin_controller import admin_bp
     from .controllers.project_manager_controller import project_manager_bp
+    from .controllers.kanban_controller import kanban_bp
+    from .controllers.kanban_controller_optimized import kanban_opt_bp
+    from .controllers.edp_upload_controller import edp_upload_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(edp_bp, url_prefix="/edp")
@@ -100,6 +103,9 @@ def create_app():
     app.register_blueprint(edp_controller_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(project_manager_bp)
+    app.register_blueprint(kanban_bp)
+    app.register_blueprint(kanban_opt_bp)  # ✨ Versión optimizada
+    app.register_blueprint(edp_upload_bp)  # 📋 Sistema de carga de EDPs
 
     # Old monolithic controllers (comment out when fully migrated)
     # app.register_blueprint(controller_bp)

@@ -2313,14 +2313,29 @@ class ControllerService(BaseService):
                     idx_mes_actual = meses_ordenados_str.index(str(mes_filter))
                     if idx_mes_actual > 0:
                         mes_anterior_para_dso = meses_ordenados_str[idx_mes_actual - 1]
-                        df_mes_anterior_para_dso = df_full[
-                            df_full["mes"] == mes_anterior_para_dso
-                        ].copy()
+                        # Apply same filters as df_filtered but for previous month
+                        df_mes_anterior = df_full[df_full["mes"] == mes_anterior_para_dso].copy()
+                        
+                        # Apply same filters except month
+                        if filters["jefe_proyecto"] and filters["jefe_proyecto"] != "todos":
+                            df_mes_anterior = df_mes_anterior[df_mes_anterior["jefe_proyecto"] == filters["jefe_proyecto"]]
+                        if filters["cliente"] and filters["cliente"] != "todos":
+                            df_mes_anterior = df_mes_anterior[df_mes_anterior["cliente"] == filters["cliente"]]
+                        
+                        # Apply same status filter logic
+                        if filters["estado"] == "pendientes":
+                            df_mes_anterior = df_mes_anterior[df_mes_anterior["estado"].isin(["revisión", "enviado"])]
+                        elif filters["estado"] == "todos" or not filters["estado"]:  
+                            pass  # No filter
+                        else:
+                            df_mes_anterior = df_mes_anterior[df_mes_anterior["estado"] == filters["estado"]]
+                        
+                        df_mes_anterior_para_dso = df_mes_anterior
                 except ValueError:  # mes_filter might not be in list
                     pass
 
             dso_global, dso_var, top_dso_proyectos_raw = self._calcular_dso(
-                df_full.copy(), mes_anterior_para_dso, df_mes_anterior_para_dso
+                df_filtered.copy(), mes_anterior_para_dso, df_mes_anterior_para_dso
             )
             top_dso_proyectos = self._clean_nat_values(top_dso_proyectos_raw)
 

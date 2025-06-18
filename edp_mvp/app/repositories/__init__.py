@@ -28,14 +28,11 @@ class BaseRepository(ABC):
         return self._service
     
     def _get_service(self):
-        """Create Google Sheets service."""
-        scopes = ['https://www.googleapis.com/auth/spreadsheets']
-        config = get_config()
-        creds = Credentials.from_service_account_file(
-            config.GOOGLE_CREDENTIALS, 
-            scopes=scopes
-        )
-        return build('sheets', 'v4', credentials=creds)
+        """Create Google Sheets service using ONLY environment variables."""
+        # Use the centralized get_service function from gsheet.py
+        # This ensures consistent behavior across the application
+        from ..utils.gsheet import get_service
+        return get_service()
     
     def _read_range(self, range_name: str) -> List[List[str]]:
         """Read data from Google Sheets range using optimized cache from gsheet.py."""

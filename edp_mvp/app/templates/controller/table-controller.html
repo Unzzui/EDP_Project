@@ -243,7 +243,7 @@
 
             <td>
               <a
-                href="{{ url_for('controller.detalle_edp', n_edp=registro.get('id', '')) }}"
+                href="{{ url_for('controller.detalle_edp', edp_id=registro.get('id', '')) }}"
                 class="flex items-center justify-center text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] bg-[color:var(--bg-card-hover)] hover:bg-[color:var(--bg-highlight)] p-1.5 rounded-full transition-colors"
                 title="Ver detalles del EDP">
                 <svg

@@ -60,7 +60,7 @@ class EDPService(BaseService):
             )
     
     def get_edp_by_id(self, edp_id: str) -> ServiceResponse:
-        """Get a specific EDP with detailed information."""
+        """Get a specific EDP by n_edp (number EDP) with detailed information."""
         try:
             # Get all EDPs from repository
             edps_response = self.edp_repository.find_all_dataframe()
@@ -79,13 +79,13 @@ class EDPService(BaseService):
                     message="No EDPs found in the system"
                 )
             
-            # Filter by EDP ID
+            # Filter by EDP ID (n_edp)
             edp_found = df_edps[df_edps["n_edp"] == str(edp_id)]
             
             if edp_found.empty:
                 return ServiceResponse(
                     success=False,
-                    message=f"EDP with ID {edp_id} not found"
+                    message=f"EDP with number {edp_id} not found"
                 )
             
             # Get the first match and convert to dict
@@ -112,8 +112,61 @@ class EDPService(BaseService):
                 message=f"Error retrieving EDP: {str(e)}"
             )
     
+    def get_edp_by_internal_id(self, internal_id: int) -> ServiceResponse:
+        """Get a specific EDP by internal ID with detailed information."""
+        try:
+            # Get all EDPs from repository
+            edps_response = self.edp_repository.find_all_dataframe()
+            
+            if not edps_response.get("success", True):
+                return ServiceResponse(
+                    success=False,
+                    message=f"Error retrieving EDPs: {edps_response.get('message', 'Unknown error')}"
+                )
+            
+            df_edps = edps_response.get("data", pd.DataFrame())
+            
+            if df_edps.empty:
+                return ServiceResponse(
+                    success=False,
+                    message="No EDPs found in the system"
+                )
+            
+            # Filter by internal ID
+            edp_found = df_edps[df_edps["id"] == int(internal_id)]
+            
+            if edp_found.empty:
+                return ServiceResponse(
+                    success=False,
+                    message=f"EDP with internal ID {internal_id} not found"
+                )
+            
+            # Get the first match and convert to dict
+            edp_data = edp_found.iloc[0].to_dict()
+            
+            # Clean NaT values and format dates
+            edp_data = self._clean_nat_values(edp_data)
+            edp_data = self._format_edp_dates(edp_data)
+            
+            # Add calculated fields
+            edp_data['row_index'] = edp_found.index[0] + 2  # +2 for header and 0-indexing
+            
+            return ServiceResponse(
+                success=True,
+                data=edp_data,
+                message="EDP retrieved successfully"
+            )
+        except Exception as e:
+            import traceback
+            print(f"Error in get_edp_by_internal_id: {str(e)}")
+            print(traceback.format_exc())
+            return ServiceResponse(
+                success=False,
+                message=f"Error retrieving EDP: {str(e)}"
+            )
+    
     def update_edp(self, edp_id: str, edp_data: Dict[str, Any]) -> ServiceResponse:
-        """Update an existing EDP using the repository."""
+        """Update an existing EDP by n_edp using the repository."""
         try:
             # Use the repository's update method
             update_response = self.edp_repository.update_by_edp_id(edp_id, edp_data)
@@ -132,6 +185,50 @@ class EDPService(BaseService):
         except Exception as e:
             import traceback
             print(f"Error in update_edp: {str(e)}")
+            print(traceback.format_exc())
+            return ServiceResponse(
+                success=False,
+                message=f"Error updating EDP: {str(e)}"
+            )
+    
+    def update_edp_by_internal_id(self, internal_id: int, edp_data: Dict[str, Any]) -> ServiceResponse:
+        """Update an existing EDP by internal ID using the repository."""
+        try:
+            # First, get the EDP to find its n_edp
+            edp_response = self.get_edp_by_internal_id(internal_id)
+            
+            if not edp_response.success:
+                return ServiceResponse(
+                    success=False,
+                    message=f"EDP with internal ID {internal_id} not found"
+                )
+            
+            edp_info = edp_response.data
+            n_edp = edp_info.get('n_edp')
+            
+            if not n_edp:
+                return ServiceResponse(
+                    success=False,
+                    message=f"Could not find n_edp for internal ID {internal_id}"
+                )
+            
+            # Use the existing update method with n_edp
+            update_response = self.edp_repository.update_by_edp_id(str(n_edp), edp_data)
+            
+            if update_response.get("success", False):
+                return ServiceResponse(
+                    success=True,
+                    data=update_response.get("data", {}),
+                    message=update_response.get("message", "EDP updated successfully")
+                )
+            else:
+                return ServiceResponse(
+                    success=False,
+                    message=update_response.get("message", "Failed to update EDP")
+                )
+        except Exception as e:
+            import traceback
+            print(f"Error in update_edp_by_internal_id: {str(e)}")
             print(traceback.format_exc())
             return ServiceResponse(
                 success=False,

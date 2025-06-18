@@ -21,9 +21,13 @@ __author__ = 'EDP Restructuring Team'
 from .controller_controller import controller_controller_bp
 from .manager_controller import manager_controller_bp
 from .edp_controller import edp_controller_bp
+from .kanban_controller import kanban_bp
+from .kanban_controller_optimized import kanban_opt_bp
 
 __all__ = [
     'controller_controller_bp',
     'manager_controller_bp', 
-    'edp_controller_bp'
+    'edp_controller_bp',
+    'kanban_bp',
+    'kanban_opt_bp'
 ]

@@ -114,6 +114,46 @@ class EDPRepository(BaseRepository):
             return next_id
         else:
             raise Exception("Failed to create EDP")
+    
+    def create_bulk(self, edps: List[EDP]) -> Dict[str, Any]:
+        """Create multiple EDPs in bulk for better performance."""
+        try:
+            if not edps:
+                return {"success": True, "created_ids": [], "message": "No EDPs to create"}
+            
+            # Get starting ID
+            next_id = self.sheets_repo.get_next_id(self.sheet_name)
+            created_ids = []
+            
+            # Prepare all rows
+            rows = []
+            for i, edp in enumerate(edps):
+                edp.id = next_id + i
+                row_values = self._model_to_row_values(edp)
+                rows.append(row_values)
+                created_ids.append(edp.id)
+            
+            # Bulk insert
+            if self.sheets_repo._append_rows(self.sheet_name, rows):
+                return {
+                    "success": True,
+                    "created_ids": created_ids,
+                    "message": f"Successfully created {len(created_ids)} EDPs"
+                }
+            else:
+                return {
+                    "success": False,
+                    "created_ids": [],
+                    "message": "Failed to create EDPs in bulk"
+                }
+                
+        except Exception as e:
+            logger.error(f"Error in bulk create: {e}")
+            return {
+                "success": False,
+                "created_ids": [],
+                "message": f"Error creating EDPs: {str(e)}"
+            }
 
     @invalidate_cache_on_change('edp_updated', ['edps'])
     def update(self, edp: EDP) -> bool:

@@ -1,0 +1,270 @@
+<!-- Performance Metrics Widget -->
+<div
+  class="performance-metrics-widget"
+  style="position: fixed; bottom: 20px; right: 20px; z-index: 1000">
+  <div class="card border-success" style="width: 300px; font-size: 0.85rem">
+    <div class="card-header bg-success text-white py-2">
+      <h6 class="mb-0">
+        <i class="fas fa-tachometer-alt"></i>
+        Performance Metrics
+        <button
+          class="btn btn-sm btn-outline-light float-right"
+          onclick="togglePerformanceWidget()"
+          style="padding: 0.1rem 0.3rem">
+          <i class="fas fa-minus" id="perf-toggle-icon"></i>
+        </button>
+      </h6>
+    </div>
+    <div class="card-body py-2" id="performance-body">
+      <!-- Load Time -->
+      <div class="row mb-1">
+        <div class="col-6"><small>Tiempo de Carga:</small></div>
+        <div class="col-6">
+          <span class="badge badge-success" id="load-time">
+            {% if load_time %}{{ "%.3f"|format(load_time) }}s{% else %}N/A{%
+            endif %}
+          </span>
+        </div>
+      </div>
+
+      <!-- Cache Status -->
+      <div class="row mb-1">
+        <div class="col-6"><small>Cache:</small></div>
+        <div class="col-6">
+          {% if from_cache %}
+          <span class="badge badge-primary">
+            <i class="fas fa-check"></i> HIT
+          </span>
+          {% else %}
+          <span class="badge badge-warning">
+            <i class="fas fa-times"></i> MISS
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Data Source -->
+      <div class="row mb-1">
+        <div class="col-6"><small>Fuente:</small></div>
+        <div class="col-6">
+          <span class="badge badge-info">
+            {% if data_source == 'quick_calculation' %}Rápido{% else
+            %}Completo{% endif %}
+          </span>
+        </div>
+      </div>
+
+      <!-- Records Count -->
+      <div class="row mb-1">
+        <div class="col-6"><small>Registros:</small></div>
+        <div class="col-6">
+          <span class="text-muted"
+            >{{ registros|length if registros else 0 }}</span
+          >
+        </div>
+      </div>
+
+      <!-- Cache Actions -->
+      <div class="row mt-2">
+        <div class="col-12">
+          <button
+            class="btn btn-sm btn-outline-primary mr-1"
+            onclick="checkCacheStatus()"
+            style="font-size: 0.7rem">
+            <i class="fas fa-sync"></i> Estado
+          </button>
+          <button
+            class="btn btn-sm btn-outline-danger"
+            onclick="clearCache()"
+            style="font-size: 0.7rem">
+            <i class="fas fa-trash"></i> Limpiar
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-time metrics -->
+      <div class="row mt-2" id="realtime-metrics" style="display: none">
+        <div class="col-12">
+          <small class="text-muted">
+            <strong>Cache Items:</strong> <span id="cache-items">0</span><br />
+            <strong>Última actualización:</strong>
+            <span id="last-update">-</span>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Performance Metrics JavaScript
+  let performanceWidgetCollapsed = false;
+
+  function togglePerformanceWidget() {
+    const body = document.getElementById("performance-body");
+    const icon = document.getElementById("perf-toggle-icon");
+
+    if (performanceWidgetCollapsed) {
+      body.style.display = "block";
+      icon.className = "fas fa-minus";
+      performanceWidgetCollapsed = false;
+    } else {
+      body.style.display = "none";
+      icon.className = "fas fa-plus";
+      performanceWidgetCollapsed = true;
+    }
+  }
+
+  async function checkCacheStatus() {
+    try {
+      const response = await fetch("/kanban-opt/api/cache-status");
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Update real-time metrics
+      document.getElementById("cache-items").textContent =
+        data.cache_items || 0;
+      document.getElementById("last-update").textContent = new Date(
+        data.timestamp
+      ).toLocaleTimeString();
+
+      // Show real-time metrics
+      document.getElementById("realtime-metrics").style.display = "block";
+
+      // Show success message
+      showPerformanceMessage("Cache status actualizado", "success");
+    } catch (error) {
+      console.error("Error checking cache status:", error);
+      showPerformanceMessage(
+        "Error al verificar cache: " + error.message,
+        "error"
+      );
+    }
+  }
+
+  async function clearCache() {
+    if (
+      !confirm(
+        "¿Estás seguro de que quieres limpiar el cache? Esto puede afectar el rendimiento temporalmente."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/kanban-opt/api/clear-cache", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Update metrics
+      document.getElementById("cache-items").textContent = "0";
+      document.getElementById("last-update").textContent =
+        new Date().toLocaleTimeString();
+
+      showPerformanceMessage(
+        `Cache limpiado: ${data.cleared_items} elementos eliminados`,
+        "success"
+      );
+
+      // Optionally reload the page to show fresh data
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } catch (error) {
+      console.error("Error clearing cache:", error);
+      showPerformanceMessage(
+        "Error al limpiar cache: " + error.message,
+        "error"
+      );
+    }
+  }
+
+  function showPerformanceMessage(message, type) {
+    // Create a temporary message element
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `alert alert-${
+      type === "success" ? "success" : "danger"
+    } alert-dismissible fade show`;
+    messageDiv.style.position = "fixed";
+    messageDiv.style.top = "20px";
+    messageDiv.style.right = "20px";
+    messageDiv.style.zIndex = "1050";
+    messageDiv.style.minWidth = "300px";
+    messageDiv.innerHTML = `
+        <small>${message}</small>
+        <button type="button" class="close" data-dismiss="alert">
+            <span>&times;</span>
+        </button>
+    `;
+
+    document.body.appendChild(messageDiv);
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      if (messageDiv.parentNode) {
+        messageDiv.parentNode.removeChild(messageDiv);
+      }
+    }, 3000);
+  }
+
+  // Auto-update cache status every 30 seconds if widget is visible
+  setInterval(() => {
+    if (
+      !performanceWidgetCollapsed &&
+      document.getElementById("realtime-metrics").style.display !== "none"
+    ) {
+      checkCacheStatus();
+    }
+  }, 30000);
+
+  // Load time color coding
+  document.addEventListener("DOMContentLoaded", function () {
+    const loadTimeElement = document.getElementById("load-time");
+    if (loadTimeElement) {
+      const loadTime = parseFloat(loadTimeElement.textContent);
+      if (loadTime < 0.5) {
+        loadTimeElement.className = "badge badge-success";
+      } else if (loadTime < 1.0) {
+        loadTimeElement.className = "badge badge-warning";
+      } else {
+        loadTimeElement.className = "badge badge-danger";
+      }
+    }
+  });
+</script>
+
+<style>
+  .performance-metrics-widget {
+    transition: all 0.3s ease;
+  }
+
+  .performance-metrics-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .performance-metrics-widget .card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .performance-metrics-widget .badge {
+    font-size: 0.7rem;
+  }
+
+  .performance-metrics-widget .btn-sm {
+    padding: 0.15rem 0.3rem;
+    font-size: 0.7rem;
+  }
+</style>

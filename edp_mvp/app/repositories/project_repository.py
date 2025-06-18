@@ -7,6 +7,7 @@ from datetime import datetime
 from ..models import Project
 from . import BaseRepository
 import logging
+import pandas as pd
 from . import BaseRepository, SheetsRepository
 
 logger = logging.getLogger(__name__)
@@ -261,19 +262,65 @@ class ProjectRepository(BaseRepository):
             tags=record.get("tags", "").split(",") if record.get("tags") else [],
         )
 
+    def _dataframe_to_models(self, df: pd.DataFrame) -> List[Project]:
+        """Convert DataFrame to list of Project models."""
+        models = []
+        for _, row in df.iterrows():
+            try:
+                # Parse dates
+                fecha_inicio = None
+                fecha_fin_prevista = None
+                
+                if pd.notna(row.get('fecha_inicio')):
+                    try:
+                        fecha_inicio = pd.to_datetime(row['fecha_inicio']).to_pydatetime()
+                    except:
+                        pass
+                
+                if pd.notna(row.get('fecha_fin_prevista')):
+                    try:
+                        fecha_fin_prevista = pd.to_datetime(row['fecha_fin_prevista']).to_pydatetime()
+                    except:
+                        pass
+                
+                # Parse monto_contrato
+                monto_contrato = None
+                if pd.notna(row.get('monto_contrato')):
+                    try:
+                        monto_contrato = float(row['monto_contrato'])
+                    except:
+                        pass
+                
+                project = Project(
+                    id=row.get('project_id', ''),
+                    project_id=row.get('project_id', ''),
+                    proyecto=row.get('proyecto', ''),
+                    cliente=row.get('cliente', ''),
+                    gestor=row.get('gestor', ''),
+                    jefe_proyecto=row.get('jefe_proyecto', ''),
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin_prevista=fecha_fin_prevista,
+                    monto_contrato=monto_contrato,
+                    moneda=row.get('moneda', 'CLP'),
+                    estado_proyecto=row.get('estado_proyecto', 'activo')
+                )
+                models.append(project)
+            except Exception as e:
+                logger.warning(f"Error converting row to Project model: {e}")
+                continue
+        
+        return models
+
     def _project_to_list(self, project: Project) -> List[Any]:
         """Convert Project object to list for Google Sheets."""
         return [
-            project.id,
-            project.edp_id,
-            project.name,
-            project.description,
-            project.status,
-            project.priority,
-            project.start_date.isoformat() if project.start_date else "",
-            project.end_date.isoformat() if project.end_date else "",
-            project.progress,
-            project.budget if project.budget else "",
-            project.assigned_to,
-            ",".join(project.tags) if project.tags else "",
+            project.project_id,
+            project.proyecto,
+            project.cliente,
+            project.gestor,
+            project.jefe_proyecto,
+            project.fecha_inicio.isoformat() if project.fecha_inicio else "",
+            project.fecha_fin_prevista.isoformat() if project.fecha_fin_prevista else "",
+            project.monto_contrato if project.monto_contrato else "",
+            project.moneda,
         ]

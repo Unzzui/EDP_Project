@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Dashboard Controller{% endblock %}
+{% block title %}Panel de Control EDP{% endblock %}
 
 <!-- Add these styles to your head block -->
 
@@ -198,7 +198,7 @@
           </svg>
         </div>
         <div>
-          <h1 class="text-2xl font-bold tracking-tight">Dashboard Controller</h1>
+          <h1 class="text-2xl font-bold tracking-tight">Panel de Control EDP</h1>
           <p class="text-[color:var(--text-secondary)] max-w-2xl">
             Gestión y seguimiento de EDPs, con métricas y estado actualizado de proyectos.
           </p>
@@ -222,7 +222,7 @@
           <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
         </svg>
       </button>
-      <a href="{{ url_for('controller.vista_kanban') }}"
+      <a href="{{ url_for('kanban.vista_kanban') }}"
          class="flex items-center bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-xl text-sm border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
           <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -1042,7 +1042,7 @@
 </td>
 
     <td>
-<a href="{{ url_for('controller.detalle_edp', n_edp=registro.get('id', '')) }}" 
+<a href="{{ url_for('controller.detalle_edp', edp_id=registro.get('id', '')) }}" 
      class="flex items-center justify-center text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] bg-[color:var(--bg-card-hover)] hover:bg-[color:var(--bg-highlight)] p-1.5 rounded-full transition-colors"
      title="Ver detalles del EDP">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

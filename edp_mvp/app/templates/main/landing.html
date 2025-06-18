@@ -177,9 +177,9 @@
         <!-- CTA Button -->
         {% if user and user.is_authenticated %}
         <a
-          href="{{ url_for('controller.dashboard_controller') }}"
+          href="{{ url_for('kanban.vista_kanban') }}"
           class="bg-white text-black px-6 py-3 rounded-full font-semibold hover:bg-white/90 hover:-translate-y-0.5 transition-all duration-300">
-          Dashboard
+          Panel de Control
         </a>
         {% else %}
         <a
@@ -242,15 +242,15 @@
         <div class="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8 animate-fade-in-up delay-500">
           {% if user and user.is_authenticated %}
           <a
-            href="{{ url_for('controller.dashboard_controller') }}"
+            href="{{ url_for('kanban.vista_kanban') }}"
             class="group bg-gradient-to-r from-blue-500 to-purple-600 text-white px-10 py-5 rounded-full font-semibold text-lg hover:from-blue-600 hover:to-purple-700 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 flex items-center gap-3">
-            <span>Acceder Dashboard</span>
+            <span>Panel de Control EDP</span>
             <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
             </svg>
           </a>
           <a
-            href="{{ url_for('controller.vista_kanban') }}"
+            href="{{ url_for('kanban.vista_kanban') }}"
             class="group bg-transparent text-white px-10 py-5 rounded-full font-semibold text-lg border-2 border-white/30 hover:border-white hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 flex items-center gap-3">
             <span>Ver Kanban</span>
             <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">

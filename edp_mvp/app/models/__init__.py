@@ -61,6 +61,52 @@ class EDP(BaseModel):
     dias_espera: Optional[int] = None
     dias_habiles: Optional[int] = None
     
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        """Create EDP instance from dictionary with date conversion."""
+        # Fields that should be converted to datetime
+        date_fields = [
+            'fecha_emision', 'fecha_envio_cliente', 'fecha_estimada_pago',
+            'fecha_conformidad', 'fecha_registro'
+        ]
+        
+        # Create a copy to avoid modifying original data
+        processed_data = data.copy()
+        
+        # Convert date strings to datetime objects
+        for field in date_fields:
+            if field in processed_data and processed_data[field]:
+                try:
+                    # Handle different date formats
+                    date_value = processed_data[field]
+                    if isinstance(date_value, str):
+                        # Try different date formats
+                        for fmt in ['%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f']:
+                            try:
+                                processed_data[field] = datetime.strptime(date_value, fmt)
+                                break
+                            except ValueError:
+                                continue
+                        else:
+                            # If no format works, try fromisoformat
+                            try:
+                                processed_data[field] = datetime.fromisoformat(date_value.replace('Z', '+00:00'))
+                            except ValueError:
+                                # If all fails, set to None
+                                processed_data[field] = None
+                    elif not isinstance(date_value, datetime):
+                        processed_data[field] = None
+                except Exception:
+                    processed_data[field] = None
+        
+        # Filter only fields that exist in the model
+        valid_fields = {
+            key: value for key, value in processed_data.items()
+            if key in cls.__annotations__
+        }
+        
+        return cls(**valid_fields)
+    
     @property
     def is_validated(self) -> bool:
         """Check if EDP is validated."""

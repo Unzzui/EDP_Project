@@ -63,8 +63,8 @@ class DatabaseConfig:
             print(f"⚠️ DATABASE_URL no configurado, usando SQLite: {sqlite_path}")
         
         return cls(
-            credentials_file=os.getenv('GOOGLE_CREDENTIALS_FILE', 'credentials.json'),
-            # Cambiado para usar SHEET_ID que es lo que tienes en tu .env
+            credentials_file="",  # No usar archivos JSON
+            # Usar SHEET_ID que tienes en tu .env
             sheet_id=os.getenv('SHEET_ID', os.getenv('GOOGLE_SHEET_ID', '')),
             timeout=int(os.getenv('DB_TIMEOUT', '30')),
             retry_attempts=int(os.getenv('DB_RETRY_ATTEMPTS', '3')),
@@ -214,10 +214,13 @@ class Config:
         self.kpi = KPIConfig.from_env()
         
         # Add compatibility attributes for legacy code
-        # Buscar credenciales de Google en múltiples ubicaciones (para Render Secret Files)
-        self.GOOGLE_CREDENTIALS = self._get_google_credentials_path()
+        # SOLO usar variables de entorno - no archivos JSON
+        self.GOOGLE_CREDENTIALS = "ENV_VARS"  # Siempre usar variables de entorno
         # Usar SHEET_ID de tu .env
         self.SHEET_ID = os.getenv('SHEET_ID', os.getenv('GOOGLE_SHEET_ID', ''))
+        
+        # Configurar servicio de Google Sheets desde aquí
+        self.GOOGLE_SERVICE = self._setup_google_service()
         self.SECRET_KEY = self.app.secret_key
         self.DEBUG = self.app.debug
         self.FLASK_ENV = self.app.environment
@@ -290,6 +293,154 @@ class Config:
         
         return "1.0.0"  # Default version
     
+    def _setup_google_service(self):
+        """
+        Configurar servicio de Google Sheets usando variables de entorno o archivo JSON.
+        Centraliza toda la lógica de autenticación en la configuración.
+        
+        Returns:
+            Google Sheets service object o None si no se puede configurar
+        """
+        try:
+            from google.oauth2.service_account import Credentials
+            from googleapiclient.discovery import build
+            import json
+            
+            # 1. Cargar variables de entorno
+            print("🔑 Configurando servicio de Google Sheets...")
+            google_project_id = os.getenv('GOOGLE_PROJECT_ID')
+            google_client_email = os.getenv('GOOGLE_CLIENT_EMAIL')
+            google_private_key = os.getenv('GOOGLE_PRIVATE_KEY')
+            google_key_id = os.getenv('GOOGLE_PRIVATE_KEY_ID', 'auto-generated-from-env')
+            google_client_id = os.getenv('GOOGLE_CLIENT_ID', 'auto-generated-from-env')
+            
+            print(f"   📧 Client Email: {google_client_email}")
+            print(f"   🆔 Project ID: {google_project_id}")
+            print(f"   🔐 Private Key ID: {google_key_id}")
+            print(f"   👤 Client ID: {google_client_id}")
+            
+            # 2. Verificar si tenemos todas las variables de entorno
+            env_vars_complete = all([google_project_id, google_client_email, google_private_key])
+            
+            if env_vars_complete:
+                print(f"   🔍 Private Key Length: {len(google_private_key)} caracteres")
+                
+                # Si la clave privada es muy corta, probablemente está truncada
+                if len(google_private_key) < 100:
+                    print(f"   ⚠️ Clave privada parece estar truncada ({len(google_private_key)} chars)")
+                    print("   🔄 Intentando cargar desde archivo JSON...")
+                    env_vars_complete = False
+                else:
+                    print("   ✅ Variables de entorno parecen completas")
+            else:
+                missing_vars = []
+                if not google_project_id:
+                    missing_vars.append('GOOGLE_PROJECT_ID')
+                if not google_client_email:
+                    missing_vars.append('GOOGLE_CLIENT_EMAIL')
+                if not google_private_key:
+                    missing_vars.append('GOOGLE_PRIVATE_KEY')
+                
+                print(f"   ⚠️ Variables de entorno faltantes: {', '.join(missing_vars)}")
+                print("   🔄 Intentando cargar desde archivo JSON...")
+            
+            # 3. Si las variables de entorno no están completas, usar archivo JSON
+            if not env_vars_complete:
+                json_path = os.path.join(os.path.dirname(__file__), '..', 'keys', 'edp-control-system.json')
+                if os.path.exists(json_path):
+                    print(f"   📁 Cargando credenciales desde: {json_path}")
+                    with open(json_path, 'r') as f:
+                        credentials_data = json.load(f)
+                    
+                    # Verificar que el JSON tiene los campos necesarios
+                    required_fields = ['project_id', 'client_email', 'private_key']
+                    if all(field in credentials_data for field in required_fields):
+                        print("   ✅ Archivo JSON válido encontrado")
+                    else:
+                        print(f"   ❌ Archivo JSON incompleto. Campos faltantes: {[f for f in required_fields if f not in credentials_data]}")
+                        print("🎭 Activando modo demo")
+                        return None
+                else:
+                    print(f"   ❌ Archivo JSON no encontrado: {json_path}")
+                    print("🎭 Activando modo demo (sin Google Sheets)")
+                    return None
+            else:
+                # 4. Usar variables de entorno para crear las credenciales
+                print("   � Procesando clave privada desde variables de entorno...")
+                processed_private_key = google_private_key.strip()
+                
+                # Remover comillas externas si existen
+                if processed_private_key.startswith('"') and processed_private_key.endswith('"'):
+                    processed_private_key = processed_private_key[1:-1]
+                    print("   🔧 Removiendo comillas externas")
+                
+                # Si la clave contiene \n literales, convertirlos a saltos de línea reales
+                if '\\n' in processed_private_key:
+                    processed_private_key = processed_private_key.replace('\\n', '\n')
+                    print("   🔧 Procesando \\n literales")
+                
+                # Verificar formato
+                if not processed_private_key.startswith('-----BEGIN PRIVATE KEY-----'):
+                    print(f"   ❌ ERROR: Clave privada no tiene formato correcto")
+                    print("   � Intentando cargar desde archivo JSON...")
+                    # Fallback a JSON
+                    json_path = os.path.join(os.path.dirname(__file__), '..', 'keys', 'edp-control-system-f3cfafc0093a.json')
+                    if os.path.exists(json_path):
+                        with open(json_path, 'r') as f:
+                            credentials_data = json.load(f)
+                    else:
+                        print("🎭 Activando modo demo")
+                        return None
+                else:
+                    # Crear credenciales desde variables de entorno
+                    credentials_data = {
+                        "type": "service_account",
+                        "project_id": google_project_id,
+                        "private_key_id": google_key_id,
+                        "private_key": processed_private_key,
+                        "client_email": google_client_email,
+                        "client_id": google_client_id,
+                        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                        "token_uri": "https://oauth2.googleapis.com/token",
+                        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                        "client_x509_cert_url": f"https://www.googleapis.com/robot/v1/metadata/x509/{google_client_email.replace('@', '%40')}"
+                    }
+            
+            # 5. Crear credenciales y servicio
+            print("   🔧 Creando credenciales de Google...")
+            scopes = ['https://www.googleapis.com/auth/spreadsheets']
+            creds = Credentials.from_service_account_info(credentials_data, scopes=scopes)
+            
+            print("   🔧 Construyendo servicio de Google Sheets...")
+            service = build('sheets', 'v4', credentials=creds)
+            
+            print("✅ Servicio de Google Sheets configurado exitosamente")
+            return service
+            
+        except Exception as e:
+            print(f"❌ Error configurando servicio de Google Sheets: {e}")
+            print(f"🔍 Tipo de error: {type(e).__name__}")
+            
+            # Debugging específico para diferentes tipos de errores
+            if "seekable bit stream" in str(e):
+                print("🔧 Error específico: problema con formato de private key")
+                
+            elif "Invalid" in str(e) and "private" in str(e).lower():
+                print("🔧 Error específico: clave privada inválida")
+                
+            elif "JSON" in str(e):
+                print("🔧 Error específico: problema con credenciales JSON")
+            
+            print("� Posibles soluciones:")
+            print("   1. Verifica el archivo JSON en app/keys/")
+            print("   2. Regenera las credenciales de Google Cloud")
+            print("   3. Verifica permisos del archivo JSON")
+            
+            import traceback
+            traceback.print_exc()
+            print("🎭 Activando modo demo")
+            return None
+    
     def validate_config(self) -> Dict[str, Any]:
         """Validate configuration settings."""
         issues = []
@@ -324,46 +475,7 @@ class Config:
             'warnings': warnings
         }
     
-    def _get_google_credentials_path(self):
-        """
-        Usar EXCLUSIVAMENTE variables de entorno separadas para las credenciales de Google.
-        No buscar archivos. Para Render deploy solo usar .env variables.
-        
-        Returns:
-            str: "ENV_VARS" si las variables están completas, None si no
-        """
-        
-        # SOLO verificar variables de entorno separadas (método Claude/Render)
-        google_project_id = os.getenv('GOOGLE_PROJECT_ID')
-        google_client_email = os.getenv('GOOGLE_CLIENT_EMAIL')
-        google_private_key = os.getenv('GOOGLE_PRIVATE_KEY')
-        google_key_id = os.getenv('GOOGLE_PRIVATE_KEY_ID')
-        google_client_id = os.getenv('GOOGLE_CLIENT_ID')
-        
-        if google_project_id and google_client_email and google_private_key:
-            print("🔑 Variables de entorno separadas de Google configuradas")
-            print(f"   📧 Client Email: {google_client_email}")
-            print(f"   🆔 Project ID: {google_project_id}")
-            print("✅ Usando EXCLUSIVAMENTE variables de entorno (.env)")
-            
-            # Retornar indicador para que gsheet.py use las variables directamente
-            return "ENV_VARS"
-        else:
-            missing_vars = []
-            if not google_project_id:
-                missing_vars.append('GOOGLE_PROJECT_ID')
-            if not google_client_email:
-                missing_vars.append('GOOGLE_CLIENT_EMAIL')
-            if not google_private_key:
-                missing_vars.append('GOOGLE_PRIVATE_KEY')
-            if not google_key_id:
-                missing_vars.append('GOOGLE_PRIVATE_KEY_ID')
-            if not google_client_id:
-                missing_vars.append('GOOGLE_CLIENT_ID')
-            
-            print(f"❌ Variables de entorno faltantes: {', '.join(missing_vars)}")
-            print("🎭 Activando modo demo (sin Google Sheets)")
-            return None
+
 
 
 # Global configuration instance

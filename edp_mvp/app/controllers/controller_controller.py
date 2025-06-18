@@ -1862,13 +1862,56 @@ def analisis_retrabajos():
         return redirect(url_for("controller.dashboard_controller"))
 
 
-@controller_controller_bp.route("/id/<n_edp>", methods=["GET", "POST"])
+@controller_controller_bp.route("/id/<int:edp_id>", methods=["GET", "POST"])
 @login_required
-def detalle_edp(n_edp):
-    """EDP detail view with editing capabilities."""
+def detalle_edp(edp_id):
+    """EDP detail view with editing capabilities using internal ID."""
     try:
         if request.method == "GET":
-            # Get EDP details
+            # Get EDP details by internal ID
+            edp_response = edp_service.get_edp_by_internal_id(edp_id)
+
+            if not edp_response.success:
+                flash(f"Error al cargar EDP: {edp_response.message}", "error")
+                return redirect(url_for("controller.dashboard_controller"))
+
+            edp_data = edp_response.data
+
+            return render_template(
+                "controller/controller_edp_detalle.html",
+                edp=edp_data,
+                row=edp_data.get("row_index", 0),
+            )
+
+        elif request.method == "POST":
+            # Update EDP by internal ID
+            form_data = request.form.to_dict()
+
+            update_response = edp_service.update_edp_by_internal_id(edp_id, form_data)
+
+            if update_response.success:
+                flash("EDP actualizado correctamente", "success")
+                return redirect(url_for("controller.detalle_edp", edp_id=edp_id))
+            else:
+                flash(f"Error al actualizar EDP: {update_response.message}", "error")
+                return render_template(
+                    "controller/controller_edp_detalle.html", edp=form_data, row=0
+                )
+
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        flash(f"Error inesperado: {str(e)}", "error")
+        return redirect(url_for("controller.dashboard_controller"))
+
+
+@controller_controller_bp.route("/edp/<n_edp>", methods=["GET", "POST"])
+@login_required
+def detalle_edp_by_number(n_edp):
+    """EDP detail view with editing capabilities using EDP number (legacy support)."""
+    try:
+        if request.method == "GET":
+            # Get EDP details by number
             edp_response = edp_service.get_edp_by_id(n_edp)
 
             if not edp_response.success:
@@ -1884,14 +1927,14 @@ def detalle_edp(n_edp):
             )
 
         elif request.method == "POST":
-            # Update EDP
+            # Update EDP by number
             form_data = request.form.to_dict()
 
             update_response = edp_service.update_edp(n_edp, form_data)
 
             if update_response.success:
                 flash("EDP actualizado correctamente", "success")
-                return redirect(url_for("controller.detalle_edp", n_edp=n_edp))
+                return redirect(url_for("controller.detalle_edp_by_number", n_edp=n_edp))
             else:
                 flash(f"Error al actualizar EDP: {update_response.message}", "error")
                 return render_template(

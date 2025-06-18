@@ -1,0 +1,1513 @@
+{% extends "base.html" %} {% block title %}Carga de EDPs - Pagora{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-[color:var(--text-primary)] mb-2">
+          📋 Carga de EDPs
+        </h1>
+        <p class="text-[color:var(--text-secondary)]">
+          Cargue EDPs de forma individual o masiva usando archivos Excel/CSV
+        </p>
+      </div>
+      <div class="flex gap-3">
+        <a
+          href="{{ url_for('kanban.vista_kanban') }}"
+          class="inline-flex items-center px-4 py-2 bg-[color:var(--bg-subtle)] hover:bg-[color:var(--bg-hover)] text-[color:var(--text-primary)] font-medium rounded-lg border border-[color:var(--border-color)] transition-all duration-200 hover:shadow-md group">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-2 transition-transform duration-200 group-hover:-translate-x-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Volver al Kanban
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Opciones de Carga -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Carga Individual -->
+    <div
+      class="bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-highlight)] rounded-2xl p-6 border border-[color:var(--border-color)] shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="text-center mb-6">
+        <div
+          class="w-16 h-16 bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-[color:var(--text-primary)] mb-2">
+          Carga Individual
+        </h3>
+        <p class="text-[color:var(--text-secondary)]">
+          Ingrese un EDP manualmente usando el formulario
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        <div
+          class="flex items-center text-sm text-[color:var(--text-secondary)]">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-2 text-[color:var(--accent-green)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7" />
+          </svg>
+          Control total sobre cada campo
+        </div>
+        <div
+          class="flex items-center text-sm text-[color:var(--text-secondary)]">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-2 text-[color:var(--accent-green)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7" />
+          </svg>
+          Validación en tiempo real
+        </div>
+        <div
+          class="flex items-center text-sm text-[color:var(--text-secondary)]">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-2 text-[color:var(--accent-green)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7" />
+          </svg>
+          Ideal para pocos registros
+        </div>
+      </div>
+
+      <button
+        onclick="openManualUpload()"
+        class="w-full mt-6 bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] text-white font-semibold py-3 px-6 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+        Crear EDP Individual
+      </button>
+    </div>
+
+    <!-- Carga Masiva -->
+    <div
+      class="bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-highlight)] rounded-2xl p-6 border border-[color:var(--border-color)] shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="text-center mb-6">
+        <div
+          class="w-16 h-16 bg-gradient-to-r from-[color:var(--accent-green)] to-[color:var(--accent-blue)] rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-[color:var(--text-primary)] mb-2">
+          Carga Masiva
+        </h3>
+        <p class="text-[color:var(--text-secondary)]">
+          Suba múltiples EDPs usando Excel o CSV
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        <div
+          class="flex items-center text-sm text-[color:var(--text-secondary)]">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-2 text-[color:var(--accent-green)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7" />
+          </svg>
+          Procesamiento en lotes optimizado
+        </div>
+        <div
+          class="flex items-center text-sm text-[color:var(--text-secondary)]">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-2 text-[color:var(--accent-green)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7" />
+          </svg>
+          Validación previa del archivo
+        </div>
+        <div
+          class="flex items-center text-sm text-[color:var(--text-secondary)]">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-2 text-[color:var(--accent-green)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7" />
+          </svg>
+          Reporte detallado de resultados
+        </div>
+      </div>
+
+      <div class="mt-6 space-y-3">
+        <a
+          href="{{ url_for('edp_upload.download_template') }}"
+          class="w-full block text-center bg-[color:var(--bg-secondary)] text-[color:var(--text-primary)] font-medium py-2 px-4 rounded-lg border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
+          📥 Descargar Plantilla
+        </a>
+        <button
+          onclick="openBulkUpload()"
+          class="w-full bg-gradient-to-r from-[color:var(--accent-green)] to-[color:var(--accent-blue)] text-white font-semibold py-3 px-6 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 btn-upload">
+          Subir Archivo Excel/CSV
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estadísticas de Carga Reciente -->
+  <div
+    class="bg-gradient-to-r from-[color:var(--bg-card)] to-[color:var(--bg-highlight)] rounded-2xl p-6 border border-[color:var(--border-color)] shadow-lg">
+    <h3 class="text-lg font-bold text-[color:var(--text-primary)] mb-4">
+      📊 Estadísticas de Carga
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="text-center">
+        <div
+          class="text-2xl font-bold text-[color:var(--accent-blue)]"
+          id="total-uploads">
+          0
+        </div>
+        <div class="text-sm text-[color:var(--text-secondary)]">
+          Total Subidos
+        </div>
+      </div>
+      <div class="text-center">
+        <div
+          class="text-2xl font-bold text-[color:var(--accent-green)]"
+          id="successful-uploads">
+          0
+        </div>
+        <div class="text-sm text-[color:var(--text-secondary)]">Exitosos</div>
+      </div>
+      <div class="text-center">
+        <div
+          class="text-2xl font-bold text-[color:var(--accent-red)]"
+          id="failed-uploads">
+          0
+        </div>
+        <div class="text-sm text-[color:var(--text-secondary)]">Errores</div>
+      </div>
+      <div class="text-center">
+        <div
+          class="text-2xl font-bold text-[color:var(--accent-purple)]"
+          id="success-rate">
+          0%
+        </div>
+        <div class="text-sm text-[color:var(--text-secondary)]">
+          Tasa de Éxito
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay de Carga Global -->
+<div
+  id="global-loading-overlay"
+  class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] hidden flex items-center justify-center">
+  <div
+    class="bg-[color:var(--bg-card)] rounded-2xl p-8 mx-4 max-w-md w-full shadow-2xl border border-[color:var(--border-color)]">
+    <!-- Icono de carga animado -->
+    <div class="text-center mb-6">
+      <div class="relative">
+        <div class="w-16 h-16 mx-auto flex items-center justify-center">
+          <!-- Spinner simple y limpio -->
+          <svg
+            id="loading-icon"
+            class="animate-spin h-12 w-12 text-[color:var(--accent-blue)]"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24">
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Título y mensaje -->
+    <div class="text-center mb-6">
+      <h3
+        id="loading-title"
+        class="text-xl font-bold text-[color:var(--text-primary)] mb-2">
+        Procesando EDPs
+      </h3>
+      <p id="loading-message" class="text-[color:var(--text-secondary)]">
+        Iniciando procesamiento...
+      </p>
+    </div>
+
+    <!-- Barra de progreso -->
+    <div class="mb-6">
+      <div
+        class="flex justify-between text-sm text-[color:var(--text-tertiary)] mb-2">
+        <span id="loading-step">Paso 1 de 4</span>
+        <span id="loading-percentage">0%</span>
+      </div>
+      <div
+        class="w-full bg-[color:var(--bg-subtle)] rounded-full h-2 overflow-hidden">
+        <div
+          id="loading-progress-bar"
+          class="bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] h-2 rounded-full transition-all duration-500 ease-out"
+          style="width: 0%">
+          <div class="h-full bg-white/20 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Indicadores de etapas -->
+    <div class="grid grid-cols-4 gap-2 text-xs">
+      <div id="step-1" class="text-center opacity-50">
+        <div
+          class="w-2 h-2 bg-[color:var(--text-tertiary)] rounded-full mx-auto mb-1"></div>
+        <span>Validando</span>
+      </div>
+      <div id="step-2" class="text-center opacity-50">
+        <div
+          class="w-2 h-2 bg-[color:var(--text-tertiary)] rounded-full mx-auto mb-1"></div>
+        <span>Subiendo</span>
+      </div>
+      <div id="step-3" class="text-center opacity-50">
+        <div
+          class="w-2 h-2 bg-[color:var(--text-tertiary)] rounded-full mx-auto mb-1"></div>
+        <span>Procesando</span>
+      </div>
+      <div id="step-4" class="text-center opacity-50">
+        <div
+          class="w-2 h-2 bg-[color:var(--text-tertiary)] rounded-full mx-auto mb-1"></div>
+        <span>Completado</span>
+      </div>
+    </div>
+
+    <!-- Botón de cancelar (opcional) -->
+    <div class="text-center mt-6">
+      <button
+        id="cancel-processing"
+        onclick="cancelProcessing()"
+        class="text-[color:var(--text-tertiary)] hover:text-[color:var(--text-secondary)] text-sm transition-colors">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Carga Individual -->
+<div
+  id="manual-upload-modal"
+  class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+  <div
+    class="bg-[color:var(--bg-card)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-[color:var(--text-primary)]">
+          Crear EDP Individual
+        </h2>
+        <button
+          onclick="closeManualUpload()"
+          class="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="manual-edp-form" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Información Básica -->
+          <div class="space-y-4">
+            <h3
+              class="text-lg font-semibold text-[color:var(--text-primary)] border-b border-[color:var(--border-color)] pb-2">
+              Información Básica
+            </h3>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >N° EDP *
+                <span
+                  id="edp-validation-indicator"
+                  class="text-xs font-medium ml-2"
+                  style="display: none"></span>
+              </label>
+              <input
+                type="number"
+                name="n_edp"
+                required
+                placeholder="Ej: 1001"
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-transparent bg-[color:var(--bg-secondary)] transition-all duration-300" />
+              <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+                ⚠️ No pueden existir dos EDPs con el mismo número en el mismo
+                proyecto
+              </p>
+            </div>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >Proyecto *</label
+              >
+              <select
+                name="proyecto"
+                required
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-transparent bg-[color:var(--bg-secondary)] transition-all duration-300">
+                <option value="">Seleccionar proyecto...</option>
+              </select>
+              <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+                💡 Al seleccionar un proyecto, se autocompletarán el cliente y
+                jefe de proyecto
+              </p>
+            </div>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >Cliente *
+                <span
+                  class="text-xs text-green-600"
+                  id="cliente-autocomplete-indicator"
+                  style="display: none"
+                  >✓ Autocompletado</span
+                ></label
+              >
+              <select
+                name="cliente"
+                required
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-transparent bg-[color:var(--bg-secondary)] transition-all duration-300">
+                <option value="">Seleccionar cliente...</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >Gestor
+                <span
+                  class="text-xs text-green-600"
+                  id="gestor-autocomplete-indicator"
+                  style="display: none"
+                  >✓ Autocompletado</span
+                ></label
+              >
+              <input
+                type="text"
+                name="gestor"
+                placeholder="Escribir o seleccionar gestor..."
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-transparent bg-[color:var(--bg-secondary)] transition-all duration-300" />
+            </div>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >Jefe de Proyecto *
+                <span
+                  class="text-xs text-green-600"
+                  id="jefe-autocomplete-indicator"
+                  style="display: none"
+                  >✓ Autocompletado</span
+                ></label
+              >
+              <select
+                name="jefe_proyecto"
+                required
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-transparent bg-[color:var(--bg-secondary)] transition-all duration-300">
+                <option value="">Seleccionar jefe de proyecto...</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >Mes</label
+              >
+              <div
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg bg-gray-100 text-gray-600 flex items-center">
+                <span id="mes-display">Se generará automáticamente</span>
+                <span class="ml-auto text-xs">🗓️ Auto</span>
+              </div>
+              <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+                Se calcula automáticamente desde la fecha de emisión
+              </p>
+            </div>
+          </div>
+
+          <!-- Fechas y Montos -->
+          <div class="space-y-4">
+            <h3
+              class="text-lg font-semibold text-[color:var(--text-primary)] border-b border-[color:var(--border-color)] pb-2">
+              Fechas y Montos
+            </h3>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >Fecha Emisión *</label
+              >
+              <input
+                type="date"
+                name="fecha_emision"
+                required
+                id="fecha_emision"
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-transparent bg-[color:var(--bg-secondary)]" />
+              <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+                📅 Se establece automáticamente con la fecha de hoy
+              </p>
+            </div>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >Fecha Envío Cliente</label
+              >
+              <input
+                type="date"
+                name="fecha_envio_cliente"
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-transparent bg-[color:var(--bg-secondary)]" />
+              <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+                Se completa cuando se envía al cliente
+              </p>
+            </div>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >Monto Propuesto *</label
+              >
+              <input
+                type="text"
+                name="monto_propuesto"
+                required
+                placeholder="Ej: 15.491.100"
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-transparent bg-[color:var(--bg-secondary)]" />
+              <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+                💰 Solo números enteros, se formatea automáticamente
+              </p>
+            </div>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >Monto Aprobado</label
+              >
+              <input
+                type="text"
+                name="monto_aprobado"
+                placeholder="Se completa después de la aprobación"
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-transparent bg-[color:var(--bg-secondary)]" />
+              <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+                Opcional - se puede agregar más adelante
+              </p>
+            </div>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >Fecha Estimada Pago</label
+              >
+              <input
+                type="date"
+                name="fecha_estimada_pago"
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-transparent bg-[color:var(--bg-secondary)]" />
+              <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+                📆 Se calcula automáticamente +30 días desde fecha de emisión
+              </p>
+            </div>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+                >Estado</label
+              >
+              <input
+                type="text"
+                value="Revisión"
+                readonly
+                class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg bg-gray-100 text-gray-600" />
+              <p class="text-xs text-[color:var(--text-secondary)] mt-1">
+                Se establece automáticamente en "Revisión"
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información Adicional -->
+        <div class="space-y-4">
+          <h3
+            class="text-lg font-semibold text-[color:var(--text-primary)] border-b border-[color:var(--border-color)] pb-2">
+            Información Adicional (Opcional)
+          </h3>
+
+          <div>
+            <label
+              class="block text-sm font-medium text-[color:var(--text-primary)] mb-2"
+              >Observaciones</label
+            >
+            <textarea
+              name="observaciones"
+              rows="3"
+              placeholder="Cualquier observación relevante..."
+              class="w-full px-4 py-2 border border-[color:var(--border-color)] rounded-lg focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-transparent bg-[color:var(--bg-secondary)] resize-none"></textarea>
+          </div>
+        </div>
+
+        <!-- Progreso de Creación -->
+        <div id="upload-progress" class="mt-6 hidden">
+          <div class="bg-[color:var(--bg-secondary)] rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-[color:var(--text-primary)]"
+                >Preparando...</span
+              >
+              <span
+                id="progress-percentage"
+                class="text-sm text-[color:var(--text-secondary)]"
+                >0%</span
+              >
+            </div>
+            <div class="w-full bg-[color:var(--bg-highlight)] rounded-full h-2">
+              <div
+                id="progress-bar"
+                class="bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] h-2 rounded-full transition-all duration-300"
+                style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div
+          class="flex justify-end space-x-4 pt-6 border-t border-[color:var(--border-color)]">
+          <button
+            type="button"
+            onclick="closeManualUpload()"
+            class="px-6 py-2 border border-[color:var(--border-color)] text-[color:var(--text-secondary)] rounded-lg hover:bg-[color:var(--bg-card-hover)] transition-colors">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="px-6 py-2 bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Crear EDP
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Carga Masiva -->
+<div
+  id="bulk-upload-modal"
+  class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+  <div
+    class="bg-[color:var(--bg-card)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-[color:var(--text-primary)]">
+          Carga Masiva de EDPs
+        </h2>
+        <button
+          onclick="closeBulkUpload()"
+          class="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Zona de Drop Mejorada -->
+      <div id="upload-container" class="space-y-6">
+        <!-- Instrucciones y Plantilla -->
+        <div
+          class="bg-gradient-to-r from-[color:var(--info-bg)] to-[color:var(--bg-subtle)] rounded-xl p-6 border border-[color:var(--border-color)]">
+          <div class="flex items-start space-x-4">
+            <div class="flex-shrink-0">
+              <div
+                class="w-12 h-12 bg-[color:var(--info-bg)] rounded-lg flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6 text-[color:var(--info)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div class="flex-1">
+              <h4
+                class="text-lg font-semibold text-[color:var(--text-primary)] mb-2">
+                📋 Instrucciones de Carga
+              </h4>
+              <div class="text-sm text-[color:var(--text-secondary)] space-y-2">
+                <p>
+                  • <strong>Descarga la plantilla</strong> para asegurar el
+                  formato correcto
+                </p>
+                <p>
+                  • <strong>Completa los campos obligatorios:</strong> N° EDP,
+                  Proyecto, Cliente, Jefe Proyecto, Fecha Emisión, Monto
+                  Propuesto
+                </p>
+                <p>
+                  • <strong>Formatos de fecha aceptados:</strong> YYYY-MM-DD,
+                  DD/MM/YYYY, MM/DD/YYYY
+                </p>
+                <p>
+                  • <strong>Archivos soportados:</strong> Excel (.xlsx, .xls) y
+                  CSV (.csv)
+                </p>
+              </div>
+              <div class="mt-4">
+                <a
+                  href="{{ url_for('edp_upload.download_template') }}"
+                  class="inline-flex items-center px-4 py-2 bg-[color:var(--accent-blue)] hover:bg-[color:var(--accent-blue-dark)] text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Descargar Plantilla Excel
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zona de Drop Principal -->
+        <div
+          id="drop-zone"
+          class="relative border-2 border-dashed border-[color:var(--border-color)] rounded-2xl p-12 text-center hover:border-[color:var(--accent-blue)] transition-all duration-300 cursor-pointer group bg-gradient-to-br from-[color:var(--bg-subtle)] to-[color:var(--bg-card)]">
+          <!-- Estado Normal -->
+          <div id="drop-zone-normal" class="space-y-6">
+            <div class="relative">
+              <div
+                class="w-20 h-20 bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] rounded-2xl flex items-center justify-center mx-auto shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-10 w-10 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+              </div>
+              <!-- Efecto de pulso -->
+              <div
+                class="absolute inset-0 w-20 h-20 bg-[color:var(--accent-blue)] rounded-2xl mx-auto animate-ping opacity-20"></div>
+            </div>
+
+            <div class="space-y-2">
+              <h3 class="text-xl font-bold text-[color:var(--text-primary)]">
+                Arrastra tu archivo aquí
+              </h3>
+              <p class="text-[color:var(--text-secondary)]">
+                o haz clic para seleccionar desde tu computadora
+              </p>
+            </div>
+
+            <div
+              class="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-[color:var(--text-tertiary)]">
+              <div class="flex items-center space-x-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 text-[color:var(--success)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Excel (.xlsx, .xls)</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 text-[color:var(--success)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>CSV (.csv)</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 text-[color:var(--info)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Máx. 16MB</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estado de Arrastre -->
+          <div id="drop-zone-dragover" class="hidden space-y-6">
+            <div
+              class="w-20 h-20 bg-gradient-to-r from-[color:var(--success)] to-[color:var(--accent-blue)] rounded-2xl flex items-center justify-center mx-auto shadow-lg animate-bounce">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-10 w-10 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-[color:var(--success)]">
+                ¡Suelta el archivo aquí!
+              </h3>
+              <p class="text-[color:var(--text-secondary)]">
+                Procesaremos tu archivo inmediatamente
+              </p>
+            </div>
+          </div>
+
+          <!-- Input oculto -->
+          <input
+            type="file"
+            id="bulk-file-input"
+            class="hidden"
+            accept=".xlsx,.xls,.csv" />
+        </div>
+      </div>
+
+      <!-- Progreso Mejorado -->
+      <div id="upload-progress" class="mt-8 hidden">
+        <div
+          class="bg-gradient-to-r from-[color:var(--info-bg)] to-[color:var(--bg-subtle)] rounded-2xl p-6 border border-[color:var(--border-color)]">
+          <div class="flex items-center space-x-4 mb-4">
+            <div class="flex-shrink-0">
+              <div
+                class="w-12 h-12 bg-[color:var(--accent-blue)] rounded-full flex items-center justify-center">
+                <svg
+                  id="progress-icon"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6 text-white animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-2">
+                <h3
+                  class="text-lg font-semibold text-[color:var(--text-primary)]">
+                  <span id="progress-title">Procesando archivo...</span>
+                </h3>
+                <span
+                  id="progress-percentage"
+                  class="text-sm font-medium text-[color:var(--accent-blue)]"
+                  >0%</span
+                >
+              </div>
+              <p
+                id="progress-message"
+                class="text-sm text-[color:var(--text-secondary)] mb-3">
+                Iniciando validación...
+              </p>
+            </div>
+          </div>
+
+          <!-- Barra de progreso -->
+          <div class="relative">
+            <div
+              class="w-full bg-[color:var(--bg-subtle)] rounded-full h-3 overflow-hidden">
+              <div
+                id="progress-bar"
+                class="bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] h-3 rounded-full transition-all duration-500 ease-out"
+                style="width: 0%">
+                <div class="h-full bg-white/20 animate-pulse"></div>
+              </div>
+            </div>
+            <!-- Indicadores de etapas -->
+            <div
+              class="flex justify-between mt-2 text-xs text-[color:var(--text-tertiary)]">
+              <span id="stage-1" class="opacity-50">Subiendo</span>
+              <span id="stage-2" class="opacity-50">Caché</span>
+              <span id="stage-3" class="opacity-50">Validando</span>
+              <span id="stage-4" class="opacity-50">Completado</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview Mejorado -->
+      <div id="file-preview" class="mt-8 hidden">
+        <div
+          class="bg-gradient-to-r from-[color:var(--success-bg)] to-[color:var(--bg-subtle)] rounded-2xl p-6 border border-[color:var(--border-color)]">
+          <div class="flex items-center space-x-3 mb-6">
+            <div class="flex-shrink-0">
+              <div
+                class="w-10 h-10 bg-[color:var(--success)] rounded-lg flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div>
+              <h3
+                class="text-lg font-semibold text-[color:var(--text-primary)]">
+                ✅ Archivo Validado Exitosamente
+              </h3>
+              <p class="text-sm text-[color:var(--text-secondary)]">
+                Vista previa de los primeros registros
+              </p>
+            </div>
+          </div>
+
+          <!-- Información del archivo -->
+          <div
+            id="file-info"
+            class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-[color:var(--bg-card)] rounded-xl border border-[color:var(--border-color-subtle)]">
+            <!-- Se llenará dinámicamente -->
+          </div>
+
+          <!-- Tabla de preview -->
+          <div
+            class="bg-[color:var(--bg-card)] rounded-xl shadow-sm border border-[color:var(--border-color)] overflow-hidden">
+            <div class="max-h-80 overflow-auto">
+              <table id="preview-table" class="w-full text-sm">
+                <!-- Preview content will be inserted here -->
+              </table>
+            </div>
+          </div>
+
+          <!-- Warnings si existen -->
+          <div id="preview-warnings" class="mt-4 hidden">
+            <!-- Se llenará dinámicamente -->
+          </div>
+
+          <!-- Botones de acción -->
+          <div
+            class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 mt-6">
+            <button
+              onclick="resetBulkUpload()"
+              class="px-6 py-3 border border-[color:var(--border-color)] text-[color:var(--text-secondary)] rounded-xl hover:bg-[color:var(--bg-hover)] transition-colors duration-200 font-medium">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 inline mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Cancelar
+            </button>
+            <button
+              id="process-button"
+              onclick="handleProcessClick()"
+              class="px-8 py-3 bg-gradient-to-r from-[color:var(--success)] to-[color:var(--accent-blue)] text-white rounded-xl hover:shadow-lg transition-all duration-300 font-semibold flex items-center justify-center btn-upload">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              Procesar&nbsp;<span id="file-count"></span>&nbsp;EDPs
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados -->
+      <div id="upload-results" class="mt-6 hidden">
+        <h3 class="text-lg font-semibold text-[color:var(--text-primary)] mb-4">
+          Resultados de la Carga
+        </h3>
+        <div id="results-content">
+          <!-- Results will be inserted here -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Estilos adicionales para validación y UX -->
+<style>
+  /* Estilos para validación */
+  .valid {
+    border-color: #10b981 !important;
+    background-color: #dcfce7;
+  }
+  .invalid {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2;
+  }
+  .field-error {
+    animation: fadeIn 0.3s ease-in;
+  }
+
+  /* Animaciones mejoradas */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    }
+  }
+
+  /* Drag and drop mejorado */
+  #drop-zone {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  #drop-zone:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  #drop-zone.dragover {
+    animation: pulse-glow 1.5s infinite;
+    border-color: var(--accent-blue) !important;
+    background: linear-gradient(135deg, var(--info-bg), var(--bg-subtle));
+  }
+
+  /* Efectos de botones */
+  .btn-upload {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-upload::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: left 0.5s;
+  }
+
+  .btn-upload:hover::before {
+    left: 100%;
+  }
+
+  /* Animación de progreso */
+  #progress-bar {
+    position: relative;
+    overflow: hidden;
+  }
+
+  #progress-bar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(
+      45deg,
+      transparent 33%,
+      rgba(255, 255, 255, 0.3) 33%,
+      rgba(255, 255, 255, 0.3) 66%,
+      transparent 66%
+    );
+    background-size: 20px 20px;
+    animation: progress-stripes 1s linear infinite;
+  }
+
+  @keyframes progress-stripes {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 20px 0;
+    }
+  }
+
+  /* Tabla de preview mejorada */
+  #preview-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  #preview-table th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  #preview-table tbody tr {
+    transition: all 0.2s ease;
+  }
+
+  #preview-table tbody tr:hover {
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Efectos de entrada */
+  .animate-slide-in-up {
+    animation: slideInUp 0.5s ease-out;
+  }
+
+  /* Estados de carga */
+  .loading-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Indicadores de estado */
+  .status-indicator {
+    position: relative;
+  }
+
+  .status-indicator::before {
+    content: "";
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    top: 50%;
+    left: -16px;
+    transform: translateY(-50%);
+  }
+
+  .status-indicator.active::before {
+    background-color: #10b981;
+    animation: pulse-dot 2s infinite;
+  }
+
+  .status-indicator.inactive::before {
+    background-color: #d1d5db;
+  }
+
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* Estados de botones */
+  button:disabled {
+    pointer-events: none;
+  }
+
+  .btn-loading {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+      90deg,
+      var(--accent-blue),
+      var(--accent-purple)
+    ) !important;
+    transform: scale(0.98);
+  }
+
+  .btn-loading::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    animation: loading-shimmer 1.5s infinite;
+  }
+
+  .btn-loading::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      45deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 70%
+    );
+    animation: pulse-loading 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-loading {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes loading-shimmer {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  /* Mejoras de hover para el botón de volver */
+  .group:hover .group-hover\:-translate-x-1 {
+    transform: translateX(-0.25rem);
+  }
+
+  /* Responsive improvements */
+  @media (max-width: 640px) {
+    #drop-zone {
+      padding: 2rem 1rem;
+    }
+
+    .btn-upload {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  /* Estilos para autocompletado */
+  .autocomplete-indicator {
+    transition: all 0.3s ease;
+  }
+
+  /* Formateo de montos */
+  input[name="monto_propuesto"],
+  input[name="monto_aprobado"] {
+    font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+    letter-spacing: 0.5px;
+  }
+
+  /* Animaciones de feedback */
+  @keyframes pulse-green {
+    0% {
+      background-color: #dcfce7;
+    }
+    50% {
+      background-color: #bbf7d0;
+    }
+    100% {
+      background-color: #dcfce7;
+    }
+  }
+
+  .animate-pulse-green {
+    animation: pulse-green 0.6s ease-in-out;
+  }
+
+  /* Toast notifications */
+  .animate__animated {
+    animation-duration: 0.5s;
+    animation-fill-mode: both;
+  }
+
+  .animate__fadeInUp {
+    animation-name: fadeInUp;
+  }
+
+  .animate__fadeOutDown {
+    animation-name: fadeOutDown;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 40px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @keyframes fadeOutDown {
+    from {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      opacity: 0;
+      transform: translate3d(0, 40px, 0);
+    }
+  }
+
+  /* Loading animations */
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  /* Button loading state */
+  .button-loading {
+    position: relative;
+    pointer-events: none;
+  }
+
+  .button-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  /* Progress bar animation */
+  #progress-bar {
+    transition: width 0.3s ease-in-out;
+  }
+
+  /* Form loading state */
+  .form-loading input,
+  .form-loading select,
+  .form-loading textarea {
+    transition: opacity 0.3s ease;
+  }
+
+  /* Pulse effect for validation */
+  @keyframes pulse-validation {
+    0% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+  }
+
+  .validation-pulse {
+    animation: pulse-validation 0.6s ease-out;
+  }
+
+  /* Button pulse animation */
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(0.98);
+    }
+  }
+
+  .animate-pulse {
+    animation: pulse 0.3s ease-in-out;
+  }
+</style>
+
+<!-- JavaScript para funcionalidad -->
+<script src="{{ url_for('static', filename='js/edp_upload.js') }}"></script>
+
+{% endblock %}

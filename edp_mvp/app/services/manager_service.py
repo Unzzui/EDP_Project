@@ -3675,6 +3675,42 @@ class ManagerService(BaseService):
             logger.error(f"Error getting cache status: {e}")
             return {"redis_available": False, "error": str(e)}
 
+    def get_all_projects(self) -> ServiceResponse:
+        """Get all projects data."""
+        try:
+            # Get projects from repository
+            projects = self.project_repo.find_all()
+            
+            # Convert to dictionaries
+            projects_data = []
+            for project in projects:
+                project_dict = {
+                    'project_id': project.project_id or project.id or '',
+                    'proyecto': project.proyecto or project.project_id or project.id or '',
+                    'cliente': project.cliente or '',
+                    'gestor': project.gestor or '',
+                    'jefe_proyecto': project.jefe_proyecto or '',
+                    'fecha_inicio': project.fecha_inicio.strftime('%Y-%m-%d') if project.fecha_inicio else '',
+                    'fecha_fin_prevista': project.fecha_fin_prevista.strftime('%Y-%m-%d') if project.fecha_fin_prevista else '',
+                    'monto_contrato': project.monto_contrato or 0,
+                    'moneda': project.moneda or 'CLP'
+                }
+                projects_data.append(project_dict)
+            
+            return ServiceResponse(
+                success=True,
+                data=projects_data,
+                message=f"Se obtuvieron {len(projects_data)} proyectos"
+            )
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo proyectos: {e}")
+            return ServiceResponse(
+                success=False,
+                message=f"Error obteniendo proyectos: {str(e)}",
+                data=[]
+            )
+
     def get_critical_projects_data(self, filters: Optional[Dict[str, Any]] = None) -> ServiceResponse:
         """Get detailed critical projects data for modal display."""
         try:

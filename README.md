@@ -114,7 +114,22 @@ make dev
 make help
 ```
 
-### **Opción 4: Manual**
+### **Opción 4: API FastAPI (Nuevo) 🆕**
+
+```bash
+# Iniciar API centralizada en puerto 8000
+chmod +x start_api.sh
+./start_api.sh
+
+# Acceder a documentación interactiva:
+# • Swagger UI: http://localhost:8000/docs
+# • ReDoc: http://localhost:8000/redoc
+
+# Ejemplos de uso
+python api_examples.py
+```
+
+### **Opción 5: Manual**
 
 ```bash
 # 1. Crear entorno virtual
@@ -183,6 +198,9 @@ Una vez iniciada la aplicación:
 | **Dashboard Manager**    | http://localhost:5000/manager           | Vista ejecutiva                    |
 | **Dashboard Controller** | http://localhost:5000/controller        | Vista operativa                    |
 | **Kanban Board**         | http://localhost:5000/controller/kanban | Tablero visual                     |
+| **API FastAPI** 🆕       | http://localhost:8000                   | API centralizada                   |
+| **API Docs (Swagger)**   | http://localhost:8000/docs              | Documentación interactiva          |
+| **API Docs (ReDoc)**     | http://localhost:8000/redoc             | Documentación alternativa          |
 | **Flower (Monitor)**     | http://localhost:5555                   | Monitor de tareas (admin/admin123) |
 | **Profiler**             | http://localhost:5000/flask-profiler    | Monitor de rendimiento             |
 
@@ -244,6 +262,31 @@ GET  /api/controller/data                 # Datos operativos
 GET  /api/controller/kanban               # Datos del tablero
 GET  /api/controller/filters              # Filtros disponibles
 POST /api/controller/update-edp           # Actualizar EDP
+```
+
+#### **API FastAPI Centralizada** 🆕
+
+```
+# EDPs
+GET  /api/v1/edps                         # Lista de EDPs con filtros
+GET  /api/v1/edps/{id}                    # EDP específico
+GET  /api/v1/edps/stats                   # Estadísticas de EDPs
+PUT  /api/v1/edps/{id}                    # Actualizar EDP
+
+# Caja/Finanzas
+GET  /api/v1/caja                         # Datos de caja con filtros
+GET  /api/v1/caja/resumen                 # Resumen financiero
+
+# Dashboard
+GET  /api/v1/dashboard/data               # Datos completos del dashboard
+
+# Cache
+GET  /api/v1/cache/stats                  # Estadísticas del cache
+POST /api/v1/cache/invalidate             # Invalidar cache por patrón
+POST /api/v1/cache/refresh                # Refrescar todo el cache
+
+# Utilidades
+GET  /health                              # Estado de la API y servicios
 ```
 
 ## 🧪 **Testing y Desarrollo**

@@ -192,6 +192,70 @@ class AnalyticsService:
                 message=f"Error técnico al obtener vista global:\n{str(e)}",
             )
 
+    def get_manager_project_view(
+        self, nombre: str, proyecto: str
+    ) -> ServiceResponse:
+        """
+        Vista específica de un proyecto para un encargado
+
+        Args:
+            nombre: Nombre del encargado
+            proyecto: Nombre del proyecto
+
+        Returns:
+            ServiceResponse con datos del proyecto específico
+        """
+        try:
+            edps_response = self.edp_repository.find_all_dataframe()
+            df_edp = pd.DataFrame(edps_response.get("data", []))
+
+            # Filtrar por encargado y proyecto
+            df_filtrado = df_edp[
+                (df_edp["jefe_proyecto"] == nombre) & 
+                (df_edp["proyecto"] == proyecto)
+            ].copy()
+
+            if df_filtrado.empty:
+                return ServiceResponse(
+                    success=False, 
+                    message=f"No hay EDPs registrados para {nombre} en el proyecto {proyecto}"
+                )
+
+            # Análisis financiero del proyecto
+            analisis_financiero = self._analizar_financiero_proyecto(df_filtrado)
+
+            # Análisis de rendimiento del proyecto
+            analisis_rendimiento = self._analizar_rendimiento_proyecto(df_filtrado, df_edp)
+
+            # Estadísticas del proyecto
+            estadisticas_proyecto = self._generar_estadisticas_proyecto(df_filtrado)
+
+            # Registros del proyecto (con ID incluido)
+            registros = self._preparar_registros_proyecto(df_filtrado)
+
+            datos_proyecto = {
+                "nombre": nombre,
+                "proyecto": proyecto,
+                "analisis_financiero": analisis_financiero,
+                "analisis_rendimiento": analisis_rendimiento,
+                "estadisticas_proyecto": estadisticas_proyecto,
+                "registros": registros,
+                "total_edp": len(df_filtrado),
+            }
+
+            return ServiceResponse(
+                success=True,
+                data=datos_proyecto,
+                message=f"Datos del proyecto {proyecto} para {nombre} obtenidos exitosamente",
+            )
+
+        except Exception as e:
+            logger.error(f"Error al obtener vista de proyecto {proyecto} para {nombre}: {str(e)}")
+            return ServiceResponse(
+                success=False, 
+                message=f"Error al obtener datos del proyecto: {str(e)}"
+            )
+
     def _calcular_metricas_comparativas(self, analisis_encargados: Dict) -> Dict:
         """Calcula métricas comparativas entre encargados"""
         if not analisis_encargados:
@@ -1389,3 +1453,85 @@ class AnalyticsService:
         except Exception as e:
             logger.error(f"Error al obtener log de EDP {n_edp}: {str(e)}")
             return f"Error al generar CSV: {str(e)}"
+
+    def _analizar_financiero_proyecto(self, df_proyecto: pd.DataFrame) -> Dict:
+        """Análisis financiero específico de un proyecto."""
+        try:
+            total_propuesto = df_proyecto['monto_propuesto'].sum()
+            total_aprobado = df_proyecto['monto_aprobado'].sum()
+            total_pagado = df_proyecto[df_proyecto['estado'] == 'pagado']['monto_aprobado'].sum()
+            
+            return {
+                'total_propuesto': total_propuesto,
+                'total_aprobado': total_aprobado,
+                'total_pagado': total_pagado,
+                'tasa_aprobacion': (total_aprobado / total_propuesto * 100) if total_propuesto > 0 else 0,
+                'tasa_pago': (total_pagado / total_aprobado * 100) if total_aprobado > 0 else 0,
+                'pendiente_pago': total_aprobado - total_pagado
+            }
+        except Exception as e:
+            logger.error(f"Error en análisis financiero de proyecto: {str(e)}")
+            return {}
+
+    def _analizar_rendimiento_proyecto(self, df_proyecto: pd.DataFrame, df_global: pd.DataFrame) -> Dict:
+        """Análisis de rendimiento específico de un proyecto."""
+        try:
+            # Estadísticas del proyecto
+            total_edps = len(df_proyecto)
+            edps_validados = len(df_proyecto[df_proyecto['estado'] == 'validado'])
+            edps_pagados = len(df_proyecto[df_proyecto['estado'] == 'pagado'])
+            
+            # Tiempo promedio de procesamiento
+            df_con_fechas = df_proyecto.dropna(subset=['fecha_emision', 'fecha_registro'])
+            if not df_con_fechas.empty:
+                tiempo_promedio = (df_con_fechas['fecha_registro'] - df_con_fechas['fecha_emision']).dt.days.mean()
+            else:
+                tiempo_promedio = 0
+            
+            return {
+                'total_edps': total_edps,
+                'edps_validados': edps_validados,
+                'edps_pagados': edps_pagados,
+                'tasa_validacion': (edps_validados / total_edps * 100) if total_edps > 0 else 0,
+                'tasa_pago': (edps_pagados / total_edps * 100) if total_edps > 0 else 0,
+                'tiempo_promedio_procesamiento': tiempo_promedio
+            }
+        except Exception as e:
+            logger.error(f"Error en análisis de rendimiento de proyecto: {str(e)}")
+            return {}
+
+    def _generar_estadisticas_proyecto(self, df_proyecto: pd.DataFrame) -> Dict:
+        """Genera estadísticas generales del proyecto."""
+        try:
+            estados = df_proyecto['estado'].value_counts().to_dict()
+            
+            # Estadísticas por mes
+            df_proyecto['mes_emision'] = pd.to_datetime(df_proyecto['fecha_emision']).dt.to_period('M')
+            estadisticas_mensuales = df_proyecto.groupby('mes_emision').size().to_dict()
+            
+            return {
+                'distribucion_estados': estados,
+                'estadisticas_mensuales': {str(k): v for k, v in estadisticas_mensuales.items()},
+                'monto_promedio': df_proyecto['monto_propuesto'].mean(),
+                'monto_maximo': df_proyecto['monto_propuesto'].max(),
+                'monto_minimo': df_proyecto['monto_propuesto'].min()
+            }
+        except Exception as e:
+            logger.error(f"Error generando estadísticas de proyecto: {str(e)}")
+            return {}
+
+    def _preparar_registros_proyecto(self, df_proyecto: pd.DataFrame) -> List[Dict]:
+        """Prepara los registros del proyecto incluyendo el ID interno."""
+        try:
+            registros = []
+            for _, row in df_proyecto.iterrows():
+                registro = row.to_dict()
+                # Asegurar que el ID interno esté disponible
+                if 'id' not in registro and 'index' in registro:
+                    registro['id'] = registro['index']
+                registros.append(registro)
+            
+            return registros
+        except Exception as e:
+            logger.error(f"Error preparando registros de proyecto: {str(e)}")
+            return []

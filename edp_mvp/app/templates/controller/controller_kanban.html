@@ -5,155 +5,42 @@
 {{ super() }}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
 {% include "controller/modal_edp_template.html" %}
+<!-- Scripts -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<!-- Antes del cierre de body -->
+<script src="{{ url_for('static', filename='js/modal_edp_scripts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/controller_kanban.js') }}"></script>
+<script src="{{ url_for('static', filename='js/table-controller.js') }}"></script>
+<!-- Control de acceso Kanban unificado -->
+<script src="{{ url_for('static', filename='js/kanban_access_control.js') }}"></script>
+<!-- Filtros y UI del Kanban -->
+<script src="{{ url_for('static', filename='js/controller_kanban_filters.js') }}"></script>
+<!-- Métricas y estadísticas del Kanban -->
+<script src="{{ url_for('static', filename='js/controller_kanban_metrics.js') }}"></script>
 
-<!-- Set initial filter for table controller JavaScript -->
+<!-- Configuración de variables globales y datos para JavaScript -->
 <script>
   // Variables globales para JavaScript
   window.dsoGlobal = {{ dso_global|default(0) }};
   
+  // Variables para control de acceso Kanban
+  window.userAccessLevel = '{{ user_access_level|default("none") }}';
+  window.managerName = '{{ manager_name|default("")|e }}';
+  window.currentUserRole = '{{ current_user_role|default("")|e }}';
+  window.isRestrictedUser = {{ is_restricted_user|default(false)|tojson }};
+  
+  // Datos para métricas (disponibles para el JavaScript externo)
+  window.estadisticasData = {{ estadisticas|tojson|safe }};
+  window.registrosData = {{ registros|tojson|safe }};
+
+  // Configurar atributos de datos para el JavaScript externo
   document.addEventListener('DOMContentLoaded', function() {
     document.body.setAttribute('data-initial-filter', '{{ filtros.estado|default("pendientes") }}');
-    
-    // Debug: verificar datos disponibles
-    console.log('🔍 Datos del kanban:', {
-      estadisticas: {{ estadisticas|tojson|safe }},
-      filtros: {{ filtros|tojson|safe }},
-      registros: {{ registros|length if registros else 0 }}
-    });
-    
-    // Llenar panel de resumen con datos reales
-    const estadisticas = {{ estadisticas|tojson|safe }};
-    const registros = {{ registros|tojson|safe }};
-    
-    if (estadisticas) {
-      // Actualizar estadísticas básicas (panel inferior)
-      const metaMensual = document.getElementById('meta-mensual');
-      
-      if (metaMensual) metaMensual.textContent = '$' + (estadisticas.meta_mensual || 0).toLocaleString();
-      
-      // Actualizar KPIs del banner principal
-      const totalEdpsBanner = document.getElementById('total-edps-banner');
-      const criticosBanner = document.getElementById('criticos-banner');
-      const pendientesBanner = document.getElementById('pendientes-banner');
-      const validadosBanner = document.getElementById('validados-banner');
-      const dsoBanner = document.getElementById('dso-banner');
-      
-      if (totalEdpsBanner) totalEdpsBanner.textContent = estadisticas.total_edps || 0;
-      if (criticosBanner) criticosBanner.textContent = estadisticas.total_criticos || 0;
-      if (pendientesBanner) pendientesBanner.textContent = estadisticas.total_pendientes || 0;
-      if (validadosBanner) validadosBanner.textContent = estadisticas.total_validados || 0;
-      
-      // Actualizar fecha de última actualización
-      const lastUpdated = document.getElementById('last-updated-date');
-      const lastUpdatedBanner = document.getElementById('last-updated-banner');
-      const currentTime = new Date().toLocaleTimeString();
-      
-      if (lastUpdated) {
-        lastUpdated.textContent = 'Actualizado: ' + currentTime;
-      }
-      if (lastUpdatedBanner) {
-        lastUpdatedBanner.textContent = 'Actualizado: ' + currentTime;
-      }
-    }
-    
-         // Si hay registros, calcular métricas adicionales
-     if (registros && Array.isArray(registros)) {
-       const totalRegistros = registros.length;
-       const totalMonto = registros.reduce((sum, r) => sum + (parseFloat(r.monto_aprobado) || 0), 0);
-       const criticos = registros.filter(r => r.dias_espera > 60).length;
-       const pendientes = registros.filter(r => r.estado && ['enviado', 'revisión', 'pendiente'].includes(r.estado.toLowerCase())).length;
-       const validados = registros.filter(r => r.estado && ['validado', 'pagado'].includes(r.estado.toLowerCase())).length;
-       
-       // Usar DSO global calculado en el servidor
-       const dso = {{ dso_global|default(0) }};
-       
-       // Actualizar métricas en el panel principal
-       const totalEdpsEl = document.getElementById('total-edps');
-       const totalPendientesEl = document.getElementById('total-pendientes');
-       const totalValidadosEl = document.getElementById('total-validados');
-       const montoTotalEl = document.getElementById('monto-total');
-       const dsoPrincipalEl = document.getElementById('dso-principal');
-       
-       if (totalEdpsEl) totalEdpsEl.textContent = totalRegistros.toLocaleString();
-       if (totalPendientesEl) totalPendientesEl.textContent = pendientes.toLocaleString();
-       if (totalValidadosEl) totalValidadosEl.textContent = validados.toLocaleString();
-       if (montoTotalEl) montoTotalEl.textContent = '$' + totalMonto.toLocaleString();
-       
-       // Actualizar DSO con colores según el valor
-       if (dsoPrincipalEl) {
-         dsoPrincipalEl.textContent = dso;
-         if (dso <= 30) {
-           dsoPrincipalEl.className = 'text-2xl font-bold text-[color:var(--accent-green)]'; // Excelente
-         } else if (dso <= 45) {
-           dsoPrincipalEl.className = 'text-2xl font-bold text-[color:var(--text-primary)]'; // Bueno
-         } else if (dso <= 60) {
-           dsoPrincipalEl.className = 'text-2xl font-bold text-[color:var(--accent-amber)]'; // Regular
-         } else {
-           dsoPrincipalEl.className = 'text-2xl font-bold text-[color:var(--accent-red)]'; // Crítico
-         }
-       }
-       
-       // Actualizar DSO en el banner también
-       const dsoBannerEl = document.getElementById('dso-banner');
-       if (dsoBannerEl) {
-         dsoBannerEl.textContent = dso;
-         if (dso <= 30) {
-           dsoBannerEl.className = 'text-2xl font-bold text-[color:var(--accent-green)]'; // Excelente
-         } else if (dso <= 45) {
-           dsoBannerEl.className = 'text-2xl font-bold text-[color:var(--text-primary)]'; // Bueno
-         } else if (dso <= 60) {
-           dsoBannerEl.className = 'text-2xl font-bold text-[color:var(--accent-amber)]'; // Regular
-         } else {
-           dsoBannerEl.className = 'text-2xl font-bold text-[color:var(--accent-red)]'; // Crítico
-         }
-       }
-       
-       // Actualizar también los KPIs del banner
-       const totalEdpsBanner = document.getElementById('total-edps-banner');
-       const criticosBanner = document.getElementById('criticos-banner');
-       const pendientesBanner = document.getElementById('pendientes-banner');
-       const validadosBanner = document.getElementById('validados-banner');
-       const dsoBanner = document.getElementById('dso-banner');
-       
-       if (totalEdpsBanner) totalEdpsBanner.textContent = totalRegistros.toLocaleString();
-       if (criticosBanner) criticosBanner.textContent = criticos.toLocaleString();
-       if (pendientesBanner) pendientesBanner.textContent = pendientes.toLocaleString();
-       if (validadosBanner) validadosBanner.textContent = validados.toLocaleString();
-       
-       // Actualizar DSO en el banner con colores según el valor
-       if (dsoBanner) {
-         dsoBanner.textContent = dso;
-         if (dso <= 30) {
-           dsoBanner.className = 'text-2xl font-bold text-[color:var(--accent-green)]'; // Excelente
-         } else if (dso <= 45) {
-           dsoBanner.className = 'text-2xl font-bold text-[color:var(--text-primary)]'; // Bueno
-         } else if (dso <= 60) {
-           dsoBanner.className = 'text-2xl font-bold text-[color:var(--accent-amber)]'; // Regular
-         } else {
-           dsoBanner.className = 'text-2xl font-bold text-[color:var(--accent-red)]'; // Crítico
-         }
-       }
-       
-       // Actualizar barra de progreso
-       const progressBar = document.getElementById('progress-bar');
-       const progressPercentage = document.getElementById('progress-percentage');
-       if (progressBar && progressPercentage && totalRegistros > 0) {
-         const progressValue = Math.round((validados / totalRegistros) * 100);
-         progressBar.style.width = progressValue + '%';
-         progressPercentage.textContent = progressValue + '%';
-       }
-       
-       console.log('📊 Métricas calculadas y actualizadas:', {
-         total: totalRegistros,
-         pendientes: pendientes,
-         validados: validados,
-         monto: totalMonto,
-         criticos: criticos,
-         dso: dso
-       });
-     } else {
-       console.warn('⚠️ No hay registros disponibles para calcular métricas');
-     }
+    document.body.setAttribute('data-filter-mes', '{{ filtros.mes|default("") }}');
+    document.body.setAttribute('data-filter-jefe', '{{ filtros.jefe_proyecto|default("") }}');
+    document.body.setAttribute('data-filter-cliente', '{{ filtros.cliente|default("") }}');
+    document.body.setAttribute('data-filter-estado', '{{ filtros.estado|default("pendientes") }}');
   });
 </script>
 
@@ -201,11 +88,7 @@
             <h1 class="text-3xl font-bold bg-gradient-to-r from-[color:var(--text-primary)] via-[color:var(--accent-blue)] to-[color:var(--accent-purple)] bg-clip-text text-transparent">
               <span id="view-title">Pagora</span>
             </h1>
-            <!-- Badge de estado en vivo -->
-            <div class="flex items-center gap-2 px-3 py-1 bg-[color:var(--accent-green)]/10 border border-[color:var(--accent-green)]/20 rounded-full">
-              <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full animate-pulse"></div>
-              <span class="text-xs font-medium text-[color:var(--accent-green)]">En vivo</span>
-            </div>
+       
           </div>
           <p class="text-[color:var(--text-secondary)] max-w-2xl text-lg font-medium">
             <span id="view-description">Centro de Comando - Gestión Visual de EDPs</span>
@@ -288,6 +171,26 @@
             </svg>
             <span class="hidden sm:inline">Actualizar</span>
           </button>
+          
+                    <!-- Botón de detalle del encargado (solo si hay filtro específico) -->
+          {% if filtros.jefe_proyecto and filtros.jefe_proyecto != '' and filtros.jefe_proyecto != 'todos' %}
+          <a href="{{ url_for('controller.vista_encargado', nombre=filtros.jefe_proyecto) }}" 
+             class="flex items-center px-4 py-2.5 text-sm bg-gradient-to-r from-[color:var(--accent-purple)] to-[color:var(--accent-blue)] text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span class="hidden sm:inline">Ver {{ filtros.jefe_proyecto }}</span>
+            <span class="sm:hidden">Ver detalle</span>
+          </a>
+          {% endif %}
+          
+          <!-- Botón de carga de EDPs -->
+          <a href="{{ url_for('edp_upload.upload_page') }}" class="flex items-center px-4 py-2.5 text-sm bg-gradient-to-r from-[color:var(--accent-purple)] to-[color:var(--accent-pink)] hover:from-purple-600 hover:to-pink-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span class="hidden sm:inline">Cargar EDPs</span>
+          </a>
           
           <!-- Botón de exportación -->
           <button id="export-btn" class="flex items-center px-4 py-2.5 text-sm bg-[color:var(--accent-green)] hover:bg-green-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105">
@@ -410,7 +313,7 @@
       </div>
 
       <div class="mt-4 flex items-center justify-end">
-        <a href="{{ url_for('controller.vista_kanban') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] mr-4 transition-colors">
+        <a href="{{ url_for('kanban.vista_kanban') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] mr-4 transition-colors">
           Limpiar filtros
         </a>
         <button type="submit" class="btn-primary">
@@ -422,13 +325,6 @@
       </div>
     </form>
   </div>
-
-  <!-- Panel de resumen mejorado -->
-  <div class="section-title-modern mb-5">
-    <h2 class="text-xl font-semibold">📊 Resumen del Tablero</h2>
-    <div class="section-line"></div>
-  </div>
-
 
   <!-- KPI -->
 <div id="summary-panel" class="mb-8 bg-gradient-to-br from-[color:var(--bg-card)] via-[color:var(--bg-highlight)] to-[color:var(--bg-secondary)] rounded-2xl shadow-xl border border-[color:var(--border-color)] overflow-hidden backdrop-blur-sm">
@@ -615,11 +511,11 @@
     </div>
   </div>
 </div>
-  <div class="section-title-modern mb-5">
+  <div id="kanban-title-section" class="section-title-modern mb-5">
     <h2 class="text-xl font-semibold">📋 Tablero Kanban</h2>
     <div class="section-line"></div>
   </div>
-    <div class="flex flex-wrap items-center gap-2 mb-5">
+    <div id="kanban-column-controls" class="flex flex-wrap items-center gap-2 mb-5">
   <span class="text-sm font-medium text-[color:var(--text-secondary)]">Mostrar columnas:</span>
   {% for estado in columnas.keys() %}
   <label class="inline-flex items-center px-3 py-1.5 bg-[color:var(--bg-card)] text-sm rounded-lg border border-[color:var(--border-color)] cursor-pointer hover:bg-[color:var(--bg-card-hover)]">
@@ -869,639 +765,8 @@
   </div>
 </div>
 
-<!-- Scripts -->
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<!-- Antes del cierre de body -->
-<script src="{{ url_for('static', filename='js/modal_edp_scripts.js') }}"></script>
-<script src="{{ url_for('static', filename='js/controller_kanban.js') }}"></script>
-<script src="{{ url_for('static', filename='js/table-controller.js') }}"></script>
 
 
-
-<!-- Toggle View Script -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Elementos del toggle
-    const toggleKanban = document.getElementById('toggle-kanban');
-    const toggleLista = document.getElementById('toggle-lista');
-    const viewTitle = document.getElementById('view-title');
-    const viewDescription = document.getElementById('view-description');
-    
-    // Contenedores de las vistas
-    const kanbanBoard = document.getElementById('kanban-board');
-    const tablaContainer = document.getElementById('tabla-view');
-    
-    console.log('🔍 Elementos encontrados:');
-    console.log('- Kanban board:', kanbanBoard ? '✅ Encontrado' : '❌ No encontrado');
-    console.log('- Tabla container:', tablaContainer ? '✅ Encontrado' : '❌ No encontrado');
-    console.log('- Toggle kanban:', toggleKanban ? '✅ Encontrado' : '❌ No encontrado');
-    console.log('- Toggle lista:', toggleLista ? '✅ Encontrado' : '❌ No encontrado');
-    
-    // Función helper para encontrar elementos de forma más robusta
-    function findKanbanSections() {
-        const sections = [];
-        
-        // 1. Panel principal del kanban (buscar por ID)
-        const kanbanBoard = document.getElementById('kanban-board');
-        if (kanbanBoard) {
-            // Buscar el contenedor padre más cercano
-            let parent = kanbanBoard.parentElement;
-            while (parent && !parent.classList.contains('bg-gradient-to-br')) {
-                parent = parent.parentElement;
-                if (parent === document.body) break; // Evitar bucle infinito
-            }
-            if (parent && parent !== document.body) {
-                sections.push(parent);
-            } else {
-                sections.push(kanbanBoard); // Fallback al kanban board mismo
-            }
-        }
-        
-        // 2. Sección de título del tablero kanban (buscar por texto)
-        const titleSections = document.querySelectorAll('.section-title-modern h2');
-        titleSections.forEach(title => {
-            if (title.textContent.includes('Tablero Kanban')) {
-                sections.push(title.closest('.section-title-modern'));
-            }
-        });
-        
-        // 3. Buscador de EDPs (buscar por ID)
-        const buscador = document.getElementById('buscar-edp');
-        if (buscador) {
-            // Buscar el contenedor padre usando una clase más simple
-            let parent = buscador.closest('div[class*="bg-"]');
-            if (parent) {
-                sections.push(parent);
-            }
-        }
-        
-        // 4. Toggle de columnas (buscar por texto "Mostrar columnas")
-        const toggleText = Array.from(document.querySelectorAll('span')).find(span => 
-            span.textContent && span.textContent.includes('Mostrar columnas:')
-        );
-        if (toggleText) {
-            sections.push(toggleText.closest('.flex'));
-        }
-        
-        // 5. Contador de validados antiguos (buscar por ID del botón)
-        const toggleValidados = document.getElementById('toggle-validados-antiguos');
-        if (toggleValidados) {
-            sections.push(toggleValidados.closest('.flex'));
-        }
-        
-        // 6. Panel de resumen - NO incluir para que permanezca visible en ambas vistas
-        // const summaryPanel = document.getElementById('summary-panel');
-        // El panel de resumen debe mantenerse visible en ambas vistas
-        
-        return sections.filter(el => el !== null);
-    }
-    
-    // Obtener las secciones del kanban
-    const kanbanSections = findKanbanSections();
-    console.log(`📊 Secciones del kanban encontradas: ${kanbanSections.length}`);
-    kanbanSections.forEach((section, index) => {
-        console.log(`  ${index + 1}. ${section.tagName} - ${section.id || 'sin ID'} - clases: ${section.className}`);
-    });
-    
-    // Estado inicial
-    let currentView = 'kanban';
-    
-    // Función para cambiar a vista Kanban
-    function showKanbanView() {
-        currentView = 'kanban';
-        console.log('🔄 Cambiando a vista Kanban...');
-        
-        // Actualizar botones
-        if (toggleKanban && toggleLista) {
-            toggleKanban.classList.remove('bg-[color:var(--bg-card-hover)]', 'text-[color:var(--text-primary)]');
-            toggleKanban.classList.add('bg-[color:var(--accent-blue)]', 'text-white');
-            toggleLista.classList.remove('bg-[color:var(--accent-blue)]', 'text-white');
-            toggleLista.classList.add('bg-[color:var(--bg-card-hover)]', 'text-[color:var(--text-primary)]');
-        }
-        
-        // Actualizar título y descripción
-        if (viewTitle) viewTitle.textContent = 'Vista Kanban';
-        if (viewDescription) viewDescription.textContent = 'Arrastra las tarjetas entre columnas para actualizar su estado.';
-        
-        // Mostrar secciones del kanban
-        console.log(`📊 Mostrando ${kanbanSections.length} secciones del kanban`);
-        kanbanSections.forEach((section, index) => {
-            if (section) {
-                section.style.display = '';
-                section.classList.remove('hidden');
-                console.log(`✅ Sección ${index + 1} mostrada:`, section.tagName, section.className);
-            }
-        });
-        
-        // Ocultar tabla
-        if (tablaContainer) {
-            tablaContainer.style.display = 'none';
-            tablaContainer.classList.add('hidden');
-            console.log('🚫 Tabla ocultada');
-        }
-        
-        console.log('✅ Vista cambiada a: Kanban');
-    }
-    
-    // Función para cambiar a vista Lista/Tabla
-    function showListaView() {
-        currentView = 'lista';
-        console.log('🔄 Cambiando a vista Lista...');
-        
-        // Actualizar botones
-        if (toggleKanban && toggleLista) {
-            toggleLista.classList.remove('bg-[color:var(--bg-card-hover)]', 'text-[color:var(--text-primary)]');
-            toggleLista.classList.add('bg-[color:var(--accent-blue)]', 'text-white');
-            toggleKanban.classList.remove('bg-[color:var(--accent-blue)]', 'text-white');
-            toggleKanban.classList.add('bg-[color:var(--bg-card-hover)]', 'text-[color:var(--text-primary)]');
-        }
-        
-        // Actualizar título y descripción
-        if (viewTitle) viewTitle.textContent = 'Vista Lista';
-        if (viewDescription) viewDescription.textContent = 'Tabla detallada con filtros avanzados y funciones de exportación.';
-        
-        // Ocultar secciones del kanban
-        console.log(`🚫 Ocultando ${kanbanSections.length} secciones del kanban`);
-        kanbanSections.forEach((section, index) => {
-            if (section) {
-                section.style.display = 'none';
-                section.classList.add('hidden');
-                console.log(`🚫 Sección ${index + 1} ocultada:`, section.tagName, section.className);
-            }
-        });
-        
-        // Mostrar tabla
-        if (tablaContainer) {
-            tablaContainer.style.display = '';
-            tablaContainer.classList.remove('hidden');
-            console.log('✅ Tabla mostrada');
-            
-            // Pequeño delay para asegurar que la tabla se renderice correctamente
-            setTimeout(() => {
-                // Trigger resize event para que la tabla se ajuste
-                window.dispatchEvent(new Event('resize'));
-                console.log('🔄 Tabla reajustada');
-            }, 100);
-        } else {
-            console.warn('⚠️ No se encontró el contenedor de la tabla');
-        }
-        
-        console.log('✅ Vista cambiada a: Lista/Tabla');
-    }
-    
-    // Event listeners para los toggles
-    if (toggleKanban) {
-        toggleKanban.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('🔘 Click en toggle Kanban');
-            if (currentView !== 'kanban') {
-                showKanbanView();
-            }
-        });
-    }
-    
-    if (toggleLista) {
-        toggleLista.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('🔘 Click en toggle Lista');
-            if (currentView !== 'lista') {
-                showListaView();
-            }
-        });
-    }
-    
-    // Indicador de atajos de teclado
-    const keyboardHint = document.getElementById('keyboard-hint');
-    let hintTimeout;
-    
-    // Mostrar hint cuando se presiona Alt
-    document.addEventListener('keydown', function(e) {
-        if (e.altKey && !e.repeat) {
-            keyboardHint.classList.add('show');
-            clearTimeout(hintTimeout);
-        }
-        
-        // Alt + K para Kanban
-        if (e.altKey && e.key === 'k') {
-            e.preventDefault();
-            showKanbanView();
-            showTemporaryFeedback('Kanban');
-        }
-        // Alt + L para Lista
-        if (e.altKey && e.key === 'l') {
-            e.preventDefault();
-            showListaView();
-            showTemporaryFeedback('Lista');
-        }
-    });
-    
-    // Ocultar hint cuando se suelta Alt
-    document.addEventListener('keyup', function(e) {
-        if (!e.altKey) {
-            hintTimeout = setTimeout(() => {
-                keyboardHint.classList.remove('show');
-            }, 1000);
-        }
-    });
-    
-    // Función para mostrar feedback temporal
-    function showTemporaryFeedback(viewName) {
-        // Crear elemento de feedback temporal
-        const feedback = document.createElement('div');
-        feedback.textContent = `✓ Cambiado a vista ${viewName}`;
-        feedback.className = 'fixed top-4 right-4 bg-[color:var(--accent-green)] text-white px-4 py-2 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
-        document.body.appendChild(feedback);
-        
-        // Animar entrada
-        setTimeout(() => {
-            feedback.classList.remove('translate-x-full');
-        }, 10);
-        
-        // Animar salida y remover
-        setTimeout(() => {
-            feedback.classList.add('translate-x-full');
-            setTimeout(() => {
-                document.body.removeChild(feedback);
-            }, 300);
-        }, 2000);
-    }
-    
-    // Función para mantener la vista actual al recargar (opcional)
-    const savedView = localStorage.getItem('kanban_view_preference');
-    if (savedView === 'lista') {
-        showListaView();
-    } else {
-        showKanbanView();
-    }
-    
-    // Guardar preferencia de vista
-    toggleKanban.addEventListener('click', () => {
-        localStorage.setItem('kanban_view_preference', 'kanban');
-    });
-    
-    toggleLista.addEventListener('click', () => {
-        localStorage.setItem('kanban_view_preference', 'lista');
-    });
-    
-    console.log('🎯 Toggle de vistas Kanban/Lista inicializado');
-});
-
-// === SCRIPT PARA EL TOGGLE DE FILTROS (MISMO ESTILO QUE EL DASHBOARD) ===
-document.addEventListener('DOMContentLoaded', function() {
-    const toggleFiltersBtn = document.getElementById('toggle-filters-btn');
-    const filtersSection = document.getElementById('filters-section');
-    const filterText = document.getElementById('filter-text');
-    const filterChevron = document.getElementById('filter-chevron');
-    
-    // Variable para controlar la visibilidad de los filtros
-    window.filtersVisible = false;
-    
-    // Función para mostrar/ocultar filtros
-    window.toggleFilters = function() {
-        window.filtersVisible = !window.filtersVisible;
-        window.keepFiltersVisible = window.filtersVisible;
-        
-        if (window.filtersVisible) {
-            // Mostrar filtros
-            filtersSection.classList.remove('hidden');
-            filtersSection.style.opacity = '0';
-            filtersSection.style.transform = 'translateY(-10px)';
-            
-            // Animación de entrada
-            setTimeout(() => {
-                filtersSection.style.transition = 'all 0.3s ease-out';
-                filtersSection.style.opacity = '1';
-                filtersSection.style.transform = 'translateY(0)';
-            }, 10);
-            
-            // Actualizar botón
-            filterText.textContent = 'Ocultar filtros';
-            filterChevron.style.transform = 'rotate(180deg)';
-            toggleFiltersBtn.classList.add('bg-blue-700');
-            
-        } else {
-            // Ocultar filtros
-            filtersSection.style.transition = 'all 0.3s ease-in';
-            filtersSection.style.opacity = '0';
-            filtersSection.style.transform = 'translateY(-10px)';
-            
-            setTimeout(() => {
-                filtersSection.classList.add('hidden');
-            }, 300);
-            
-            // Actualizar botón
-            filterText.textContent = 'Mostrar filtros';
-            filterChevron.style.transform = 'rotate(0deg)';
-            toggleFiltersBtn.classList.remove('bg-blue-700');
-        }
-    }
-    
-    // Event listener para el botón de filtros
-    toggleFiltersBtn.addEventListener('click', window.toggleFilters);
-    
-    // Verificar si hay filtros aplicados y mostrarlos automáticamente
-    {% if filtros.mes or filtros.jefe_proyecto or filtros.cliente or (filtros.estado and filtros.estado != 'pendientes' and filtros.estado != 'todos') %}
-        setTimeout(window.toggleFilters, 100);
-    {% endif %}
-    
-    // Manejar el envío del formulario de filtros para mantener el estado
-    const filterForm = document.querySelector('form[method="GET"]');
-    if (filterForm) {
-        filterForm.addEventListener('submit', function(e) {
-            // Guardar el estado de visibilidad actual en localStorage antes de enviar el formulario
-            localStorage.setItem('filtersVisible', window.filtersVisible);
-        });
-    }
-    
-    // Restaurar estado de visibilidad al cargar la página si hay filtros personalizados
-    const hasCustomFilters = {{ 1 if (filtros.mes and filtros.mes != '' and filtros.mes != 'todos') or 
-                                    (filtros.jefe_proyecto and filtros.jefe_proyecto != '' and filtros.jefe_proyecto != 'todos') or 
-                                    (filtros.cliente and filtros.cliente != '' and filtros.cliente != 'todos') or 
-                                    (filtros.estado and filtros.estado != '' and filtros.estado != 'todos' and filtros.estado != 'pendientes') else 0 }};
-    const savedVisibility = localStorage.getItem('filtersVisible');
-    
-        if (savedVisibility === 'true' && hasCustomFilters) {
-        // Si había filtros visibles en la sesión anterior y hay filtros personalizados, restaurar
-        setTimeout(window.toggleFilters, 100);
-    }
-});
-
-// === FUNCIONALIDAD PARA LOS BOTONES DEL BANNER ===
-document.addEventListener('DOMContentLoaded', function() {
-    // Botón de actualización
-    const refreshBtn = document.getElementById('refresh-all-btn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
-            // Mostrar indicador de carga
-            const originalHTML = this.innerHTML;
-            this.innerHTML = `
-                <svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span class="hidden sm:inline">Actualizando...</span>
-            `;
-            this.disabled = true;
-            
-            // Simular actualización (recargar página)
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        });
-    }
-    
-    // Botón de exportación
-    const exportBtn = document.getElementById('export-btn');
-    if (exportBtn) {
-        exportBtn.addEventListener('click', function() {
-            // Crear modal de exportación simple
-            const modalHTML = `
-                <div id="export-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center animate__animated animate__fadeIn">
-                    <div class="bg-[color:var(--bg-card)] rounded-xl shadow-xl p-6 w-full max-w-md animate__animated animate__zoomIn">
-                        <h3 class="text-lg font-bold mb-4">Exportar Datos</h3>
-                        <p class="text-[color:var(--text-secondary)] mb-6">Selecciona el formato de exportación:</p>
-                        
-                        <div class="grid grid-cols-1 gap-3 mb-6">
-                            <button class="export-option flex items-center p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-highlight)] transition-colors" data-format="csv">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[color:var(--accent-green)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <div class="text-left">
-                                    <div class="font-medium">Exportar a CSV</div>
-                                    <div class="text-sm text-[color:var(--text-secondary)]">Archivo de Excel compatible</div>
-                                </div>
-                            </button>
-                            
-                            <button class="export-option flex items-center p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-highlight)] transition-colors" data-format="pdf">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[color:var(--accent-red)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                </svg>
-                                <div class="text-left">
-                                    <div class="font-medium">Exportar a PDF</div>
-                                    <div class="text-sm text-[color:var(--text-secondary)]">Reporte ejecutivo</div>
-                                </div>
-                            </button>
-                        </div>
-                        
-                        <div class="flex justify-end">
-                            <button id="cancel-export-modal" class="px-4 py-2 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors">
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-            
-            // Event listeners para el modal
-            const modal = document.getElementById('export-modal');
-            const cancelBtn = document.getElementById('cancel-export-modal');
-            const exportOptions = document.querySelectorAll('.export-option');
-            
-            cancelBtn.addEventListener('click', () => modal.remove());
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.remove();
-            });
-            
-            exportOptions.forEach(option => {
-                option.addEventListener('click', () => {
-                    const format = option.dataset.format;
-                    modal.remove();
-                    
-                    // Simular exportación
-                    showToast(`Exportando datos en formato ${format.toUpperCase()}...`, 'info');
-                    setTimeout(() => {
-                        showToast(`Archivo ${format.toUpperCase()} exportado correctamente`, 'success');
-                    }, 2000);
-                });
-            });
-        });
-    }
-    
-    // Función para mostrar notificaciones toast
-    function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 animate__animated animate__fadeInUp`;
-        
-        if (type === 'success') {
-            toast.classList.add('bg-green-600');
-            message = `✅ ${message}`;
-        } else if (type === 'error') {
-            toast.classList.add('bg-red-600');
-            message = `❌ ${message}`;
-        } else if (type === 'warning') {
-            toast.classList.add('bg-amber-500');
-            message = `⚠️ ${message}`;
-        } else {
-            toast.classList.add('bg-blue-600');
-            message = `ℹ️ ${message}`;
-        }
-        
-        toast.innerHTML = `
-            <div class="flex items-center">
-                <span class="flex-grow">${message}</span>
-                <button class="ml-4 hover:text-gray-300 focus:outline-none" onclick="this.parentElement.parentElement.remove()">
-                    &times;
-                </button>
-            </div>
-        `;
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.classList.replace('animate__fadeInUp', 'animate__fadeOutDown');
-            setTimeout(() => {
-                if (document.body.contains(toast)) {
-                    document.body.removeChild(toast);
-                }
-            }, 500);
-        }, 5000);
-    }
-    
-    // Actualizar texto del botón de filtros
-    const filterText = document.getElementById('filter-text');
-    if (filterText) {
-        filterText.textContent = 'Filtros';
-    }
-    
-    // Actualizar timestamp cada minuto
-    setInterval(() => {
-        const lastUpdatedBanner = document.getElementById('last-updated-banner');
-        if (lastUpdatedBanner) {
-            lastUpdatedBanner.textContent = 'Actualizado: ' + new Date().toLocaleTimeString();
-        }
-    }, 60000);
-});
-</script>
-
-<!-- Estilos para animaciones de filtros (mismo estilo que el dashboard) -->
-<style>
-#filters-section {
-    transition: all 0.3s ease-out;
-}
-
-#filter-chevron {
-    transition: transform 0.3s ease;
-}
-
-.btn-primary {
-  @apply bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center;
-}
-
-/* Mejorar compatibilidad visual con los selectores */
-.form-select {
-    transition: all 0.2s ease;
-}
-
-.form-select:focus {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    border-color: var(--accent-blue);
-}
-
-/* Efecto hover para los botones de filtro */
-#toggle-filters-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-/* Efecto de entrada suave para la sección de filtros */
-#filters-section.hidden {
-    opacity: 0;
-    transform: translateY(-10px);
-}
-
-#filters-section:not(.hidden) {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Estilos específicos para el nuevo banner */
-.banner-glow {
-    box-shadow: 0 0 50px rgba(59, 130, 246, 0.1);
-}
-
-/* Animaciones para los KPIs del banner */
-#total-edps-banner, #criticos-banner, #pendientes-banner, #validados-banner {
-    transition: all 0.3s ease;
-}
-
-#total-edps-banner:hover, #criticos-banner:hover, #pendientes-banner:hover, #validados-banner:hover {
-    transform: scale(1.1);
-}
-
-/* Efecto glassmorphism para el panel de KPIs */
-.backdrop-blur-sm {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-}
-
-/* Animación para la barra de progreso */
-#progress-bar {
-    background: linear-gradient(90deg, 
-        var(--accent-blue), 
-        var(--accent-purple), 
-        var(--accent-green)
-    );
-    background-size: 200% 100%;
-    animation: gradientShift 3s ease-in-out infinite;
-}
-
-@keyframes gradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-}
-
-/* Mejoras para botones del banner */
-button:hover {
-    transform: translateY(-2px);
-}
-
-button:active {
-    transform: translateY(0);
-}
-
-/* Efecto de resplandor para el logo principal */
-.logo-glow {
-    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
-}
-
-/* Responsive improvements */
-@media (max-width: 768px) {
-    .text-3xl {
-        font-size: 1.875rem;
-    }
-    
-    .grid-cols-2.lg\\:grid-cols-5 {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-    }
-}
-
-/* Mejores breakpoints para 5 columnas */
-@media (max-width: 640px) {
-    .grid-cols-2.lg\\:grid-cols-5 {
-        grid-template-columns: repeat(1, minmax(0, 1fr));
-    }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-    .grid-cols-2.lg\\:grid-cols-5 {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}
-
-/* Mejoras para el estado "En vivo" */
-@keyframes pulse-soft {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-.animate-pulse {
-    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-</style>
 
   <!-- Tabla de EDPs - Al mismo nivel que el contenido principal para alinearse con base.html -->
 <div id="tabla-view" class="hidden">
@@ -1527,4 +792,10 @@ button:active {
   </div>
 </div>
 </div>
+
+<!-- Performance Metrics Widget (Solo mostrar si está optimizado) -->
+{% if load_time is defined or from_cache is defined %}
+  {% include 'controller/performance_metrics.html' %}
+{% endif %}
+
 {% endblock %}

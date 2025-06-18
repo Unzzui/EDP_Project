@@ -649,3 +649,128 @@ transform: none !important; /* Prevenir rotaciones que causan desalineación */
   opacity: 1;
   visibility: visible;
 }
+
+
+#filters-section {
+  transition: all 0.3s ease-out;
+}
+
+#filter-chevron {
+  transition: transform 0.3s ease;
+}
+
+.btn-primary {
+@apply bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center;
+}
+
+/* Mejorar compatibilidad visual con los selectores */
+.form-select {
+  transition: all 0.2s ease;
+}
+
+.form-select:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--accent-blue);
+}
+
+/* Efecto hover para los botones de filtro */
+#toggle-filters-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Efecto de entrada suave para la sección de filtros */
+#filters-section.hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+#filters-section:not(.hidden) {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Estilos específicos para el nuevo banner */
+.banner-glow {
+  box-shadow: 0 0 50px rgba(59, 130, 246, 0.1);
+}
+
+/* Animaciones para los KPIs del banner */
+#total-edps-banner, #criticos-banner, #pendientes-banner, #validados-banner {
+  transition: all 0.3s ease;
+}
+
+#total-edps-banner:hover, #criticos-banner:hover, #pendientes-banner:hover, #validados-banner:hover {
+  transform: scale(1.1);
+}
+
+/* Efecto glassmorphism para el panel de KPIs */
+.backdrop-blur-sm {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Animación para la barra de progreso */
+#progress-bar {
+  background: linear-gradient(90deg, 
+      var(--accent-blue), 
+      var(--accent-purple), 
+      var(--accent-green)
+  );
+  background-size: 200% 100%;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Mejoras para botones del banner */
+button:hover {
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Efecto de resplandor para el logo principal */
+.logo-glow {
+  filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .text-3xl {
+      font-size: 1.875rem;
+  }
+  
+  .grid-cols-2.lg\\:grid-cols-5 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+  }
+}
+
+/* Mejores breakpoints para 5 columnas */
+@media (max-width: 640px) {
+  .grid-cols-2.lg\\:grid-cols-5 {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .grid-cols-2.lg\\:grid-cols-5 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Mejoras para el estado "En vivo" */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse {
+  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
