@@ -11,7 +11,7 @@ import os
 import json
 
 from ..config import Config, get_config
-from ..utils.gsheet import read_sheet, clear_all_cache
+from ..utils.supabase_adapter import read_sheet, clear_all_cache
 
 
 class BaseRepository(ABC):
@@ -22,20 +22,20 @@ class BaseRepository(ABC):
     
     @property
     def service(self):
-        """Get Google Sheets service instance."""
+        """Supabase integration (migrated from Google Sheets)"""
         if self._service is None:
             self._service = self._get_service()
         return self._service
     
     def _get_service(self):
-        """Create Google Sheets service using ONLY environment variables."""
+        """Supabase integration (migrated from Google Sheets)"""
         # Use the centralized get_service function from gsheet.py
         # This ensures consistent behavior across the application
-        from ..utils.gsheet import get_service
+        from ..utils.supabase_adapter import get_service
         return get_service()
     
     def _read_range(self, range_name: str) -> List[List[str]]:
-        """Read data from Google Sheets range using optimized cache from gsheet.py."""
+        """Supabase integration (migrated from Google Sheets)"""
         try:
             # Use the optimized read_sheet function which handles multi-level caching
             df = read_sheet(range_name)
@@ -72,7 +72,7 @@ class BaseRepository(ABC):
     
     def _write_range(self, range_name: str, values: List[List[str]], 
                     value_input_option: str = "USER_ENTERED") -> bool:
-        """Write data to Google Sheets range."""
+        """Supabase integration (migrated from Google Sheets)"""
         try:
             config = get_config()
             self.service.spreadsheets().values().update(
@@ -147,7 +147,7 @@ class BaseRepository(ABC):
 
 
 class SheetsRepository(BaseRepository):
-    """Repository for basic Google Sheets operations."""
+    """Supabase integration (migrated from Google Sheets)"""
     
     def read_sheet_raw(self, range_name: str) -> pd.DataFrame:
         """Read sheet data without transformations."""

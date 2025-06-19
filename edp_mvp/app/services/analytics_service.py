@@ -1414,7 +1414,7 @@ class AnalyticsService:
     def get_edp_log_csv(self, n_edp: str) -> str:
         """Obtiene el log de EDPs como CSV string para exportar"""
         try:
-            from ..utils.gsheet import read_log
+            from ..utils.supabase_adapter import read_log
             
             # Get log data using the existing read_log function
             df_log = read_log(n_edp)

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import random
 
 def generate_demo_edp_data():
-    """Generar datos demo para EDP cuando Google Sheets no está disponible"""
+    """Supabase integration (migrated from Google Sheets)"""
     
     # Datos de ejemplo
     states = ['Pendiente', 'En Proceso', 'Completado', 'Cancelado']
@@ -41,7 +41,7 @@ def generate_demo_edp_data():
     return pd.DataFrame(data)
 
 def generate_demo_log_data():
-    """Generar datos demo para LOG cuando Google Sheets no está disponible"""
+    """Supabase integration (migrated from Google Sheets)"""
     
     actions = ['Creado', 'Modificado', 'Completado', 'Cancelado', 'Revisado']
     users = ['admin', 'user1', 'user2', 'manager1']

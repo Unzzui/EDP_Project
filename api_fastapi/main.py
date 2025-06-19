@@ -18,7 +18,7 @@ sys.path.insert(0, str(project_root))
 # Import Flask app and services
 from edp_mvp.app import create_app
 from edp_mvp.app.config import get_config
-from edp_mvp.app.utils.gsheet import (
+from edp_mvp.app.utils.supabase_adapter import (
     read_sheet, 
     get_service, 
     clear_all_cache,
@@ -465,7 +465,7 @@ async def sheets_webhook(
     data: dict,
     services = Depends(get_services)
 ):
-    """Webhook para actualizaciones automáticas desde Google Sheets"""
+    """Supabase integration (migrated from Google Sheets)"""
     try:
         # Invalidar cache cuando Google Sheets se actualiza
         result = await services['api_service'].clear_all_caches()

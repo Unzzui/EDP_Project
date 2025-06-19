@@ -288,7 +288,7 @@ class CacheInvalidationRequest(BaseModel):
 
 # === MODELOS DE WEBHOOKS ===
 class SheetsWebhookData(BaseModel):
-    """Datos del webhook de Google Sheets"""
+    """Supabase integration (migrated from Google Sheets)"""
     sheet_id: str
     worksheet_name: str
     action: str  # 'update', 'insert', 'delete'

@@ -9,7 +9,7 @@
 
 {% block content %}
 <!-- Panel principal -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/kanban.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/control_panel.css') }}">
 
 <div class="bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-6 animate__animated animate__fadeIn">
 
@@ -33,7 +33,7 @@
     </div>
     
     <div class="flex space-x-3">
-      <a href="{{ url_for('project_manager.dashboard') }}" 
+      <a href="{{ url_for('project_management.dashboard') }}" 
          class="flex items-center bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-xl text-sm border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -104,7 +104,7 @@
     </div>
 
     <div class="mt-4 flex items-center justify-end">
-      <a href="{{ url_for('kanban.vista_kanban') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] mr-4 transition-colors">
+      <a href="{{ url_for('control_panel.vista_kanban') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] mr-4 transition-colors">
         Limpiar filtros
       </a>
       <button type="submit" class="btn-primary">
@@ -716,6 +716,6 @@
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <!-- Antes del cierre de body -->
-<script src="{{ url_for('static', filename='js/modal_edp_scripts.js') }}"></script>
-<script src="{{ url_for('static', filename='js/jp_kanban.js') }}"></script>
+<script src="{{ url_for('static', filename='js/common/modal_edp_scripts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/projects/jp_control_panel.js') }}"></script>
 {% endblock %} 

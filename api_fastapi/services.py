@@ -15,7 +15,7 @@ sys.path.insert(0, str(project_root))
 
 # Import Flask services and functions
 from edp_mvp.app.config import get_config
-from edp_mvp.app.utils.gsheet import (
+from edp_mvp.app.utils.supabase_adapter import (
     read_sheet, 
     get_service, 
     clear_all_cache,
@@ -106,7 +106,7 @@ def _clean_date_value(value) -> Optional[str]:
     return str(value)
 
 class GoogleSheetsServiceAsync:
-    """Async wrapper for Google Sheets operations"""
+    """Supabase integration (migrated from Google Sheets)"""
     
     def __init__(self):
         self.executor = ThreadPoolExecutor(max_workers=4)
@@ -774,7 +774,7 @@ class APIService:
             }
 
     async def check_sheets_health(self) -> Dict[str, Any]:
-        """Check Google Sheets service health"""
+        """Supabase integration (migrated from Google Sheets)"""
         try:
             # Try to get service
             service = get_service()

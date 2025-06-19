@@ -9,13 +9,13 @@
 
       <div class="header-actions">
         <a
-          href="{{ url_for('controller.dashboard_controller') }}"
+          href="{{ url_for('dashboard.dashboard_controller') }}"
           class="btn btn-secondary">
           ← Volver al Dashboard
         </a>
         {% if registros_agrupados %}
         <a
-          href="{{ url_for('controller.descargar_log_csv', n_edp=n_edp) }}"
+          href="{{ url_for('dashboard.descargar_log_csv', n_edp=n_edp) }}"
           class="btn btn-primary">
           📥 Descargar CSV
         </a>

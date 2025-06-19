@@ -13,7 +13,7 @@ from ..utils.format_utils import FormatUtils
 
 
 class EDPService(BaseService):
-    """Service for managing EDP business logic using Google Sheets."""
+    """Supabase integration (migrated from Google Sheets)"""
     
     def __init__(self):
         super().__init__()
@@ -194,26 +194,10 @@ class EDPService(BaseService):
     def update_edp_by_internal_id(self, internal_id: int, edp_data: Dict[str, Any]) -> ServiceResponse:
         """Update an existing EDP by internal ID using the repository."""
         try:
-            # First, get the EDP to find its n_edp
-            edp_response = self.get_edp_by_internal_id(internal_id)
+            print(f"🔍 EDPService.update_edp_by_internal_id - ID: {internal_id}, Data: {edp_data}")
             
-            if not edp_response.success:
-                return ServiceResponse(
-                    success=False,
-                    message=f"EDP with internal ID {internal_id} not found"
-                )
-            
-            edp_info = edp_response.data
-            n_edp = edp_info.get('n_edp')
-            
-            if not n_edp:
-                return ServiceResponse(
-                    success=False,
-                    message=f"Could not find n_edp for internal ID {internal_id}"
-                )
-            
-            # Use the existing update method with n_edp
-            update_response = self.edp_repository.update_by_edp_id(str(n_edp), edp_data)
+            # Use the new repository method that directly handles internal ID
+            update_response = self.edp_repository.update_by_internal_id(internal_id, edp_data)
             
             if update_response.get("success", False):
                 return ServiceResponse(
@@ -228,7 +212,7 @@ class EDPService(BaseService):
                 )
         except Exception as e:
             import traceback
-            print(f"Error in update_edp_by_internal_id: {str(e)}")
+            print(f"❌ Error in update_edp_by_internal_id: {str(e)}")
             print(traceback.format_exc())
             return ServiceResponse(
                 success=False,

@@ -29,7 +29,7 @@ Jefe de Proyecto{% endblock %} {% block head_extras %}
   <div class="flex flex-col md:flex-row justify-between items-start">
     <div class="flex items-center mb-4 md:mb-0">
       <a
-        href="{{ url_for('project_manager.dashboard') }}"
+        href="{{ url_for('project_management.dashboard') }}"
         class="mr-4 p-2 bg-[color:var(--bg-card)] rounded-lg border border-[color:var(--border-color)] hover:bg-[color:var(--bg-hover)] transition-colors">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -412,7 +412,7 @@ Jefe de Proyecto{% endblock %} {% block head_extras %}
           <td class="py-4 px-4 text-center">
             <div class="flex items-center justify-center space-x-2">
               <a
-                href="/controller/id/{{ edp.N_EDP }}"
+                href="/dashboard/id/{{ edp.N_EDP }}"
                 class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-blue)] text-white rounded-md hover:bg-[color:var(--accent-blue-dark)] transition-colors text-sm">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -546,7 +546,7 @@ Jefe de Proyecto{% endblock %} {% block head_extras %}
 
   function editEDP(edpNumber) {
     // Redirigir a la página de edición del EDP
-    window.location.href = `/controller/id/${edpNumber}`;
+    window.location.href = `/dashboard/id/${edpNumber}`;
   }
 </script>
 {% endblock %}

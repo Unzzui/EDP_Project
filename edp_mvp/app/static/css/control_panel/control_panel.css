@@ -1,0 +1,95 @@
+/**
+ * Control Panel Main CSS
+ * Unified styles for the control panel (formerly kanban) interface
+ */
+
+/* Import dependencies */
+@import '../common/variables.css';
+
+/* Main control panel layout */
+.control-panel-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: var(--bg-primary);
+}
+
+.control-panel-header {
+    padding: 1rem 2rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.control-panel-content {
+    flex: 1;
+    overflow: auto;
+    padding: 1rem;
+}
+
+/* Kanban board styles */
+.kanban-board {
+    display: flex;
+    gap: 1rem;
+    height: 100%;
+    min-height: 600px;
+}
+
+.kanban-column {
+    flex: 1;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    max-width: 300px;
+}
+
+.kanban-column-header {
+    padding: 1rem;
+    background: var(--accent-gradient);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
+    text-align: center;
+}
+
+.kanban-column-content {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+/* Card styles */
+.kanban-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.kanban-card.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .kanban-board {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .kanban-column {
+        max-width: none;
+        min-height: 200px;
+    }
+}

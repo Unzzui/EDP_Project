@@ -20,7 +20,7 @@ except ImportError:
 class DatabaseConfig:
     """Database configuration."""
     
-    # Google Sheets configuration (for EDP data)
+    # Supabase (anteriormente Google Sheets) configuration (for EDP data)
     credentials_file: str = "credentials.json"
     sheet_id: str = ""
     timeout: int = 30
@@ -31,39 +31,52 @@ class DatabaseConfig:
     sqlalchemy_database_uri: str = ""
     sqlalchemy_track_modifications: bool = False
     
+    # Supabase configuration
+    supabase_url: str = ""
+    supabase_anon_key: str = ""
+    supabase_service_role_key: str = ""
+    
+    # NUEVO: Selector de backend de datos
+    database_type: str = "supabase"  # Cambiado de "sqlite" a "supabase"
+    data_backend: str = "supabase"   # NUEVO: "google_sheets" o "supabase"
+    
     @classmethod
     def from_env(cls) -> 'DatabaseConfig':
-        """Create config from environment variables."""
-        # Default SQLite database path
-        base_dir = Path(__file__).parent.parent.parent.parent  # Go to project root
-        default_db_path = str(base_dir / "edp_mvp" / "instance" / "edp_database.db")
+        """Create DatabaseConfig from environment variables."""
         
-        sqlite_path = os.getenv('SQLITE_DB_PATH', default_db_path)
+        # Obtener tipo de base de datos desde variables de entorno
+        database_type = os.getenv('DATABASE_TYPE', 'supabase')  # Cambio por defecto
+        data_backend = os.getenv('DATA_BACKEND', 'supabase')    # NUEVO: backend de datos
         
-        # Fix DATABASE_URL handling for production
-        database_url = os.getenv('DATABASE_URL')
-        if database_url and database_url != "":
-            print(f"🔍 DATABASE_URL detectado: {database_url[:50]}...")
-            
-            # Detectar placeholders comunes en DATABASE_URL
-            placeholders = ['username', 'password', 'hostname', 'port', 'database', 'host']
-            has_placeholder = any(placeholder in database_url.lower() for placeholder in placeholders)
-            
-            if has_placeholder:
-                print(f"⚠️ DATABASE_URL contiene placeholders, usando SQLite")
-                sqlalchemy_uri = f"sqlite:///{sqlite_path}"
-            else:
-                # Fix for PostgreSQL URLs that start with postgres:// (Render uses this)
-                if database_url.startswith('postgres://'):
-                    database_url = database_url.replace('postgres://', 'postgresql://', 1)
-                sqlalchemy_uri = database_url
-                print(f"✅ Usando PostgreSQL validado")
+        # SQLite configuration
+        instance_dir = os.getenv('INSTANCE_PATH', 'edp_mvp/instance')
+        sqlite_filename = os.getenv('SQLITE_DB_NAME', 'edp_mvp.db')
+        sqlite_path = os.path.join(instance_dir, sqlite_filename)
+        
+        # Configurar URI de SQLAlchemy basado en el tipo de DB
+        if database_type == 'postgresql':
+            # PostgreSQL/Supabase para producción
+            database_url = os.getenv('DATABASE_URL')
+            if database_url and database_url.startswith('postgres://'):
+                # Render/Heroku compatibility: replace postgres:// with postgresql://
+                database_url = database_url.replace('postgres://', 'postgresql://', 1)
+            sqlalchemy_uri = database_url or 'postgresql://localhost/edp_mvp'
         else:
-            sqlalchemy_uri = f"sqlite:///{sqlite_path}"
-            print(f"⚠️ DATABASE_URL no configurado, usando SQLite: {sqlite_path}")
+            # SQLite por defecto
+            sqlalchemy_uri = f'sqlite:///{sqlite_path}'
+        
+        # Supabase configuration
+        supabase_url = os.getenv('SUPABASE_URL', '')
+        supabase_anon_key = os.getenv('SUPABASE_ANON_KEY', '')
+        supabase_service_role_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')
+        
+        print(f"🔧 Configuración de datos:")
+        print(f"   📊 Backend de datos: {data_backend}")
+        print(f"   🗄️ Base de datos: {database_type}")
+        print(f"   🔗 Supabase: {'✅ Configurado' if supabase_url else '❌ No configurado'}")
         
         return cls(
-            credentials_file="",  # No usar archivos JSON
+            credentials_file=os.getenv('GOOGLE_CREDENTIALS_FILE', 'edp_mvp/app/keys/edp-control-system.json'),
             # Usar SHEET_ID que tienes en tu .env
             sheet_id=os.getenv('SHEET_ID', os.getenv('GOOGLE_SHEET_ID', '')),
             timeout=int(os.getenv('DB_TIMEOUT', '30')),
@@ -71,7 +84,13 @@ class DatabaseConfig:
             # SQLite config
             sqlite_db_path=sqlite_path,
             sqlalchemy_database_uri=sqlalchemy_uri,
-            sqlalchemy_track_modifications=os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', 'False').lower() == 'true'
+            sqlalchemy_track_modifications=os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', 'False').lower() == 'true',
+            # Supabase config
+            supabase_url=supabase_url,
+            supabase_anon_key=supabase_anon_key,
+            supabase_service_role_key=supabase_service_role_key,
+            database_type=database_type,
+            data_backend=data_backend  # NUEVO
         )
 
 @dataclass
@@ -213,14 +232,24 @@ class Config:
         self.security = SecurityConfig.from_env()
         self.kpi = KPIConfig.from_env()
         
-        # Add compatibility attributes for legacy code
-        # SOLO usar variables de entorno - no archivos JSON
-        self.GOOGLE_CREDENTIALS = "ENV_VARS"  # Siempre usar variables de entorno
-        # Usar SHEET_ID de tu .env
-        self.SHEET_ID = os.getenv('SHEET_ID', os.getenv('GOOGLE_SHEET_ID', ''))
+        # NUEVO: Configurar backend de datos
+        self.DATA_BACKEND = self.database.data_backend
         
-        # Configurar servicio de Google Sheets desde aquí
-        self.GOOGLE_SERVICE = self._setup_google_service()
+        # Add compatibility attributes for legacy code
+        if self.DATA_BACKEND == "google_sheets":
+            print("📊 Usando Google Sheets como backend de datos")
+            # SOLO usar variables de entorno - no archivos JSON
+            self.GOOGLE_CREDENTIALS = "ENV_VARS"  # Siempre usar variables de entorno
+            # Usar SHEET_ID de tu .env
+            self.SHEET_ID = os.getenv('SHEET_ID', os.getenv('GOOGLE_SHEET_ID', ''))
+            
+            # Configurar servicio de Google Sheets desde aquí
+            self.GOOGLE_SERVICE = self._setup_google_service()
+        else:
+            print("🗄️ Usando Supabase como backend de datos")
+            self.GOOGLE_SERVICE = None
+            self.SHEET_ID = ""
+        
         self.SECRET_KEY = self.app.secret_key
         self.DEBUG = self.app.debug
         self.FLASK_ENV = self.app.environment
@@ -248,55 +277,68 @@ class Config:
         # More conservative timeouts
         self.database.timeout = 60
         self.database.retry_attempts = 5
-    
+        
     def _apply_testing_overrides(self):
         """Apply testing-specific settings."""
-        self.app.debug = True
         self.app.testing = True
+        self.app.debug = True
         self.app.log_level = "DEBUG"
         
-        # Relaxed settings for testing
+        # Relaxed security for testing 
         self.security.csrf_protection = False
         self.security.rate_limit_enabled = False
         
         # Faster timeouts for tests
         self.database.timeout = 10
-        self.cache_timeout = 10
+        self.database.retry_attempts = 1
     
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert all configurations to dictionary."""
-        return {
-            'app': self.app.__dict__,
-            'database': self.database.__dict__,
-            'security': self.security.__dict__,
-            'kpi': self.kpi.__dict__
-        }
-    
-    def get_app_info(self) -> Dict[str, Any]:
-        """Get basic app information."""
-        return {
-            'environment': self.app.environment,
-            'debug': self.app.debug,
-            'version': self.get_version(),
-            'config_loaded_at': self._config_loaded_at.isoformat() if hasattr(self, '_config_loaded_at') else None
-        }
-    
-    def get_version(self) -> str:
-        """Get application version."""
-        try:
-            # Try to read from version file
-            version_file = Path(__file__).parent.parent / 'version.txt'
-            if version_file.exists():
-                return version_file.read_text().strip()
-        except Exception:
-            pass
+    def get_redis_config(self) -> Dict[str, Any]:
+        """Get Redis configuration from various sources."""
+        redis_url = None
         
-        return "1.0.0"  # Default version
+        # Try different environment variable names in order of preference
+        redis_env_vars = ['REDIS_URL', 'REDISCLOUD_URL', 'REDISTOGO_URL']
+        
+        for var in redis_env_vars:
+            redis_url = os.getenv(var)
+            if redis_url:
+                print(f"✅ Redis configurado desde {var}")
+                break
+        
+        if not redis_url:
+            # Try localhost default for development
+            redis_url = "redis://localhost:6379/0"
+            print("⚠️ Redis no configurado, usando localhost por defecto")
+        
+        return {
+            'url': redis_url,
+            'decode_responses': True,
+            'socket_timeout': 5,
+            'socket_connect_timeout': 5,
+            'retry_on_timeout': True,
+            'health_check_interval': 30
+        }
+    
+    def is_google_sheets_enabled(self) -> bool:
+        """Supabase integration (migrated from Google Sheets)"""
+        return (
+            self.DATA_BACKEND == "google_sheets" and
+            self.GOOGLE_SERVICE is not None and 
+            bool(self.SHEET_ID)
+        )
+    
+    def is_supabase_enabled(self) -> bool:
+        """Check if Supabase integration is enabled and properly configured."""
+        return (
+            self.DATA_BACKEND == "supabase" and
+            bool(self.database.supabase_url) and 
+            bool(self.database.supabase_service_role_key)
+        )
     
     def _setup_google_service(self):
         """
-        Configurar servicio de Google Sheets usando variables de entorno o archivo JSON.
-        Centraliza toda la lógica de autenticación en la configuración.
+        Configurar servicio de Google Sheets usando archivo JSON.
+        Simplificado para usar únicamente el archivo JSON en app/keys/
         
         Returns:
             Google Sheets service object o None si no se puede configurar
@@ -306,107 +348,46 @@ class Config:
             from googleapiclient.discovery import build
             import json
             
-            # 1. Cargar variables de entorno
             print("🔑 Configurando servicio de Google Sheets...")
-            google_project_id = os.getenv('GOOGLE_PROJECT_ID')
-            google_client_email = os.getenv('GOOGLE_CLIENT_EMAIL')
-            google_private_key = os.getenv('GOOGLE_PRIVATE_KEY')
-            google_key_id = os.getenv('GOOGLE_PRIVATE_KEY_ID', 'auto-generated-from-env')
-            google_client_id = os.getenv('GOOGLE_CLIENT_ID', 'auto-generated-from-env')
             
-            print(f"   📧 Client Email: {google_client_email}")
-            print(f"   🆔 Project ID: {google_project_id}")
-            print(f"   🔐 Private Key ID: {google_key_id}")
-            print(f"   👤 Client ID: {google_client_id}")
+            # Usar archivo JSON directamente
+            credentials_file = os.getenv('GOOGLE_CREDENTIALS_FILE', 'edp_mvp/app/keys/edp-control-system.json')
             
-            # 2. Verificar si tenemos todas las variables de entorno
-            env_vars_complete = all([google_project_id, google_client_email, google_private_key])
-            
-            if env_vars_complete:
-                print(f"   🔍 Private Key Length: {len(google_private_key)} caracteres")
-                
-                # Si la clave privada es muy corta, probablemente está truncada
-                if len(google_private_key) < 100:
-                    print(f"   ⚠️ Clave privada parece estar truncada ({len(google_private_key)} chars)")
-                    print("   🔄 Intentando cargar desde archivo JSON...")
-                    env_vars_complete = False
-                else:
-                    print("   ✅ Variables de entorno parecen completas")
+            # Construir ruta absoluta
+            if not os.path.isabs(credentials_file):
+                # Si es relativa, usar la ruta del proyecto
+                project_root = Path(__file__).parent.parent.parent.parent
+                json_path = project_root / credentials_file
             else:
-                missing_vars = []
-                if not google_project_id:
-                    missing_vars.append('GOOGLE_PROJECT_ID')
-                if not google_client_email:
-                    missing_vars.append('GOOGLE_CLIENT_EMAIL')
-                if not google_private_key:
-                    missing_vars.append('GOOGLE_PRIVATE_KEY')
-                
-                print(f"   ⚠️ Variables de entorno faltantes: {', '.join(missing_vars)}")
-                print("   🔄 Intentando cargar desde archivo JSON...")
+                json_path = Path(credentials_file)
             
-            # 3. Si las variables de entorno no están completas, usar archivo JSON
-            if not env_vars_complete:
-                json_path = os.path.join(os.path.dirname(__file__), '..', 'keys', 'edp-control-system.json')
-                if os.path.exists(json_path):
-                    print(f"   📁 Cargando credenciales desde: {json_path}")
-                    with open(json_path, 'r') as f:
-                        credentials_data = json.load(f)
-                    
-                    # Verificar que el JSON tiene los campos necesarios
-                    required_fields = ['project_id', 'client_email', 'private_key']
-                    if all(field in credentials_data for field in required_fields):
-                        print("   ✅ Archivo JSON válido encontrado")
-                    else:
-                        print(f"   ❌ Archivo JSON incompleto. Campos faltantes: {[f for f in required_fields if f not in credentials_data]}")
-                        print("🎭 Activando modo demo")
-                        return None
-                else:
-                    print(f"   ❌ Archivo JSON no encontrado: {json_path}")
-                    print("🎭 Activando modo demo (sin Google Sheets)")
-                    return None
-            else:
-                # 4. Usar variables de entorno para crear las credenciales
-                print("   � Procesando clave privada desde variables de entorno...")
-                processed_private_key = google_private_key.strip()
-                
-                # Remover comillas externas si existen
-                if processed_private_key.startswith('"') and processed_private_key.endswith('"'):
-                    processed_private_key = processed_private_key[1:-1]
-                    print("   🔧 Removiendo comillas externas")
-                
-                # Si la clave contiene \n literales, convertirlos a saltos de línea reales
-                if '\\n' in processed_private_key:
-                    processed_private_key = processed_private_key.replace('\\n', '\n')
-                    print("   🔧 Procesando \\n literales")
-                
-                # Verificar formato
-                if not processed_private_key.startswith('-----BEGIN PRIVATE KEY-----'):
-                    print(f"   ❌ ERROR: Clave privada no tiene formato correcto")
-                    print("   � Intentando cargar desde archivo JSON...")
-                    # Fallback a JSON
-                    json_path = os.path.join(os.path.dirname(__file__), '..', 'keys', 'edp-control-system-f3cfafc0093a.json')
-                    if os.path.exists(json_path):
-                        with open(json_path, 'r') as f:
-                            credentials_data = json.load(f)
-                    else:
-                        print("🎭 Activando modo demo")
-                        return None
-                else:
-                    # Crear credenciales desde variables de entorno
-                    credentials_data = {
-                        "type": "service_account",
-                        "project_id": google_project_id,
-                        "private_key_id": google_key_id,
-                        "private_key": processed_private_key,
-                        "client_email": google_client_email,
-                        "client_id": google_client_id,
-                        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                        "token_uri": "https://oauth2.googleapis.com/token",
-                        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                        "client_x509_cert_url": f"https://www.googleapis.com/robot/v1/metadata/x509/{google_client_email.replace('@', '%40')}"
-                    }
+            print(f"   📁 Buscando credenciales en: {json_path}")
             
-            # 5. Crear credenciales y servicio
+            if not json_path.exists():
+                print(f"   ❌ Archivo JSON no encontrado: {json_path}")
+                print("🎭 Activando modo demo (sin Google Sheets)")
+                return None
+            
+            print(f"   ✅ Archivo JSON encontrado: {json_path}")
+            
+            # Cargar credenciales desde JSON
+            with open(json_path, 'r') as f:
+                credentials_data = json.load(f)
+            
+            # Verificar que el JSON tiene los campos necesarios
+            required_fields = ['project_id', 'client_email', 'private_key']
+            missing_fields = [field for field in required_fields if field not in credentials_data]
+            
+            if missing_fields:
+                print(f"   ❌ Archivo JSON incompleto. Campos faltantes: {missing_fields}")
+                print("🎭 Activando modo demo")
+                return None
+            
+            print(f"   📧 Client Email: {credentials_data['client_email']}")
+            print(f"   🆔 Project ID: {credentials_data['project_id']}")
+            print("   ✅ Archivo JSON válido")
+            
+            # Crear credenciales y servicio
             print("   🔧 Creando credenciales de Google...")
             scopes = ['https://www.googleapis.com/auth/spreadsheets']
             creds = Credentials.from_service_account_info(credentials_data, scopes=scopes)
@@ -421,23 +402,11 @@ class Config:
             print(f"❌ Error configurando servicio de Google Sheets: {e}")
             print(f"🔍 Tipo de error: {type(e).__name__}")
             
-            # Debugging específico para diferentes tipos de errores
-            if "seekable bit stream" in str(e):
-                print("🔧 Error específico: problema con formato de private key")
-                
-            elif "Invalid" in str(e) and "private" in str(e).lower():
-                print("🔧 Error específico: clave privada inválida")
-                
-            elif "JSON" in str(e):
-                print("🔧 Error específico: problema con credenciales JSON")
-            
-            print("� Posibles soluciones:")
+            print("🔧 Posibles soluciones:")
             print("   1. Verifica el archivo JSON en app/keys/")
             print("   2. Regenera las credenciales de Google Cloud")
             print("   3. Verifica permisos del archivo JSON")
             
-            import traceback
-            traceback.print_exc()
             print("🎭 Activando modo demo")
             return None
     

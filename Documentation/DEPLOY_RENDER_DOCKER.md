@@ -179,6 +179,7 @@ Si no configuras Google Sheets, la aplicación funcionará con datos demo:
 ### ❌ Error común: "Permission denied" al leer Secret Files
 
 Si ves este error:
+
 ```
 ❌ Error de permisos leyendo credenciales: [Errno 13] Permission denied: '/etc/secrets/edp-control-system-f3cfafc0093a.json'
 ```
@@ -186,11 +187,13 @@ Si ves este error:
 **✅ SOLUCIÓN IMPLEMENTADA:**
 
 1. **Script automático de corrección**: `fix_render_secrets.py`
+
    - Se ejecuta como root en el entrypoint
    - Copia Secret Files de `/etc/secrets/` a `/app/secrets/`
    - Ajusta permisos para que sean legibles por `appuser`
 
-2. **Búsqueda inteligente de credenciales**: 
+2. **Búsqueda inteligente de credenciales**:
+
    - La app busca credenciales en múltiples ubicaciones
    - Prioriza archivos copiados en `/app/secrets/`
    - Fallback a ubicaciones originales si es posible
@@ -203,7 +206,7 @@ Si ves este error:
 ### 🔧 **Archivos involucrados en la solución:**
 
 - `fix_render_secrets.py`: Copia Secret Files con permisos correctos
-- `entrypoint.sh`: Ejecuta corrección como root, luego cambia a appuser  
+- `entrypoint.sh`: Ejecuta corrección como root, luego cambia a appuser
 - `edp_mvp/app/config/__init__.py`: Búsqueda inteligente de credenciales
 - `edp_mvp/app/utils/gsheet.py`: Manejo robusto de errores de permisos
 - `edp_mvp/app/utils/demo_data.py`: Datos demo cuando no hay acceso a Google Sheets

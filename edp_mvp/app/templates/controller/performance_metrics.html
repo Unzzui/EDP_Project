@@ -117,7 +117,7 @@
 
   async function checkCacheStatus() {
     try {
-      const response = await fetch("/kanban-opt/api/cache-status");
+      const response = await fetch("/analytics/api/cache-status");
       const data = await response.json();
 
       if (data.error) {
@@ -155,7 +155,7 @@
     }
 
     try {
-      const response = await fetch("/kanban-opt/api/clear-cache", {
+      const response = await fetch("/analytics/api/clear-cache", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

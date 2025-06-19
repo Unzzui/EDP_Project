@@ -320,7 +320,7 @@
         </div>
         
         <div class="flex gap-3">
-          <a href="{{ url_for('controller.dashboard_controller') }}" 
+          <a href="{{ url_for('dashboard.dashboard_controller') }}" 
              class="px-4 py-2 text-[color:var(--text-secondary)] bg-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-md hover:bg-[color:var(--bg-hover)] focus:ring-2 focus:ring-[color:var(--accent-blue)] focus:border-[color:var(--accent-blue)] transition-colors duration-200">
             ← Cancelar
           </a>
@@ -343,7 +343,7 @@
 <!-- Enlace al historial -->
 <div class="container mx-auto px-4 py-6 max-w-4xl">
   <div class="bg-[color:var(--bg-card)] rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200 border border-[color:var(--border-color)]">
-    <a href="{{ url_for('controller.ver_log_edp', n_edp=edp['n_edp']) }}" class="flex items-center justify-between group">
+    <a href="{{ url_for('dashboard.ver_log_edp', n_edp=edp['n_edp']) }}" class="flex items-center justify-between group">
       <div class="flex items-center">
         <div class="mr-4 p-3 bg-[color:var(--accent-blue)] rounded-lg group-hover:bg-[color:var(--accent-blue-dark)] transition-colors duration-200">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">

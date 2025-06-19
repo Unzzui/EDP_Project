@@ -237,7 +237,7 @@ endblock %} {% block extra_head %}
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- EDP Management -->
         <a
-          href="{{ url_for('edp_controller.lista_edps') }}"
+          href="{{ url_for('edp_management.list_edps') }}"
           class="glass-card rounded-xl p-6 text-white hover:bg-white/20 transition-all duration-300 group">
           <div class="flex items-center justify-between mb-4">
             <div
@@ -274,7 +274,7 @@ endblock %} {% block extra_head %}
 
         <!-- Analytics -->
         <a
-          href="{{ url_for('main.landing') }}"
+          href="{{ url_for('landing.landing') }}"
           class="glass-card rounded-xl p-6 text-white hover:bg-white/20 transition-all duration-300 group">
           <div class="flex items-center justify-between mb-4">
             <div
@@ -311,7 +311,7 @@ endblock %} {% block extra_head %}
 
         <!-- Help & Support -->
         <a
-          href="{{ url_for('main.help_page') }}"
+          href="{{ url_for('landing.help_page') }}"
           class="glass-card rounded-xl p-6 text-white hover:bg-white/20 transition-all duration-300 group">
           <div class="flex items-center justify-between mb-4">
             <div

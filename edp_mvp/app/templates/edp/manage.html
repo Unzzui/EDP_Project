@@ -1,0 +1,1045 @@
+{% extends 'base.html' %} {% block title %}Gestionar EDPs - Sistema EDP{%
+endblock %} {% block head %}
+<!-- Bootstrap CSS -->
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  rel="stylesheet" />
+
+<!-- Font Awesome -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Animate.css for modal animations -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
+<!-- Table Controller CSS -->
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/control_panel/table-controller.css') }}" />
+
+<style>
+  /* Fix navbar layout conflicts with Bootstrap */
+  nav .navbar-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 1rem !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+  }
+
+  nav .navbar-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  nav .nav-item {
+    position: relative !important;
+    display: block !important;
+  }
+
+  nav .nav-link,
+  nav .nav-button {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0.5rem 0.75rem !important;
+    text-decoration: none !important;
+    border: none !important;
+    background: transparent !important;
+    cursor: pointer !important;
+  }
+
+  nav .dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    z-index: 1000 !important;
+    min-width: 200px !important;
+  }
+
+  nav .mobile-menu-button {
+    display: none !important;
+  }
+
+  @media (max-width: 768px) {
+    nav .navbar-nav {
+      display: none !important;
+    }
+
+    nav .mobile-menu-button {
+      display: block !important;
+    }
+  }
+
+  :root {
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --transition-base: all 0.2s ease-in-out;
+  }
+
+  .manage-container {
+    padding: 1.5rem 0;
+    min-height: calc(100vh - 80px);
+  }
+
+  .page-header {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .page-title i {
+    color: var(--accent-blue);
+  }
+
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .btn-header {
+    background: var(--accent-blue);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    transition: var(--transition-base);
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-header:hover {
+    background: var(--accent-blue-dark);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+
+  .btn-header.secondary {
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+  }
+
+  .btn-header.secondary:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--accent-blue);
+  }
+
+  .monto {
+    text-align: right;
+    font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
+    font-weight: 600;
+    color: var(--accent-green);
+  }
+
+  .edp-number {
+    font-weight: 700;
+    color: var(--accent-blue);
+  }
+
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+  }
+
+  .loading-spinner {
+    background: var(--bg-card);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    color: var(--text-primary);
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--accent-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  /* DataTables Customization */
+  .dataTables_wrapper {
+    color: var(--text-primary);
+  }
+
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_info,
+  .dataTables_wrapper .dataTables_paginate {
+    color: var(--text-primary);
+  }
+
+  .dataTables_wrapper .dataTables_length select,
+  .dataTables_wrapper .dataTables_filter input {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    padding: 0.5rem;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
+    margin: 0 2px;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: white;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: white;
+  }
+
+  /* Form styles for modal */
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    transition: var(--transition-base);
+  }
+
+  .form-input:focus,
+  .form-select:focus,
+  .form-textarea:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .btn-primary {
+    background: var(--accent-blue);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-base);
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-blue-dark);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-base);
+  }
+
+  .btn-secondary:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-blue);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .manage-container {
+      padding: 1rem 0;
+    }
+
+    .page-header {
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .header-actions {
+      margin-top: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .table-header {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
+
+    .table-container {
+      padding: 1rem;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="manage-container">
+  <div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="row align-items-center">
+        <div class="col-lg-8">
+          <h1 class="page-title">
+            <i class="fas fa-list-alt"></i>
+            Gestión de EDPs
+          </h1>
+          <p class="page-subtitle">
+            Visualiza y gestiona los EDPs registrados en el sistema
+          </p>
+        </div>
+        <div class="col-lg-4">
+          <div class="header-actions">
+            <a
+              href="{{ url_for('edp_upload.upload_page') }}"
+              class="btn-header">
+              <i class="fas fa-plus"></i> Cargar EDPs
+            </a>
+            <button class="btn-header secondary" onclick="refreshTable()">
+              <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Opciones de tabla y Quick Filters -->
+    <div
+      class="flex flex-col md:flex-row justify-between mb-4 bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-3">
+      <div class="flex flex-wrap gap-2 mb-3 md:mb-0">
+        <button
+          id="filter-all"
+          class="px-3 py-1 text-sm rounded-full bg-[color:var(--accent-blue)] text-white hover:bg-[color:var(--accent-blue-dark)] transition-colors">
+          Todos
+        </button>
+        <button
+          id="filter-proyecto"
+          class="px-3 py-1 text-sm rounded-full bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] transition-colors">
+          Por Proyecto
+        </button>
+        <button
+          id="filter-cliente"
+          class="px-3 py-1 text-sm rounded-full bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)] hover:bg-[color:var(--bg-highlight)] transition-colors">
+          Por Cliente
+        </button>
+      </div>
+
+      <div class="flex gap-2">
+        <div class="relative">
+          <input
+            id="table-search"
+            type="text"
+            placeholder="Buscar en tabla"
+            class="form-input pl-8 py-1 text-sm" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 text-[color:var(--text-secondary)] absolute left-2.5 top-1/2 transform -translate-y-1/2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        <button class="btn-header secondary" onclick="refreshTable()">
+          <i class="fas fa-sync-alt"></i> Actualizar
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla con mejor interactividad -->
+    <div
+      class="table-responsive shadow-md rounded-xl overflow-hidden border border-[color:var(--border-color)]">
+      <table id="edps-table" class="data-table w-full">
+        <thead>
+          <tr class="bg-[color:var(--background)]">
+            <th class="sortable p-3" data-sort="proyecto">Proyecto</th>
+            <th class="sortable" data-sort="edp">N° EDP</th>
+            <th class="sortable" data-sort="cliente">Cliente</th>
+            <th class="sortable text-right" data-sort="monto-propuesto">
+              Monto Propuesto
+            </th>
+            <th>Observaciones</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Data will be loaded via AJAX -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Información de la tabla y controles de paginación -->
+    <div
+      class="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 space-y-4 md:space-y-0">
+      <!-- Información de registros -->
+      <div class="flex flex-col space-y-2">
+        <div class="text-sm text-[color:var(--text-secondary)]">
+          Mostrando <span id="showing-from">1</span> -
+          <span id="showing-to">10</span> de
+          <span id="total-count">0</span> EDPs
+          <span id="filtered-info" class="hidden"
+            >(filtrado de <span id="original-count">0</span> total)</span
+          >
+        </div>
+        <div class="flex items-center space-x-2">
+          <label
+            for="page-size"
+            class="text-xs text-[color:var(--text-secondary)]"
+            >Mostrar:</label
+          >
+          <select id="page-size" class="form-select text-xs py-1 px-2 w-20">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <span class="text-xs text-[color:var(--text-secondary)]"
+            >por página</span
+          >
+        </div>
+      </div>
+
+      <!-- Controles de paginación -->
+      <div class="flex items-center space-x-4">
+        <!-- Exportar -->
+        <button
+          id="exportar-excel"
+          class="flex items-center text-[color:var(--accent-green)] hover:text-[color:var(--accent-green-dark)] transition-colors">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Exportar a CSV
+        </button>
+
+        <!-- Navegación de páginas -->
+        <div class="flex items-center space-x-2">
+          <button
+            id="prev-page"
+            class="px-3 py-1 text-sm bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded hover:bg-[color:var(--bg-highlight)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <div class="flex items-center space-x-1" id="page-numbers">
+            <!-- Los números de página se generarán dinámicamente -->
+          </div>
+
+          <button
+            id="next-page"
+            class="px-3 py-1 text-sm bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded hover:bg-[color:var(--bg-highlight)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Ir a página específica -->
+        <div class="flex items-center space-x-2">
+          <span class="text-xs text-[color:var(--text-secondary)]">Ir a:</span>
+          <input
+            id="goto-page"
+            type="number"
+            min="1"
+            class="form-input text-xs py-1 px-2 w-16 text-center"
+            placeholder="1" />
+          <button
+            id="goto-page-btn"
+            class="px-2 py-1 text-xs bg-[color:var(--accent-blue)] text-white rounded hover:bg-blue-600 transition-colors">
+            Ir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay" style="display: none">
+  <div class="loading-spinner">
+    <div class="spinner"></div>
+    <div>Cargando datos...</div>
+  </div>
+</div>
+
+<!-- Include the modal template -->
+{% include 'controller/modal_edp_template.html' %}
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+<!-- Socket.IO for real-time updates -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
+<!-- Modal EDP Scripts -->
+<script src="{{ url_for('static', filename='js/common/modal_edp_scripts.js') }}"></script>
+
+<script>
+  let edpsData = [];
+
+  $(document).ready(function () {
+    loadEDPs();
+    initializeTableControls();
+  });
+
+  function initializeTableControls() {
+    // Table search
+    document
+      .getElementById("table-search")
+      .addEventListener("input", function (e) {
+        filterTable(e.target.value);
+      });
+
+    // Filter buttons
+    document
+      .getElementById("filter-all")
+      .addEventListener("click", function () {
+        setActiveFilter(this);
+        updateTable(edpsData);
+      });
+
+    document
+      .getElementById("filter-proyecto")
+      .addEventListener("click", function () {
+        setActiveFilter(this);
+        // Aquí podrías implementar filtrado por proyecto si es necesario
+        updateTable(edpsData);
+      });
+
+    document
+      .getElementById("filter-cliente")
+      .addEventListener("click", function () {
+        setActiveFilter(this);
+        // Aquí podrías implementar filtrado por cliente si es necesario
+        updateTable(edpsData);
+      });
+  }
+
+  function setActiveFilter(activeButton) {
+    // Remove active class from all filter buttons
+    document.querySelectorAll('[id^="filter-"]').forEach((btn) => {
+      btn.className = btn.className.replace(
+        "bg-[color:var(--accent-blue)] text-white",
+        "bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)]"
+      );
+    });
+
+    // Add active class to clicked button
+    activeButton.className = activeButton.className.replace(
+      "bg-[color:var(--bg-card-hover)] text-[color:var(--text-primary)]",
+      "bg-[color:var(--accent-blue)] text-white"
+    );
+  }
+
+  function filterTable(searchTerm) {
+    if (!searchTerm) {
+      updateTable(edpsData);
+      return;
+    }
+
+    const filteredData = edpsData.filter((edp) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        (edp.proyecto || "").toLowerCase().includes(searchLower) ||
+        (edp.n_edp || "").toLowerCase().includes(searchLower) ||
+        (edp.cliente || "").toLowerCase().includes(searchLower) ||
+        (edp.observaciones || "").toLowerCase().includes(searchLower)
+      );
+    });
+
+    updateTable(filteredData);
+  }
+
+  function loadEDPs() {
+    showLoading(true);
+
+    $.ajax({
+      url: '{{ url_for("edp_management.manage_list_edps") }}',
+      method: "GET",
+      success: function (response) {
+        if (response.success) {
+          edpsData = response.data;
+          updateTable(edpsData);
+
+          showLoading(false);
+        } else {
+          showError("Error cargando EDPs", response.message);
+          showLoading(false);
+        }
+      },
+      error: function (xhr, status, error) {
+        showError(
+          "Error de conexión",
+          "No se pudo cargar la lista de EDPs: " + error
+        );
+        showLoading(false);
+      },
+    });
+  }
+
+  function updateTable(data) {
+    const tbody = document.querySelector("#edps-table tbody");
+
+    if (data.length === 0) {
+      tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-8 text-center text-[color:var(--text-secondary)]">
+              <div class="flex flex-col items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-[color:var(--text-secondary)] opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-base font-medium">No se encontraron registros</p>
+                <p class="text-sm mt-1">Prueba con diferentes criterios de búsqueda</p>
+              </div>
+            </td>
+          </tr>
+        `;
+      return;
+    }
+
+    let html = "";
+    data.forEach(function (edp) {
+      html += `
+          <tr data-edp="${edp.n_edp || ""}" 
+              data-internal-id="${edp.id || ""}"
+              data-proyecto="${edp.proyecto || ""}"
+              data-monto-propuesto="${edp.monto_propuesto || 0}"
+              class="${edp.critico ? "data-table-row-critical" : ""}">
+            <td class="font-medium">${edp.proyecto || "-"}</td>
+            <td class="font-semibold text-[color:var(--accent-blue)]">${
+              edp.n_edp || "-"
+            }</td>
+            <td>${edp.cliente || "-"}</td>
+            <td class="text-right font-medium">${formatMoney(
+              edp.monto_propuesto || 0
+            )}</td>
+            <td class="max-w-xs truncate" title="${edp.observaciones || ""}">
+              ${
+                edp.observaciones
+                  ? edp.observaciones.length > 30
+                    ? edp.observaciones.slice(0, 30) + "..."
+                    : edp.observaciones
+                  : "-"
+              }
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-action btn-edit" onclick="editEDP(${
+                  edp.id
+                })" title="Editar EDP">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-action btn-delete" onclick="confirmDelete(${
+                  edp.id
+                }, '${edp.n_edp}', '${edp.proyecto}')" title="Eliminar EDP">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+
+    // Actualizar contadores
+    document.getElementById("total-count").textContent = data.length;
+    document.getElementById("showing-from").textContent =
+      data.length > 0 ? 1 : 0;
+    document.getElementById("showing-to").textContent = data.length;
+  }
+
+  function getStatusBadge(estado) {
+    if (!estado)
+      return '<span class="badge badge-secondary status-badge">Sin Estado</span>';
+
+    const estadoLower = estado.toLowerCase();
+
+    if (estadoLower.includes("aprobado") || estadoLower.includes("pagado")) {
+      return `<span class="badge badge-success status-badge">${estado}</span>`;
+    } else if (
+      estadoLower.includes("revision") ||
+      estadoLower.includes("pendiente")
+    ) {
+      return `<span class="badge badge-warning status-badge">${estado}</span>`;
+    } else if (
+      estadoLower.includes("rechazado") ||
+      estadoLower.includes("cancelado")
+    ) {
+      return `<span class="badge badge-danger status-badge">${estado}</span>`;
+    } else {
+      return `<span class="badge badge-info status-badge">${estado}</span>`;
+    }
+  }
+
+  function getActionButtons(edp) {
+    return `
+      <div class="action-buttons">
+        <button class="btn-action btn-edit" onclick="editEDP(${edp.id})" title="Editar EDP">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn-action btn-delete" onclick="confirmDelete(${edp.id}, '${edp.n_edp}', '${edp.proyecto}')" title="Eliminar EDP">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    `;
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return "N/A";
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("es-ES", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  function formatMoney(amount) {
+    return typeof amount === "number"
+      ? "$" + amount.toLocaleString("es-ES")
+      : "$0";
+  }
+
+  // Función para abrir el modal de edición
+  function editEDP(edpId) {
+    // Buscar el EDP en los datos cargados
+    const edp = edpsData.find((e) => e.id === edpId);
+    if (!edp) {
+      showError("Error", "No se encontró el EDP seleccionado");
+      return;
+    }
+
+    // Mostrar el modal
+    document.getElementById("edpModalOverlay").classList.remove("hidden");
+
+    // Renderizar el contenido del modal con los datos del EDP
+    renderEdpModalContent(edp);
+  }
+
+  // Función para refrescar la tabla
+  function refreshTable() {
+    loadEDPs();
+  }
+
+  function confirmDelete(edpId, nEdp, proyecto) {
+    Swal.fire({
+      title: "⚠️ Confirmar Eliminación",
+      html: `
+        <div style="text-align: left; padding: 1rem;">
+          <p style="margin-bottom: 1rem; color: #6b7280;">Esta acción eliminará permanentemente el siguiente EDP:</p>
+          <div style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #ef4444;">
+            <p style="margin: 0;"><strong>EDP:</strong> #${nEdp}</p>
+            <p style="margin: 0.5rem 0 0 0;"><strong>Proyecto:</strong> ${proyecto}</p>
+          </div>
+          <p style="margin-top: 1rem; color: #ef4444; font-weight: 500;">⚠️ Esta acción no se puede deshacer</p>
+        </div>
+      `,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: '<i class="fas fa-trash"></i> Sí, eliminar',
+      cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
+      reverseButtons: true,
+      customClass: {
+        popup: "swal-wide",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteEDP(edpId, nEdp);
+      }
+    });
+  }
+
+  function deleteEDP(edpId, nEdp) {
+    // Mostrar loading
+    Swal.fire({
+      title: "🗑️ Eliminando EDP...",
+      html: `
+        <div style="text-align: center; padding: 1rem;">
+          <div class="spinner" style="margin: 1rem auto;"></div>
+          <p>Eliminando EDP #${nEdp}</p>
+          <p style="color: #6b7280; font-size: 0.875rem;">Por favor espera...</p>
+        </div>
+      `,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      customClass: {
+        popup: "swal-loading",
+      },
+    });
+
+    $.ajax({
+      url: `{{ url_for("edp_management.delete_edp_by_id", edp_id=0) }}`.replace(
+        "0",
+        edpId
+      ),
+      method: "DELETE",
+      success: function (response) {
+        if (response.success) {
+          Swal.fire({
+            title: "✅ ¡Eliminado Exitosamente!",
+            html: `
+              <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 3rem; color: #22c55e; margin-bottom: 1rem;">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+                <p style="color: #6b7280;">${response.message}</p>
+              </div>
+            `,
+            icon: "success",
+            timer: 3000,
+            showConfirmButton: false,
+            customClass: {
+              popup: "swal-success",
+            },
+          });
+
+          // Recargar tabla
+          refreshTable();
+        } else {
+          Swal.fire({
+            title: "❌ Error al Eliminar",
+            text: response.message,
+            icon: "error",
+            confirmButtonColor: "#ef4444",
+          });
+        }
+      },
+      error: function (xhr, status, error) {
+        Swal.fire({
+          title: "🔌 Error de Conexión",
+          html: `
+            <div style="text-align: center; padding: 1rem;">
+              <div style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <p>No se pudo eliminar el EDP</p>
+              <p style="color: #6b7280; font-size: 0.875rem;">${error}</p>
+            </div>
+          `,
+          icon: "error",
+          confirmButtonColor: "#ef4444",
+        });
+      },
+    });
+  }
+
+  function editEDP(edpId) {
+    // Buscar el EDP en los datos cargados
+    const edpData = edpsData.find((edp) => edp.id === edpId);
+
+    if (!edpData) {
+      showError("Error", "No se encontraron los datos del EDP");
+      return;
+    }
+
+    // Mostrar el modal con los datos del EDP
+    showEdpModal(edpData);
+  }
+
+  function showEdpModal(edpData) {
+    // Mostrar el modal
+    document.getElementById("edpModalOverlay").classList.remove("hidden");
+
+    // Renderizar el contenido del modal con los datos del EDP
+    renderEdpModalContent(edpData);
+  }
+
+  function exportData() {
+    Swal.fire({
+      title: "📊 Exportar Datos",
+      html: `
+        <div style="text-align: center; padding: 1rem;">
+          <div style="font-size: 3rem; color: #3b82f6; margin-bottom: 1rem;">
+            <i class="fas fa-download"></i>
+          </div>
+          <p>Función de exportación en desarrollo</p>
+          <p style="color: #6b7280; font-size: 0.875rem;">Próximamente podrás exportar a Excel y PDF</p>
+        </div>
+      `,
+      icon: "info",
+      confirmButtonColor: "#3b82f6",
+    });
+  }
+
+  function refreshTable() {
+    loadEDPs();
+  }
+
+  function showLoading(show) {
+    if (show) {
+      $("#loading-overlay").fadeIn(300);
+    } else {
+      $("#loading-overlay").fadeOut(300);
+    }
+  }
+
+  function showError(title, message) {
+    Swal.fire({
+      title: title,
+      text: message,
+      icon: "error",
+      confirmButtonColor: "#ef4444",
+    });
+  }
+</script>
+
+<!-- Custom SweetAlert2 Styles -->
+<style>
+  .swal-wide {
+    width: 600px !important;
+  }
+
+  .swal-loading .swal2-popup {
+    border-radius: 1rem !important;
+  }
+
+  .swal-success .swal2-popup {
+    border-radius: 1rem !important;
+  }
+</style>
+{% endblock %}

@@ -231,7 +231,7 @@ class ProjectRepository(BaseRepository):
             return {}
 
     def _dict_to_project(self, record: Dict[str, Any]) -> Project:
-        """Convert dictionary from Google Sheets to Project object."""
+        """Supabase integration (migrated from Google Sheets)"""
         start_date = None
         end_date = None
 
@@ -312,7 +312,7 @@ class ProjectRepository(BaseRepository):
         return models
 
     def _project_to_list(self, project: Project) -> List[Any]:
-        """Convert Project object to list for Google Sheets."""
+        """Supabase integration (migrated from Google Sheets)"""
         return [
             project.project_id,
             project.proyecto,

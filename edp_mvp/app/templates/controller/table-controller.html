@@ -1,7 +1,7 @@
 <!-- Tabla de EDPs Mejorada -->
 <link
   rel="stylesheet"
-  href="{{ url_for('static', filename='css/table-controller.css') }}" />
+  href="{{ url_for('static', filename='css/control_panel/table-controller.css') }}" />
 
 <div class="container mx-auto px-4 py-6">
   <div class="section-title-modern mb-5">
@@ -198,6 +198,7 @@
             data-cliente="{{ registro.get('cliente', '') }}"
             data-mes="{{ registro.get('mes', '') }}"
             data-edp="{{ registro.get('n_edp', '') }}"
+            data-internal-id="{{ registro.get('id', '') }}"
             data-n-conformidad="{{ registro.get('n_conformidad', '') }}"
             data-estado="{{ registro.get('estado', '') }}"
             data-dias="{{ registro.get('dias_espera', 0) }}"
@@ -235,15 +236,15 @@
             </td>
             <td
               class="max-w-xs truncate"
-              title="{{ registro.get('observaciones', '') }}">
-              {{ registro.get('observaciones', '-')[:15] ~ ('...' if
+              title="{{ registro.get('observaciones', '') | default('') }}">
+              {{ (registro.get('observaciones') | default('-'))[:15] ~ ('...' if
               registro.get('observaciones') and
-              registro.get('observaciones')|length > 50 else '') }}
+              (registro.get('observaciones') | default(''))|length > 50 else '') }}
             </td>
 
             <td>
               <a
-                href="{{ url_for('controller.detalle_edp', edp_id=registro.get('id', '')) }}"
+                href="{{ url_for('dashboard.detalle_edp', edp_id=registro.get('id', '')) }}"
                 class="flex items-center justify-center text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] bg-[color:var(--bg-card-hover)] hover:bg-[color:var(--bg-highlight)] p-1.5 rounded-full transition-colors"
                 title="Ver detalles del EDP">
                 <svg

@@ -222,7 +222,7 @@
           <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
         </svg>
       </button>
-      <a href="{{ url_for('kanban.vista_kanban') }}"
+      <a href="{{ url_for('control_panel.vista_kanban') }}"
          class="flex items-center bg-[color:var(--bg-card)] text-[color:var(--text-primary)] px-4 py-2 rounded-xl text-sm border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
           <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -365,7 +365,7 @@
       </div>
 
       <div class="mt-4 flex items-center justify-end">
-        <a href="{{ url_for('controller.dashboard_controller') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] mr-4 transition-colors">
+        <a href="{{ url_for('dashboard.dashboard_controller') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] mr-4 transition-colors">
           Limpiar filtros
         </a>
         <button type="submit" class="btn-primary">
@@ -381,7 +381,7 @@
   <!-- Botón de acceso rápido a gestión por encargado -->
   {% if filtros.jefe_proyecto and filtros.jefe_proyecto != 'todos' and filtros.jefe_proyecto != '' %}
     <div class="mb-6">
-      <a href="{{ url_for('controller.vista_encargado', nombre=filtros.jefe_proyecto) }}"
+      <a href="{{ url_for('dashboard.vista_encargado', nombre=filtros.jefe_proyecto) }}"
          class="inline-flex items-center px-4 py-2 bg-[color:var(--accent-blue-dark)] bg-opacity-15 text-[color:var(--text-primary)] hover:bg-opacity-25 transition-all">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
           <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -563,7 +563,7 @@
           <h5 class="text-xs font-medium text-[color:var(--text-secondary)] mb-2">Top 3 críticos</h5>
           <div class="space-y-1.5">
             {% for proyecto in top_dso_proyectos %}
-              <a href="{{ url_for('controller.vista_proyecto_de_encargado', nombre=proyecto.jefe_proyecto, proyecto=proyecto.nombre) }}"
+              <a href="{{ url_for('dashboard.vista_proyecto_de_encargado', nombre=proyecto.jefe_proyecto, proyecto=proyecto.nombre) }}"
                  class="flex items-center justify-between py-1 px-2 rounded hover:bg-[color:var(--bg-highlight)] transition-colors text-xs">
                 <div class="flex items-center space-x-1 min-w-0">
                   <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-opacity-20 {% if proyecto.dias > 60 %}bg-[color:var(--accent-red)] text-[color:var(--accent-red)]{% elif proyecto.dias > 45 %}bg-[color:var(--accent-amber)] text-[color:var(--accent-amber)]{% else %}bg-[color:var(--accent-green)] text-[color:var(--accent-green)]{% endif %} flex-shrink-0">
@@ -1009,6 +1009,7 @@
       data-cliente="{{ registro.get('cliente', '') }}"
       data-mes="{{ registro.get('mes', '') }}"
       data-edp="{{ registro.get('n_edp', '') }}"
+      data-internal-id="{{ registro.get('id', '') }}"
       data-n-conformidad="{{ registro.get('n_conformidad', '') }}"
       data-estado="{{ registro.get('estado', '') }}"
       data-dias="{{ registro.get('dias_espera', 0) }}"
@@ -1038,11 +1039,11 @@
       <td class="text-right">${{ "{:,.0f}".format(registro.get('monto_propuesto', 0)|default(0)).replace(",",".") }}</td>
       <td class="text-right">${{ "{:,.0f}".format(registro.get('monto_aprobado', 0)|default(0)).replace(",",".") }}</td>
  <td class="max-w-xs truncate" title="{{ registro.get('observaciones', '') }}">
-  {{ registro.get('observaciones', '-')[:15] ~ ('...' if registro.get('observaciones') and registro.get('observaciones')|length > 50 else '') }}
+  {{ (registro.get('observaciones') | default('-'))[:15] ~ ('...' if registro.get('observaciones') and (registro.get('observaciones') | default(''))|length > 50 else '') }}
 </td>
 
     <td>
-<a href="{{ url_for('controller.detalle_edp', edp_id=registro.get('id', '')) }}" 
+<a href="{{ url_for('dashboard.detalle_edp', edp_id=registro.get('id', '')) }}" 
      class="flex items-center justify-center text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] bg-[color:var(--bg-card-hover)] hover:bg-[color:var(--bg-highlight)] p-1.5 rounded-full transition-colors"
      title="Ver detalles del EDP">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -1136,7 +1137,7 @@
 <!-- Incluir el modal -->
 {% include "controller/modal_edp_template.html" %}
 <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
-<script src="{{ url_for('static', filename='js/modal_edp_scripts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/common/modal_edp_scripts.js') }}"></script>
   
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -1481,7 +1482,7 @@ window.addEventListener("DOMContentLoaded", () => {
   console.log("Estado del filtro: {{ filtros.estado }}");
 });
     // Define essential variables first
-    const detailPagePrefix = '/controller/detalle/';
+    const detailPagePrefix = '/dashboard/detalle/';
     const table        = document.getElementById('edp-table');
     const tableBody    = table.querySelector('tbody');          
     const headers      = table.querySelectorAll('th.sortable');
@@ -1933,14 +1934,34 @@ function sortTable(sortBy, ascending) {
       // Add visual indication that rows are clickable
       row.classList.add('cursor-pointer', 'hover:shadow-md', 'transition-all');
       
-      // Get the EDP number for this row
-      const edpNumber = row.getAttribute('data-edp');
+      // Get IDs for this row - ALWAYS prioritize internal ID for API calls
+      const internalId = row.getAttribute('data-internal-id');
+      const nEdp = row.getAttribute('data-edp'); // Only for display purposes
       
       // Make the entire row clickable except for elements that already have click handlers
       // Make the entire row clickable except for elements that already have click handlers
 row.addEventListener('click', function (e) {
   // Don't trigger if clicking on an element that's already a link or button
   if (e.target.closest('a, button')) {
+    return;
+  }
+
+  // CRITICAL: Verify we have internal ID before proceeding
+  if (!internalId) {
+    console.error(`🚨 ERROR CRÍTICO: EDP ${nEdp} no tiene ID interno disponible. No se puede abrir modal de forma segura.`);
+    // Show error modal instead
+    document.getElementById('edpModalOverlay').classList.remove('hidden');
+    document.getElementById('edpModalContent').innerHTML = `
+      <div class="text-center p-8">
+        <div class="text-[color:var(--accent-red)] text-5xl mb-4">⚠️</div>
+        <h3 class="text-xl font-bold mb-2">Error de Sistema</h3>
+        <p class="mb-4">Este EDP no tiene ID interno válido. No se puede proceder de forma segura.</p>
+        <p class="text-sm text-[color:var(--text-secondary)] mb-4">EDP: ${nEdp}</p>
+        <button class="btn-primary" onclick="document.getElementById('edpModalOverlay').classList.add('hidden')">
+          Cerrar
+        </button>
+      </div>
+    `;
     return;
   }
 
@@ -1952,8 +1973,9 @@ row.addEventListener('click', function (e) {
     </div>
   `;
 
-  // Load EDP details via AJAX
-  fetch(`/controller/api/edp-details/${edpNumber}`)
+  // Load EDP details via AJAX using INTERNAL ID (safe and unique)
+  console.log(`🔍 Abriendo modal para EDP ${nEdp} usando ID interno ${internalId} (SEGURO Y ÚNICO)`);
+  fetch(`/dashboard/api/edp-details-by-id/${internalId}`)
     .then(response => response.json())
     .then(data => {
       renderEdpModalContent(data);
@@ -1964,6 +1986,7 @@ row.addEventListener('click', function (e) {
           <div class="text-[color:var(--accent-red)] text-5xl mb-4">⚠️</div>
           <h3 class="text-xl font-bold mb-2">Error al cargar datos</h3>
           <p class="mb-4">${error.message || 'No se pudieron cargar los detalles del EDP'}</p>
+          <p class="text-sm text-[color:var(--text-secondary)] mb-4">EDP: ${nEdp} (ID: ${internalId})</p>
           <button class="btn-primary" onclick="document.getElementById('edpModalOverlay').classList.add('hidden')">
             Cerrar
           </button>
@@ -2117,7 +2140,7 @@ function startExport(exportAll = false) {
   
     // Si exportamos todos los datos, hacemos una petición al servidor
   if (exportAll) {
-    fetch('/controller/api/export-all-csv')
+    fetch('/dashboard/api/export-all-csv')
       .then(response => {
         if (!response.ok) {
           throw new Error('Error en la respuesta del servidor: ' + response.status);

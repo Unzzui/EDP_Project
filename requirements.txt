@@ -89,3 +89,8 @@ gunicorn==21.2.0
 waitress==3.0.0
 psycopg2-binary==2.9.9
 openpyxl==3.1.5
+supabase==2.15.3
+alembic==1.16.2
+postgrest>=0.13.0
+gotrue>=2.0.0
+realtime>=1.0.0

@@ -159,7 +159,7 @@ class LogRepository(BaseRepository):
             return False
     
     def _dict_to_log_entry(self, record: Dict[str, Any]) -> LogEntry:
-        """Convert dictionary from Google Sheets to LogEntry object."""
+        """Supabase integration (migrated from Google Sheets)"""
         return LogEntry(
             id=record.get('id', ''),
             edp_id=record.get('edp_id', ''),
@@ -171,7 +171,7 @@ class LogRepository(BaseRepository):
         )
     
     def _log_entry_to_list(self, log_entry: LogEntry) -> List[Any]:
-        """Convert LogEntry object to list for Google Sheets."""
+        """Supabase integration (migrated from Google Sheets)"""
         return [
             log_entry.id,
             log_entry.edp_id,
@@ -211,7 +211,7 @@ class LogRepository(BaseRepository):
         return models
     
     def _model_to_row_values(self, log: LogEntry, headers: Optional[List[str]] = None) -> List[str]:
-        """Convert EDP model to row values for Google Sheets."""
+        """Supabase integration (migrated from Google Sheets)"""
         if headers is None:
             headers = self.sheets_repo._get_headers(self.sheet_name)
         

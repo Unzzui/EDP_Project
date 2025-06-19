@@ -7,7 +7,7 @@ import sys
 import os
 sys.path.append('/home/unzzui/Documents/coding/EDP_Project')
 
-from edp_mvp.app.utils.gsheet import log_cambio_edp
+from edp_mvp.app.utils.supabase_adapter import log_cambio_edp
 
 def test_log_without_user():
     """Prueba que log_cambio_edp funciona cuando no se especifica usuario"""

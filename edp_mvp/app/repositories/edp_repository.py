@@ -8,11 +8,12 @@ from datetime import datetime
 import logging
 import traceback
 
-from . import BaseRepository, SheetsRepository
+from . import BaseRepository
 from ..models import EDP
 from ..utils.date_utils import parse_date_safe
 from ..utils.format_utils import clean_numeric_value
-from ..utils.gsheet import update_row, log_cambio_edp
+from ..utils.supabase_adapter import read_sheet, update_row, log_cambio_edp, append_row
+from ..services.supabase_service import get_supabase_service
 from ..config import get_config
 import numpy as np
 from ..services.cache_invalidation_service import invalidate_cache_on_change
@@ -25,9 +26,8 @@ class EDPRepository(BaseRepository):
 
     def __init__(self):
         super().__init__()
-        self.sheets_repo = SheetsRepository()
-        self.sheet_name = "edp"
-        self.range_name = "edp!A:V"
+        self.table_name = "edp"
+        self.range_name = "edp!A:V"  # Para compatibilidad
 
     def find_all(self, apply_filters: bool = True) -> Dict[str, Any]:
         """Get all EDPs with optional transformations."""
@@ -102,18 +102,48 @@ class EDPRepository(BaseRepository):
 
     def create(self, edp: EDP) -> int:
         """Create new EDP and return the assigned ID."""
-        # Get next ID
-        next_id = self.sheets_repo.get_next_id(self.sheet_name)
-        edp.id = next_id
-
-        # Prepare row values
-        row_values = self._model_to_row_values(edp)
-
-        # Append to sheet
-        if self.sheets_repo._append_rows(self.sheet_name, [row_values]):
-            return next_id
-        else:
-            raise Exception("Failed to create EDP")
+        try:
+            service = get_supabase_service()
+            
+            # Preparar datos del EDP
+            edp_data = {
+                'n_edp': int(edp.n_edp) if edp.n_edp else None,  # Convertir a INTEGER
+                'proyecto': edp.proyecto,
+                'cliente': edp.cliente,
+                'gestor': edp.gestor,
+                'jefe_proyecto': edp.jefe_proyecto,
+                'mes': edp.mes,
+                'fecha_emision': edp.fecha_emision.isoformat() if edp.fecha_emision else None,
+                'fecha_envio_cliente': edp.fecha_envio_cliente.isoformat() if edp.fecha_envio_cliente else None,
+                'monto_propuesto': int(edp.monto_propuesto) if edp.monto_propuesto else None,  # Convertir a BIGINT
+                'monto_aprobado': int(edp.monto_aprobado) if edp.monto_aprobado else None,  # Convertir a BIGINT
+                'fecha_estimada_pago': edp.fecha_estimada_pago.isoformat() if edp.fecha_estimada_pago else None,
+                'conformidad_enviada': bool(edp.conformidad_enviada) if edp.conformidad_enviada is not None else False,
+                'n_conformidad': edp.n_conformidad,
+                'fecha_conformidad': edp.fecha_conformidad.isoformat() if edp.fecha_conformidad else None,
+                'estado': edp.estado,
+                'observaciones': edp.observaciones,
+                'registrado_por': edp.registrado_por,
+                'estado_detallado': edp.estado_detallado,
+                'fecha_registro': edp.fecha_registro.isoformat() if edp.fecha_registro else None,
+                'motivo_no_aprobado': edp.motivo_no_aprobado,
+                'tipo_falla': edp.tipo_falla
+            }
+            
+            # Insertar en Supabase
+            result = service.insert(self.table_name, edp_data)
+            
+            # El servicio insert() devuelve una lista, necesitamos el primer elemento
+            if result and isinstance(result, list) and len(result) > 0:
+                return result[0].get('id')
+            elif result and isinstance(result, dict):
+                return result.get('id')
+            else:
+                return None
+            
+        except Exception as e:
+            logger.error(f"Error creating EDP: {e}")
+            raise Exception(f"Failed to create EDP: {e}")
     
     def create_bulk(self, edps: List[EDP]) -> Dict[str, Any]:
         """Create multiple EDPs in bulk for better performance."""
@@ -121,31 +151,50 @@ class EDPRepository(BaseRepository):
             if not edps:
                 return {"success": True, "created_ids": [], "message": "No EDPs to create"}
             
-            # Get starting ID
-            next_id = self.sheets_repo.get_next_id(self.sheet_name)
+            service = get_supabase_service()
             created_ids = []
             
-            # Prepare all rows
-            rows = []
-            for i, edp in enumerate(edps):
-                edp.id = next_id + i
-                row_values = self._model_to_row_values(edp)
-                rows.append(row_values)
-                created_ids.append(edp.id)
+            # Preparar datos de todos los EDPs
+            edps_data = []
+            for edp in edps:
+                edp_data = {
+                    'n_edp': int(edp.n_edp) if edp.n_edp else None,  # Convertir a INTEGER
+                    'proyecto': edp.proyecto,
+                    'cliente': edp.cliente,
+                    'gestor': edp.gestor,
+                    'jefe_proyecto': edp.jefe_proyecto,
+                    'mes': edp.mes,
+                    'fecha_emision': edp.fecha_emision.isoformat() if edp.fecha_emision else None,
+                    'fecha_envio_cliente': edp.fecha_envio_cliente.isoformat() if edp.fecha_envio_cliente else None,
+                    'monto_propuesto': int(edp.monto_propuesto) if edp.monto_propuesto else None,  # Convertir a BIGINT
+                    'monto_aprobado': int(edp.monto_aprobado) if edp.monto_aprobado else None,  # Convertir a BIGINT
+                    'fecha_estimada_pago': edp.fecha_estimada_pago.isoformat() if edp.fecha_estimada_pago else None,
+                    'conformidad_enviada': bool(edp.conformidad_enviada) if edp.conformidad_enviada is not None else False,
+                    'n_conformidad': edp.n_conformidad,
+                    'fecha_conformidad': edp.fecha_conformidad.isoformat() if edp.fecha_conformidad else None,
+                    'estado': edp.estado,
+                    'observaciones': edp.observaciones,
+                    'registrado_por': edp.registrado_por,
+                    'estado_detallado': edp.estado_detallado,
+                    'fecha_registro': edp.fecha_registro.isoformat() if edp.fecha_registro else None,
+                    'motivo_no_aprobado': edp.motivo_no_aprobado,
+                    'tipo_falla': edp.tipo_falla
+                }
+                edps_data.append(edp_data)
             
-            # Bulk insert
-            if self.sheets_repo._append_rows(self.sheet_name, rows):
-                return {
-                    "success": True,
-                    "created_ids": created_ids,
-                    "message": f"Successfully created {len(created_ids)} EDPs"
-                }
-            else:
-                return {
-                    "success": False,
-                    "created_ids": [],
-                    "message": "Failed to create EDPs in bulk"
-                }
+            # Bulk insert en Supabase usando insert normal (que maneja listas)
+            results = service.insert(self.table_name, edps_data)
+            
+            # El servicio insert() devuelve una lista cuando se pasa una lista
+            created_ids = []
+            if results and isinstance(results, list):
+                created_ids = [result.get('id') for result in results if result and result.get('id')]
+            
+            return {
+                "success": True,
+                "created_ids": created_ids,
+                "message": f"Successfully created {len(created_ids)} EDPs"
+            }
                 
         except Exception as e:
             logger.error(f"Error in bulk create: {e}")
@@ -161,17 +210,149 @@ class EDPRepository(BaseRepository):
         if not edp.id:
             raise ValueError("EDP ID is required for update")
 
-        row_number = self.sheets_repo.find_row_by_id(self.sheet_name, str(edp.id))
-        if not row_number:
+        try:
+            service = get_supabase_service()
+            
+            # Preparar datos actualizados
+            edp_data = {
+                'n_edp': int(edp.n_edp) if edp.n_edp else None,  # Convertir a INTEGER
+                'proyecto': edp.proyecto,
+                'cliente': edp.cliente,
+                'gestor': edp.gestor,
+                'jefe_proyecto': edp.jefe_proyecto,
+                'mes': edp.mes,
+                'fecha_emision': edp.fecha_emision.isoformat() if edp.fecha_emision else None,
+                'fecha_envio_cliente': edp.fecha_envio_cliente.isoformat() if edp.fecha_envio_cliente else None,
+                'monto_propuesto': int(edp.monto_propuesto) if edp.monto_propuesto else None,  # Convertir a BIGINT
+                'monto_aprobado': int(edp.monto_aprobado) if edp.monto_aprobado else None,  # Convertir a BIGINT
+                'fecha_estimada_pago': edp.fecha_estimada_pago.isoformat() if edp.fecha_estimada_pago else None,
+                'conformidad_enviada': bool(edp.conformidad_enviada) if edp.conformidad_enviada is not None else False,
+                'n_conformidad': edp.n_conformidad,
+                'fecha_conformidad': edp.fecha_conformidad.isoformat() if edp.fecha_conformidad else None,
+                'estado': edp.estado,
+                'observaciones': edp.observaciones,
+                'registrado_por': edp.registrado_por,
+                'estado_detallado': edp.estado_detallado,
+                'fecha_registro': edp.fecha_registro.isoformat() if edp.fecha_registro else None,
+                'motivo_no_aprobado': edp.motivo_no_aprobado,
+                'tipo_falla': edp.tipo_falla
+            }
+            
+            # Actualizar en Supabase por ID
+            result = service.update(self.table_name, {'id': edp.id}, edp_data)
+            return result is not None
+            
+        except Exception as e:
+            logger.error(f"Error updating EDP {edp.id}: {e}")
             return False
 
-        # Get headers and prepare values
-        headers = self.sheets_repo._get_headers(self.sheet_name)
-        row_values = self._model_to_row_values(edp, headers)
+    @invalidate_cache_on_change('edp_deleted', ['edps'])
+    def delete(self, edp_id: int) -> Dict[str, Any]:
+        """Delete EDP by internal ID."""
+        try:
+            print(f"🗑️ Eliminando EDP con ID: {edp_id}")
+            
+            service = get_supabase_service()
+            
+            # Primero verificar que el EDP existe
+            existing_edp = service.select(self.table_name, {"id": edp_id}, limit=1)
+            
+            if not existing_edp:
+                print(f"❌ EDP no encontrado con ID: {edp_id}")
+                return {
+                    "success": False,
+                    "message": f"EDP con ID {edp_id} no encontrado"
+                }
+            
+            edp_record = existing_edp[0]
+            n_edp = edp_record.get('n_edp', 'N/A')
+            proyecto = edp_record.get('proyecto', 'N/A')
+            
+            print(f"📋 EDP encontrado: #{n_edp} - Proyecto: {proyecto}")
+            
+            # Eliminar el EDP
+            result = service.delete(self.table_name, {"id": edp_id})
+            
+            if result:
+                print(f"✅ EDP #{n_edp} eliminado exitosamente")
+                
+                # Limpiar caché (si está disponible)
+                try:
+                    from ..controllers.edp_upload_controller import _GLOBAL_EDP_CACHE
+                    _GLOBAL_EDP_CACHE['data'] = {}
+                    _GLOBAL_EDP_CACHE['last_update'] = 0
+                    print("🧹 Caché global limpiado")
+                except ImportError:
+                    print("ℹ️ Caché global no disponible")
+                    pass
+                
+                return {
+                    "success": True,
+                    "message": f"EDP #{n_edp} (Proyecto: {proyecto}) eliminado exitosamente",
+                    "deleted_edp": {
+                        "id": edp_id,
+                        "n_edp": n_edp,
+                        "proyecto": proyecto
+                    }
+                }
+            else:
+                print(f"❌ Error eliminando EDP #{n_edp}")
+                return {
+                    "success": False,
+                    "message": f"Error eliminando EDP #{n_edp}"
+                }
+                
+        except Exception as e:
+            print(f"💥 Error en delete: {str(e)}")
+            logger.error(f"Error deleting EDP {edp_id}: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                "success": False,
+                "message": f"Error eliminando EDP: {str(e)}"
+            }
 
-        # Update the entire row
-        range_name = f"{self.sheet_name}!A{row_number}:{self._get_last_column(len(headers))}{row_number}"
-        return self.sheets_repo._write_range(range_name, [row_values])
+    def delete_by_n_edp(self, n_edp: str, proyecto: str = None) -> Dict[str, Any]:
+        """Delete EDP by n_edp and optionally proyecto."""
+        try:
+            print(f"🗑️ Eliminando EDP #{n_edp} (Proyecto: {proyecto or 'cualquiera'})")
+            
+            service = get_supabase_service()
+            
+            # Buscar EDP por n_edp (y proyecto si se especifica)
+            filters = {"n_edp": str(n_edp)}
+            if proyecto:
+                filters["proyecto"] = str(proyecto)
+            
+            existing_edps = service.select(self.table_name, filters)
+            
+            if not existing_edps:
+                return {
+                    "success": False,
+                    "message": f"EDP #{n_edp}" + (f" para proyecto {proyecto}" if proyecto else "") + " no encontrado"
+                }
+            
+            if len(existing_edps) > 1 and not proyecto:
+                # Múltiples EDPs con el mismo número pero diferentes proyectos
+                projects = [edp.get('proyecto', 'N/A') for edp in existing_edps]
+                return {
+                    "success": False,
+                    "message": f"Múltiples EDPs #{n_edp} encontrados en proyectos: {', '.join(projects)}. Especifique el proyecto."
+                }
+            
+            # Eliminar el EDP encontrado
+            edp_to_delete = existing_edps[0]
+            edp_id = edp_to_delete.get('id')
+            
+            return self.delete(edp_id)
+            
+        except Exception as e:
+            print(f"💥 Error en delete_by_n_edp: {str(e)}")
+            logger.error(f"Error deleting EDP by n_edp {n_edp}: {e}")
+            return {
+                "success": False,
+                "message": f"Error eliminando EDP: {str(e)}"
+            }
 
     @invalidate_cache_on_change('edp_updated', ['edps'])
     def update_fields(self, edp_id: int, updates: Dict[str, Any]) -> bool:
@@ -181,72 +362,44 @@ class EDPRepository(BaseRepository):
             print(f"   - edp_id: {edp_id} (type: {type(edp_id)})")
             print(f"   - updates: {updates}")
             
-            # Convert edp_id to string for comparison with n_edp
-            edp_id_str = str(edp_id)
+            service = get_supabase_service()
             
-            # Find the row by n_edp (column B) instead of id (column A)
-            row_number = self.sheets_repo.find_row_by_id(self.sheet_name, edp_id_str, id_column="B")
-            print(f"   - row_number found (searching n_edp in column B): {row_number}")
+            # Buscar EDP por n_edp en Supabase
+            filters = {'n_edp': int(edp_id) if str(edp_id).isdigit() else edp_id}
+            existing_edp = service.select(self.table_name, filters, limit=1)
             
-            if not row_number:
-                print(f"❌ Row not found for n_edp: {edp_id_str}")
+            if not existing_edp:
+                print(f"❌ EDP not found for n_edp: {edp_id}")
                 return False
-
-            # Get current data
-            headers = self.sheets_repo._get_headers(self.sheet_name)
-            print(f"   - headers count: {len(headers)}")
             
-            if not headers:
-                print(f"❌ No headers found for sheet: {self.sheet_name}")
-                return False
-
-            # Read the specific row directly using Google Sheets API (bypass read_sheet function)
-            range_name = f"{self.sheet_name}!A{row_number}:{self._get_last_column(len(headers))}{row_number}"
-            print(f"   - range_name: {range_name}")
+            edp_record = existing_edp[0]
+            print(f"   - Found EDP with ID: {edp_record.get('id')}")
             
-            try:
-                config = get_config()
-                result = self.service.spreadsheets().values().get(
-                    spreadsheetId=config.SHEET_ID,
-                    range=range_name
-                ).execute()
-                
-                values = result.get('values', [])
-                print(f"   - direct API values: {values}")
-                
-                if not values or not values[0]:
-                    print(f"❌ No current values found for range: {range_name}")
-                    return False
-
-                row_values = values[0]
-                
-                # Ensure row_values has same length as headers
-                while len(row_values) < len(headers):
-                    row_values.append('')
-                    
-            except Exception as api_error:
-                print(f"❌ Error reading row directly from API: {api_error}")
-                return False
-
-            # Apply updates
-            for field_name, new_value in updates.items():
-                if field_name in headers:
-                    col_index = headers.index(field_name)
-                    if col_index < len(row_values):
-                        old_value = row_values[col_index]
-                        row_values[col_index] = (
-                            str(new_value) if new_value is not None else ""
-                        )
-                        print(f"   - Updated {field_name}: '{old_value}' → '{new_value}'")
+            # Convert string boolean values to actual booleans for Supabase
+            cleaned_updates = {}
+            for key, value in updates.items():
+                if key == 'conformidad_enviada':
+                    # Convert "Sí"/"No" to boolean
+                    if value == "Sí":
+                        cleaned_updates[key] = True
+                    elif value == "No":
+                        cleaned_updates[key] = False
                     else:
-                        print(f"⚠️  Column index {col_index} out of range for {field_name}")
+                        cleaned_updates[key] = value
                 else:
-                    print(f"⚠️  Field '{field_name}' not found in headers")
-
-            # Write back
-            result = self.sheets_repo._write_range(range_name, [row_values])
-            print(f"   - Write result: {result}")
-            return result
+                    cleaned_updates[key] = value
+            
+            print(f"   - Cleaned updates: {cleaned_updates}")
+            
+            # Actualizar solo los campos especificados
+            result = service.update(self.table_name, {'id': edp_record['id']}, cleaned_updates)
+            
+            if result:
+                print(f"✅ Successfully updated EDP {edp_id}")
+                return True
+            else:
+                print(f"❌ Failed to update EDP {edp_id}")
+                return False
             
         except Exception as e:
             print(f"💥 Exception in update_fields: {e}")
@@ -362,8 +515,32 @@ class EDPRepository(BaseRepository):
                     "message": "No changes detected"
                 }
             
-            # Update the sheet using gsheet utility
-            success = update_row(row_number, updates, sheet_name="edp")
+            # Convert pandas/numpy types to native Python types before passing to adapter
+            clean_updates = {}
+            for key, value in updates.items():
+                if value is None or pd.isna(value):
+                    clean_updates[key] = None
+                elif hasattr(value, 'item'):  # numpy scalars
+                    clean_updates[key] = value.item()
+                elif hasattr(value, 'tolist'):  # numpy arrays
+                    clean_updates[key] = value.tolist()
+                # Conversiones específicas para campos EDP
+                elif key == 'conformidad_enviada' and isinstance(value, str):
+                    clean_updates[key] = value.lower() in ['sí', 'si', 'yes', 'true', '1']
+                else:
+                    clean_updates[key] = value
+            
+            # Update using Supabase adapter with cleaned data - usar ID interno, no row_number
+            # Necesitamos obtener el ID interno del EDP encontrado
+            edp_internal_id = current_edp.get("id")
+            if not edp_internal_id:
+                return {
+                    "success": False,
+                    "message": f"EDP {n_edp} sin ID interno válido"
+                }
+            
+            from ..utils.supabase_adapter import update_edp_by_id
+            success = update_edp_by_id(int(edp_internal_id), clean_updates)
             
             if success:
                 # Log changes
@@ -387,7 +564,7 @@ class EDPRepository(BaseRepository):
             else:
                 return {
                     "success": False,
-                    "message": "Failed to update EDP in Google Sheets"
+                    "message": "Failed to update EDP in Supabase"
                 }
                 
         except Exception as e:
@@ -399,119 +576,178 @@ class EDPRepository(BaseRepository):
                 "message": f"Error updating EDP: {str(e)}"
             }
 
+    @invalidate_cache_on_change('edp_updated', ['edps'])
+    def update_by_internal_id(self, internal_id: int, form_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update EDP by internal ID using form data and log changes."""
+        try:
+            # Get all EDPs to find the specific one
+            edps_response = self.find_all_dataframe()
+            
+            if not edps_response.get("success", True):
+                return {
+                    "success": False,
+                    "message": f"Error retrieving EDPs: {edps_response.get('message', 'Unknown error')}"
+                }
+            
+            df_edps = edps_response.get("data", pd.DataFrame())
+            
+            if df_edps.empty:
+                return {
+                    "success": False,
+                    "message": "No EDPs found in the system"
+                }
+            
+            # Find EDP by internal ID
+            edp_found = df_edps[df_edps["id"] == int(internal_id)]
+            
+            if edp_found.empty:
+                return {
+                    "success": False,
+                    "message": f"EDP with internal ID {internal_id} not found"
+                }
+            
+            # Get row number (add 2 for header and 0-based indexing)
+            row_index = edp_found.index[0]
+            row_number = row_index + 2
+            
+            # Get current EDP data
+            current_edp = edp_found.iloc[0].to_dict()
+            n_edp = current_edp.get('n_edp', str(internal_id))
+            
+            print(f"🔍 update_by_internal_id - Found EDP: n_edp={n_edp}, internal_id={internal_id}")
+            
+            # Prepare updates dictionary
+            updates = {}
+            
+            # Map form fields to database fields
+            field_mapping = {
+                'estado': 'estado',
+                'estado_detallado': 'estado_detallado',
+                'conformidad_enviada': 'conformidad_enviada',
+                'fecha_conformidad': 'fecha_conformidad',
+                'motivo_no_aprobado': 'motivo_no_aprobado',
+                'tipo_falla': 'tipo_falla',
+                'observaciones': 'observaciones',
+                'monto_propuesto': 'monto_propuesto',
+                'monto_aprobado': 'monto_aprobado',
+                'n_conformidad': 'n_conformidad',
+                'fecha_estimada_pago': 'fecha_estimada_pago',
+                'fecha_emision': 'fecha_emision'
+            }
+            
+            # Process form data and track changes
+            changes = []
+            
+            for form_field, db_field in field_mapping.items():
+                if form_field in form_data:
+                    new_value = form_data[form_field]
+                    
+                    # Clean and format the new value
+                    if new_value == "":
+                        new_value = None
+                    
+                    # Get current value
+                    current_value = current_edp.get(db_field)
+                    
+                    # Convert current value for comparison
+                    if pd.isna(current_value):
+                        current_value = None
+                    elif isinstance(current_value, str):
+                        current_value = current_value.strip()
+                    
+                    # Improved comparison logic
+                    values_different = False
+                    
+                    # Handle None values
+                    if current_value is None and new_value is None:
+                        values_different = False
+                    elif current_value is None or new_value is None:
+                        values_different = True
+                    else:
+                        # Both values are not None, compare as strings
+                        current_str = str(current_value).strip()
+                        new_str = str(new_value).strip()
+                        values_different = current_str != new_str
+                    
+                    if values_different:
+                        updates[db_field] = new_value
+                        changes.append({
+                            'campo': db_field,
+                            'antes': current_value,
+                            'despues': new_value
+                        })
+            
+            # If there are no changes, return success
+            if not updates:
+                return {
+                    "success": True,
+                    "message": "No changes detected"
+                }
+            
+            print(f"🔍 update_by_internal_id - Applying updates: {updates}")
+            
+            # Convert pandas/numpy types to native Python types before passing to adapter
+            clean_updates = {}
+            for key, value in updates.items():
+                if value is None or pd.isna(value):
+                    clean_updates[key] = None
+                elif hasattr(value, 'item'):  # numpy scalars
+                    clean_updates[key] = value.item()
+                elif hasattr(value, 'tolist'):  # numpy arrays
+                    clean_updates[key] = value.tolist()
+                # Conversiones específicas para campos EDP
+                elif key == 'conformidad_enviada' and isinstance(value, str):
+                    clean_updates[key] = value.lower() in ['sí', 'si', 'yes', 'true', '1']
+                else:
+                    clean_updates[key] = value
+            
+            print(f"🔍 update_by_internal_id - Clean updates: {clean_updates} (types: {[(k, type(v)) for k, v in clean_updates.items()]})")
+            
+            # Update using Supabase adapter with cleaned data - usar ID interno, no row_number
+            from ..utils.supabase_adapter import update_edp_by_id
+            success = update_edp_by_id(int(internal_id), clean_updates)
+            
+            if success:
+                # Log changes
+                for change in changes:
+                    log_cambio_edp(
+                        n_edp=n_edp,
+                        proyecto=current_edp.get('proyecto', ''),
+                        campo=change['campo'],
+                        antes=change['antes'],
+                        despues=change['despues']
+                    )
+                
+                return {
+                    "success": True,
+                    "message": f"EDP {n_edp} (ID: {internal_id}) updated successfully",
+                    "data": {
+                        "updated_fields": list(updates.keys()),
+                        "changes_count": len(changes)
+                    }
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Failed to update EDP in Supabase"
+                }
+                
+        except Exception as e:
+            import traceback
+            print(f"❌ Error in update_by_internal_id: {str(e)}")
+            print(traceback.format_exc())
+            return {
+                "success": False,
+                "message": f"Error updating EDP: {str(e)}"
+            }
+
     def _read_sheet_with_transformations(self) -> pd.DataFrame:
-        """Read EDP sheet with all transformations applied."""
-        values = self._read_range(self.range_name)
-        df = self._values_to_dataframe(values)
-
-        if df.empty:
-            return df
-
-        # Apply transformations
-        df = self._apply_transformations(df)
+        """Read EDP data from Supabase with all transformations applied."""
+        df = read_sheet(self.range_name, apply_transformations=True)
         return df
 
-    def _apply_transformations(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Apply EDP-specific transformations."""
-        try:
-            hoy = pd.to_datetime(datetime.today())
-
-            # Ensure we have a proper DataFrame
-            if df is None or df.empty:
-                return df
-
-            # Convert ID to numeric
-            if "id" in df.columns:
-                df["id"] = pd.to_numeric(df["id"], errors="coerce")
-
-            # Convert monetary amounts
-            for col in ["monto_propuesto", "monto_aprobado"]:
-                if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors="coerce")
-
-            # Process categorical columns - fix the string operations
-            categorical_cols = [
-                "estado",
-                "estado_detallado",
-                "motivo_no_aprobado",
-                "tipo_falla",
-            ]
-            for col in categorical_cols:
-                if col in df.columns and len(df) > 0:
-                    # Ensure column exists and has data before applying string operations
-                    # Fill NaN values with empty string first, then apply transformations
-                    df[col] = df[col].fillna("").astype(str).str.strip().str.lower()
-
-            # Process dates
-            date_cols = [
-                "fecha_emision",
-                "fecha_envio_cliente",
-                "fecha_estimada_pago",
-                "fecha_conformidad",
-                "fecha_registro",
-            ]
-            for col in date_cols:
-                if col in df.columns:
-                    df[col] = pd.to_datetime(df[col], errors="coerce")
-
-            # Calculate waiting days
-            if "fecha_envio_cliente" in df.columns and len(df) > 0:
-                fecha_envio = pd.to_datetime(df["fecha_envio_cliente"], errors="coerce")
-                if "fecha_conformidad" in df.columns:
-                    fecha_conformidad = pd.to_datetime(
-                        df["fecha_conformidad"], errors="coerce"
-                    )
-                    df["dias_espera"] = (
-                        fecha_conformidad.fillna(hoy) - fecha_envio
-                    ).dt.days
-                else:
-                    df["dias_espera"] = (hoy - fecha_envio).dt.days
-
-            if "fecha_envio_cliente" in df.columns and len(df) > 0:
-                df["fecha_envio_cliente"] = pd.to_datetime(
-                    df["fecha_envio_cliente"], errors="coerce"
-                )
-                df["fecha_conformidad"] = pd.to_datetime(
-                    df.get("fecha_conformidad", pd.NaT), errors="coerce"
-                )
-                hoy = pd.Timestamp.today()
-
-                df["fecha_final"] = df["fecha_conformidad"].fillna(hoy)
-
-                # Asegúrate de que ambas fechas no sean NaT
-                mask_validas = (~df["fecha_envio_cliente"].isna()) & (
-                    ~df["fecha_final"].isna()
-                )
-
-                df.loc[mask_validas, "dias_habiles"] = df.loc[mask_validas].apply(
-                    lambda row: np.busday_count(
-                        row["fecha_envio_cliente"].date(), row["fecha_final"].date()
-                    ),
-                    axis=1,
-                )
-
-            # Calculate critical status
-            if "dias_espera" in df.columns and len(df) > 0:
-                dias_espera_numeric = pd.to_numeric(df["dias_espera"], errors="coerce")
-                estado_not_final = ~df["estado"].isin(["validado", "pagado"])
-                df["critico"] = (dias_espera_numeric > 30) & estado_not_final
-
-            # Calculate validation status
-            if (
-                "estado" in df.columns
-                and "conformidad_enviada" in df.columns
-                and len(df) > 0
-            ):
-                df["validado"] = (df["estado"].isin(["validado", "pagado"])) & (
-                    df["conformidad_enviada"] == "Sí"
-                )
-
-            return df
-
-        except Exception as e:
-            logger.error(f"Error in _apply_transformations: {e}")
-            # Return the original DataFrame if transformations fail
-            return df
+    # Método _apply_transformations movido al adaptador de Supabase
+    # Las transformaciones ahora se aplican automáticamente en read_sheet()
 
     def _dataframe_to_models(self, df: pd.DataFrame) -> List[EDP]:
         """Convert DataFrame to list of EDP models."""
@@ -611,60 +847,5 @@ class EDPRepository(BaseRepository):
         logger.debug(f"Total models created: {len(models)}")
         return models
 
-    def _model_to_row_values(
-        self, edp: EDP, headers: Optional[List[str]] = None
-    ) -> List[str]:
-        """Convert EDP model to row values for Google Sheets."""
-        if headers is None:
-            headers = self.sheets_repo._get_headers(self.sheet_name)
-
-        # Map model fields to sheet columns (now using lowercase names)
-        field_mapping = {
-            "id": edp.id,
-            "n_edp": edp.n_edp,
-            "proyecto": edp.proyecto,
-            "cliente": edp.cliente,
-            "estado": edp.estado,
-            "estado_detallado": edp.estado_detallado,
-            "jefe_proyecto": edp.jefe_proyecto,
-            "gestor": edp.gestor,
-            "mes": edp.mes,
-            "monto_propuesto": edp.monto_propuesto,
-            "monto_aprobado": edp.monto_aprobado,
-            "fecha_emision": edp.fecha_emision.isoformat() if edp.fecha_emision else "",
-            "fecha_envio_cliente": (
-                edp.fecha_envio_cliente.isoformat() if edp.fecha_envio_cliente else ""
-            ),
-            "fecha_estimada_pago": (
-                edp.fecha_estimada_pago.isoformat() if edp.fecha_estimada_pago else ""
-            ),
-            "fecha_conformidad": (
-                edp.fecha_conformidad.isoformat() if edp.fecha_conformidad else ""
-            ),
-            "conformidad_enviada": edp.conformidad_enviada,
-            "n_conformidad": edp.n_conformidad,
-            "registrado_por": edp.registrado_por,
-            "fecha_registro": (
-                edp.fecha_registro.isoformat() if edp.fecha_registro else ""
-            ),
-            "motivo_no_aprobado": edp.motivo_no_aprobado,
-            "tipo_falla": edp.tipo_falla,
-            "observaciones": edp.observaciones,
-        }
-
-        # Build row values according to headers
-        row_values = []
-        for header in headers:
-            value = field_mapping.get(header, "")
-            row_values.append(str(value) if value is not None else "")
-
-        return row_values
-
-    def _get_last_column(self, num_cols: int) -> str:
-        """Convert column number to Excel column letter."""
-        result = ""
-        while num_cols > 0:
-            num_cols -= 1
-            result = chr(65 + (num_cols % 26)) + result
-            num_cols //= 26
-        return result
+    # Métodos auxiliares removidos - ya no necesarios con Supabase
+    # _model_to_row_values y _get_last_column eran específicos de Google Sheets

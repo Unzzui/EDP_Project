@@ -45,7 +45,7 @@ class EDP(BaseModel):
     monto_propuesto: Optional[float] = None
     monto_aprobado: Optional[float] = None
     fecha_estimada_pago: Optional[datetime] = None
-    conformidad_enviada: Optional[str] = None
+    conformidad_enviada: Optional[bool] = None  # Booleano: True si está enviada, False si no
     n_conformidad: Optional[str] = None
     fecha_conformidad: Optional[datetime] = None
     estado: Optional[str] = None
@@ -69,6 +69,9 @@ class EDP(BaseModel):
             'fecha_emision', 'fecha_envio_cliente', 'fecha_estimada_pago',
             'fecha_conformidad', 'fecha_registro'
         ]
+        
+        # Fields that should be converted to boolean
+        boolean_fields = ['conformidad_enviada', 'validado', 'critico']
         
         # Create a copy to avoid modifying original data
         processed_data = data.copy()
@@ -95,6 +98,27 @@ class EDP(BaseModel):
                                 # If all fails, set to None
                                 processed_data[field] = None
                     elif not isinstance(date_value, datetime):
+                        processed_data[field] = None
+                except Exception:
+                    processed_data[field] = None
+        
+        # Convert boolean fields
+        for field in boolean_fields:
+            if field in processed_data and processed_data[field] is not None:
+                try:
+                    value = processed_data[field]
+                    if isinstance(value, str):
+                        # Handle string representations of booleans
+                        if value.lower() in ['true', 'yes', 'si', 'sí', '1', 'on']:
+                            processed_data[field] = True
+                        elif value.lower() in ['false', 'no', '0', 'off', '']:
+                            processed_data[field] = False
+                        else:
+                            processed_data[field] = None
+                    elif isinstance(value, (int, float)):
+                        # Handle numeric representations
+                        processed_data[field] = bool(value)
+                    elif not isinstance(value, bool):
                         processed_data[field] = None
                 except Exception:
                     processed_data[field] = None

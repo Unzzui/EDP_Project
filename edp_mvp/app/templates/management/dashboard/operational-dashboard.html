@@ -1,0 +1,2107 @@
+{% extends "management/base_management.html" %} {% block title %}Dashboard
+Operativo - EDP Manager{% endblock %} {% block extra_head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/common/styles.css') }}" />
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/dashboard/operational-dashboard.css') }}" />
+{% endblock %} {% block content %}
+<!-- ========== COMMUNICATION SYSTEM SCRIPT ========== -->
+<script src="{{ url_for('static', filename='js/common/communication-system.js') }}"></script>
+
+<div class="container mx-auto px-2 sm:px-4 py-4 sm:py-6 space-y-6">
+  <!-- ========================================== -->
+  <!-- HEADER SECTION                            -->
+  <!-- ========================================== -->
+  <section class="dashboard-header">
+    <div
+      style="background: var(--bg-card); border: 1px solid var(--border-color)"
+      class="rounded-xl p-6 shadow-lg">
+      <div class="flex items-center justify-between">
+        <!-- Left: Title and Description -->
+        <div class="flex items-center gap-6">
+          <div
+            class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-md">
+            <svg
+              class="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div>
+            <h1
+              style="color: var(--text-primary)"
+              class="text-3xl font-bold mb-2">
+              Dashboard Operativo
+            </h1>
+            <p style="color: var(--text-secondary)" class="text-base">
+              Vista ejecutiva de acciones críticas en tiempo real
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: Status Indicators and Update Info -->
+        <div class="flex items-center gap-8">
+          <!-- Status Indicators -->
+          <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+              <span
+                style="color: var(--text-secondary)"
+                class="text-sm font-medium">
+                {{ kpis.critical_projects_count|default('3') }} críticos
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+              <span
+                style="color: var(--text-secondary)"
+                class="text-sm font-medium">
+                {{ kpis.pending_count|default('5') }} pendientes
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span
+                style="color: var(--text-secondary)"
+                class="text-sm font-medium">
+                Sistema activo
+              </span>
+            </div>
+          </div>
+
+          <!-- Update Info -->
+          <div
+            style="
+              background: var(--bg-subtle);
+              border: 1px solid var(--border-color);
+            "
+            class="rounded-lg p-4">
+            <div class="text-center">
+              <div style="color: var(--text-secondary)" class="text-xs mb-1">
+                Actualizado
+              </div>
+              <div style="color: var(--text-primary)" class="text-lg font-bold">
+                {{ kpis.ultima_actualizacion|default('14:35') }}
+              </div>
+              <div style="color: var(--text-secondary)" class="text-xs">
+                Auto-refresh 2min
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- KPI CARDS SECTION                         -->
+  <!-- ========================================== -->
+  <section class="kpi-cards">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- DSO Critical Card -->
+      <div class="kpi-card kpi-card--critical">
+        <div
+          class="group relative overflow-hidden bg-gradient-to-br from-red-50 via-red-100 to-red-200 dark:from-red-950/40 dark:via-red-900/40 dark:to-red-950/60 border-2 border-red-300 dark:border-red-700 rounded-3xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-500 h-[180px] cursor-pointer">
+          <!-- Background Pattern -->
+          <div class="absolute inset-0 opacity-20">
+            <div
+              class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-400 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
+            <div
+              class="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-red-500 to-transparent rounded-full translate-y-12 -translate-x-12"></div>
+          </div>
+
+          <div class="relative flex flex-col h-full">
+            <!-- Header -->
+            <div class="flex items-start justify-between mb-4">
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                  <p
+                    style="color: var(--danger)"
+                    class="text-xs font-bold uppercase tracking-wider">
+                    DSO CRÍTICO
+                  </p>
+                </div>
+                <p
+                  style="color: var(--danger)"
+                  class="text-sm font-medium opacity-80">
+                  +34d sobre target
+                </p>
+              </div>
+              <div
+                class="p-3 bg-red-500/20 backdrop-blur-sm rounded-2xl group-hover:bg-red-500 group-hover:text-white transition-all duration-300">
+                <svg
+                  style="color: var(--danger)"
+                  class="w-6 h-6 group-hover:text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 flex items-center justify-between">
+              <div>
+                <div
+                  style="color: var(--danger)"
+                  class="text-4xl font-black mb-1">
+                  {{ kpis.dso_actual|default('124') }}
+                </div>
+                <div style="color: var(--danger)" class="text-base font-bold">
+                  días
+                </div>
+              </div>
+              <div class="flex items-end gap-1 h-12">
+                <div
+                  style="background: var(--danger)"
+                  class="w-2 opacity-60 h-6 rounded-full animate-pulse"></div>
+                <div
+                  style="background: var(--danger)"
+                  class="w-2 opacity-70 h-8 rounded-full animate-pulse"
+                  style="animation-delay: 0.1s"></div>
+                <div
+                  style="background: var(--danger)"
+                  class="w-2 opacity-80 h-10 rounded-full animate-pulse"
+                  style="animation-delay: 0.2s"></div>
+                <div
+                  style="background: var(--danger)"
+                  class="w-2 h-12 rounded-full animate-pulse"
+                  style="animation-delay: 0.3s"></div>
+                <div
+                  style="background: var(--danger)"
+                  class="w-2 h-9 rounded-full opacity-60 animate-pulse"
+                  style="animation-delay: 0.4s"></div>
+              </div>
+            </div>
+
+            <!-- Badge -->
+            <div
+              class="absolute -top-2 -right-2 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-bounce">
+              🚨 CRÍTICO
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collection Card -->
+      <div class="kpi-card kpi-card--info">
+        <div
+          class="group relative overflow-hidden bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 dark:from-blue-950/40 dark:via-blue-900/40 dark:to-blue-950/60 border-2 border-blue-300 dark:border-blue-700 rounded-3xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-500 h-[180px] cursor-pointer">
+          <!-- Progress Ring Background -->
+          <div class="absolute inset-0 opacity-10">
+            <svg class="w-full h-full" viewBox="0 0 100 100">
+              <circle
+                cx="50"
+                cy="50"
+                r="35"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1"
+                opacity="0.2"
+                class="text-blue-400"></circle>
+              <circle
+                cx="50"
+                cy="50"
+                r="35"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-dasharray="{{ kpis.pct_meta_ingresos|default(82) * 2.2 }}, 220"
+                transform="rotate(-90 50 50)"
+                class="text-blue-500"></circle>
+            </svg>
+          </div>
+
+          <div class="relative flex flex-col h-full">
+            <!-- Header -->
+            <div class="flex items-start justify-between mb-4">
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>
+                  <p
+                    style="color: var(--info)"
+                    class="text-xs font-bold uppercase tracking-wider">
+                    COBRANZA HOY
+                  </p>
+                </div>
+                <p
+                  style="color: var(--info)"
+                  class="text-sm font-medium opacity-80">
+                  {{ kpis.meta_cobranza_pct|default('82') }}% de meta
+                </p>
+              </div>
+              <div
+                class="p-3 bg-blue-500/20 backdrop-blur-sm rounded-2xl group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
+                <svg
+                  style="color: var(--info)"
+                  class="w-6 h-6 group-hover:text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20">
+                  <path
+                    d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 flex items-center justify-between">
+              <div>
+                <div
+                  style="color: var(--info)"
+                  class="text-4xl font-black mb-1">
+                  ${{ kpis.ingresos_totales|default('8.2') }}
+                </div>
+                <div style="color: var(--info)" class="text-base font-bold">
+                  M cobrados
+                </div>
+              </div>
+              <div class="relative w-16 h-16">
+                <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-dasharray="100, 100"
+                    style="color: var(--border-color)"
+                    opacity="0.3"></path>
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-dasharray="{{ kpis.pct_meta_ingresos|default(82) }}, 100"
+                    style="color: var(--info)"
+                    class="animate-pulse"></path>
+                </svg>
+                <div
+                  class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span style="color: var(--info)" class="text-lg font-black"
+                    >{{ kpis.pct_meta_ingresos|default('82') }}%</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Badge -->
+            <div
+              class="absolute -top-2 -right-2 bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+              💰 ACTIVO
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance Card -->
+      <div class="kpi-card kpi-card--success">
+        <div
+          class="group relative overflow-hidden bg-gradient-to-br from-green-50 via-green-100 to-green-200 dark:from-green-950/40 dark:via-green-900/40 dark:to-green-950/60 border-2 border-green-300 dark:border-green-700 rounded-3xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-500 h-[180px] cursor-pointer">
+          <!-- Trophy Background -->
+          <div class="absolute inset-0 opacity-10">
+            <div
+              class="absolute top-0 left-0 w-20 h-20 bg-gradient-to-br from-green-400 to-transparent rounded-full -translate-y-10 -translate-x-10"></div>
+            <div
+              class="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-green-500 to-transparent rounded-full translate-y-8 translate-x-8"></div>
+          </div>
+
+          <div class="relative flex flex-col h-full">
+            <!-- Header -->
+            <div class="flex items-start justify-between mb-4">
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <p
+                    style="color: var(--success)"
+                    class="text-xs font-bold uppercase tracking-wider">
+                    PERFORMANCE
+                  </p>
+                </div>
+                <p
+                  style="color: var(--success)"
+                  class="text-sm font-medium opacity-80">
+                  Sobre target 90%
+                </p>
+              </div>
+              <div
+                class="p-3 bg-green-500/20 backdrop-blur-sm rounded-2xl group-hover:bg-green-500 group-hover:text-white transition-all duration-300">
+                <svg
+                  style="color: var(--success)"
+                  class="w-6 h-6 group-hover:text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 flex items-center justify-between">
+              <div>
+                <div
+                  style="color: var(--success)"
+                  class="text-4xl font-black mb-1">
+                  {{
+                  kpis.approval_rate|default(kpis.team_performance)|default('94')
+                  }}
+                </div>
+                <div style="color: var(--success)" class="text-base font-bold">
+                  % efectividad
+                </div>
+              </div>
+              <div class="space-y-2">
+                <div class="flex gap-1">
+                  <div
+                    style="background: var(--success)"
+                    class="w-3 h-2 rounded-sm animate-pulse"
+                    title="Top performers"></div>
+                  <div
+                    style="background: var(--accent-green)"
+                    class="w-3 h-2 rounded-sm animate-pulse"
+                    style="animation-delay: 0.1s"
+                    title="On target"></div>
+                  <div
+                    style="background: var(--warning)"
+                    class="w-3 h-2 rounded-sm animate-pulse"
+                    style="animation-delay: 0.2s"
+                    title="Below target"></div>
+                  <div
+                    style="background: var(--danger)"
+                    class="w-2 h-2 rounded-sm animate-pulse"
+                    style="animation-delay: 0.3s"
+                    title="Critical"></div>
+                </div>
+                <p
+                  style="color: var(--success)"
+                  class="text-sm font-medium opacity-80">
+                  12 managers
+                </p>
+              </div>
+            </div>
+
+            <!-- Badge -->
+            <div
+              class="absolute -top-2 -right-2 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+              🏆 EXCELENTE
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Critical Projects Card -->
+      <div class="kpi-card kpi-card--warning">
+        <div
+          class="group relative overflow-hidden bg-gradient-to-br from-purple-50 via-purple-100 to-purple-200 dark:from-purple-950/40 dark:via-purple-900/40 dark:to-purple-950/60 border-2 border-purple-300 dark:border-purple-700 rounded-3xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-500 h-[180px] cursor-pointer">
+          <!-- Warning Pattern -->
+          <div class="absolute inset-0 opacity-15">
+            <div
+              class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-400 to-transparent rounded-full -translate-y-12 translate-x-12"></div>
+            <div
+              class="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-purple-500 to-transparent rounded-full translate-y-10 -translate-x-10"></div>
+            <div
+              class="absolute center w-12 h-12 bg-gradient-to-br from-orange-400 to-transparent rounded-full animate-ping"></div>
+          </div>
+
+          <div class="relative flex flex-col h-full">
+            <!-- Header -->
+            <div class="flex items-start justify-between mb-4">
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+                  <p
+                    style="color: var(--accent-purple)"
+                    class="text-xs font-bold uppercase tracking-wider">
+                    PROYECTOS CRÍTICOS
+                  </p>
+                </div>
+                <p
+                  style="color: var(--accent-purple)"
+                  class="text-sm font-medium opacity-80">
+                  Requieren atención
+                </p>
+              </div>
+              <div
+                class="p-3 bg-purple-500/20 backdrop-blur-sm rounded-2xl group-hover:bg-purple-500 group-hover:text-white transition-all duration-300">
+                <svg
+                  style="color: var(--accent-purple)"
+                  class="w-6 h-6 group-hover:text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 flex items-center justify-between">
+              <div>
+                <div
+                  style="color: var(--accent-purple)"
+                  class="text-4xl font-black mb-1">
+                  {{ kpis.critical_projects_count|default('3') }}
+                </div>
+                <div
+                  style="color: var(--accent-purple)"
+                  class="text-base font-bold">
+                  proyectos
+                </div>
+              </div>
+              <div class="text-right">
+                <div
+                  style="color: var(--accent-purple)"
+                  class="text-2xl font-black">
+                  ${{ kpis.critical_projects_amount|default('57') }}M
+                </div>
+                <p
+                  style="color: var(--accent-purple)"
+                  class="text-sm font-medium opacity-80">
+                  en riesgo
+                </p>
+              </div>
+            </div>
+
+            <!-- Badge -->
+            <div
+              class="absolute -top-2 -right-2 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+              ⚠️ URGENTE
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- MAIN CONTENT SECTION                      -->
+  <!-- ========================================== -->
+  <section class="main-content">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- ========== PRIORITY PROJECT (Left Side - 8 cols) ========== -->
+      <div class="lg:col-span-8">
+        <!-- Executive Priority Project Container -->
+        <div
+          class="relative overflow-hidden rounded-2xl h-full min-h-[520px]"
+          style="
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+          ">
+          <!-- Elegant Critical Border -->
+          <div
+            class="absolute left-0 top-0 bottom-0 w-1"
+            style="background: var(--danger)"></div>
+
+          <!-- Content Container -->
+          <div class="p-8">
+            <!-- Executive Header -->
+            <div class="flex items-start justify-between mb-8">
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
+                  style="background: var(--danger)">
+                  <svg
+                    class="w-7 h-7 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2
+                    style="color: var(--danger)"
+                    class="text-2xl font-bold mb-1">
+                    PROYECTO PRIORITARIO
+                  </h2>
+                  <p style="color: var(--text-secondary)" class="text-base">
+                    Decisión ejecutiva requerida
+                  </p>
+                </div>
+              </div>
+
+              <!-- Priority Badge -->
+              <div
+                class="px-4 py-2 rounded-full shadow-lg"
+                style="background: var(--danger)">
+                <span class="text-white text-sm font-bold">🚨 CRÍTICO</span>
+              </div>
+            </div>
+
+            <!-- Executive Project Details -->
+            <div
+              class="rounded-xl p-6 mb-8 shadow-sm"
+              style="
+                background: var(--bg-subtle);
+                border: 1px solid var(--border-color);
+              ">
+              {% if kpis.critical_projects_list and
+              kpis.critical_projects_list|length > 0 %} {% set critical_project
+              = kpis.critical_projects_list[0] %}
+
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex-1">
+                  <h3
+                    style="color: var(--text-primary)"
+                    class="text-xl font-bold mb-2">
+                    {{ critical_project.cliente if critical_project.cliente else
+                    'Cliente No Especificado' }}
+                  </h3>
+                  <p
+                    style="color: var(--text-secondary)"
+                    class="text-base mb-4">
+                    {{ critical_project.proyecto if critical_project.proyecto
+                    else 'Proyecto Sin Título' }}
+                  </p>
+                </div>
+                <div
+                  class="px-3 py-1 rounded-full text-sm font-bold text-white"
+                  style="background: var(--danger)">
+                  {% if critical_project.dias_pendiente %} {{
+                  critical_project.dias_pendiente }} días {% else %} 45 días {%
+                  endif %}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-6">
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    EDP
+                  </div>
+                  <div
+                    style="color: var(--text-primary)"
+                    class="text-lg font-bold">
+                    {% if critical_project.id %} #{{ critical_project.id }} {%
+                    else %} #EDP-001 {% endif %}
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    Valor en Riesgo
+                  </div>
+                  <div style="color: var(--danger)" class="text-2xl font-bold">
+                    {% if critical_project.monto %} ${{
+                    "%.1f"|format(critical_project.monto|float) }}M {% else %}
+                    $2.8M {% endif %}
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    Estado
+                  </div>
+                  <div
+                    class="text-lg font-bold"
+                    style="color: {% if critical_project.estado == 'completado' %}var(--success){% elif critical_project.estado == 'en_progreso' %}var(--warning){% else %}var(--danger){% endif %};">
+                    {% if critical_project.estado %} {{
+                    critical_project.estado|upper|replace('_', ' ') }} {% else
+                    %} PENDIENTE {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              {% else %}
+
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex-1">
+                  <h3
+                    style="color: var(--text-primary)"
+                    class="text-xl font-bold mb-2">
+                    No hay proyectos críticos
+                  </h3>
+                  <p
+                    style="color: var(--text-secondary)"
+                    class="text-base mb-4">
+                    Todos los proyectos están dentro de los parámetros normales
+                  </p>
+                </div>
+                <div
+                  class="px-3 py-1 rounded-full text-sm font-bold text-white"
+                  style="background: var(--success)">
+                  ✅ OK
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-6">
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    Total EDPs
+                  </div>
+                  <div
+                    style="color: var(--text-primary)"
+                    class="text-lg font-bold">
+                    {{ kpis.total_projects if kpis.total_projects else '0' }}
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    En Seguimiento
+                  </div>
+                  <div style="color: var(--info)" class="text-2xl font-bold">
+                    {{ kpis.projects_in_progress if kpis.projects_in_progress
+                    else '0' }}
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm mb-1">
+                    Estado General
+                  </div>
+                  <div style="color: var(--success)" class="text-lg font-bold">
+                    ESTABLE
+                  </div>
+                </div>
+              </div>
+
+              {% endif %}
+            </div>
+
+            <!-- Executive Action Center -->
+            <div class="text-center">
+              <h4
+                style="color: var(--text-primary)"
+                class="text-lg font-bold mb-6">
+                💼 Centro de Decisiones Ejecutivas
+              </h4>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Consultar JP Button -->
+                <button
+                  onclick="openCommunicationModal('jp', '{{ critical_project.jefe_proyecto if critical_project and critical_project.jefe_proyecto else 'Jefe de Proyecto' }}', 'project-status')"
+                  class="group relative overflow-hidden text-white p-6 rounded-xl hover:scale-105 transform transition-all duration-300 font-semibold shadow-lg"
+                  style="
+                    background: var(--info);
+                    border: 2px solid transparent;
+                  ">
+                  <!-- Button overlay on hover -->
+                  <div
+                    class="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+                    style="background: var(--text-primary)"></div>
+
+                  <div class="relative flex items-center justify-center gap-3">
+                    <svg
+                      class="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span class="text-lg">💬 Consultar JP</span>
+                  </div>
+
+                  <div class="relative mt-2 text-sm opacity-90">
+                    {% if critical_project and critical_project.jefe_proyecto %}
+                    Contactar: {{ critical_project.jefe_proyecto }} {% else %}
+                    Estado actual del proyecto {% endif %}
+                  </div>
+                </button>
+
+                <!-- Escalar Controller Button -->
+                <button
+                  onclick="openCommunicationModal('controller', 'Controller Financiero', 'escalation')"
+                  class="group relative overflow-hidden text-white p-6 rounded-xl hover:scale-105 transform transition-all duration-300 font-semibold shadow-lg"
+                  style="
+                    background: var(--danger);
+                    border: 2px solid transparent;
+                  ">
+                  <!-- Button overlay on hover -->
+                  <div
+                    class="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+                    style="background: var(--text-primary)"></div>
+
+                  <div class="relative flex items-center justify-center gap-3">
+                    <svg
+                      class="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span class="text-lg">🚨 Escalar Controller</span>
+                  </div>
+
+                  <div class="relative mt-2 text-sm opacity-90">
+                    {% if critical_project and critical_project.monto %} Riesgo:
+                    ${{ "%.1f"|format(critical_project.monto|float) }}M {% else
+                    %} Revisión financiera urgente {% endif %}
+                  </div>
+                </button>
+              </div>
+
+              <!-- Status Indicator -->
+              <div
+                class="mt-6 p-4 rounded-lg"
+                style="
+                  background: var(--bg-subtle);
+                  border: 1px solid var(--border-color);
+                ">
+                <div class="flex items-center justify-center gap-2 text-sm">
+                  <div
+                    class="w-2 h-2 rounded-full animate-pulse"
+                    style="background: var(--success)"></div>
+                  <span style="color: var(--text-secondary)">
+                    {% if critical_project %} Sistema de comunicación activo •
+                    Proyecto crítico detectado {% else %} Sistema de
+                    comunicación activo • Todo en orden {% endif %}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== SIDEBAR (Right Side - 4 cols) ========== -->
+      <div class="lg:col-span-4">
+        <div
+          class="sidebar-container space-y-6 h-full min-h-[750px] flex flex-col">
+          <!-- Quick Actions Panel -->
+          <div
+            class="quick-actions-panel"
+            style="
+              background: var(--bg-card);
+              border: 1px solid var(--border-color);
+            "
+            class="rounded-xl p-6 shadow-lg">
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+                <svg
+                  class="w-4 h-4 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 style="color: var(--text-primary)" class="text-lg font-bold">
+                Acciones Rápidas
+              </h3>
+            </div>
+
+            <div class="space-y-3">
+              <button
+                style="
+                  background: var(--bg-subtle);
+                  border: 1px solid var(--border-color);
+                "
+                class="w-full flex items-center gap-3 p-4 rounded-lg hover:shadow-md transition-all duration-200">
+                <div
+                  style="background: var(--danger)"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center">
+                  <svg
+                    class="w-4 h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </div>
+                <div class="text-left">
+                  <div
+                    style="color: var(--text-primary)"
+                    class="font-medium text-sm">
+                    Contactar Cliente Crítico
+                  </div>
+                  <div style="color: var(--text-secondary)" class="text-xs">
+                    Acción inmediata
+                  </div>
+                </div>
+              </button>
+
+              <button
+                style="
+                  background: var(--bg-subtle);
+                  border: 1px solid var(--border-color);
+                "
+                class="w-full flex items-center gap-3 p-4 rounded-lg hover:shadow-md transition-all duration-200">
+                <div
+                  style="background: var(--info)"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center">
+                  <svg
+                    class="w-4 h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div class="text-left">
+                  <div
+                    style="color: var(--text-primary)"
+                    class="font-medium text-sm">
+                    Generar Reporte Legal
+                  </div>
+                  <div style="color: var(--text-secondary)" class="text-xs">
+                    Documentación
+                  </div>
+                </div>
+              </button>
+
+              <button
+                style="
+                  background: var(--bg-subtle);
+                  border: 1px solid var(--border-color);
+                "
+                class="w-full flex items-center gap-3 p-4 rounded-lg hover:shadow-md transition-all duration-200">
+                <div
+                  style="background: var(--success)"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center">
+                  <svg
+                    class="w-4 h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                </div>
+                <div class="text-left">
+                  <div
+                    style="color: var(--text-primary)"
+                    class="font-medium text-sm">
+                    Plan Negociación
+                  </div>
+                  <div style="color: var(--text-secondary)" class="text-xs">
+                    Estrategia
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Risk Distribution Panel -->
+          <div
+            class="risk-distribution-panel"
+            style="
+              background: var(--bg-card);
+              border: 1px solid var(--border-color);
+            "
+            class="rounded-xl p-6 shadow-lg">
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-8 h-8 bg-gradient-to-br from-orange-600 to-red-700 rounded-lg flex items-center justify-center">
+                <svg
+                  class="w-4 h-4 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 style="color: var(--text-primary)" class="text-lg font-bold">
+                Distribución de Riesgo
+              </h3>
+            </div>
+
+            <div class="space-y-3">
+              <div
+                style="
+                  background: var(--bg-subtle);
+                  border: 1px solid var(--border-color);
+                "
+                class="rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div
+                      style="background: var(--danger)"
+                      class="w-3 h-3 rounded-full"></div>
+                    <div>
+                      <span
+                        style="color: var(--text-primary)"
+                        class="text-sm font-medium">
+                        Alto Riesgo
+                      </span>
+                      <div style="color: var(--text-secondary)" class="text-xs">
+                        Crítico
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <span
+                      style="color: var(--danger)"
+                      class="text-xl font-bold">
+                      {{ kpis.high_risk_count|default('0') }}
+                    </span>
+                    <div style="color: var(--text-secondary)" class="text-xs">
+                      proyectos
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style="
+                  background: var(--bg-subtle);
+                  border: 1px solid var(--border-color);
+                "
+                class="rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div
+                      style="background: var(--warning)"
+                      class="w-3 h-3 rounded-full"></div>
+                    <div>
+                      <span
+                        style="color: var(--text-primary)"
+                        class="text-sm font-medium">
+                        Riesgo Medio
+                      </span>
+                      <div style="color: var(--text-secondary)" class="text-xs">
+                        Moderado
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <span
+                      style="color: var(--warning)"
+                      class="text-xl font-bold">
+                      {{ kpis.medium_risk_count|default('0') }}
+                    </span>
+                    <div style="color: var(--text-secondary)" class="text-xs">
+                      proyectos
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style="
+                  background: var(--bg-subtle);
+                  border: 1px solid var(--border-color);
+                "
+                class="rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div
+                      style="background: var(--success)"
+                      class="w-3 h-3 rounded-full"></div>
+                    <div>
+                      <span
+                        style="color: var(--text-primary)"
+                        class="text-sm font-medium">
+                        Bajo Riesgo
+                      </span>
+                      <div style="color: var(--text-secondary)" class="text-xs">
+                        Estable
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <span
+                      style="color: var(--success)"
+                      class="text-xl font-bold">
+                      {{ kpis.low_risk_count|default('0') }}
+                    </span>
+                    <div style="color: var(--text-secondary)" class="text-xs">
+                      proyectos
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- CRITICAL PROJECTS SUMMARY                 -->
+  <!-- ========================================== -->
+  <section class="critical-projects-summary">
+    <div
+      style="background: var(--bg-card); border: 1px solid var(--border-color)"
+      class="rounded-xl p-6 shadow-lg">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <div class="flex items-center gap-4 mb-3">
+            <div
+              class="w-12 h-12 bg-gradient-to-br from-red-600 to-orange-700 rounded-lg flex items-center justify-center shadow-md">
+              <svg
+                class="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 style="color: var(--text-primary)" class="text-2xl font-bold">
+              Portfolio de Proyectos Críticos
+            </h3>
+          </div>
+          <p style="color: var(--text-secondary)" class="text-base">
+            Monitoreo en tiempo real de situaciones que requieren intervención
+            ejecutiva
+          </p>
+        </div>
+
+        <div
+          style="
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+          "
+          class="rounded-lg p-4">
+          <div class="text-center">
+            <div
+              style="color: var(--text-secondary)"
+              class="text-sm font-medium mb-2">
+              TOTAL CRÍTICOS
+            </div>
+            <div style="color: var(--danger)" class="text-3xl font-bold">
+              {{ kpis.critical_projects_count|default('3') }}
+            </div>
+            <div style="color: var(--text-secondary)" class="text-xs mt-1">
+              proyectos activos
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Value Summary -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div
+          style="
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+          "
+          class="rounded-lg p-4">
+          <div class="flex items-center gap-3 mb-3">
+            <div
+              style="background: var(--danger)"
+              class="w-8 h-8 rounded-lg flex items-center justify-center">
+              <svg
+                class="w-4 h-4 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+            </div>
+            <div>
+              <div
+                style="color: var(--text-secondary)"
+                class="text-sm font-medium">
+                Valor total en riesgo
+              </div>
+              <div style="color: var(--danger)" class="text-2xl font-bold">
+                ${{ kpis.critical_projects_amount|default('157') }}M
+              </div>
+            </div>
+          </div>
+          <div style="color: var(--text-secondary)" class="text-xs">
+            Impacto financiero inmediato
+          </div>
+        </div>
+
+        <div
+          style="
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+          "
+          class="rounded-lg p-4">
+          <div class="flex items-center gap-3 mb-3">
+            <div
+              style="background: var(--info)"
+              class="w-8 h-8 rounded-lg flex items-center justify-center">
+              <svg
+                class="w-4 h-4 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <div
+                style="color: var(--text-secondary)"
+                class="text-sm font-medium">
+                Progreso promedio
+              </div>
+              <div style="color: var(--info)" class="text-2xl font-bold">
+                {{ kpis.avg_progress|default('34') }}%
+              </div>
+            </div>
+          </div>
+          <div style="color: var(--text-secondary)" class="text-xs">
+            Completado del portfolio crítico
+          </div>
+        </div>
+      </div>
+
+      <!-- Projects List -->
+      {% if kpis.critical_projects_list %}
+      <div class="space-y-3">
+        <h4 style="color: var(--text-primary)" class="text-sm font-medium mb-3">
+          Proyectos por antigüedad
+        </h4>
+        {% for project in kpis.critical_projects_list[:5] %}
+        <div
+          style="
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+          "
+          class="flex items-center justify-between p-4 rounded-lg hover:shadow-md transition-shadow">
+          <div class="flex-1">
+            <div style="color: var(--text-primary)" class="text-sm font-medium">
+              {{ project.cliente|default('Cliente N/A') }}
+            </div>
+            <div style="color: var(--text-secondary)" class="text-xs">
+              EDP: {{ project.id|default('N/A') }} • {{
+              project.estado|default('pendiente') }}
+            </div>
+          </div>
+          <div class="text-right">
+            <div
+              class="text-sm font-bold {% if project.dias_pendiente > 60 %}text-[color:var(--danger)]{% elif project.dias_pendiente > 30 %}text-[color:var(--warning)]{% else %}text-[color:var(--success)]{% endif %}">
+              {{ project.dias_pendiente|default('0') }}d
+            </div>
+            <div style="color: var(--text-secondary)" class="text-xs">
+              ${{ project.monto|default('0') }}M
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="color: var(--text-secondary)" class="text-center py-8">
+        <svg
+          class="w-12 h-12 mx-auto mb-4 opacity-50"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p>No hay proyectos críticos en este momento</p>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- CONTROL PANEL                             -->
+  <!-- ========================================== -->
+  <section class="control-panel">
+    <div
+      class="relative overflow-hidden bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 dark:from-slate-900/80 dark:via-slate-800/80 dark:to-slate-900/90 border-2 border-slate-300 dark:border-slate-700 rounded-2xl p-6 shadow-2xl">
+      <!-- Background Pattern -->
+      <div class="absolute inset-0 opacity-10">
+        <div
+          class="absolute top-0 left-0 w-36 h-36 bg-gradient-to-br from-blue-400 to-transparent rounded-full -translate-y-18 -translate-x-18"></div>
+        <div
+          class="absolute bottom-0 right-0 w-28 h-28 bg-gradient-to-tl from-purple-400 to-transparent rounded-full translate-y-14 translate-x-14"></div>
+      </div>
+
+      <div
+        class="relative flex flex-col md:flex-row justify-between items-center gap-6">
+        <!-- Left: System Info -->
+        <div class="flex items-center gap-8">
+          <div class="flex items-center gap-4">
+            <div
+              class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <svg
+                class="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div
+              style="color: var(--text-secondary)"
+              class="bg-slate-100 dark:bg-slate-800 rounded-xl p-3">
+              <div class="font-bold text-base">
+                Última actualización: {{ kpis.ultima_actualizacion|default('Hoy
+                14:35') }}
+              </div>
+              <div class="text-sm opacity-70">Auto-refresh cada 2 minutos</div>
+            </div>
+          </div>
+
+          <div
+            class="flex items-center gap-3 bg-green-100 dark:bg-green-900/40 rounded-xl p-3">
+            <div class="relative">
+              <div
+                style="background: var(--success)"
+                class="w-4 h-4 rounded-full animate-pulse"></div>
+              <div
+                style="background: var(--success)"
+                class="absolute inset-0 w-4 h-4 rounded-full animate-ping opacity-40"></div>
+            </div>
+            <span style="color: var(--success)" class="text-sm font-bold">
+              🟢 Sistema operativo
+            </span>
+          </div>
+        </div>
+
+        <!-- Right: Action Buttons -->
+        <div class="flex gap-4">
+          <button
+            onclick="location.reload()"
+            class="group relative overflow-hidden bg-gradient-to-r from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 hover:from-slate-300 hover:to-slate-400 dark:hover:from-slate-600 dark:hover:to-slate-700 border-2 border-slate-400 dark:border-slate-600 text-slate-700 dark:text-slate-300 px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg">
+            <div class="flex items-center gap-3">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span class="font-bold">🔄 Actualizar</span>
+            </div>
+          </button>
+
+          <a
+            href="{{ url_for('management.dashboard') }}"
+            class="group relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg">
+            <div class="flex items-center gap-3">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span class="font-bold">📊 Dashboard Principal</span>
+            </div>
+          </a>
+
+          <button
+            class="group relative overflow-hidden bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg">
+            <div class="flex items-center gap-3">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span class="font-bold">📄 Exportar Reporte</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ========== ENHANCED COMMUNICATION MODAL (Enterprise Level) ========== -->
+<div
+  id="communicationModal"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+  <div
+    style="background: var(--bg-card); border: 1px solid var(--border-color)"
+    class="rounded-xl max-w-4xl w-full max-h-[95vh] overflow-hidden shadow-2xl">
+    <!-- Enhanced Modal Header with Tabs -->
+    <div
+      style="
+        background: var(--bg-subtle);
+        border-bottom: 1px solid var(--border-color);
+      "
+      class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-4">
+          <div
+            id="modalIcon"
+            class="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg">
+            <svg
+              class="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+          <div>
+            <h3
+              id="modalTitle"
+              style="color: var(--text-primary)"
+              class="text-xl font-bold">
+              Centro de Comunicación Enterprise
+            </h3>
+            <p
+              id="modalSubtitle"
+              style="color: var(--text-secondary)"
+              class="text-sm">
+              Gestión integral de comunicaciones y escalaciones
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <!-- Status Indicator -->
+          <div
+            class="flex items-center gap-2 px-3 py-1 rounded-full"
+            style="background: var(--success); color: white">
+            <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span class="text-xs font-medium">Sistema Activo</span>
+          </div>
+          <button
+            onclick="closeCommunicationModal()"
+            style="color: var(--text-secondary)"
+            class="hover:opacity-70 transition-opacity p-1">
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex gap-1">
+        <button
+          onclick="switchTab('message')"
+          id="tabMessage"
+          style="background: var(--info); color: white"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+          <div class="flex items-center gap-2">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            Mensaje
+          </div>
+        </button>
+        <button
+          onclick="switchTab('meeting')"
+          id="tabMeeting"
+          style="background: var(--bg-subtle); color: var(--text-secondary)"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+          <div class="flex items-center gap-2">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            Videollamada
+          </div>
+        </button>
+        <button
+          onclick="switchTab('task')"
+          id="tabTask"
+          style="background: var(--bg-subtle); color: var(--text-secondary)"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+          <div class="flex items-center gap-2">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            Asignar Tarea
+          </div>
+        </button>
+        <button
+          onclick="switchTab('history')"
+          id="tabHistory"
+          style="background: var(--bg-subtle); color: var(--text-secondary)"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+          <div class="flex items-center gap-2">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Historial
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Content Container -->
+    <div class="p-6 overflow-y-auto max-h-[calc(95vh-140px)]">
+      <!-- MESSAGE TAB -->
+      <div id="tabContentMessage" class="tab-content">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Left Column: Recipient & Templates -->
+          <div class="lg:col-span-1">
+            <!-- Enhanced Recipient Info -->
+            <div
+              style="
+                background: var(--bg-subtle);
+                border: 1px solid var(--border-color);
+              "
+              class="p-4 rounded-lg mb-4">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="relative">
+                  <div
+                    class="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center">
+                    <span
+                      class="text-white text-lg font-bold"
+                      id="recipientInitials"
+                      >MG</span
+                    >
+                  </div>
+                  <div
+                    class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                </div>
+                <div>
+                  <div
+                    style="color: var(--text-primary)"
+                    class="font-medium"
+                    id="recipientName">
+                    María González
+                  </div>
+                  <div
+                    style="color: var(--text-secondary)"
+                    class="text-sm"
+                    id="recipientRole">
+                    Jefe de Proyecto
+                  </div>
+                  <div class="flex items-center gap-2 text-xs mt-1">
+                    <div
+                      class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span style="color: var(--success)">En línea ahora</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contact Methods -->
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  onclick="initiateCall()"
+                  style="background: var(--info); color: white"
+                  class="p-2 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity">
+                  <svg
+                    class="w-4 h-4 mx-auto mb-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  Llamar
+                </button>
+                <button
+                  onclick="initiateVideoCall()"
+                  style="background: var(--success); color: white"
+                  class="p-2 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity">
+                  <svg
+                    class="w-4 h-4 mx-auto mb-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Video
+                </button>
+                <button
+                  onclick="sendWhatsApp()"
+                  style="background: var(--warning); color: white"
+                  class="p-2 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity">
+                  <svg
+                    class="w-4 h-4 mx-auto mb-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Chat
+                </button>
+              </div>
+            </div>
+
+            <!-- Message Templates -->
+            <div
+              style="
+                background: var(--bg-subtle);
+                border: 1px solid var(--border-color);
+              "
+              class="p-4 rounded-lg">
+              <h4
+                style="color: var(--text-primary)"
+                class="text-sm font-medium mb-3">
+                Templates Rápidos
+              </h4>
+              <div class="space-y-2">
+                <button
+                  onclick="useTemplate('status')"
+                  style="
+                    background: var(--bg-card);
+                    border: 1px solid var(--border-color);
+                  "
+                  class="w-full p-2 rounded text-xs text-left hover:shadow-md transition-shadow">
+                  <div style="color: var(--text-primary)" class="font-medium">
+                    📊 Estado del Proyecto
+                  </div>
+                  <div style="color: var(--text-secondary)" class="text-xs">
+                    Solicitud de actualización general
+                  </div>
+                </button>
+                <button
+                  onclick="useTemplate('escalation')"
+                  style="
+                    background: var(--bg-card);
+                    border: 1px solid var(--border-color);
+                  "
+                  class="w-full p-2 rounded text-xs text-left hover:shadow-md transition-shadow">
+                  <div style="color: var(--text-primary)" class="font-medium">
+                    🚨 Escalación Crítica
+                  </div>
+                  <div style="color: var(--text-secondary)" class="text-xs">
+                    Problema que requiere intervención
+                  </div>
+                </button>
+                <button
+                  onclick="useTemplate('meeting')"
+                  style="
+                    background: var(--bg-card);
+                    border: 1px solid var(--border-color);
+                  "
+                  class="w-full p-2 rounded text-xs text-left hover:shadow-md transition-shadow">
+                  <div style="color: var(--text-primary)" class="font-medium">
+                    📅 Solicitud de Reunión
+                  </div>
+                  <div style="color: var(--text-secondary)" class="text-xs">
+                    Coordinar reunión de seguimiento
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Message Composition -->
+          <div class="lg:col-span-2">
+            <form id="communicationForm" class="space-y-4">
+              <!-- Enhanced Message Type & Priority -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    style="color: var(--text-primary)"
+                    class="block text-sm font-medium mb-2"
+                    >Tipo de consulta</label
+                  >
+                  <select
+                    id="messageType"
+                    style="
+                      background: var(--bg-subtle);
+                      border: 1px solid var(--border-color);
+                      color: var(--text-primary);
+                    "
+                    class="w-full p-3 rounded-lg">
+                    <option value="status">📊 Estado del proyecto</option>
+                    <option value="escalation">
+                      🚨 Escalación - Problema crítico
+                    </option>
+                    <option value="legal-review">
+                      ⚖️ Revisión legal requerida
+                    </option>
+                    <option value="critical-escalation">
+                      🔥 Escalación a Dirección
+                    </option>
+                    <option value="financial-review">
+                      💰 Revisión financiera
+                    </option>
+                    <option value="client-contact">
+                      👥 Contacto con cliente
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    style="color: var(--text-primary)"
+                    class="block text-sm font-medium mb-2"
+                    >Nivel de prioridad</label
+                  >
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      onclick="setPriority('low')"
+                      id="priorityLow"
+                      style="border: 1px solid var(--border-color)"
+                      class="flex-1 p-2 rounded-lg text-sm transition-colors">
+                      <div
+                        class="w-3 h-3 bg-green-500 rounded-full mx-auto mb-1"></div>
+                      Normal
+                    </button>
+                    <button
+                      type="button"
+                      onclick="setPriority('medium')"
+                      id="priorityMedium"
+                      style="border: 1px solid var(--border-color)"
+                      class="flex-1 p-2 rounded-lg text-sm transition-colors">
+                      <div
+                        class="w-3 h-3 bg-yellow-500 rounded-full mx-auto mb-1"></div>
+                      Urgente
+                    </button>
+                    <button
+                      type="button"
+                      onclick="setPriority('high')"
+                      id="priorityHigh"
+                      style="border: 1px solid var(--border-color)"
+                      class="flex-1 p-2 rounded-lg text-sm transition-colors">
+                      <div
+                        class="w-3 h-3 bg-red-500 rounded-full mx-auto mb-1"></div>
+                      Crítico
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Enhanced Message Composer -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label
+                    style="color: var(--text-primary)"
+                    class="text-sm font-medium"
+                    >Mensaje</label
+                  >
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onclick="toggleAIAssist()"
+                      style="color: var(--info)"
+                      class="text-xs hover:underline flex items-center gap-1">
+                      <svg
+                        class="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      AI Assist
+                    </button>
+                    <span
+                      id="charCount"
+                      style="color: var(--text-secondary)"
+                      class="text-xs"
+                      >0/500</span
+                    >
+                  </div>
+                </div>
+                <textarea
+                  id="messageText"
+                  style="
+                    background: var(--bg-card);
+                    border: 1px solid var(--border-color);
+                    color: var(--text-primary);
+                  "
+                  class="w-full p-3 rounded-lg h-32 resize-none"
+                  placeholder="Describe la situación y qué necesitas saber..."
+                  maxlength="500"></textarea>
+              </div>
+
+              <!-- Attachments -->
+              <div
+                style="
+                  background: var(--bg-subtle);
+                  border: 1px solid var(--border-color);
+                "
+                class="p-4 rounded-lg">
+                <div class="flex items-center justify-between mb-3">
+                  <h4
+                    style="color: var(--text-primary)"
+                    class="text-sm font-medium">
+                    Archivos adjuntos
+                  </h4>
+                  <button
+                    type="button"
+                    onclick="addAttachment()"
+                    style="color: var(--info)"
+                    class="text-xs hover:underline">
+                    + Agregar archivo
+                  </button>
+                </div>
+                <div id="attachmentsList" class="space-y-2">
+                  <!-- Attachments will appear here -->
+                </div>
+              </div>
+
+              <!-- Enhanced Notification Options -->
+              <div
+                style="
+                  background: var(--bg-subtle);
+                  border: 1px solid var(--border-color);
+                "
+                class="p-4 rounded-lg">
+                <h4
+                  style="color: var(--text-primary)"
+                  class="text-sm font-medium mb-3">
+                  Opciones de entrega
+                </h4>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="space-y-2">
+                    <label class="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="notifyApp"
+                        checked
+                        class="rounded" />
+                      <span style="color: var(--text-secondary)" class="text-sm"
+                        >📱 Notificación en app</span
+                      >
+                    </label>
+                    <label class="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="notifyEmail"
+                        checked
+                        class="rounded" />
+                      <span style="color: var(--text-secondary)" class="text-sm"
+                        >📧 Enviar por email</span
+                      >
+                    </label>
+                    <label class="flex items-center gap-3">
+                      <input type="checkbox" id="notifySlack" class="rounded" />
+                      <span style="color: var(--text-secondary)" class="text-sm"
+                        >💬 Notificar en Slack</span
+                      >
+                    </label>
+                  </div>
+                  <div class="space-y-2">
+                    <label class="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="scheduleMessage"
+                        class="rounded" />
+                      <span style="color: var(--text-secondary)" class="text-sm"
+                        >⏰ Programar envío</span
+                      >
+                    </label>
+                    <label class="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="requireResponse"
+                        class="rounded" />
+                      <span style="color: var(--text-secondary)" class="text-sm"
+                        >✅ Requiere respuesta</span
+                      >
+                    </label>
+                    <label class="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="trackDelivery"
+                        checked
+                        class="rounded" />
+                      <span style="color: var(--text-secondary)" class="text-sm"
+                        >📊 Seguimiento entrega</span
+                      >
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Enhanced Action Buttons -->
+              <div class="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onclick="saveDraft()"
+                  style="
+                    background: var(--bg-subtle);
+                    border: 1px solid var(--border-color);
+                    color: var(--text-primary);
+                  "
+                  class="px-6 py-3 rounded-lg font-medium hover:opacity-80 transition-opacity flex items-center gap-2">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                  Guardar Borrador
+                </button>
+                <button
+                  type="button"
+                  onclick="closeCommunicationModal()"
+                  style="
+                    background: var(--bg-subtle);
+                    border: 1px solid var(--border-color);
+                    color: var(--text-primary);
+                  "
+                  class="px-6 py-3 rounded-lg font-medium hover:opacity-80 transition-opacity">
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  id="sendButton"
+                  style="background: var(--danger); color: white"
+                  class="flex-1 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  Enviar Consulta
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- MEETING TAB -->
+      <div id="tabContentMeeting" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3
+              style="color: var(--text-primary)"
+              class="text-lg font-bold mb-4">
+              📹 Programar Videollamada
+            </h3>
+            <!-- Meeting content will go here -->
+            <div
+              style="
+                background: var(--bg-subtle);
+                border: 1px solid var(--border-color);
+              "
+              class="p-6 rounded-lg text-center">
+              <svg
+                class="w-16 h-16 mx-auto mb-4 opacity-50"
+                style="color: var(--text-secondary)"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <p style="color: var(--text-secondary)">
+                Funcionalidad de videollamadas próximamente
+              </p>
+            </div>
+          </div>
+          <div>
+            <!-- Meeting options will go here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- TASK TAB -->
+      <div id="tabContentTask" class="tab-content hidden">
+        <h3 style="color: var(--text-primary)" class="text-lg font-bold mb-4">
+          📋 Crear y Asignar Tarea
+        </h3>
+        <div
+          style="
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+          "
+          class="p-6 rounded-lg text-center">
+          <svg
+            class="w-16 h-16 mx-auto mb-4 opacity-50"
+            style="color: var(--text-secondary)"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <p style="color: var(--text-secondary)">
+            Sistema de tareas en desarrollo
+          </p>
+        </div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div id="tabContentHistory" class="tab-content hidden">
+        <h3 style="color: var(--text-primary)" class="text-lg font-bold mb-4">
+          🕒 Historial de Comunicaciones
+        </h3>
+        <div
+          style="
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+          "
+          class="p-6 rounded-lg text-center">
+          <svg
+            class="w-16 h-16 mx-auto mb-4 opacity-50"
+            style="color: var(--text-secondary)"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p style="color: var(--text-secondary)">
+            Historial de comunicaciones próximamente
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCRIPTS ========== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+  // Dashboard data for functionality
+  window.dashboardData = {
+    kpis: {{ kpis.__dict__|tojson if kpis.__dict__ else kpis|tojson }},
+    operational_chart_data: {{ operational_chart_data|tojson }},
+    aging: {{ aging|tojson }},
+    cash_forecast: {{ cash_forecast|tojson }}
+  };
+  console.log('📊 Dashboard operativo cargado:', window.dashboardData);
+</script>
+<script src="{{ url_for('static', filename='js/common/operational-charts.js') }}"></script>
+
+{% endblock %}

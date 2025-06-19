@@ -14,7 +14,7 @@
       </div>
       <div class="flex gap-3">
         <a
-          href="{{ url_for('kanban.vista_kanban') }}"
+          href="{{ url_for('control_panel.vista_kanban') }}"
           class="inline-flex items-center px-4 py-2 bg-[color:var(--bg-subtle)] hover:bg-[color:var(--bg-hover)] text-[color:var(--text-primary)] font-medium rounded-lg border border-[color:var(--border-color)] transition-all duration-200 hover:shadow-md group">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -1508,6 +1508,6 @@
 </style>
 
 <!-- JavaScript para funcionalidad -->
-<script src="{{ url_for('static', filename='js/edp_upload.js') }}"></script>
+<script src="{{ url_for('static', filename='js/common/edp_upload.js') }}"></script>
 
 {% endblock %}

@@ -277,7 +277,7 @@ endblock %} {% block extra_head %}
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Kanban -->
         <a
-          href="{{ url_for('kanban.vista_kanban') }}"
+          href="{{ url_for('control_panel.vista_kanban') }}"
           class="tool-card p-8 group">
           <div class="flex flex-col items-center text-center">
             <div
@@ -332,7 +332,7 @@ endblock %} {% block extra_head %}
 
         <!-- Dashboard -->
         <a
-          href="{{ url_for('controller.dashboard_controller') }}"
+          href="{{ url_for('dashboard.dashboard_controller') }}"
           class="tool-card p-8 group">
           <div class="flex flex-col items-center text-center">
             <div
@@ -387,7 +387,7 @@ endblock %} {% block extra_head %}
 
         <!-- Teams -->
         <a
-          href="{{ url_for('controller.vista_global_encargados') }}"
+          href="{{ url_for('dashboard.vista_global_encargados') }}"
           class="tool-card p-8 group">
           <div class="flex flex-col items-center text-center">
             <div
@@ -451,7 +451,7 @@ endblock %} {% block extra_head %}
       </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <a
-          href="{{ url_for('controller.analisis_retrabajos') }}"
+          href="{{ url_for('dashboard.analisis_retrabajos') }}"
           class="mini-tool p-6 group">
           <div class="flex items-center mb-4">
             <div

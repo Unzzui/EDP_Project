@@ -20,7 +20,7 @@ def get_cashflow_service():
     return CashFlowService()
 
 def get_kanban_service():
-    from ..services.kanban_service import KanbanService
+    from ..services.control_panel_service import KanbanService
     return KanbanService()
 
 def get_kpi_service():

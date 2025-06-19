@@ -257,7 +257,19 @@ def invalidate_cache_on_change(operation: str, data_types: List[str] = None):
                 result = func(*args, **kwargs)
                 
                 # Si la función fue exitosa, invalidar cache
-                if hasattr(result, 'success') and result.success:
+                should_invalidate = False
+                
+                # Verificar diferentes formatos de resultado exitoso
+                if isinstance(result, dict) and result.get('success'):
+                    should_invalidate = True
+                elif hasattr(result, 'success') and result.success:
+                    should_invalidate = True
+                elif result is True:  # Para funciones que devuelven True directamente
+                    should_invalidate = True
+                elif result is not None and result is not False:  # Para funciones que devuelven objetos/valores
+                    should_invalidate = True
+                
+                if should_invalidate:
                     invalidation_service = CacheInvalidationService()
                     invalidation_service.register_data_change(
                         operation=operation,

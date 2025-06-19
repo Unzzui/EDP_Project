@@ -80,31 +80,31 @@ def create_app():
     from .auth.routes import auth_bp
     from .edp.routes import edp_bp
 
-    # New refactored controllers using layered architecture
-    from .controllers.main_controller import main_bp
-    from .controllers.controller_controller import controller_controller_bp
-    from .controllers.manager_controller import manager_controller_bp
-    from .controllers.edp_controller import edp_controller_bp
-    from .controllers.admin_controller import admin_bp
-    from .controllers.project_manager_controller import project_manager_bp
-    from .controllers.kanban_controller import kanban_bp
-    from .controllers.kanban_controller_optimized import kanban_opt_bp
-    from .controllers.edp_upload_controller import edp_upload_bp
+    # New refactored routes using layered architecture
+    from .routes.landing import landing_bp
+    from .routes.dashboard import dashboard_bp
+    from .routes.management import management_bp
+    from .routes.edp import edp_management_bp
+    from .routes.admin import admin_bp
+    from .routes.projects import projects_bp
+    from .routes.control_panel import control_panel_bp
+    from .routes.analytics import analytics_bp
+    from .routes.edp_upload import edp_upload_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(edp_bp, url_prefix="/edp")
 
     # Register main blueprint (landing page)
-    app.register_blueprint(main_bp)
+    app.register_blueprint(landing_bp)
 
-    # Register new refactored controllers
-    app.register_blueprint(controller_controller_bp)
-    app.register_blueprint(manager_controller_bp)
-    app.register_blueprint(edp_controller_bp)
+    # Register new refactored routes
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(management_bp)
+    app.register_blueprint(edp_management_bp)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(project_manager_bp)
-    app.register_blueprint(kanban_bp)
-    app.register_blueprint(kanban_opt_bp)  # ✨ Versión optimizada
+    app.register_blueprint(projects_bp)
+    app.register_blueprint(control_panel_bp)
+    app.register_blueprint(analytics_bp)  # ✨ Analytics and insights
     app.register_blueprint(edp_upload_bp)  # 📋 Sistema de carga de EDPs
 
     # Old monolithic controllers (comment out when fully migrated)

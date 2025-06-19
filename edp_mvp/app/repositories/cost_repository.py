@@ -274,7 +274,7 @@ class CostRepository(BaseRepository):
     def _model_to_row_values(
         self, cost: Cost, headers: Optional[List[str]] = None
     ) -> List[str]:
-        """Convert Cost model to row values for Google Sheets."""
+        """Supabase integration (migrated from Google Sheets)"""
         if headers is None:
             headers = self.sheets_repo._get_headers(self.sheet_name)
 

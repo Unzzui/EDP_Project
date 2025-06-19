@@ -3760,35 +3760,75 @@ class ManagerService(BaseService):
                 # Ordenar por días sin movimiento (descendente) - MÁS CRÍTICO PRIMERO
                 df_critical = df_critical.sort_values("dias_espera_num", ascending=False)
                 
-                # Convertir a lista de diccionarios
+                # **NUEVO: Agrupar EDPs por proyecto**
+                projects_dict = {}
+                
                 for _, row in df_critical.iterrows():
+                    proyecto_key = row.get("proyecto", "Proyecto N/A")
+                    cliente = row.get("cliente", "Cliente N/A")
+                    jefe_proyecto = row.get("jefe_proyecto", "Sin asignar")
+                    
+                    # Crear clave única por proyecto-cliente-jefe
+                    project_id = f"{proyecto_key}_{cliente}_{jefe_proyecto}"
+                    
                     edp_data = {
                         "id": row.get("n_edp", "N/A"),
-                        "cliente": row.get("cliente", "Cliente N/A"),
-                        "proyecto": row.get("proyecto", "Proyecto N/A"),
                         "monto": float(row.get("monto_aprobado", 0)),
                         "dias_sin_movimiento": int(row.get("dias_espera_num", 0)),
                         "estado": row.get("estado", "pendiente"),
-                        "jefe_proyecto": row.get("jefe_proyecto", "Sin asignar"),
                         "fecha_ultimo_movimiento": self._calculate_last_movement_date(row),
-                        "bloqueo_principal": self._identify_main_blockage(row),
-                        "contact_info": self._extract_contact_info(row),
-                        "urgency_score": self._calculate_urgency_score(row)
+                        "fecha_emision": row.get("fecha_emision", "Sin fecha"),
                     }
-                    critical_edps.append(edp_data)
+                    
+                    if project_id not in projects_dict:
+                        projects_dict[project_id] = {
+                            "proyecto": proyecto_key,
+                            "cliente": cliente,
+                            "jefe_proyecto": jefe_proyecto,
+                            "edps": [],
+                            "total_monto": 0,
+                            "max_dias_sin_movimiento": 0,
+                            "estado_proyecto": "activo"
+                        }
+                    
+                    projects_dict[project_id]["edps"].append(edp_data)
+                    projects_dict[project_id]["total_monto"] += edp_data["monto"]
+                    projects_dict[project_id]["max_dias_sin_movimiento"] = max(
+                        projects_dict[project_id]["max_dias_sin_movimiento"],
+                        edp_data["dias_sin_movimiento"]
+                    )
+                
+                # Convertir diccionario a lista y ordenar por criticidad
+                critical_edps = []
+                for project_data in projects_dict.values():
+                    critical_edps.append(project_data)
+                
+                # Ordenar proyectos por máximos días sin movimiento
+                critical_edps.sort(key=lambda x: x["max_dias_sin_movimiento"], reverse=True)
             
             # Calcular portfolio total para contexto
             total_portfolio_value = df_prepared["monto_aprobado"].sum()
             
+            # Calcular estadísticas por proyecto
+            total_edps_criticos = sum(len(project["edps"]) for project in critical_edps)
+            
+            # Clasificar proyectos por criticidad basado en máximos días
+            critical_projects_90_plus = len([p for p in critical_edps if p["max_dias_sin_movimiento"] > 90])
+            high_risk_projects_60_90 = len([p for p in critical_edps if 60 <= p["max_dias_sin_movimiento"] <= 90])
+            medium_risk_projects_30_60 = len([p for p in critical_edps if 30 <= p["max_dias_sin_movimiento"] < 60])
+            
             # Preparar datos de respuesta
             critical_data = {
-                "critical_edps": critical_edps,
+                "critical_edps": critical_edps,  # Ahora son proyectos agrupados
                 "total_portfolio_value": total_portfolio_value,
                 "summary": {
                     "total_count": len(df_prepared),
-                    "critical_count": len([edp for edp in critical_edps if edp["dias_sin_movimiento"] > 90]),
-                    "high_risk_count": len([edp for edp in critical_edps if 60 <= edp["dias_sin_movimiento"] <= 90]),
-                    "medium_risk_count": len([edp for edp in critical_edps if 30 <= edp["dias_sin_movimiento"] < 60])
+                    "total_amount": sum(p["total_monto"] for p in critical_edps),
+                    "critical_count": critical_projects_90_plus,
+                    "high_risk_count": high_risk_projects_60_90,
+                    "medium_risk_count": medium_risk_projects_30_60,
+                    "total_critical_projects": len(critical_edps),
+                    "total_critical_edps": total_edps_criticos
                 }
             }
             

@@ -12,7 +12,7 @@ from ..utils.date_utils import DateUtils
 import pandas as pd
 import logging
 import traceback
-from ..utils.gsheet import update_row, log_cambio_edp
+from ..utils.supabase_adapter import update_row, log_cambio_edp
 
 logger = logging.getLogger(__name__)
 
