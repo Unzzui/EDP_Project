@@ -378,6 +378,9 @@ class KPIService(BaseService):
                 df_full[df_full["estado"].str.strip().isin(estados_completados)]["monto_aprobado"].sum() / 1_000_000
             )
 
+            # Calculate DSO
+            overall_dso = self._calculate_dso(df_full)
+
             essential_kpis = {
                 # Financial KPIs (including the missing ingresos_totales)
                 "ingresos_totales": round(ingresos_totales, 1),
@@ -392,16 +395,28 @@ class KPIService(BaseService):
                 "total_approved": paid_count,
                 "total_pending": pending_count,
                 "approval_rate": round(approval_rate, 1),
-                "critical_edps": max(0, pending_count - 5),  # Simple estimation
+                "critical_projects_count": max(0, pending_count - 5),  # Simple estimation
                 "critical_amount": round(
                     max(0, (pending_count - 5) * (approved_amount / max(1, paid_count))) / 1_000_000, 1
                 ),
                 # Basic DSO and client metrics
-                "dso": 45.0,  # Default DSO
+                "dso": round(overall_dso, 1),  # Calculated DSO
+                "dso_actual": round(overall_dso, 1),
                 "client_satisfaction": 85.0,  # Default satisfaction
                 "forecast_year": round(forecast_year / 1_000_000, 1),
                 "variacion_presupuesto": round(variacion_presupuesto, 1),
                 "payment_rate": round(payment_rate, 1),
+                # Add missing essential KPIs that the template expects
+                "forecast_accuracy": 85.0,  # Default forecast accuracy
+                "efficiency_score": min(95.0, max(60.0, approval_rate + (payment_rate * 0.3))),  # Calculated efficiency
+                "dso_benchmark": 35.0,  # Industry benchmark
+                "dso_target_progress": round(max(0, (35.0 / max(1, overall_dso)) * 100), 1),  # Progress toward DSO target
+                "quality_score": round(approval_rate * 1.1, 1),  # Quality based on approval rate
+                "roi_promedio": 23.4,  # Default ROI
+                "proyectos_completados": paid_count,
+                "satisfaccion_cliente": 96.0,  # Default satisfaction
+                "progreso_objetivo": min(100, (paid_count / max(1, total_edps) * 100) * 1.2),
+                "objetivo_anual": 120.0,  # Mock annual target
             }
 
             return ServiceResponse(
@@ -440,6 +455,7 @@ class KPIService(BaseService):
             "score_equipo": 94,
             "efficiency_score": 85.0,
             "critical_projects_count": 7,
+            "total_edps": 0,  # Total number of EDPs
             
             # DSO and target progress metrics for template
             "dso_actual": 47.2,
@@ -473,6 +489,8 @@ class KPIService(BaseService):
             "forecast_day_5": 0.6,
             "forecast_day_6": 0.4,
             "forecast_day_7": 0.2,
+            "forecast_accuracy": 85.0,  # Forecast accuracy percentage
+            "forecast_growth": 12.5,  # Forecast growth rate
             
             # Advanced DSO and payment metrics - comprehensive coverage
             "dso": 45.0,  # Overall DSO

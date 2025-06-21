@@ -3,335 +3,896 @@
   rel="stylesheet"
   href="{{ url_for('static', filename='css/controller/controller_encargados_global.css') }}" />
 
-<div class="dashboard-container" style="padding: 24px">
-  <div class="container mx-auto" style="max-width: 1600px">
-    <!-- HEADER CON MÉTRICAS EJECUTIVAS -->
-    <div class="command-header">
-      <h1 class="header-title">
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          style="margin-right: 8px">
-          <path
-            d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
-        </svg>
-        Centro de Comando JP - Analytics
-      </h1>
-
-      <div class="kpi-grid">
-        {% set criticos_count = encargados|selectattr('dso', '>',
-        60)|list|length if encargados else 0 %} {% set promedio_dso =
-        managers_data.promedio_dso|default(0) %} {% set total_pendiente =
-        managers_data.total_pendiente|default(0) %} {% set eficiencia_global =
-        managers_data.avance_global|default(0) %}
-
+<div
+  class="dashboard-container"
+  style="
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+  ">
+  <!-- EXECUTIVE HEADER -->
+  <header
+    style="
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-primary);
+      padding: var(--space-lg) var(--space-2xl);
+    ">
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      ">
+      <div style="display: flex; align-items: center; gap: var(--space-lg)">
         <div
-          class="kpi-card {% if criticos_count > 0 %}critical{% else %}good{% endif %}">
-          <div>
-            <div class="kpi-label">JP Críticos</div>
-            <div class="kpi-value">{{ criticos_count }}</div>
-          </div>
-          <div
-            class="kpi-change {% if criticos_count > 0 %}up{% else %}neutral{% endif %}">
-            {% if criticos_count > 0 %}+{{ criticos_count }} vs mes ant.{% else
-            %}Bajo control{% endif %}
-          </div>
-        </div>
-
-        <div
-          class="kpi-card {% if promedio_dso < 45 %}good{% elif promedio_dso < 60 %}warning{% else %}critical{% endif %}">
-          <div>
-            <div class="kpi-label">DSO Promedio</div>
-            <div class="kpi-value">{{ promedio_dso }}d</div>
-          </div>
-          <div class="kpi-change neutral">Target: 45d</div>
-        </div>
-
-        <div class="kpi-card neutral">
-          <div>
-            <div class="kpi-label">Total Pendiente</div>
-            <div class="kpi-value">
-              ${{ "{:,.0f}".format(total_pendiente/1000000).replace(",",".") }}M
-            </div>
-          </div>
-          {% set evol_data = evolucion_mensual|default({}) %} {% if
-          evol_data.crecimiento_mensual and evol_data.crecimiento_mensual|length
-          > 0 %} {% set ultimo_cambio = evol_data.crecimiento_mensual[-1] %}
-          <div
-            class="kpi-change {% if ultimo_cambio > 0 %}up{% elif ultimo_cambio < 0 %}down{% else %}neutral{% endif %}">
-            {% if ultimo_cambio > 0 %}+{{ ultimo_cambio }}%{% elif ultimo_cambio
-            < 0 %}{{ ultimo_cambio }}%{% else %}Sin cambio{% endif %} vs mes
-            ant.
-          </div>
-          {% else %}
-          <div class="kpi-change neutral">Datos históricos N/A</div>
-          {% endif %}
-        </div>
-
-        <div
-          class="kpi-card {% if eficiencia_global >= 80 %}good{% elif eficiencia_global >= 60 %}warning{% else %}critical{% endif %}">
-          <div>
-            <div class="kpi-label">Eficiencia Global</div>
-            <div class="kpi-value">{{ eficiencia_global }}%</div>
-          </div>
-          {% if evol_data.tendencia_general %}
-          <div
-            class="kpi-change {% if evol_data.tendencia_general == 'creciente' %}up{% elif evol_data.tendencia_general == 'decreciente' %}down{% else %}neutral{% endif %}">
-            {% if evol_data.tendencia_general == 'creciente' %}Mejorando{% elif
-            evol_data.tendencia_general == 'decreciente' %}Deteriorando{% else
-            %}Estable{% endif %}
-          </div>
-          {% else %}
-          <div class="kpi-change neutral">En análisis</div>
-          {% endif %}
+          style="
+            width: var(--space-lg);
+            height: var(--space-lg);
+            background: var(--accent-primary);
+            border-radius: var(--radius-sm);
+          "></div>
+        <div>
+          <h1
+            style="
+              font-size: 1.25rem;
+              font-weight: 600;
+              color: var(--text-primary);
+              margin: 0;
+            ">
+            Centro de Comando JP - Analytics
+          </h1>
+          <p
+            style="
+              font-size: 0.875rem;
+              color: var(--text-secondary);
+              margin: 4px 0 0 0;
+            ">
+            Dashboard ejecutivo para análisis de cartera y rendimiento de Jefes
+            de Proyecto
+          </p>
         </div>
       </div>
+      <nav style="display: flex; gap: var(--space-2xl)">
+        <a
+          href="#"
+          style="
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--accent-primary);
+            text-decoration: none;
+            transition: var(--transition-normal);
+          "
+          >Analytics</a
+        >
+        <a
+          href="#"
+          style="
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition-normal);
+          "
+          onmouseover="this.style.color='var(--accent-primary)'"
+          onmouseout="this.style.color='var(--text-secondary)'"
+          >Reports</a
+        >
+        <a
+          href="#"
+          style="
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition-normal);
+          "
+          onmouseover="this.style.color='var(--accent-primary)'"
+          onmouseout="this.style.color='var(--text-secondary)'"
+          >Settings</a
+        >
+      </nav>
     </div>
+  </header>
 
-    <!-- ALERTAS CRÍTICAS -->
+  <div style="padding: var(--space-lg)">
+    <!-- CRITICAL ALERT BANNER -->
     {% set jp_criticos = encargados|selectattr('dso', '>=', 60)|list if
     encargados else [] %} {% if jp_criticos|length > 0 %}
-    <div class="alerts-section">
-      <div class="alert-banner">
-        <div class="alert-title">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            style="margin-right: 8px; vertical-align: middle">
-            <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
-          </svg>
-          {{ jp_criticos|length }} JP requieren acción inmediata
+    <div
+      style="
+        background: linear-gradient(
+          90deg,
+          var(--status-danger-bg),
+          rgba(255, 0, 102, 0.05)
+        );
+        border: 1px solid var(--status-danger);
+        border-left: 4px solid var(--status-danger);
+        border-radius: var(--radius-sm);
+        padding: var(--space-lg) var(--space-2xl);
+        margin-bottom: var(--space-lg);
+        animation: pulse-border 2s infinite;
+      ">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        ">
+        <div style="display: flex; align-items: center; gap: var(--space-md)">
+          <div
+            style="
+              width: var(--space-lg);
+              height: var(--space-lg);
+              background: var(--status-danger);
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+            <span
+              style="
+                color: var(--text-primary);
+                font-size: 0.75rem;
+                font-weight: 700;
+              "
+              >!</span
+            >
+          </div>
+          <div>
+            <h2 style="color: var(--text-primary); font-weight: 600; margin: 0">
+              Acción Ejecutiva Requerida
+            </h2>
+            <p
+              style="
+                color: var(--status-danger);
+                font-size: 0.875rem;
+                margin: 4px 0 0 0;
+                font-family: var(--font-mono);
+              ">
+              {{ jp_criticos|length }} JP requieren intervención inmediata
+              <span style="margin: 0 var(--space-sm)">•</span>
+              Exposición: ${{
+              "{:,.0f}".format(jp_criticos|map(attribute='monto_pendiente')|sum/1000000).replace(",",".")
+              }}M
+              <span style="margin: 0 var(--space-sm)">•</span>
+              DSO Promedio: {{ (jp_criticos|map(attribute='dso')|sum /
+              jp_criticos|length)|round if jp_criticos|length > 0 else 0 }}d
+            </p>
+          </div>
         </div>
-        <div class="alert-subtitle">
-          ${{
-          "{:,.0f}".format(jp_criticos|map(attribute='monto_pendiente')|sum/1000000).replace(",",".")
-          }}M en riesgo alto • DSO promedio críticos: {{
-          (jp_criticos|map(attribute='dso')|sum / jp_criticos|length)|round }}d
-        </div>
+        <button
+          style="
+            background: var(--status-danger);
+            color: var(--text-primary);
+            border: none;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            transition: var(--transition-normal);
+          "
+          onmouseover="this.style.transform='scale(1.05)'"
+          onmouseout="this.style.transform='scale(1)'">
+          Revisar
+        </button>
       </div>
     </div>
     {% endif %}
 
-    <!-- DASHBOARD PRINCIPAL CON CHARTS -->
-    <div class="dashboard-grid">
-      <!-- DISTRIBUCIÓN DSO -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <div class="chart-title">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              style="margin-right: 8px; vertical-align: middle">
-              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
-            </svg>
-            Distribución DSO por JP
+    <!-- KPI CARDS ROW -->
+    <div
+      style="
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-lg);
+        margin-bottom: var(--space-2xl);
+      ">
+      {% set criticos_count = encargados|selectattr('dso', '>', 60)|list|length
+      if encargados else 0 %} {% set promedio_dso =
+      managers_data.promedio_dso|default(0) %} {% set total_pendiente =
+      managers_data.total_pendiente|default(0) %} {% set eficiencia_global =
+      managers_data.avance_global|default(0) %}
+
+      <!-- KPI 1: JP Críticos -->
+      <div
+        style="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-left: 4px solid {% if criticos_count > 0 %}var(--status-danger){% else %}var(--status-success){% endif %}; border-radius: var(--radius-sm); padding: var(--space-2xl); cursor: pointer; transition: var(--transition-normal); position: relative;"
+        onmouseover="this.style.background='var(--bg-tertiary)'; this.style.transform='translateY(-2px)'"
+        onmouseout="this.style.background='var(--bg-secondary)'; this.style.transform='translateY(0)'">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-md);
+          ">
+          <span
+            style="
+              font-size: 0.75rem;
+              font-weight: 600;
+              color: var(--text-secondary);
+              text-transform: uppercase;
+              font-family: var(--font-mono);
+              letter-spacing: 0.05em;
+            "
+            >JP Críticos</span
+          >
+          <div
+            style="display: flex; align-items: center; gap: var(--space-xs); font-size: 0.75rem; font-weight: 700; font-family: var(--font-mono); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); background: {% if criticos_count > 0 %}var(--status-danger-bg){% else %}var(--bg-quaternary){% endif %}; color: {% if criticos_count > 0 %}var(--status-danger){% else %}var(--text-tertiary){% endif %};">
+            {% if criticos_count > 0 %}↑{% else %}—{% endif %}
           </div>
-          <div class="chart-subtitle">Análisis de días de venta pendientes</div>
         </div>
-        <div class="chart-container">
-          <canvas id="dsoDistributionChart"></canvas>
+        <div
+          style="font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono); margin-bottom: var(--space-sm); color: {% if criticos_count > 0 %}var(--status-danger){% else %}var(--text-primary){% endif %};">
+          {{ criticos_count }}
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0">
+          {% if criticos_count > 0 %}+{{ criticos_count }} vs mes ant.{% else
+          %}Bajo control{% endif %}
+        </p>
+        {% if criticos_count > 0 %}
+        <div
+          style="
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            width: var(--space-sm);
+            height: var(--space-sm);
+            background: var(--status-danger);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+          "></div>
+        {% endif %}
+      </div>
+
+      <!-- KPI 2: DSO Promedio -->
+      <div
+        style="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-left: 4px solid {% if promedio_dso < 45 %}var(--status-success){% elif promedio_dso < 60 %}var(--status-warning){% else %}var(--status-danger){% endif %}; border-radius: var(--radius-sm); padding: var(--space-2xl); cursor: pointer; transition: var(--transition-normal); position: relative;"
+        onmouseover="this.style.background='var(--bg-tertiary)'; this.style.transform='translateY(-2px)'"
+        onmouseout="this.style.background='var(--bg-secondary)'; this.style.transform='translateY(0)'">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-md);
+          ">
+          <span
+            style="
+              font-size: 0.75rem;
+              font-weight: 600;
+              color: var(--text-secondary);
+              text-transform: uppercase;
+              font-family: var(--font-mono);
+              letter-spacing: 0.05em;
+            "
+            >DSO Promedio</span
+          >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: var(--space-xs);
+              font-size: 0.75rem;
+              font-weight: 700;
+              font-family: var(--font-mono);
+              padding: var(--space-xs) var(--space-sm);
+              border-radius: var(--radius-sm);
+              background: var(--bg-quaternary);
+              color: var(--text-tertiary);
+            ">
+            —
+          </div>
+        </div>
+        <div
+          style="font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono); margin-bottom: var(--space-sm); color: {% if promedio_dso < 45 %}var(--status-success){% elif promedio_dso < 60 %}var(--status-warning){% else %}var(--status-danger){% endif %};">
+          {{ promedio_dso }}d
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0">
+          Target: 45d
+        </p>
+        {% if promedio_dso >= 60 %}
+        <div
+          style="
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            width: var(--space-sm);
+            height: var(--space-sm);
+            background: var(--status-danger);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+          "></div>
+        {% elif promedio_dso >= 45 %}
+        <div
+          style="
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            width: var(--space-sm);
+            height: var(--space-sm);
+            background: var(--status-warning);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+          "></div>
+        {% endif %}
+      </div>
+
+      <!-- KPI 3: Total Pendiente -->
+      <div
+        style="
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-primary);
+          border-left: 4px solid var(--status-info);
+          border-radius: var(--radius-sm);
+          padding: var(--space-2xl);
+          cursor: pointer;
+          transition: var(--transition-normal);
+          position: relative;
+        "
+        onmouseover="this.style.background='var(--bg-tertiary)'; this.style.transform='translateY(-2px)'"
+        onmouseout="this.style.background='var(--bg-secondary)'; this.style.transform='translateY(0)'">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-md);
+          ">
+          <span
+            style="
+              font-size: 0.75rem;
+              font-weight: 600;
+              color: var(--text-secondary);
+              text-transform: uppercase;
+              font-family: var(--font-mono);
+              letter-spacing: 0.05em;
+            "
+            >Total Pendiente</span
+          >
+          {% set evol_data = evolucion_mensual|default({}) %} {% if
+          evol_data.crecimiento_mensual and evol_data.crecimiento_mensual|length
+          > 0 %} {% set ultimo_cambio = evol_data.crecimiento_mensual[-1] %}
+          <div
+            style="display: flex; align-items: center; gap: var(--space-xs); font-size: 0.75rem; font-weight: 700; font-family: var(--font-mono); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); background: {% if ultimo_cambio > 0 %}var(--status-danger-bg){% elif ultimo_cambio < 0 %}var(--status-success-bg){% else %}var(--bg-quaternary){% endif %}; color: {% if ultimo_cambio > 0 %}var(--status-danger){% elif ultimo_cambio < 0 %}var(--status-success){% else %}var(--text-tertiary){% endif %};">
+            {% if ultimo_cambio > 0 %}↑{% elif ultimo_cambio < 0 %}↓{% else
+            %}—{% endif %}
+          </div>
+          {% else %}
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: var(--space-xs);
+              font-size: 0.75rem;
+              font-weight: 700;
+              font-family: var(--font-mono);
+              padding: var(--space-xs) var(--space-sm);
+              border-radius: var(--radius-sm);
+              background: var(--bg-quaternary);
+              color: var(--text-tertiary);
+            ">
+            —
+          </div>
+          {% endif %}
+        </div>
+        <div
+          style="
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            margin-bottom: var(--space-sm);
+            color: var(--status-info);
+          ">
+          ${{ "{:,.0f}".format(total_pendiente/1000000).replace(",",".") }}M
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0">
+          {% if evol_data.crecimiento_mensual and
+          evol_data.crecimiento_mensual|length > 0 %} {% if ultimo_cambio > 0
+          %}+{{ ultimo_cambio }}%{% elif ultimo_cambio < 0 %}{{ ultimo_cambio
+          }}%{% else %}Sin cambio{% endif %} vs mes ant. {% else %}Datos
+          históricos N/A{% endif %}
+        </p>
+      </div>
+
+      <!-- KPI 4: Eficiencia Global -->
+      <div
+        style="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-left: 4px solid {% if eficiencia_global >= 80 %}var(--status-success){% elif eficiencia_global >= 60 %}var(--status-warning){% else %}var(--status-danger){% endif %}; border-radius: var(--radius-sm); padding: var(--space-2xl); cursor: pointer; transition: var(--transition-normal); position: relative;"
+        onmouseover="this.style.background='var(--bg-tertiary)'; this.style.transform='translateY(-2px)'"
+        onmouseout="this.style.background='var(--bg-secondary)'; this.style.transform='translateY(0)'">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-md);
+          ">
+          <span
+            style="
+              font-size: 0.75rem;
+              font-weight: 600;
+              color: var(--text-secondary);
+              text-transform: uppercase;
+              font-family: var(--font-mono);
+              letter-spacing: 0.05em;
+            "
+            >Eficiencia Global</span
+          >
+          {% if evol_data.tendencia_general %}
+          <div
+            style="display: flex; align-items: center; gap: var(--space-xs); font-size: 0.75rem; font-weight: 700; font-family: var(--font-mono); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); background: {% if evol_data.tendencia_general == 'creciente' %}var(--status-success-bg){% elif evol_data.tendencia_general == 'decreciente' %}var(--status-danger-bg){% else %}var(--bg-quaternary){% endif %}; color: {% if evol_data.tendencia_general == 'creciente' %}var(--status-success){% elif evol_data.tendencia_general == 'decreciente' %}var(--status-danger){% else %}var(--text-tertiary){% endif %};">
+            {% if evol_data.tendencia_general == 'creciente' %}↑{% elif
+            evol_data.tendencia_general == 'decreciente' %}↓{% else %}—{% endif
+            %}
+          </div>
+          {% else %}
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: var(--space-xs);
+              font-size: 0.75rem;
+              font-weight: 700;
+              font-family: var(--font-mono);
+              padding: var(--space-xs) var(--space-sm);
+              border-radius: var(--radius-sm);
+              background: var(--bg-quaternary);
+              color: var(--text-tertiary);
+            ">
+            —
+          </div>
+          {% endif %}
+        </div>
+        <div
+          style="font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono); margin-bottom: var(--space-sm); color: {% if eficiencia_global >= 80 %}var(--status-success){% elif eficiencia_global >= 60 %}var(--status-warning){% else %}var(--status-danger){% endif %};">
+          {{ eficiencia_global }}%
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0">
+          {% if evol_data.tendencia_general %} {% if evol_data.tendencia_general
+          == 'creciente' %}Mejorando{% elif evol_data.tendencia_general ==
+          'decreciente' %}Deteriorando{% else %}Estable{% endif %} {% else %}En
+          análisis{% endif %}
+        </p>
+        {% if eficiencia_global < 60 %}
+        <div
+          style="
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            width: var(--space-sm);
+            height: var(--space-sm);
+            background: var(--status-danger);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+          "></div>
+        {% elif eficiencia_global < 80 %}
+        <div
+          style="
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            width: var(--space-sm);
+            height: var(--space-sm);
+            background: var(--status-warning);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+          "></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- MAIN ANALYTICS GRID -->
+    <div
+      style="
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: 320px 280px 320px;
+        gap: var(--space-lg);
+        margin-bottom: var(--space-2xl);
+      ">
+      <!-- DISTRIBUCIÓN DSO (Wide Panel) -->
+      <div
+        class="background: var(--bg-secondary);"
+        style="
+          grid-column: span 2;
+
+          border: 1px solid var(--border-primary);
+          border-radius: var(--radius-sm);
+          padding: var(--space-2xl);
+          overflow: hidden;
+        ">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-lg);
+            padding-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border-primary);
+          ">
+          <div>
+            <h3
+              style="
+                font-size: 1rem;
+                font-weight: 600;
+                color: var(--text-primary);
+                margin: 0;
+              ">
+              Distribución DSO por JP
+            </h3>
+            <p
+              style="
+                font-size: 0.75rem;
+                color: var(--text-secondary);
+                margin: var(--space-xs) 0 0 0;
+              ">
+              Análisis de días de venta pendientes por jefe de proyecto
+            </p>
+          </div>
+          <button
+            style="
+              border: 1px solid var(--status-success);
+              color: var(--status-success);
+              background: transparent;
+              padding: var(--space-md) var(--space-lg);
+              font-size: 0.75rem;
+              border-radius: var(--radius-sm);
+              transition: var(--transition-normal);
+              font-family: var(--font-mono);
+              text-transform: uppercase;
+              cursor: pointer;
+            "
+            onmouseover="this.style.background='var(--status-success)'; this.style.color='var(--text-primary)'"
+            onmouseout="this.style.background='transparent'; this.style.color='var(--status-success)'">
+            Detalles
+          </button>
+        </div>
+        <div style="height: calc(100% - 80px); width: 100%">
+          <canvas
+            id="dsoDistributionChart"
+            style="width: 100%; height: 100%"></canvas>
         </div>
       </div>
 
-      <!-- ANÁLISIS DE RIESGO POR JP -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <div class="chart-title">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              style="margin-right: 8px; vertical-align: middle">
-              <path
-                d="M12,2L13.09,8.26L22,9L13.09,9.74L12,16L10.91,9.74L2,9L10.91,8.26L12,2Z" />
-            </svg>
-            Análisis de Riesgo por JP
+      <!-- ANÁLISIS DE RIESGO -->
+      <div
+        class="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-sm); padding: var(--space-2xl);">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-lg);
+            padding-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border-primary);
+          ">
+          <div>
+            <h3
+              style="
+                font-size: 1rem;
+                font-weight: 600;
+                color: var(--text-primary);
+                margin: 0;
+              ">
+              Análisis de Riesgo
+            </h3>
+            <p
+              style="
+                font-size: 0.75rem;
+                color: var(--text-secondary);
+                margin: var(--space-xs) 0 0 0;
+              ">
+              Clasificación por nivel de riesgo
+            </p>
           </div>
-          <div class="chart-subtitle">JP clasificados por nivel de riesgo</div>
+          <button
+            style="
+              border: 1px solid var(--status-danger);
+              color: var(--status-danger);
+              background: transparent;
+              padding: var(--space-md) var(--space-lg);
+              font-size: 0.75rem;
+              border-radius: var(--radius-sm);
+              transition: var(--transition-normal);
+              font-family: var(--font-mono);
+              text-transform: uppercase;
+              cursor: pointer;
+            "
+            onmouseover="this.style.background='var(--status-danger)'; this.style.color='var(--text-primary)'"
+            onmouseout="this.style.background='transparent'; this.style.color='var(--status-danger)'">
+            Críticos
+          </button>
         </div>
-        <div class="chart-container">
-          <canvas id="riskAnalysisChart"></canvas>
+        <div
+          style="
+            position: relative;
+            height: calc(100% - 80px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+          ">
+          <div
+            style="
+              position: relative;
+              width: 176px;
+              height: 176px;
+              margin-bottom: var(--space-lg);
+            ">
+            <canvas
+              id="riskAnalysisChart"
+              style="width: 100%; height: 100%"></canvas>
+            <div
+              style="
+                position: absolute;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+              ">
+              <div
+                style="
+                  font-size: 1.5rem;
+                  font-weight: 700;
+                  font-family: var(--font-mono);
+                  color: var(--text-primary);
+                ">
+                {{ encargados|length if encargados else 0 }}
+              </div>
+              <div
+                style="
+                  font-size: 0.75rem;
+                  color: var(--text-secondary);
+                  font-family: var(--font-mono);
+                  text-transform: uppercase;
+                ">
+                Total JP
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: var(--space-lg)">
+            <div
+              style="display: flex; align-items: center; gap: var(--space-sm)">
+              <div
+                style="
+                  width: var(--space-md);
+                  height: var(--space-md);
+                  background: var(--status-success);
+                  border-radius: var(--radius-sm);
+                "></div>
+              <span
+                style="
+                  font-size: 0.75rem;
+                  color: var(--text-secondary);
+                  font-family: var(--font-mono);
+                "
+                >Bajo</span
+              >
+            </div>
+            <div
+              style="display: flex; align-items: center; gap: var(--space-sm)">
+              <div
+                style="
+                  width: var(--space-md);
+                  height: var(--space-md);
+                  background: var(--status-warning);
+                  border-radius: var(--radius-sm);
+                "></div>
+              <span
+                style="
+                  font-size: 0.75rem;
+                  color: var(--text-secondary);
+                  font-family: var(--font-mono);
+                "
+                >Medio</span
+              >
+            </div>
+            <div
+              style="display: flex; align-items: center; gap: var(--space-sm)">
+              <div
+                style="
+                  width: var(--space-md);
+                  height: var(--space-md);
+                  background: var(--status-danger);
+                  border-radius: var(--radius-sm);
+                "></div>
+              <span
+                style="
+                  font-size: 0.75rem;
+                  color: var(--text-secondary);
+                  font-family: var(--font-mono);
+                "
+                >Alto</span
+              >
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- CORRELACIÓN DSO-MONTO -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <div class="chart-title">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              style="margin-right: 8px; vertical-align: middle">
-              <path
-                d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z" />
-            </svg>
-            DSO vs Monto Pendiente
+      <div
+        class="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-sm); padding: var(--space-2xl)">
+        <div
+          class="flex justify-between items-center mb-5 pb-3 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-semibold text-white">DSO vs Monto</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Matriz de riesgo ejecutiva
+            </p>
           </div>
-          <div class="chart-subtitle">Identificación de casos críticos</div>
+          <button
+            class="border border-emerald-400 text-emerald-400 hover:bg-emerald-400 hover:text-black px-3 py-1.5 text-xs rounded-sm transition-all font-mono uppercase">
+            Matriz
+          </button>
         </div>
-        <div class="chart-container">
-          <canvas id="scatterChart"></canvas>
+        <div class="h-[calc(100%-80px)] w-full">
+          <canvas id="scatterChart" class="w-full h-full"></canvas>
         </div>
       </div>
 
       <!-- EVOLUCIÓN TEMPORAL -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <div class="chart-title">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              style="margin-right: 8px; vertical-align: middle">
-              <path
-                d="M9,10V12H7V10H9M13,10V12H11V10H13M17,10V12H15V10H17M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5C3.89,21 3,20.1 3,19V5A2,2 0 0,1 5,3H6V1H8V3H16V1H18V3H19M19,19V8H5V19H19M9,14V16H7V14H9M13,14V16H11V14H13M17,14V16H15V14H17Z" />
-            </svg>
-            Evolución Últimos 6 Meses
+      <div
+        class="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-sm); padding: var(--space-2xl)">
+        <div
+          class="flex justify-between items-center mb-5 pb-3 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-semibold text-white">Evolución 6M</h3>
+            <p class="text-xs text-slate-400 mt-1">Tendencia histórica</p>
           </div>
-          <div class="chart-subtitle">Tendencia de cobros y DSO</div>
+          <button
+            class="border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white px-3 py-1.5 text-xs rounded-sm transition-all font-mono uppercase">
+            Histórico
+          </button>
         </div>
-        <div class="chart-container">
-          <canvas id="trendChart"></canvas>
+        <div class="h-[calc(100%-80px)] w-full">
+          <canvas id="trendChart" class="w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- JP PERFORMANCE GRID -->
+      <div
+        class="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-sm); padding: var(--space-2xl)">
+        <div
+          class="flex justify-between items-center mb-5 pb-3 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-semibold text-white">Performance JP</h3>
+            <p class="text-xs text-slate-400 mt-1">Top performers y críticos</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 h-[calc(100%-80px)]">
+          {% set sorted_by_dso = encargados|sort(attribute='dso') if encargados
+          else [] %} {% for jp in sorted_by_dso[:4] %}
+          <div
+            class="bg-slate-900/20 border border-slate-800 {% if jp.dso >= 60 %}border-l-4 border-l-pink-500 bg-pink-500/5{% elif jp.dso >= 45 %}border-l-4 border-l-orange-400 bg-orange-400/5{% else %}border-l-4 border-l-emerald-400 bg-emerald-400/5{% endif %} rounded-sm p-4 cursor-pointer transition-all hover:bg-slate-900/40 hover:scale-105">
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-sm font-semibold text-white">
+                {{ jp.nombre|default('Sin Nombre')|truncate(15, true) }}
+              </span>
+              <span
+                class="text-xs font-bold font-mono px-2 py-1 rounded-sm {% if jp.dso >= 60 %}bg-pink-500/30 text-pink-400{% elif jp.dso >= 45 %}bg-orange-400/30 text-orange-400{% else %}bg-emerald-400/30 text-emerald-400{% endif %} uppercase">
+                {% if jp.dso >= 60 %}Crítico{% elif jp.dso >= 45 %}Medio{% else
+                %}Bueno{% endif %}
+              </span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="text-center">
+                <div
+                  class="text-base font-bold font-mono mb-1 {% if jp.dso >= 60 %}text-pink-400{% elif jp.dso >= 45 %}text-orange-400{% else %}text-emerald-400{% endif %}">
+                  {{ jp.dso|default(0) }}d
+                </div>
+                <div class="text-xs text-slate-400 font-mono uppercase">
+                  DSO
+                </div>
+              </div>
+              <div class="text-center">
+                <div class="text-base font-bold font-mono mb-1 text-white">
+                  ${{ "{:.1f}".format(jp.monto_pendiente|default(0)/1000000) }}M
+                </div>
+                <div class="text-xs text-slate-400 font-mono uppercase">
+                  Pendiente
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
         </div>
       </div>
     </div>
 
-    <!-- RANKINGS VISUALES -->
-    <div class="ranking-section">
-      <div style="margin-bottom: 20px">
-        <h2
-          style="
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-          ">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            style="margin-right: 8px">
-            <path
-              d="M5,16L3,5H5.5L7,13L8.5,5H11L9,16H5M15,16L13,5H15.5L17,13L18.5,5H21L19,16H15M12,1L14.5,6L20.5,6.75L16.25,11L17.25,17L12,14.25L6.75,17L7.75,11L3.5,6.75L9.5,6L12,1Z" />
-          </svg>
-          Rankings de Rendimiento
-        </h2>
-        <p style="color: var(--text-secondary); margin: 0; font-size: 14px">
-          Comparativa de JP por diferentes métricas clave
-        </p>
-      </div>
-
-      <div class="ranking-grid">
-        <!-- TOP PERFORMERS -->
-        <div class="ranking-card">
-          <div class="chart-header">
-            <div
-              class="chart-title"
-              title="DSO = Days Sales Outstanding. Mide cuántos días en promedio tarda en cobrarse una factura. Menor es mejor.">
+    <!-- RANKINGS & EXECUTIVE TABLE -->
+    <div class="grid grid-cols-3 gap-5">
+      <!-- MEJORES DSO -->
+      <div
+        class="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-sm); padding: var(--space-2xl)">
+        <div
+          class="flex justify-between items-center mb-5 pb-3 border-b border-slate-800">
+          <div>
+            <h3
+              class="text-base font-semibold text-white flex items-center gap-2">
               <svg
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                style="margin-right: 6px; vertical-align: middle">
+                class="text-emerald-400">
                 <path
                   d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.46,13.97L5.82,21L12,17.27Z" />
               </svg>
               Mejores DSO
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="var(--text-tertiary)"
-                style="margin-left: 6px; cursor: help; vertical-align: middle">
-                <path
-                  d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z" />
-              </svg>
-            </div>
-            <div class="chart-subtitle">
-              Menor tiempo de cobro (mejor performance)
-            </div>
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Performance superior</p>
           </div>
+        </div>
+        <div class="space-y-3">
           {% set sorted_by_dso = encargados|sort(attribute='dso') if encargados
           else [] %} {% for jp in sorted_by_dso[:5] %}
-          <div class="ranking-item">
-            <div
-              class="ranking-position {% if loop.index == 1 %}first{% elif loop.index == 2 %}second{% elif loop.index == 3 %}third{% else %}other{% endif %}">
-              {{ loop.index }}
-            </div>
-            <div class="ranking-info">
-              <div class="ranking-name">
-                {{ jp.nombre|default('Sin Nombre') }}
+          <div
+            class="flex items-center justify-between p-3 bg-slate-900/20 border border-slate-800 rounded-sm hover:bg-slate-900/40 transition-all cursor-pointer">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold font-mono {% if loop.index == 1 %}bg-yellow-500 text-black{% elif loop.index == 2 %}bg-slate-400 text-black{% elif loop.index == 3 %}bg-amber-600 text-white{% else %}bg-slate-600 text-white{% endif %}">
+                {{ loop.index }}
               </div>
-              <div class="ranking-metric">Días promedio de cobro</div>
+              <div>
+                <div class="text-sm font-semibold text-white">
+                  {{ jp.nombre|default('Sin Nombre') }}
+                </div>
+                <div class="text-xs text-slate-400">Días promedio de cobro</div>
+              </div>
             </div>
             <div
-              class="ranking-value {% if jp.dso < 45 %}good{% elif jp.dso < 60 %}warning{% else %}critical{% endif %}">
+              class="text-sm font-bold font-mono {% if jp.dso < 45 %}text-emerald-400{% elif jp.dso < 60 %}text-orange-400{% else %}text-pink-400{% endif %}">
               {{ jp.dso|default(0) }}d
             </div>
           </div>
           {% endfor %}
         </div>
+      </div>
 
-        <!-- MAYORES MONTOS -->
-        <div class="ranking-card">
-          <div class="chart-header">
-            <div
-              class="chart-title"
-              title="Ranking por montos pendientes de cobro. Identifica carteras de mayor volumen que requieren seguimiento prioritario.">
+      <!-- MAYORES PENDIENTES -->
+      <div
+        class="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-sm); padding: var(--space-2xl)">
+        <div
+          class="flex justify-between items-center mb-5 pb-3 border-b border-slate-800">
+          <div>
+            <h3
+              class="text-base font-semibold text-white flex items-center gap-2">
               <svg
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                style="margin-right: 6px; vertical-align: middle">
+                class="text-blue-400">
                 <path
                   d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z" />
               </svg>
               Mayores Pendientes
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="var(--text-tertiary)"
-                style="margin-left: 6px; cursor: help; vertical-align: middle">
-                <path
-                  d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z" />
-              </svg>
-            </div>
-            <div class="chart-subtitle">
-              Carteras de mayor volumen pendiente
-            </div>
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Seguimiento prioritario</p>
           </div>
+        </div>
+        <div class="space-y-3">
           {% set sorted_by_amount = encargados|sort(attribute='monto_pendiente',
           reverse=true) if encargados else [] %} {% for jp in
           sorted_by_amount[:5] %}
-          <div class="ranking-item">
-            <div
-              class="ranking-position {% if loop.index == 1 %}first{% elif loop.index == 2 %}second{% elif loop.index == 3 %}third{% else %}other{% endif %}">
-              {{ loop.index }}
-            </div>
-            <div class="ranking-info">
-              <div class="ranking-name">
-                {{ jp.nombre|default('Sin Nombre') }}
+          <div
+            class="flex items-center justify-between p-3 bg-slate-900/20 border border-slate-800 rounded-sm hover:bg-slate-900/40 transition-all cursor-pointer">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold font-mono {% if loop.index == 1 %}bg-yellow-500 text-black{% elif loop.index == 2 %}bg-slate-400 text-black{% elif loop.index == 3 %}bg-amber-600 text-white{% else %}bg-slate-600 text-white{% endif %}">
+                {{ loop.index }}
               </div>
-              <div class="ranking-metric">Millones pendientes</div>
+              <div>
+                <div class="text-sm font-semibold text-white">
+                  {{ jp.nombre|default('Sin Nombre') }}
+                </div>
+                <div class="text-xs text-slate-400">Millones pendientes</div>
+              </div>
             </div>
-            <div
-              class="ranking-value {% if jp.monto_pendiente > 50000000 %}critical{% elif jp.monto_pendiente > 25000000 %}warning{% else %}good{% endif %}">
+            <div class="text-sm font-bold font-mono text-blue-400">
               ${{
               "{:,.0f}".format(jp.monto_pendiente|default(0)/1000000).replace(",",".")
               }}M
@@ -340,145 +901,198 @@
           {% endfor %}
         </div>
       </div>
+
+      <!-- EXECUTIVE SUMMARY -->
+      <div
+        class="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-sm); padding: var(--space-2xl)">
+        <div
+          class="flex justify-between items-center mb-5 pb-3 border-b border-slate-800">
+          <div>
+            <h3
+              class="text-base font-semibold text-white flex items-center gap-2">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                class="text-slate-400">
+                <path
+                  d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19Z" />
+              </svg>
+              Resumen Ejecutivo
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Métricas consolidadas</p>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="bg-slate-900/20 border border-slate-800 rounded-sm p-4">
+            <div class="text-2xl font-bold font-mono text-white mb-1">
+              {{ encargados|length if encargados else 0 }}
+            </div>
+            <div class="text-xs text-slate-400 font-mono uppercase">
+              Total JP Activos
+            </div>
+          </div>
+          <div class="bg-slate-900/20 border border-slate-800 rounded-sm p-4">
+            {% set total_jp = encargados|length if encargados else 0 %} {% set
+            jp_en_target = encargados|selectattr('dso', '<', 45)|list|length if
+            encargados else 0 %} {% set porcentaje_target = (jp_en_target /
+            total_jp * 100)|round if total_jp > 0 else 0 %}
+            <div class="text-2xl font-bold font-mono text-emerald-400 mb-1">
+              {{ porcentaje_target }}%
+            </div>
+            <div class="text-xs text-slate-400 font-mono uppercase">
+              JP en Target
+            </div>
+          </div>
+          <div class="bg-slate-900/20 border border-slate-800 rounded-sm p-4">
+            <div class="text-2xl font-bold font-mono text-pink-400 mb-1">
+              ${{ "{:,.0f}".format((encargados|selectattr('dso', '>=',
+              60)|map(attribute='monto_pendiente')|sum)/1000000).replace(",",".")
+              if encargados else 0 }}M
+            </div>
+            <div class="text-xs text-slate-400 font-mono uppercase">
+              Exposición Crítica
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- TABLA COMPARATIVA DETALLADA -->
-    <div class="comparison-section">
-      <div class="comparison-table">
-        <div class="table-header">
-          <div class="table-title">
+    <!-- EXECUTIVE COMPARISON TABLE -->
+    <div
+      class="mt-6 background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-sm); padding: var(--space-2xl)">
+      <div
+        class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
+        <div>
+          <h2 class="text-lg font-semibold text-white flex items-center gap-2">
             <svg
-              width="18"
-              height="18"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="currentColor"
-              style="margin-right: 8px; vertical-align: middle">
+              class="text-slate-400">
               <path
                 d="M3,3H21V5H3V3M3,7H21V9H3V7M3,11H21V13H3V11M3,15H21V17H3V15M3,19H21V21H3V19Z" />
             </svg>
-            Análisis Comparativo Detallado
-          </div>
-          <div class="table-controls">
-            <button class="filter-btn active" onclick="sortTable('dso')">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                style="margin-right: 4px">
-                <path
-                  d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-              </svg>
-              Por DSO
-            </button>
-            <button class="filter-btn" onclick="sortTable('amount')">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                style="margin-right: 4px">
-                <path
-                  d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z" />
-              </svg>
-              Por Monto
-            </button>
-            <button class="filter-btn" onclick="sortTable('progress')">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                style="margin-right: 4px">
-                <path
-                  d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z" />
-              </svg>
-              Por Avance
-            </button>
-            <button class="filter-btn" onclick="sortTable('critical')">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                style="margin-right: 4px">
-                <path
-                  d="M12,2L13.09,8.26L22,9L13.09,9.74L12,16L10.91,9.74L2,9L10.91,8.26L12,2Z" />
-              </svg>
-              Críticos
-            </button>
-          </div>
+            Análisis Comparativo Ejecutivo
+          </h2>
+          <p class="text-sm text-slate-400 mt-1">
+            Métricas detalladas por jefe de proyecto
+          </p>
         </div>
+        <div class="flex gap-2">
+          <button
+            class="px-3 py-1.5 text-xs font-mono border border-emerald-400 text-emerald-400 hover:bg-emerald-400 hover:text-black rounded-sm transition-all uppercase"
+            onclick="sortTable('dso')">
+            Por DSO
+          </button>
+          <button
+            class="px-3 py-1.5 text-xs font-mono border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white rounded-sm transition-all uppercase"
+            onclick="sortTable('amount')">
+            Por Monto
+          </button>
+          <button
+            class="px-3 py-1.5 text-xs font-mono border border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-black rounded-sm transition-all uppercase"
+            onclick="sortTable('critical')">
+            Críticos
+          </button>
+        </div>
+      </div>
 
-        <div id="comparisonTable">
-          {% for jp in encargados|default([]) %}
-          <div
-            class="comparison-row"
-            data-dso="{{ jp.dso|default(0) }}"
-            data-amount="{{ jp.monto_pendiente|default(0) }}"
-            data-progress="{{ jp.avance|default(0) }}">
-            <div class="row-name">
+      <!-- TABLE CONTENT -->
+      <div class="space-y-2" id="comparisonTable">
+        {% for jp in encargados|default([]) %}
+        <div
+          class="bg-slate-900/20 border border-slate-800 rounded-sm p-4 hover:bg-slate-900/40 transition-all cursor-pointer"
+          data-dso="{{ jp.dso|default(0) }}"
+          data-amount="{{ jp.monto_pendiente|default(0) }}"
+          data-progress="{{ jp.avance|default(0) }}">
+          <div class="flex items-center justify-between">
+            <!-- JP NAME & STATUS -->
+            <div class="flex items-center gap-4">
               <div
-                class="status-indicator"
-                style="background: {% if jp.dso < 45 %}var(--success){% elif jp.dso < 60 %}var(--warning){% else %}var(--danger){% endif %};"></div>
-              {{ jp.nombre|default('Sin Nombre') }}
-            </div>
-            <div style="text-align: center">
-              <div style="font-weight: 600; margin-bottom: 4px">
-                {{ jp.dso|default(0) }}d
+                class="w-3 h-3 rounded-full {% if jp.dso < 45 %}bg-emerald-400{% elif jp.dso < 60 %}bg-orange-400{% else %}bg-pink-500{% endif %}"></div>
+              <div>
+                <div class="text-sm font-semibold text-white">
+                  {{ jp.nombre|default('Sin Nombre') }}
+                </div>
+                <div class="text-xs text-slate-400">Jefe de Proyecto</div>
               </div>
-              <div class="progress-bar">
+            </div>
+
+            <!-- METRICS ROW -->
+            <div class="flex items-center gap-8">
+              <!-- DSO -->
+              <div class="text-center">
                 <div
-                  class="progress-fill {% if jp.dso < 45 %}excellent{% elif jp.dso < 60 %}good{% else %}critical{% endif %}"
-                  style="width: {% set dso_percent = jp.dso|default(0) %}{% if dso_percent > 100 %}100{% else %}{{ dso_percent }}{% endif %}%;"></div>
+                  class="text-lg font-bold font-mono mb-1 {% if jp.dso < 45 %}text-emerald-400{% elif jp.dso < 60 %}text-orange-400{% else %}text-pink-400{% endif %}">
+                  {{ jp.dso|default(0) }}d
+                </div>
+                <div class="w-20 h-1 bg-slate-700 rounded-full overflow-hidden">
+                  {% set dso_value = jp.dso|default(0) %}
+                  <div
+                    class="h-full {% if jp.dso < 45 %}bg-emerald-400{% elif jp.dso < 60 %}bg-orange-400{% else %}bg-pink-500{% endif %} rounded-full transition-all"
+                    style="width: {% if dso_value > 100 %}100{% else %}{{ dso_value }}{% endif %}%;"></div>
+                </div>
+                <div class="text-xs text-slate-400 font-mono uppercase mt-1">
+                  DSO
+                </div>
               </div>
-            </div>
-            <div
-              style="
-                text-align: center;
-                font-family: 'JetBrains Mono', monospace;
-              ">
-              ${{
-              "{:,.0f}".format(jp.monto_pendiente|default(0)/1000000).replace(",",".")
-              }}M
-            </div>
-            <div style="text-align: center">
-              <div style="font-weight: 600; margin-bottom: 4px">
-                {{ jp.avance|default(0) }}%
+
+              <!-- MONTO -->
+              <div class="text-center">
+                <div class="text-lg font-bold font-mono text-blue-400 mb-1">
+                  ${{
+                  "{:,.0f}".format(jp.monto_pendiente|default(0)/1000000).replace(",",".")
+                  }}M
+                </div>
+                <div class="text-xs text-slate-400 font-mono uppercase">
+                  Pendiente
+                </div>
               </div>
-              <div class="progress-bar">
+
+              <!-- AVANCE -->
+              <div class="text-center">
                 <div
-                  class="progress-fill {% if jp.avance >= 80 %}excellent{% elif jp.avance >= 60 %}good{% else %}warning{% endif %}"
-                  style="width: {{ jp.avance|default(0) }}%;"></div>
+                  class="text-lg font-bold font-mono mb-1 {% if jp.avance >= 80 %}text-emerald-400{% elif jp.avance >= 60 %}text-orange-400{% else %}text-pink-400{% endif %}">
+                  {{ jp.avance|default(0) }}%
+                </div>
+                <div class="w-20 h-1 bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    class="h-full {% if jp.avance >= 80 %}bg-emerald-400{% elif jp.avance >= 60 %}bg-orange-400{% else %}bg-pink-500{% endif %} rounded-full transition-all"
+                    style="width: {{ jp.avance|default(0) }}%;"></div>
+                </div>
+                <div class="text-xs text-slate-400 font-mono uppercase mt-1">
+                  Avance
+                </div>
               </div>
-            </div>
-            <div style="text-align: center">
-              {% if jp.edps_criticos|default(0) > 0 %}
-              <span
-                style="
-                  background: var(--danger-bg);
-                  color: var(--danger);
-                  padding: 4px 8px;
-                  border-radius: 12px;
-                  font-size: 12px;
-                  font-weight: 600;
-                ">
-                {{ jp.edps_criticos|default(0) }} críticos
-              </span>
-              {% else %}
-              <span style="color: var(--success); font-weight: 600">✓ OK</span>
-              {% endif %}
-            </div>
-            <div style="text-align: center">
+
+              <!-- STATUS -->
+              <div class="text-center">
+                {% if jp.edps_criticos|default(0) > 0 %}
+                <span
+                  class="px-2 py-1 text-xs font-bold font-mono bg-pink-500/20 text-pink-400 rounded-sm uppercase">
+                  {{ jp.edps_criticos|default(0) }} Críticos
+                </span>
+                {% else %}
+                <span
+                  class="px-2 py-1 text-xs font-bold font-mono bg-emerald-500/20 text-emerald-400 rounded-sm uppercase">
+                  ✓ OK
+                </span>
+                {% endif %}
+              </div>
+
+              <!-- ACTION -->
               <button
                 onclick="window.open('/dashboard/encargado/{{ jp.nombre|default('') }}', '_blank')"
-                class="btn btn-sm btn-primary">
-                Ver Detalle
+                class="px-3 py-1.5 text-xs font-mono border border-emerald-400 text-emerald-400 hover:bg-emerald-400 hover:text-black rounded-sm transition-all uppercase">
+                Detalle
               </button>
             </div>
           </div>
-          {% endfor %}
         </div>
+        {% endfor %}
       </div>
     </div>
   </div>
@@ -490,6 +1104,62 @@
   window.encargadosData = {{ encargados|default([])|tojson }};
   window.evolucionMensual = {{ evolucion_mensual|default({})|tojson }};
   window.managersData = {{ managers_data|default({})|tojson }};
+
+  // Función de ordenamiento para la tabla
+  function sortTable(criteria) {
+    const table = document.getElementById('comparisonTable');
+    const rows = Array.from(table.children);
+
+    // Remove active class from all buttons
+    document.querySelectorAll('button[onclick*="sortTable"]').forEach(btn => {
+      btn.classList.remove('bg-emerald-400', 'text-black', 'bg-blue-500', 'text-white', 'bg-orange-400');
+      btn.classList.add('border-emerald-400', 'text-emerald-400');
+    });
+
+    // Add active class to clicked button
+    const clickedBtn = event.target.closest('button');
+    if (criteria === 'dso') {
+      clickedBtn.classList.add('bg-emerald-400', 'text-black');
+      clickedBtn.classList.remove('border-emerald-400', 'text-emerald-400');
+    } else if (criteria === 'amount') {
+      clickedBtn.classList.add('bg-blue-500', 'text-white');
+      clickedBtn.classList.remove('border-blue-500', 'text-blue-500');
+    } else if (criteria === 'critical') {
+      clickedBtn.classList.add('bg-orange-400', 'text-black');
+      clickedBtn.classList.remove('border-orange-400', 'text-orange-400');
+    }
+
+    rows.sort((a, b) => {
+      let aVal, bVal;
+
+      switch(criteria) {
+        case 'dso':
+          aVal = parseFloat(a.dataset.dso);
+          bVal = parseFloat(b.dataset.dso);
+          return aVal - bVal;
+        case 'amount':
+          aVal = parseFloat(a.dataset.amount);
+          bVal = parseFloat(b.dataset.amount);
+          return bVal - aVal;
+        case 'progress':
+          aVal = parseFloat(a.dataset.progress);
+          bVal = parseFloat(b.dataset.progress);
+          return bVal - aVal;
+        case 'critical':
+          // Sort critical ones first
+          const aCritical = a.querySelector('.text-pink-400') !== null;
+          const bCritical = b.querySelector('.text-pink-400') !== null;
+          if (aCritical && !bCritical) return -1;
+          if (!aCritical && bCritical) return 1;
+          return 0;
+        default:
+          return 0;
+      }
+    });
+
+    // Reorder the rows
+    rows.forEach(row => table.appendChild(row));
+  }
 </script>
 <script src="{{ url_for('static', filename='js/controller/controller_encargados_global.js') }}"></script>
 

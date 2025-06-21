@@ -30,9 +30,27 @@ class DictToObject:
     """Simple class to convert dictionaries to objects with dot notation access."""
 
     def __init__(self, dictionary):
+        # Fields that should remain as dictionaries for template iteration
+        preserve_as_dict = [
+            'dso_by_project_manager', 
+            'dso_by_client', 
+            'dso_by_project_type',
+            'rejection_rate_by_client',
+            'rejection_rate_by_type',
+            'stage_efficiency_scores',
+            'utilization_by_team',
+            'efficiency_per_resource',
+            'correlations'
+        ]
+        
         for key, value in dictionary.items():
             if isinstance(value, dict):
-                setattr(self, key, DictToObject(value))
+                if key in preserve_as_dict:
+                    # Keep as regular dict for template iteration
+                    setattr(self, key, value)
+                else:
+                    # Convert to object for dot notation
+                    setattr(self, key, DictToObject(value))
             else:
                 setattr(self, key, value)
 
@@ -902,6 +920,8 @@ def dashboard():
             'forecast_day_5': 0.6,
             'forecast_day_6': 0.4,
             'forecast_day_7': 0.2,
+            'forecast_accuracy': 85.0,  # Forecast accuracy percentage
+            'forecast_growth': 12.5,    # Forecast growth rate
         }
         
         # Llenar campos faltantes con valores por defecto

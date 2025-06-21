@@ -52,13 +52,74 @@ function initializeDSODistributionChart() {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { 
+                    display: false 
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#333333',
+                    borderWidth: 1,
+                    cornerRadius: 6,
+                    titleFont: {
+                        family: 'Inter',
+                        size: 14,
+                        weight: '600'
+                    },
+                    bodyFont: {
+                        family: 'JetBrains Mono',
+                        size: 12
+                    }
+                }
             },
             scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(100, 100, 100, 0.1)',
+                        lineWidth: 1
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        font: {
+                            family: 'Inter',
+                            size: 11,
+                            weight: '500'
+                        }
+                    }
+                },
                 y: {
                     beginAtZero: true,
-                    title: { display: true, text: 'Días' }
+                    grid: {
+                        color: 'rgba(100, 100, 100, 0.1)',
+                        lineWidth: 1
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        font: {
+                            family: 'JetBrains Mono',
+                            size: 11
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Días DSO',
+                        color: '#1a1a1a',
+                        font: {
+                            family: 'Inter',
+                            size: 12,
+                            weight: '600'
+                        }
+                    }
                 }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            animation: {
+                duration: 800,
+                easing: 'easeInOutQuart'
             }
         }
     });
@@ -110,8 +171,36 @@ function initializeRiskAnalysisChart() {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom' },
+                legend: { 
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        font: {
+                            family: 'Inter',
+                            size: 12,
+                            weight: '500'
+                        },
+                        color: '#1a1a1a'
+                    }
+                },
                 tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#333333',
+                    borderWidth: 1,
+                    cornerRadius: 6,
+                    titleFont: {
+                        family: 'Inter',
+                        size: 14,
+                        weight: '600'
+                    },
+                    bodyFont: {
+                        family: 'JetBrains Mono',
+                        size: 12
+                    },
                     callbacks: {
                         label: function(context) {
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -120,6 +209,11 @@ function initializeRiskAnalysisChart() {
                         }
                     }
                 }
+            },
+            cutout: '60%',
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
             }
         }
     });
@@ -172,29 +266,80 @@ function initializeScatterChart() {
             maintainAspectRatio: false,
             scales: {
                 x: {
-                    title: { display: true, text: 'DSO (días)' },
-                    grid: { color: 'rgba(128, 128, 128, 0.1)' }
+                    title: { 
+                        display: true, 
+                        text: 'DSO (días)',
+                        color: '#1a1a1a',
+                        font: {
+                            family: 'Inter',
+                            size: 12,
+                            weight: '600'
+                        }
+                    },
+                    grid: { 
+                        color: 'rgba(100, 100, 100, 0.1)',
+                        lineWidth: 1
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        font: {
+                            family: 'JetBrains Mono',
+                            size: 11
+                        }
+                    }
                 },
                 y: {
-                    title: { display: true, text: 'Monto Pendiente (M$)' },
-                    grid: { color: 'rgba(128, 128, 128, 0.1)' }
+                    title: { 
+                        display: true, 
+                        text: 'Monto Pendiente (M$)',
+                        color: '#1a1a1a',
+                        font: {
+                            family: 'Inter',
+                            size: 12,
+                            weight: '600'
+                        }
+                    },
+                    grid: { 
+                        color: 'rgba(100, 100, 100, 0.1)',
+                        lineWidth: 1
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        font: {
+                            family: 'JetBrains Mono',
+                            size: 11
+                        }
+                    }
                 }
             },
             plugins: {
                 legend: {
-                    display: false  // Ocultar leyenda genérica
+                    display: false
                 },
                 tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#333333',
+                    borderWidth: 1,
+                    cornerRadius: 6,
+                    titleFont: {
+                        family: 'Inter',
+                        size: 14,
+                        weight: '600'
+                    },
+                    bodyFont: {
+                        family: 'JetBrains Mono',
+                        size: 11
+                    },
                     callbacks: {
                         title: function(context) {
-                            // Mostrar nombre del JP como título del tooltip
                             return context[0].raw.nombre;
                         },
                         label: function(context) {
                             const dso = Math.round(context.parsed.x);
                             const monto = context.parsed.y.toFixed(1);
 
-                            // Determinar nivel de riesgo
                             let riesgo = 'Bajo';
                             if (dso >= 60 || context.parsed.y > 100) riesgo = 'Crítico';
                             else if (dso >= 45 || context.parsed.y > 50) riesgo = 'Alto';
@@ -208,6 +353,14 @@ function initializeScatterChart() {
                         }
                     }
                 }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'point'
+            },
+            animation: {
+                duration: 1200,
+                easing: 'easeInOutQuart'
             }
         }
     });
@@ -288,14 +441,46 @@ function initializeTrendChart() {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(100, 100, 100, 0.1)',
+                        lineWidth: 1
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        font: {
+                            family: 'Inter',
+                            size: 11,
+                            weight: '500'
+                        }
+                    }
+                },
                 y: {
                     type: 'linear',
                     display: true,
                     position: 'left',
-                    title: { display: true, text: 'DSO (días)', color: 'rgb(245, 158, 11)' },
+                    title: { 
+                        display: true, 
+                        text: 'DSO (días)', 
+                        color: 'rgb(245, 158, 11)',
+                        font: {
+                            family: 'Inter',
+                            size: 12,
+                            weight: '600'
+                        }
+                    },
                     min: Math.max(0, Math.min(...dsoData) - 5),
                     max: Math.max(...dsoData) + 5,
+                    grid: {
+                        color: 'rgba(245, 158, 11, 0.1)',
+                        lineWidth: 1
+                    },
                     ticks: {
+                        color: '#6b7280',
+                        font: {
+                            family: 'JetBrains Mono',
+                            size: 11
+                        },
                         callback: function(value) {
                             return Math.round(value) + 'd';
                         }
@@ -305,11 +490,29 @@ function initializeTrendChart() {
                     type: 'linear',
                     display: true,
                     position: 'right',
-                    title: { display: true, text: 'Cobros (M$)', color: 'rgb(16, 185, 129)' },
-                    grid: { drawOnChartArea: false },
+                    title: { 
+                        display: true, 
+                        text: 'Cobros (M$)', 
+                        color: 'rgb(16, 185, 129)',
+                        font: {
+                            family: 'Inter',
+                            size: 12,
+                            weight: '600'
+                        }
+                    },
+                    grid: { 
+                        drawOnChartArea: false,
+                        color: 'rgba(16, 185, 129, 0.1)',
+                        lineWidth: 1
+                    },
                     min: Math.max(0, Math.min(...cobrosData) * 0.8),
                     max: Math.max(...cobrosData) * 1.2,
                     ticks: {
+                        color: '#6b7280',
+                        font: {
+                            family: 'JetBrains Mono',
+                            size: 11
+                        },
                         callback: function(value) {
                             return '$' + value.toFixed(0) + 'M';
                         }
@@ -317,12 +520,40 @@ function initializeTrendChart() {
                 }
             },
             plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'line',
+                        font: {
+                            family: 'Inter',
+                            size: 12,
+                            weight: '500'
+                        },
+                        color: '#1a1a1a'
+                    }
+                },
                 tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#333333',
+                    borderWidth: 1,
+                    cornerRadius: 6,
+                    titleFont: {
+                        family: 'Inter',
+                        size: 14,
+                        weight: '600'
+                    },
+                    bodyFont: {
+                        family: 'JetBrains Mono',
+                        size: 11
+                    },
                     callbacks: {
                         label: function(context) {
                             const index = context.dataIndex;
                             if (context.datasetIndex === 0) {
-                                // DSO con % de cambio
                                 const currentValue = Math.round(context.parsed.y);
                                 let changeText = '';
                                 if (index > 0) {
@@ -334,7 +565,6 @@ function initializeTrendChart() {
                                 }
                                 return `DSO: ${currentValue} días${changeText}`;
                             } else {
-                                // Cobros con % de cambio
                                 const currentValue = context.parsed.y.toFixed(1);
                                 let changeText = '';
                                 if (index > 0) {
@@ -349,6 +579,14 @@ function initializeTrendChart() {
                         }
                     }
                 }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
             }
         }
     });

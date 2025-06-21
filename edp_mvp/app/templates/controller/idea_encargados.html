@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Comando JP - Analytics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Space Grotesk', sans-serif;
+            line-height: 1.4;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid #1a1a1a;
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo {
+            width: 24px;
+            height: 24px;
+            background: #00ff88;
+            border-radius: 2px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-item {
+            color: #888888;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: #00ff88;
+        }
+
+        .dashboard-container {
+            padding: 24px;
+            display: grid;
+            gap: 20px;
+        }
+
+        /* Critical Alert Banner */
+        .critical-banner {
+            background: linear-gradient(90deg, rgba(255, 0, 102, 0.2), rgba(255, 0, 102, 0.1));
+            border: 1px solid #ff0066;
+            border-left: 4px solid #ff0066;
+            border-radius: 2px;
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { border-color: #ff0066; }
+            50% { border-color: #ff3388; }
+        }
+
+        .alert-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .alert-icon {
+            width: 20px;
+            height: 20px;
+            background: #ff0066;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .alert-text {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .alert-details {
+            font-family: 'JetBrains Mono', monospace;
+            color: #ff0066;
+            font-size: 14px;
+            margin-left: 16px;
+        }
+
+        .alert-action {
+            background: #ff0066;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 2px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .alert-action:hover {
+            background: #ff3388;
+            transform: scale(1.05);
+        }
+
+        /* KPI Cards Row */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #1a1a1a;
+            border-radius: 2px;
+            padding: 24px;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .kpi-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+            border-color: #333333;
+        }
+
+        .kpi-card.critical {
+            border-left: 4px solid #ff0066;
+        }
+
+        .kpi-card.warning {
+            border-left: 4px solid #ffa500;
+        }
+
+        .kpi-card.good {
+            border-left: 4px solid #00ff88;
+        }
+
+        .kpi-card.neutral {
+            border-left: 4px solid #0066ff;
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .kpi-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: #888888;
+            text-transform: uppercase;
+        }
+
+        .kpi-trend {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 2px;
+        }
+
+        .kpi-trend.up {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .kpi-trend.down {
+            background: rgba(255, 0, 102, 0.2);
+            color: #ff0066;
+        }
+
+        .kpi-trend.stable {
+            background: rgba(136, 136, 136, 0.2);
+            color: #888888;
+        }
+
+        .kpi-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .kpi-value.critical { color: #ff0066; }
+        .kpi-value.warning { color: #ffa500; }
+        .kpi-value.good { color: #00ff88; }
+        .kpi-value.neutral { color: #0066ff; }
+
+        .kpi-context {
+            font-size: 12px;
+            color: #888888;
+            line-height: 1.4;
+        }
+
+        .kpi-impact {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .kpi-impact.critical { background: #ff0066; }
+        .kpi-impact.warning { background: #ffa500; }
+        .kpi-impact.good { background: #00ff88; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Main Analytics Grid */
+        .analytics-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 320px 280px 320px;
+            gap: 20px;
+        }
+
+        .chart-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #1a1a1a;
+            border-radius: 2px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-panel.wide {
+            grid-column: span 2;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .chart-subtitle {
+            font-size: 12px;
+            color: #888888;
+            margin-top: 4px;
+        }
+
+        .chart-action {
+            background: transparent;
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .chart-action:hover {
+            background: #00ff88;
+            color: #000000;
+        }
+
+        .chart-action.critical {
+            border-color: #ff0066;
+            color: #ff0066;
+        }
+
+        .chart-action.critical:hover {
+            background: #ff0066;
+            color: #ffffff;
+        }
+
+        /* JP Performance Grid */
+        .jp-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            height: calc(100% - 80px);
+        }
+
+        .jp-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #1a1a1a;
+            border-radius: 2px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .jp-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.02);
+        }
+
+        .jp-card.critical {
+            border-left: 4px solid #ff0066;
+            background: rgba(255, 0, 102, 0.05);
+        }
+
+        .jp-card.warning {
+            border-left: 4px solid #ffa500;
+            background: rgba(255, 165, 0, 0.05);
+        }
+
+        .jp-card.good {
+            border-left: 4px solid #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .jp-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .jp-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .jp-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 2px;
+            text-transform: uppercase;
+        }
+
+        .jp-status.critical {
+            background: rgba(255, 0, 102, 0.3);
+            color: #ff0066;
+        }
+
+        .jp-status.warning {
+            background: rgba(255, 165, 0, 0.3);
+            color: #ffa500;
+        }
+
+        .jp-status.good {
+            background: rgba(0, 255, 136, 0.3);
+            color: #00ff88;
+        }
+
+        .jp-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .jp-metric {
+            text-align: center;
+        }
+
+        .jp-metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .jp-metric-value.critical { color: #ff0066; }
+        .jp-metric-value.warning { color: #ffa500; }
+        .jp-metric-value.good { color: #00ff88; }
+
+        .jp-metric-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: #888888;
+            text-transform: uppercase;
+        }
+
+        /* Risk Analysis Donut */
+        .risk-container {
+            position: relative;
+            height: calc(100% - 80px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .risk-donut {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin-bottom: 20px;
+        }
+
+        .risk-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .risk-total {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .risk-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: #888888;
+            text-transform: uppercase;
+        }
+
+        .risk-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .risk-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .risk-legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .risk-legend-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #888888;
+        }
+
+        /* DSO Evolution Chart */
+        .chart-container {
+            position: relative;
+            height: calc(100% - 80px);
+            width: 100%;
+        }
+
+        /* Performance Rankings */
+        .rankings-container {
+            height: calc(100% - 80px);
+            overflow-y: auto;
+        }
+
+        .ranking-section {
+            margin-bottom: 24px;
+        }
+
+        .ranking-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .ranking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .ranking-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .ranking-subtitle {
+            font-size: 11px;
+            color: #888888;
+        }
+
+        .ranking-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .ranking-item {
+            display: grid;
+            grid-template-columns: 32px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #1a1a1a;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ranking-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(4px);
+        }
+
+        .ranking-position {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .ranking-position.first {
+            background: #00ff88;
+            color: #000000;
+        }
+
+        .ranking-position.second {
+            background: #ffa500;
+            color: #000000;
+        }
+
+        .ranking-position.third {
+            background: #ff0066;
+            color: #ffffff;
+        }
+
+        .ranking-position.other {
+            background: #333333;
+            color: #888888;
+        }
+
+        .ranking-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .ranking-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .ranking-value.good { color: #00ff88; }
+        .ranking-value.warning { color: #ffa500; }
+        .ranking-value.critical { color: #ff0066; }
+
+        /* Executive Summary Table */
+        .executive-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .executive-table th {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #1a1a1a;
+            padding: 12px;
+            text-align: left;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: #888888;
+            text-transform: uppercase;
+        }
+
+        .executive-table td {
+            border: 1px solid #1a1a1a;
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        .executive-table tr {
+            transition: background-color 0.3s;
+        }
+
+        .executive-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .table-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .table-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+        }
+
+        .table-value.good { color: #00ff88; }
+        .table-value.warning { color: #ffa500; }
+        .table-value.critical { color: #ff0066; }
+
+        .table-action {
+            background: transparent;
+            border: 1px solid #333333;
+            color: #888888;
+            padding: 4px 8px;
+            font-size: 10px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+        }
+
+        .table-action:hover {
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1400px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .analytics-section {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .jp-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-menu {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Navigation -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo"></div>
+            <div class="header-title">PAGORA</div>
+        </div>
+        <nav class="nav-menu">
+            <a href="#" class="nav-item">INICIO</a>
+            <a href="#" class="nav-item">CONTROL OPERATIVO</a>
+            <a href="#" class="nav-item">GESTIÓN EJECUTIVA</a>
+            <a href="#" class="nav-item active">EDPS</a>
+            <a href="#" class="nav-item">ADMINISTRACIÓN</a>
+        </nav>
+        <div style="color: #888888; font-size: 12px;">Administrador del Sistema</div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Critical Action Alert -->
+        <div class="critical-banner">
+            <div class="alert-content">
+                <div class="alert-icon">!</div>
+                <div>
+                    <div class="alert-text">ACCIÓN EJECUTIVA REQUERIDA</div>
+                    <div class="alert-details">+ 20 requieren intervención inmediata • EXPOSICIÓN $4,213M • DSO PROMEDIO 158.0d</div>
+                </div>
+            </div>
+            <button class="alert-action">Actuar Ahora</button>
+        </div>
+
+        <!-- KPI Grid -->
+        <section class="kpi-grid">
+            <div class="kpi-card critical">
+                <div class="kpi-impact critical"></div>
+                <div class="kpi-header">
+                    <div class="kpi-label">JP Críticos</div>
+                    <div class="kpi-trend down">↓ 25%</div>
+                </div>
+                <div class="kpi-value critical">4</div>
+                <div class="kpi-context">Jefes de proyecto con DSO crítico >150 días</div>
+            </div>
+
+            <div class="kpi-card warning">
+                <div class="kpi-impact warning"></div>
+                <div class="kpi-header">
+                    <div class="kpi-label">DSO Promedio</div>
+                    <div class="kpi-trend down">↓ 12d</div>
+                </div>
+                <div class="kpi-value warning">157.9d</div>
+                <div class="kpi-context">+122d sobre benchmark industria (35d)</div>
+            </div>
+
+            <div class="kpi-card good">
+                <div class="kpi-impact good"></div>
+                <div class="kpi-header">
+                    <div class="kpi-label">Total Exposición</div>
+                    <div class="kpi-trend stable">→ 0%</div>
+                </div>
+                <div class="kpi-value good">$4,213M</div>
+                <div class="kpi-context">CLP en cartera total • 18% en riesgo alto</div>
+            </div>
+
+            <div class="kpi-card neutral">
+                <div class="kpi-impact good"></div>
+                <div class="kpi-header">
+                    <div class="kpi-label">Eficiencia Global</div>
+                    <div class="kpi-trend up">↑ 8%</div>
+                </div>
+                <div class="kpi-value neutral">60.4%</div>
+                <div class="kpi-context">Performance promedio de cobranza</div>
+            </div>
+        </section>
+
+        <!-- Main Analytics Section -->
+        <section class="analytics-section">
+            <!-- JP Performance Distribution -->
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Distribución DSO por JP</div>
+                        <div class="chart-subtitle">Análisis de días de venta pendientes por jefe de proyecto</div>
+                    </div>
+                    <button class="chart-action critical">Coordinar</button>
+                </div>
+                <div class="jp-grid">
+                    <div class="jp-card critical">
+                        <div class="jp-info">
+                            <div class="jp-name">Ana Pérez</div>
+                            <div class="jp-status critical">Crítico</div>
+                        </div>
+                        <div class="jp-metrics">
+                            <div class="jp-metric">
+                                <div class="jp-metric-value critical">168.0d</div>
+                                <div class="jp-metric-label">DSO</div>
+                            </div>
+                            <div class="jp-metric">
+                                <div class="jp-metric-value critical">$950M</div>
+                                <div class="jp-metric-label">Exposición</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="jp-card warning">
+                        <div class="jp-info">
+                            <div class="jp-name">Carolina López</div>
+                            <div class="jp-status warning">Alerta</div>
+                        </div>
+                        <div class="jp-metrics">
+                            <div class="jp-metric">
+                                <div class="jp-metric-value warning">157.6d</div>
+                                <div class="jp-metric-label">DSO</div>
+                            </div>
+                            <div class="jp-metric">
+                                <div class="jp-metric-value warning">$1,420M</div>
+                                <div class="jp-metric-label">Exposición</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="jp-card good">
+                        <div class="jp-info">
+                            <div class="jp-name">Diego Bravo</div>
+                            <div class="jp-status good">Óptimo</div>
+                        </div>
+                        <div class="jp-metrics">
+                            <div class="jp-metric">
+                                <div class="jp-metric-value good">140.7d</div>
+                                <div class="jp-metric-label">DSO</div>
+                            </div>
+                            <div class="jp-metric">
+                                <div class="jp-metric-value good">$930M</div>
+                                <div class="jp-metric-label">Exposición</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="jp-card warning">
+                        <div class="jp-info">
+                            <div class="jp-name">Pedro Rojas</div>
+                            <div class="jp-status warning">Alerta</div>
+                        </div>
+                        <div class="jp-metrics">
+                            <div class="jp-metric">
+                                <div class="jp-metric-value warning">149.1d</div>
+                                <div class="jp-metric-label">DSO</div>
+                            </div>
+                            <div class="jp-metric">
+                                <div class="jp-metric-value warning">$450M</div>
+                                <div class="jp-metric-label">Exposición</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Analysis -->
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Análisis de Riesgo</div>
+                        <div class="chart-subtitle">Clasificación de JP por nivel de riesgo operacional</div>
+                    </div>
+                    <button class="chart-action">Exportar</button>
+                </div>
+                <div class="risk-container">
+                    <div class="risk-donut">
+                        <canvas id="riskChart" width="180" height="180"></canvas>
+                        <div class="risk-center">
+                            <div class="risk-total">4</div>
+                            <div class="risk-label">Total JP</div>
+                        </div>
+                    </div>
+                    <div class="risk-legend">
+                        <div class="risk-legend-item">
+                            <div class="risk-legend-color" style="background: #ff0066;"></div>
+                            <div class="risk-legend-text">Crítico (1)</div>
+                        </div>
+                        <div class="risk-legend-item">
+                            <div class="risk-legend-color" style="background: #ffa500;"></div>
+                            <div class="risk-legend-text">Alerta (2)</div>
+                        </div>
+                        <div class="risk-legend-item">
+                            <div class="risk-legend-color" style="background: #00ff88;"></div>
+                            <div class="risk-legend-text">Óptimo (1)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DSO Evolution Chart -->
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">DSO vs Monto Pendiente</div>
+                        <div class="chart-subtitle">Matriz de riesgo basada en performance y exposición</div>
+                    </div>
+                    <button class="chart-action">Analizar</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="dsoScatterChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Trend Evolution -->
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Evolución Últimos 6 Meses</div>
+                        <div class="chart-subtitle">Tendencia histórica de cobros y DSO</div>
+                    </div>
+                    <button class="chart-action">Proyectar</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Performance Rankings -->
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-
