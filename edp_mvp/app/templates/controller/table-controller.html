@@ -97,32 +97,20 @@
       class="hidden bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-3 shadow-lg mb-4">
       <div class="grid grid-cols-3 gap-3">
         <label class="flex items-center">
+          <input type="checkbox" checked data-column="edp" class="mr-2" />
+          N° EDP
+        </label>
+        <label class="flex items-center">
           <input type="checkbox" checked data-column="proyecto" class="mr-2" />
           Proyecto
         </label>
         <label class="flex items-center">
           <input type="checkbox" checked data-column="jefe" class="mr-2" />
-          Jefe Proyecto
+          Encargado
         </label>
         <label class="flex items-center">
           <input type="checkbox" checked data-column="cliente" class="mr-2" />
           Cliente
-        </label>
-        <label class="flex items-center">
-          <input type="checkbox" checked data-column="mes" class="mr-2" />
-          Mes
-        </label>
-        <label class="flex items-center">
-          <input type="checkbox" checked data-column="edp" class="mr-2" />
-          N° EDP
-        </label>
-        <label class="flex items-center">
-          <input
-            type="checkbox"
-            checked
-            data-column="conformidad"
-            class="mr-2" />
-          N° Conf.
         </label>
         <label class="flex items-center">
           <input type="checkbox" checked data-column="estado" class="mr-2" />
@@ -133,28 +121,12 @@
           Días
         </label>
         <label class="flex items-center">
-          <input
-            type="checkbox"
-            checked
-            data-column="diashabiles"
-            class="mr-2" />
-          Días Hábiles
-        </label>
-        <label class="flex items-center">
-          <input
-            type="checkbox"
-            checked
-            data-column="montopropuesto"
-            class="mr-2" />
-          M. Propuesto
-        </label>
-        <label class="flex items-center">
-          <input
-            type="checkbox"
-            checked
-            data-column="montoaprobado"
-            class="mr-2" />
+          <input type="checkbox" checked data-column="montoaprobado" class="mr-2" />
           M. Aprobado
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" checked data-column="acciones" class="mr-2" />
+          Acciones
         </label>
       </div>
     </div>
@@ -163,31 +135,18 @@
     <div
       class="table-responsive shadow-md rounded-xl overflow-hidden border border-[color:var(--border-color)]">
       <table id="edp-table" class="data-table w-full">
-        <thead>
-          <tr class="bg-[color:var(--background)]">
-            <th class="sortable p-3" data-sort="proyecto">Proyecto</th>
-            <th class="sortable" data-sort="jefe">Jefe de Proyecto</th>
-            <th class="sortable" data-sort="cliente">Cliente</th>
-            <th class="sortable" data-sort="mes">Mes</th>
-            <th class="sortable" data-sort="edp">N° EDP</th>
-            <th class="sortable" data-sort="n-conformidad">N° Conf.</th>
-            <th class="sortable" data-sort="estado">Estado</th>
-            <th class="sortable sort-desc text-center" data-sort="dias">
-              Días
-            </th>
-            <th class="sortable text-center" data-sort="dias-habiles">
-              Días Hábiles
-            </th>
-            <th class="sortable text-right" data-sort="monto-propuesto">
-              M. Propuesto
-            </th>
-            <th class="sortable text-right" data-sort="monto-aprobado">
-              M. Aprobado
-            </th>
-            <th>Observaciones</th>
-            <th></th>
-          </tr>
-        </thead>
+                  <thead>
+            <tr class="bg-[color:var(--background)]">
+              <th class="sortable p-3 text-center" data-sort="edp">N° EDP</th>
+              <th class="sortable text-left" data-sort="proyecto">Proyecto</th>
+              <th class="sortable text-left" data-sort="jefe">Encargado</th>
+              <th class="sortable text-left" data-sort="cliente">Cliente</th>
+              <th class="sortable text-center" data-sort="estado">Estado</th>
+              <th class="sortable sort-desc text-center" data-sort="dias">Días</th>
+              <th class="sortable text-center" data-sort="monto-aprobado">M. Aprobado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
         <!-- Replace the table row content with this fixed version -->
 
         <tbody>
@@ -205,67 +164,74 @@
             data-dias-habiles="{{ registro.get('dias_habiles', 0) }}"
             data-monto-propuesto="{{ registro.get('monto_propuesto', 0)|default(0) }}"
             data-monto-aprobado="{{ registro.get('monto_aprobado', 0)|default(0) }}"
-            class="{% if registro.get('critico', False) %}data-table-row-critical{% endif %}{% if registro.get('estado', '') == 'pagado' %}data-table-row-validated{% endif %}">
-            <td class="font-medium">{{ registro.get('proyecto', '-') }}</td>
-            <td>{{ registro.get('jefe_proyecto', '-') }}</td>
-            <td>{{ registro.get('cliente', '-') }}</td>
-            <td>{{ registro.get('mes', '-') }}</td>
-            <td>{{ registro.get('n_edp', '-') }}</td>
-            <td>{{ registro.get('n_conformidad', '-') }}</td>
-            <td>
-              <span
-                class="estado-pill estado-{{ registro.get('estado', 'pendiente') }}">
+            class="hover:bg-[color:var(--bg-card-hover)] transition-colors {% if registro.get('critico', False) %}data-table-row-critical{% endif %}{% if registro.get('estado', '') == 'pagado' %}data-table-row-validated{% endif %}">
+            
+            <!-- N° EDP destacado -->
+            <td class="font-bold text-[color:var(--accent-blue)] p-3 text-center">
+              {{ registro.get('n_edp', '-') }}
+            </td>
+            
+            <!-- Proyecto -->
+            <td class="font-medium max-w-[200px] truncate text-left" title="{{ registro.get('proyecto', '') }}">
+              {{ registro.get('proyecto', '-') }}
+            </td>
+            
+            <!-- Encargado -->
+            <td class="max-w-[150px] truncate text-left" title="{{ registro.get('jefe_proyecto', '') }}">
+              {{ registro.get('jefe_proyecto', '-') }}
+            </td>
+            
+            <!-- Cliente -->
+            <td class="max-w-[120px] truncate text-left" title="{{ registro.get('cliente', '') }}">
+              {{ registro.get('cliente', '-') }}
+            </td>
+            
+            <!-- Estado -->
+            <td class="text-center">
+              <span class="estado-pill estado-{{ registro.get('estado', 'pendiente') }}">
                 {{ registro.get('estado', 'pendiente') }}
               </span>
             </td>
 
+            <!-- Días con colores -->
             {% set dias = registro.get('dias_espera', 0)|int %}
-            <td
-              class="text-center {% if dias > 30 %}text-[color:var(--accent-red)] font-medium{% elif dias > 20 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-green)]{% endif %}">
+            <td class="text-center font-bold {% if dias > 30 %}text-[color:var(--accent-danger)]{% elif dias > 20 %}text-[color:var(--accent-warning)]{% else %}text-[color:var(--accent-green)]{% endif %}">
               {{ dias }}
             </td>
 
-            <td class="text-center">{{ registro.get('dias_habiles', 0) }}</td>
-            <td class="text-right">
-              ${{ "{:,.0f}".format(registro.get('monto_propuesto',
-              0)|default(0)).replace(",",".") }}
-            </td>
-            <td class="text-right">
-              ${{ "{:,.0f}".format(registro.get('monto_aprobado',
-              0)|default(0)).replace(",",".") }}
-            </td>
-            <td
-              class="max-w-xs truncate"
-              title="{{ registro.get('observaciones', '') | default('') }}">
-              {{ (registro.get('observaciones') | default('-'))[:15] ~ ('...' if
-              registro.get('observaciones') and
-              (registro.get('observaciones') | default(''))|length > 50 else '') }}
+            <!-- Monto Aprobado -->
+            <td class="text-center font-bold text-[color:var(--accent-green)] mono-font">
+              ${{ "{:,.1f}".format(registro.get('monto_aprobado',0)|default(0)/1000000) }}M
             </td>
 
-            <td>
-              <a
-                href="{{ url_for('dashboard.detalle_edp', edp_id=registro.get('id', '')) }}"
-                class="flex items-center justify-center text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] bg-[color:var(--bg-card-hover)] hover:bg-[color:var(--bg-highlight)] p-1.5 rounded-full transition-colors"
-                title="Ver detalles del EDP">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor">
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                  <path
-                    fill-rule="evenodd"
-                    d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                    clip-rule="evenodd" />
-                </svg>
-              </a>
+            <!-- Acciones -->
+            <td class="text-center">
+              <div class="flex items-center justify-center gap-2">
+                <a
+                  href="{{ url_for('dashboard.detalle_edp', edp_id=registro.get('id', '')) }}"
+                  class="flex items-center justify-center w-8 h-8 text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-dark)] bg-[color:var(--accent-blue)]/10 hover:bg-[color:var(--accent-blue)]/20 rounded-lg transition-colors"
+                  title="Ver detalles">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                  </svg>
+                </a>
+                                                  <button
+                   data-edp-id="{{ registro.get('id', '') }}"
+                   class="edp-edit-btn flex items-center justify-center w-8 h-8 text-[color:var(--accent-green)] hover:text-[color:var(--accent-green-dark)] bg-[color:var(--accent-green)]/10 hover:bg-[color:var(--accent-green)]/20 rounded-lg transition-colors"
+                   title="Editar EDP">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+            </div>
             </td>
           </tr>
-          {% endfor %} {% if not registros %}
-          <tr>
-            <td
-              colspan="14"
-              class="py-8 text-center text-[color:var(--text-secondary)]">
+          {% endfor %}            {% if not registros %}
+           <tr>
+             <td
+               colspan="8"
+               class="py-8 text-center text-[color:var(--text-secondary)]">
               <div class="flex flex-col items-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -404,8 +370,22 @@
     </div>
 
     <!-- Incluir el modal -->
-    <!-- Incluir el modal -->
     {% include "controller/modal_edp_template.html" %}
   </div>
 </div>
-</div>
+
+<!-- Script para manejar los botones de editar en la tabla -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Agregar event listeners a todos los botones de editar
+  document.querySelectorAll('.edp-edit-btn').forEach(function(button) {
+    button.addEventListener('click', function() {
+      const edpId = this.getAttribute('data-edp-id');
+      const row = this.closest('tr');
+      if (window.openEdpModal && edpId) {
+        window.openEdpModal(edpId, row);
+      }
+    });
+  });
+});
+</script>

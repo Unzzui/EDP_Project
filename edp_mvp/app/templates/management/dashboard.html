@@ -274,55 +274,8 @@ Manager{% endblock %} {% block content %}
       </div>
     </div>
 
-    <!-- Progress Targets -->
-    <div class="chart-panel">
-      <div class="chart-header">
-        <div class="chart-title">Objetivos del Mes</div>
-        <button class="chart-action" onclick="showTargetDetails()">Detalles</button>
-      </div>
-      <div class="chart-container">
-        <div class="progress-rings">
-          <div class="progress-ring {{ 'good' if (kpis.progreso_objetivo if kpis else 78) > 80 else 'warning' if (kpis.progreso_objetivo if kpis else 78) > 60 else 'critical' }}">
-            <svg>
-              <circle class="bg" cx="40" cy="40" r="30"></circle>
-              <circle class="progress" cx="40" cy="40" r="30" 
-                      style="stroke-dasharray: {{ ((kpis.progreso_objetivo if kpis else 78) / 100 * 188.4) | round(1) }}, 188.4"></circle>
-            </svg>
-            <div class="progress-text">
-              <div class="progress-value">{{ "{:.0f}%".format(kpis.progreso_objetivo if kpis else 78) }}</div>
-              <div class="progress-label">Ingresos</div>
-            </div>
-          </div>
-
-          <div class="progress-ring {{ 'good' if (kpis.dso_target_progress if kpis else 40) > 70 else 'warning' if (kpis.dso_target_progress if kpis else 40) > 50 else 'critical' }}">
-            <svg>
-              <circle class="bg" cx="40" cy="40" r="30"></circle>
-              <circle class="progress" cx="40" cy="40" r="30" 
-                      style="stroke-dasharray: {{ ((kpis.dso_target_progress if kpis else 40) / 100 * 188.4) | round(1) }}, 188.4"></circle>
-            </svg>
-            <div class="progress-text">
-              <div class="progress-value">{{ "{:.0f}%".format(kpis.dso_target_progress if kpis else 40) }}</div>
-              <div class="progress-label">DSO Target</div>
-            </div>
-          </div>
-
-          <div class="progress-ring {{ 'good' if (kpis.quality_score if kpis else 90) > 85 else 'warning' if (kpis.quality_score if kpis else 90) > 70 else 'critical' }}">
-            <svg>
-              <circle class="bg" cx="40" cy="40" r="30"></circle>
-              <circle class="progress" cx="40" cy="40" r="30" 
-                      style="stroke-dasharray: {{ ((kpis.quality_score if kpis else 90) / 100 * 188.4) | round(1) }}, 188.4"></circle>
-            </svg>
-            <div class="progress-text">
-              <div class="progress-value">{{ "{:.0f}%".format(kpis.quality_score if kpis else 90) }}</div>
-              <div class="progress-label">Calidad</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- DSO Trend Chart -->
-    <div class="chart-panel">
+    <div class="chart-panel wide">
       <div class="chart-header">
         <div class="chart-title">Tendencia DSO</div>
         <button class="chart-action" onclick="analyzeDSOTrend()">Analizar</button>

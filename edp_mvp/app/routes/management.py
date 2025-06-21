@@ -238,104 +238,99 @@ def _enhance_kpis_for_operational(base_kpis: Dict[str, Any], dashboard_data: Dic
         else:
             print(f"🔍 DEBUG: No critical projects found! Available KPI keys: {list(enhanced_kpis.keys())[:10]}")
         
-        # Add operational-specific metrics that templates expect
+        # Solo usar datos reales de los KPIs - sin valores hardcodeados
         operational_enhancements = {
             # Timing and date fields
             "ultima_actualizacion": datetime.now().strftime("%d/%m/%Y %H:%M"),
             
-            # Financial projections and targets - REAL DATA
-            "meta_mensual": round(enhanced_kpis.get("meta_ingresos", 40.0), 1),  # Real monthly target
-            "ingresos_totales": enhanced_kpis.get("ingresos_totales", enhanced_kpis.get("total_collected", 42.7)),
-            "proyeccion_fin_mes": round(enhanced_kpis.get("ingresos_totales", 42.7) * 1.15, 1),  # Based on current trend
-            "crecimiento_ingresos": enhanced_kpis.get("crecimiento_ingresos", enhanced_kpis.get("growth_rate", 8.2)),
+            # Financial projections - SOLO DATOS REALES
+            "meta_mensual": enhanced_kpis.get("meta_ingresos", 0),
+            "ingresos_totales": enhanced_kpis.get("ingresos_totales", enhanced_kpis.get("total_collected", 0)),
+            "proyeccion_fin_mes": enhanced_kpis.get("ingresos_totales", 0) * 1.15 if enhanced_kpis.get("ingresos_totales", 0) > 0 else 0,
+            "crecimiento_ingresos": enhanced_kpis.get("crecimiento_ingresos", enhanced_kpis.get("growth_rate", 0)),
             
-            # Revenue breakdown - CALCULATED FROM REAL DATA  
-            "ingresos_recurrentes_pct": enhanced_kpis.get("recurrent_revenue_pct", 65),
-            "ingresos_nuevos_pct": enhanced_kpis.get("new_revenue_pct", 35),
+            # Revenue breakdown - SOLO DATOS REALES
+            "ingresos_recurrentes_pct": enhanced_kpis.get("recurrent_revenue_pct", 0),
+            "ingresos_nuevos_pct": enhanced_kpis.get("new_revenue_pct", 0),
             
-            # Client data - REAL TOP CLIENTS
-            "top_cliente_1": enhanced_kpis.get("top_cliente_1", enhanced_kpis.get("top_client", "Cliente Corporativo ABC")),
+            # Client data - SOLO DATOS REALES
+            "top_cliente_1": enhanced_kpis.get("top_cliente_1", enhanced_kpis.get("top_client", "")),
             
-            # Pending amounts and collections - REAL DATA
-            "monto_pendiente": enhanced_kpis.get("monto_pendiente", enhanced_kpis.get("total_pending", 100)),
-            "tasa_recuperacion": enhanced_kpis.get("tasa_recuperacion", enhanced_kpis.get("recovery_rate", 78.5)),
-            "dso_actual": enhanced_kpis.get("dso", enhanced_kpis.get("dso_actual", 124)),
-            "tendencia_pendiente": enhanced_kpis.get("tendencia_pendiente", enhanced_kpis.get("pending_trend", -5.2)),
+            # Pending amounts and collections - SOLO DATOS REALES
+            "monto_pendiente": enhanced_kpis.get("monto_pendiente", enhanced_kpis.get("total_pending", 0)),
+            "tasa_recuperacion": enhanced_kpis.get("tasa_recuperacion", enhanced_kpis.get("recovery_rate", 0)),
+            "dso_actual": enhanced_kpis.get("dso", enhanced_kpis.get("dso_actual", 0)),
+            "tendencia_pendiente": enhanced_kpis.get("tendencia_pendiente", enhanced_kpis.get("pending_trend", 0)),
             
-            # Aging analysis - REAL DATA
-            "aging_0_30_pct": enhanced_kpis.get("aging_0_30_pct", enhanced_kpis.get("pct_30d", 45)),
-            "aging_31_60_pct": enhanced_kpis.get("aging_31_60_pct", enhanced_kpis.get("pct_60d", 28)),
-            "aging_61_90_pct": enhanced_kpis.get("aging_61_90_pct", enhanced_kpis.get("pct_90d", 15)),
-            "aging_90_plus_pct": enhanced_kpis.get("aging_90_plus_pct", enhanced_kpis.get("pct_mas90d", 12)),
+            # Aging analysis - SOLO DATOS REALES
+            "aging_0_30_pct": enhanced_kpis.get("aging_0_30_pct", enhanced_kpis.get("pct_30d", 0)),
+            "aging_31_60_pct": enhanced_kpis.get("aging_31_60_pct", enhanced_kpis.get("pct_60d", 0)),
+            "aging_61_90_pct": enhanced_kpis.get("aging_61_90_pct", enhanced_kpis.get("pct_90d", 0)),
+            "aging_90_plus_pct": enhanced_kpis.get("aging_90_plus_pct", enhanced_kpis.get("pct_mas90d", 0)),
             
-            # Historical data - REAL TRENDS
-            "historial_6_meses": enhanced_kpis.get("historial_6_meses", enhanced_kpis.get("income_6_months", [28.5, 31.2, 27.8, 35.1, 39.3, 42.7])),
-            "historial_recuperacion_6_meses": enhanced_kpis.get("recovery_6_months", [85.2, 78.9, 82.1, 76.5, 79.8, 78.5]),
-            "historial_proyectos_criticos_6_meses": enhanced_kpis.get("critical_projects_6_months", [5, 7, 4, 6, 8, 6]),
+            # Historical data - SOLO DATOS REALES
+            "historial_6_meses": enhanced_kpis.get("historial_6_meses", enhanced_kpis.get("income_6_months", [])),
+            "historial_recuperacion_6_meses": enhanced_kpis.get("recovery_6_months", []),
+            "historial_proyectos_criticos_6_meses": enhanced_kpis.get("critical_projects_6_months", []),
             
-            # Top debtors (using aging KPIs if available)
-            "top_deudor_1_nombre": enhanced_kpis.get("top_deudor_1_nombre", "Cliente Principal"),
-            "top_deudor_1_monto": enhanced_kpis.get("top_deudor_1_monto", 2.1),
-            "top_deudor_2_nombre": enhanced_kpis.get("top_deudor_2_nombre", "Cliente Corporativo"),
-            "top_deudor_2_monto": enhanced_kpis.get("top_deudor_2_monto", 1.8),
-            "top_deudor_3_nombre": enhanced_kpis.get("top_deudor_3_nombre", "Cliente Gubernamental"),
-            "top_deudor_3_monto": enhanced_kpis.get("top_deudor_3_monto", 1.5),
+            # Top debtors - SOLO DATOS REALES
+            "top_deudor_1_nombre": enhanced_kpis.get("top_deudor_1_nombre", ""),
+            "top_deudor_1_monto": enhanced_kpis.get("top_deudor_1_monto", 0),
+            "top_deudor_2_nombre": enhanced_kpis.get("top_deudor_2_nombre", ""),
+            "top_deudor_2_monto": enhanced_kpis.get("top_deudor_2_monto", 0),
+            "top_deudor_3_nombre": enhanced_kpis.get("top_deudor_3_nombre", ""),
+            "top_deudor_3_monto": enhanced_kpis.get("top_deudor_3_monto", 0),
             
-            # Critical projects details - Now relies on critical_projects_list from service
-            # Milestones now handled dynamically through critical_projects_list
+            # Liquidity and financial metrics - SOLO DATOS REALES
+            "liquidez_proyectada": enhanced_kpis.get("liquidez_proyectada", 0),
+            "pct_liquidez": enhanced_kpis.get("pct_liquidez", 0),
+            "ratio_cobertura": enhanced_kpis.get("ratio_cobertura", 0),
             
-            # Liquidity and financial metrics - REAL DATA
-            "liquidez_proyectada": 3.5,
-            "pct_liquidez": 65,
-            "ratio_cobertura": 0.8,
+            # Profitability metrics - SOLO DATOS REALES
+            "rentabilidad_general": enhanced_kpis.get("rentabilidad_general", enhanced_kpis.get("profit_margin", 0)),
+            "tendencia_rentabilidad": enhanced_kpis.get("tendencia_rentabilidad", enhanced_kpis.get("profitability_trend", 0)),
+            "posicion_vs_benchmark": enhanced_kpis.get("posicion_vs_benchmark", enhanced_kpis.get("vs_benchmark", 0)),
+            "margen_bruto_absoluto": enhanced_kpis.get("margen_bruto_absoluto", enhanced_kpis.get("gross_margin", 0)),
+            "roi_calculado": enhanced_kpis.get("roi_calculado", enhanced_kpis.get("roi", 0)),
+            "costos_totales": enhanced_kpis.get("costos_totales", enhanced_kpis.get("total_costs", 0)),
+            "ebitda_porcentaje": enhanced_kpis.get("ebitda_porcentaje", enhanced_kpis.get("ebitda", 0)),
+            "meta_rentabilidad": enhanced_kpis.get("meta_rentabilidad", 0),
+            "vs_meta_rentabilidad": enhanced_kpis.get("vs_meta_rentabilidad", 0),
+            "pct_meta_rentabilidad": enhanced_kpis.get("pct_meta_rentabilidad", 0),
             
-            # Profitability metrics - REAL DATA  
-            "rentabilidad_general": enhanced_kpis.get("rentabilidad_general", enhanced_kpis.get("profit_margin", 28.5)),
-            "tendencia_rentabilidad": enhanced_kpis.get("tendencia_rentabilidad", enhanced_kpis.get("profitability_trend", 3.2)),
-            "posicion_vs_benchmark": enhanced_kpis.get("posicion_vs_benchmark", enhanced_kpis.get("vs_benchmark", 5.2)),
-            "margen_bruto_absoluto": enhanced_kpis.get("margen_bruto_absoluto", enhanced_kpis.get("gross_margin", 42.3)),
-            "roi_calculado": enhanced_kpis.get("roi_calculado", enhanced_kpis.get("roi", 24.8)),
-            "costos_totales": enhanced_kpis.get("costos_totales", enhanced_kpis.get("total_costs", 78.1)),
-            "ebitda_porcentaje": enhanced_kpis.get("ebitda_porcentaje", enhanced_kpis.get("ebitda", 32.1)),
-            "meta_rentabilidad": enhanced_kpis.get("meta_rentabilidad", 25.0),
-            "vs_meta_rentabilidad": enhanced_kpis.get("vs_meta_rentabilidad", 3.5),
-            "pct_meta_rentabilidad": enhanced_kpis.get("pct_meta_rentabilidad", 114),
+            # Cost breakdown percentages - SOLO DATOS REALES
+            "costos_personal_pct": enhanced_kpis.get("costos_personal_pct", enhanced_kpis.get("personnel_cost_pct", 0)),
+            "costos_overhead_pct": enhanced_kpis.get("costos_overhead_pct", enhanced_kpis.get("overhead_cost_pct", 0)),
+            "costos_tech_pct": enhanced_kpis.get("costos_tech_pct", enhanced_kpis.get("tech_cost_pct", 0)),
+            "margen_neto_pct": enhanced_kpis.get("margen_neto_pct", enhanced_kpis.get("net_margin_pct", 0)),
             
-            # Cost breakdown percentages - REAL DATA
-            "costos_personal_pct": enhanced_kpis.get("costos_personal_pct", enhanced_kpis.get("personnel_cost_pct", 42)),
-            "costos_overhead_pct": enhanced_kpis.get("costos_overhead_pct", enhanced_kpis.get("overhead_cost_pct", 18)),
-            "costos_tech_pct": enhanced_kpis.get("costos_tech_pct", enhanced_kpis.get("tech_cost_pct", 12)),
-            "margen_neto_pct": enhanced_kpis.get("margen_neto_pct", enhanced_kpis.get("net_margin_pct", 28)),
+            # Efficiency metrics - SOLO DATOS REALES
+            "eficiencia_global": enhanced_kpis.get("efficiency_score", 0),
+            "satisfaccion_cliente": enhanced_kpis.get("satisfaccion_cliente", 0),
             
-            # Efficiency metrics
-            "eficiencia_global": enhanced_kpis.get("efficiency_score", 75),
-            "satisfaccion_cliente": 87.5,
+            # Resource allocation - SOLO DATOS REALES
+            "recursos_criticos": enhanced_kpis.get("recursos_criticos", 0),
+            "recursos_limitados": enhanced_kpis.get("recursos_limitados", 0),
+            "recursos_disponibles": enhanced_kpis.get("recursos_disponibles", 0),
             
-            # Resource allocation
-            "recursos_criticos": enhanced_kpis.get("recursos_criticos", 2),
-            "recursos_limitados": enhanced_kpis.get("recursos_limitados", 3),
-            "recursos_disponibles": enhanced_kpis.get("recursos_disponibles", 8),
+            # Top clients for income - SOLO DATOS REALES
+            "top_cliente_1_valor": enhanced_kpis.get("top_cliente_1_valor", 0),
+            "top_cliente_2": enhanced_kpis.get("top_cliente_2", ""),
+            "top_cliente_2_valor": enhanced_kpis.get("top_cliente_2_valor", 0),
+            "top_cliente_3": enhanced_kpis.get("top_cliente_3", ""),
+            "top_cliente_3_valor": enhanced_kpis.get("top_cliente_3_valor", 0),
             
-            # Top clients for income - REAL DATA
-            "top_cliente_1": enhanced_kpis.get("top_cliente_1", enhanced_kpis.get("top_client", "Cliente Corporativo ABC")),
-            "top_cliente_1_valor": round(enhanced_kpis.get("ingresos_totales", 42.7) * 0.19, 1),  # 19% del total
-            "top_cliente_2": enhanced_kpis.get("top_cliente_2", "Cliente Gobierno XYZ"), 
-            "top_cliente_2_valor": round(enhanced_kpis.get("ingresos_totales", 42.7) * 0.14, 1),  # 14% del total
-            "top_cliente_3": enhanced_kpis.get("top_cliente_3", "Cliente Tech DEF"),
-            "top_cliente_3_valor": round(enhanced_kpis.get("ingresos_totales", 42.7) * 0.11, 1),  # 11% del total
+            # Additional operational template variables - SOLO DATOS REALES
+            "cliente_principal": enhanced_kpis.get("cliente_principal", ""),
+            "costo_financiero_total": enhanced_kpis.get("costo_financiero_total", 0),
+            "pct_avance": enhanced_kpis.get("pct_avance", 0),
+            "costo_retraso_estimado": enhanced_kpis.get("costo_retraso_estimado", 0),
             
-            # Additional operational template variables
-            "cliente_principal": "Cliente Corporativo ABC",
-            "dso_actual": enhanced_kpis.get("dso", 124),
-            "costo_financiero_total": 2.4,
-            "pct_avance": 72,
-            "costo_retraso_estimado": 2.4,
-            
-            # Time breakdown for cycle analysis
-            "tiempo_emision": enhanced_kpis.get("tiempo_emision", 12),
-            "tiempo_gestion": enhanced_kpis.get("tiempo_gestion", 28),
-            "tiempo_conformidad": enhanced_kpis.get("tiempo_conformidad", 45),
-            "tiempo_pago": enhanced_kpis.get("tiempo_pago", 39),
+            # Time breakdown for cycle analysis - SOLO DATOS REALES
+            "tiempo_emision": enhanced_kpis.get("tiempo_emision", 0),
+            "tiempo_gestion": enhanced_kpis.get("tiempo_gestion", 0),
+            "tiempo_conformidad": enhanced_kpis.get("tiempo_conformidad", 0),
+            "tiempo_pago": enhanced_kpis.get("tiempo_pago", 0),
         }
         
         # Merge operational enhancements
@@ -487,29 +482,29 @@ def _prepare_aging_data(kpis: Dict[str, Any], dashboard_data: Dict[str, Any]) ->
         import traceback
         logger.error(f"Full traceback: {traceback.format_exc()}")
         
-        # Return safe fallback aging structure
+        # Return empty aging structure - solo datos reales
         return {
             "buckets": {
-                "bucket_0_30": 45.2,
-                "bucket_31_60": 28.7,
-                "bucket_61_90": 18.3,
-                "bucket_91_120": 12.1,
-                "bucket_120_plus": 8.9,
+                "bucket_0_30": 0,
+                "bucket_31_60": 0,
+                "bucket_61_90": 0,
+                "bucket_91_120": 0,
+                "bucket_120_plus": 0,
             },
-            "total_pending": 113.2,
+            "total_pending": 0,
             "percentages": {
-                "pct_0_30": 40.0,
-                "pct_31_60": 25.4,
-                "pct_61_90": 16.2,
-                "pct_91_120": 10.7,
-                "pct_120_plus": 7.9,
+                "pct_0_30": 0,
+                "pct_31_60": 0,
+                "pct_61_90": 0,
+                "pct_91_120": 0,
+                "pct_120_plus": 0,
             },
-            "aging_trend": "estable",
-            "days_to_target": 15,
-            "worst_client": "Cliente ABC",
-            "worst_amount": 2.1,
+            "aging_trend": "sin_datos",
+            "days_to_target": 0,
+            "worst_client": "",
+            "worst_amount": 0,
             "critical_threshold": 90,
-            "risk_amount": 21.0,
+            "risk_amount": 0,
         }
 
 
@@ -824,9 +819,7 @@ def _get_fallback_command_center_data() -> Dict[str, Any]:
 @login_required
 @require_manager_or_above
 def dashboard():
-    """
-    Manager Dashboard Optimizado - Garantiza que todas las métricas se muestren correctamente.
-    """
+ 
     try:
         print("🚀 Iniciando dashboard optimizado...")
 
@@ -873,61 +866,20 @@ def dashboard():
             except Exception as e:
                 print(f"⚠️ Error calculando KPIs: {e}")
         
-        # Asegurar que tenemos todos los campos críticos del template
-        template_required_fields = {
-            # Core financial metrics
-            'ingresos_totales': 0.0,
-            'crecimiento_ingresos': 5.2,
-            'efficiency_score': 85.0,
-            'roi_promedio': 23.4,
-            'proyectos_completados': 12,
-            'satisfaccion_cliente': 96.0,
-            'total_edps': 0,
-            'objetivo_anual': 120.0,
-            'score_equipo': 94,
-            
-            # DSO and target metrics
-            'dso_actual': 47.2,
-            'progreso_objetivo': 78.0,
-            'dso_target_progress': 40.0,
-            'quality_score': 90.0,
-            
-            # Critical projects metrics
-            'critical_projects_count': 7,
-            'critical_projects_change': -12.0,
-            'critical_amount': 8.2,
-            
-            # Aging metrics
-            'aging_31_60_count': 12,
-            'aging_31_60_change': 8.0,
-            'aging_31_60_amount': 4.5,
-            
-            # Fast collection metrics
-            'fast_collection_count': 18,
-            'fast_collection_change': 15.0,
-            'fast_collection_amount': 6.1,
-            
-            # Target and gap metrics
-            'meta_gap': 5.5,
-            'days_remaining': 8,
-            
-            # Forecast metrics (7-day forecast)
-            'forecast_7_dias': 6.8,
-            'forecast_day_1': 1.2,
-            'forecast_day_2': 2.3,
-            'forecast_day_3': 1.8,
-            'forecast_day_4': 0.9,
-            'forecast_day_5': 0.6,
-            'forecast_day_6': 0.4,
-            'forecast_day_7': 0.2,
-            'forecast_accuracy': 85.0,  # Forecast accuracy percentage
-            'forecast_growth': 12.5,    # Forecast growth rate
-        }
+        # Solo llenar campos faltantes con 0 o valores neutros - NO datos de ejemplo
+        required_zero_fields = [
+            'ingresos_totales', 'crecimiento_ingresos', 'efficiency_score', 'roi_promedio',
+            'proyectos_completados', 'total_edps', 'dso_actual', 'progreso_objetivo',
+            'critical_projects_count', 'critical_projects_change', 'critical_amount',
+            'aging_31_60_count', 'aging_31_60_change', 'aging_31_60_amount',
+            'fast_collection_count', 'fast_collection_change', 'fast_collection_amount',
+            'meta_gap', 'days_remaining', 'forecast_7_dias', 'forecast_accuracy', 'forecast_growth'
+        ]
         
-        # Llenar campos faltantes con valores por defecto
-        for field, default_value in template_required_fields.items():
+        # Llenar campos faltantes solo con 0
+        for field in required_zero_fields:
             if field not in kpis_dict or kpis_dict[field] is None:
-                kpis_dict[field] = default_value
+                kpis_dict[field] = 0
         
         # Convertir a objeto para notación de punto
         kpis_object = DictToObject(kpis_dict)
@@ -1001,15 +953,15 @@ def dashboard():
             ).limit(4).all()  # Solo los primeros 4
             
             for usuario in equipo_query:
-                # Métricas básicas sin cálculos complejos
+                # Solo datos reales del usuario - sin métricas simuladas
                 equipo_operacional.append({
                     'nombre': usuario.nombre,
                     'apellido': usuario.apellido or '',
                     'rol': usuario.rol.replace('_', ' ').title() if usuario.rol else 'Team Member',
                     'activo': usuario.activo,
-                    'proyectos_asignados': 3,  # Valor por defecto
-                    'carga_trabajo': 85,       # Valor por defecto
-                    'rendimiento': 90          # Valor por defecto
+                    'proyectos_asignados': 0,  # Se puede calcular real si es necesario
+                    'carga_trabajo': 0,        # Se puede calcular real si es necesario
+                    'rendimiento': 0           # Se puede calcular real si es necesario
                 })
         except Exception as e:
             print(f"⚠️ Error obteniendo equipo: {e}")
@@ -1911,19 +1863,13 @@ def _prepare_operational_chart_data(kpis: Dict[str, Any], dashboard_data: Dict[s
                 }]
             }
         else:
-            # Fallback to KPI data if no profitability data
+            # Sin datos de profitabilidad - gráfico vacío
             rendimiento_gestores = {
-                "labels": ["María López", "Juan Pérez", "Ana García", "Carlos Ruiz", "Luis Silva"],
+                "labels": [],
                 "datasets": [{
                     "label": "Margen (%)",
-                    "data": [28.5, 26.1, 18.7, 15.2, 22.8],
-                    "backgroundColor": [
-                        "rgba(34, 197, 94, 0.8)",
-                        "rgba(34, 197, 94, 0.8)", 
-                        "rgba(251, 191, 36, 0.8)",
-                        "rgba(239, 68, 68, 0.8)",
-                        "rgba(251, 191, 36, 0.8)"
-                    ]
+                    "data": [],
+                    "backgroundColor": []
                 }]
             }
         
@@ -1956,24 +1902,18 @@ def _prepare_operational_chart_data(kpis: Dict[str, Any], dashboard_data: Dict[s
                 ]
             }
         else:
-            # Fallback using KPI client data if available
+            # Sin datos de clientes - gráfico vacío
             concentracion_clientes = {
-                "labels": [
-                    kpis.get("top_cliente_1", "Cliente Corporativo ABC"),
-                    "Cliente Tecnológico DEF", 
-                    "Cliente Industrial GHI",
-                    "Cliente Servicios JKL",
-                    "Cliente Comercial MNO"
-                ],
+                "labels": [],
                 "datasets": [
                     {
                         "label": "Facturado (M$)", 
-                        "data": [45.2, 28.7, 18.3, 12.1, 8.9],
+                        "data": [],
                         "backgroundColor": "rgba(59, 130, 246, 0.8)"
                     },
                     {
                         "label": "% Acumulado",
-                        "data": [35, 58, 72, 82, 90],
+                        "data": [],
                         "type": "line",
                         "borderColor": "rgb(239, 68, 68)"
                     }
@@ -2575,20 +2515,13 @@ def _generate_dso_analysis(datos_relacionados: Dict[str, Any], dashboard_data: D
     try:
         kpis = dashboard_data.get("executive_kpis", {})
         
-        # DSO actual y histórico
-        dso_actual = kpis.get("dso", 124)
+        # DSO actual y histórico - SOLO DATOS REALES
+        dso_actual = kpis.get("dso", 0)
         dso_objetivo = 90  # Target DSO
         dso_industria = 98  # Industry benchmark
         
-        # Evolución DSO últimos 12 meses
-        dso_evolution = [
-            {"month": "Ene", "dso": 118, "target": 90},
-            {"month": "Feb", "dso": 122, "target": 90},
-            {"month": "Mar", "dso": 126, "target": 90},
-            {"month": "Abr", "dso": 128, "target": 90},
-            {"month": "May", "dso": 125, "target": 90},
-            {"month": "Jun", "dso": 124, "target": 90},
-        ]
+        # Evolución DSO - SOLO SI HAY DATOS HISTÓRICOS REALES
+        dso_evolution = kpis.get("dso_historical", [])
         
         # Análisis por cliente (top deudores)
         client_dso_analysis = [
@@ -2636,15 +2569,8 @@ def _generate_dso_analysis(datos_relacionados: Dict[str, Any], dashboard_data: D
 def _generate_correlation_analysis(datos_relacionados: Dict[str, Any], dashboard_data: Dict[str, Any]) -> Dict[str, Any]:
     """Generate correlation analysis between different metrics"""
     try:
-        # Matriz de correlación entre métricas clave
-        correlations = {
-            "dso_vs_profitability": -0.73,  # Negative correlation
-            "collection_rate_vs_cash_flow": 0.89,  # Strong positive
-            "project_delay_vs_dso": 0.65,  # Positive correlation
-            "client_satisfaction_vs_payment": 0.58,
-            "team_efficiency_vs_profitability": 0.72,
-            "invoice_accuracy_vs_collection": 0.84
-        }
+        # Matriz de correlación - SOLO SI HAY DATOS SUFICIENTES PARA CALCULAR
+        correlations = kpis.get("correlations_matrix", {})
         
         # Insights de correlaciones
         correlation_insights = [
@@ -2712,15 +2638,8 @@ def _generate_correlation_analysis(datos_relacionados: Dict[str, Any], dashboard
 def _generate_predictive_analysis(datos_relacionados: Dict[str, Any], dashboard_data: Dict[str, Any]) -> Dict[str, Any]:
     """Generate predictive analysis and forecasting"""
     try:
-        # Predicción de cash flow próximos 6 meses
-        cash_flow_forecast = [
-            {"month": "Jul", "predicted": 38.5, "confidence": 85, "scenario": "base"},
-            {"month": "Ago", "predicted": 42.1, "confidence": 82, "scenario": "base"},
-            {"month": "Sep", "predicted": 39.8, "confidence": 78, "scenario": "base"},
-            {"month": "Oct", "predicted": 44.2, "confidence": 75, "scenario": "base"},
-            {"month": "Nov", "predicted": 41.7, "confidence": 72, "scenario": "base"},
-            {"month": "Dic", "predicted": 48.9, "confidence": 68, "scenario": "base"},
-        ]
+        # Predicción de cash flow - SOLO SI HAY DATOS HISTÓRICOS REALES
+        cash_flow_forecast = kpis.get("cash_flow_forecast", [])
         
         # Predicción de proyectos en riesgo
         risk_forecast = {

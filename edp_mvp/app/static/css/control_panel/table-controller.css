@@ -111,30 +111,30 @@
   
   .estado-pendiente {
     background-color: var(--state-warning-bg);
-    color: var(--accent-amber);
+    color: var(--text-primary);
   }
   
   .estado-revisión {
     background-color: var(--state-info-bg);
-    color: var(--accent-white);
+    color: var(--text-primary);
     font-weight: bold;
   }
   
   .estado-enviado {
     background-color: var(--state-progress-bg);
-    color: var(--accent-white);
+    color: var(--text-primary);
     font-weight: bold;
   }
   
   .estado-pagado {
     background-color: var(--state-success-bg);
-    color: var(--accent-white);
+    color: var(--text-primary);
     font-weight: bold;
   }
   
   .estado-validado {
     background-color: var(--state-success-bg);
-    color: var(--accent-white);
+    color: var(--text-primary);
     font-weight: bold;
   }
   
@@ -175,4 +175,174 @@
   
   #critical-alert-section {
     animation: fadeInSoft 0.5s ease-out;
+  }
+  
+  /* ===== ESTILOS PARA TABLA RESPONSIVE OPTIMIZADA ===== */
+  
+  /* Tabla con scroll horizontal suave */
+  .table-responsive .overflow-x-auto {
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-blue) var(--bg-tertiary);
+  }
+  
+  .table-responsive .overflow-x-auto::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .table-responsive .overflow-x-auto::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+  }
+  
+  .table-responsive .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: var(--accent-blue);
+    border-radius: 4px;
+  }
+  
+  .table-responsive .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-blue-dark);
+  }
+  
+  /* Columna sticky del EDP */
+  .data-table th.sticky,
+  .data-table td.sticky {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  }
+  
+  /* Mejoras para el formato de montos */
+  .data-table .monto-format {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Estados mejorados para la tabla */
+  .estado-revisión {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark));
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  }
+  
+  .estado-enviado {
+    background: linear-gradient(135deg, var(--accent-warning), #f59e0b);
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+  }
+  
+  .estado-validado {
+    background: linear-gradient(135deg, var(--accent-purple), #8b5cf6);
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+  }
+  
+  .estado-pagado {
+    background: linear-gradient(135deg, var(--accent-green), #10b981);
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+  }
+  
+  /* Botones de acción compactos */
+  .data-table .action-buttons {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+  }
+  
+  .data-table .action-button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+  
+  .data-table .action-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+  
+  /* Responsive breakpoints para la tabla */
+  @media (max-width: 1280px) {
+    .data-table {
+      font-size: 0.875rem;
+    }
+    
+    .data-table th,
+    .data-table td {
+      padding: 0.5rem 0.75rem;
+    }
+  }
+  
+  @media (max-width: 1024px) {
+    .data-table {
+      font-size: 0.8rem;
+    }
+    
+    .data-table th,
+    .data-table td {
+      padding: 0.5rem;
+    }
+    
+    .estado-pill {
+      font-size: 0.625rem;
+      padding: 0.125rem 0.375rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .data-table {
+      font-size: 0.75rem;
+    }
+    
+    .data-table .action-button {
+      width: 28px;
+      height: 28px;
+    }
+    
+    .data-table .action-button svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+  
+  /* Indicadores visuales para columnas críticas */
+  .data-table .dias-critico {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+    border-left: 3px solid var(--accent-danger);
+  }
+  
+  .data-table .dias-atencion {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+    border-left: 3px solid var(--accent-warning);
+  }
+  
+  .data-table .dias-normal {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+    border-left: 3px solid var(--accent-green);
+  }
+  
+  /* Animación suave para el hover de filas */
+  .data-table tbody tr {
+    transition: all 0.2s ease;
+  }
+  
+  .data-table tbody tr:hover {
+    background: linear-gradient(135deg, var(--bg-card-hover), var(--bg-highlight));
+    transform: translateX(2px);
+  }
+  
+  /* Mejoras para la columna sticky del EDP */
+  .data-table .edp-column {
+    background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+    border-right: 2px solid var(--border-primary);
+  }
+  
+  .data-table tr:hover .edp-column {
+    background: linear-gradient(135deg, var(--accent-blue)/10, var(--accent-blue)/5);
   }
