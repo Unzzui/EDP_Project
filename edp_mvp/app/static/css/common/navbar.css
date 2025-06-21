@@ -1,68 +1,86 @@
-/* ========================================
-   🎨 NAVBAR MODERNO Y ELEGANTE
-   Compatible con manager-theme.css
-   ======================================== */
+/* ==========================================================================
+   Executive Dashboard Navbar
+   Dual Theme: Command Center (Dark) / Executive Suite (Light)
+   ========================================================================== */
 
-/* Variables CSS específicas del navbar (sin conflictos) */
+/* ==========================================================================
+   Navbar Foundation Variables
+   ========================================================================== */
+
 :root {
   --navbar-height: 4rem;
   --navbar-blur: blur(20px) saturate(180%);
-  --navbar-transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --navbar-transition-fast: all 0.15s ease-out;
-  --navbar-border-radius: 0.75rem;
-  --navbar-primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --navbar-accent-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --navbar-success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --navbar-transition-smooth: var(--transition-normal);
+  --navbar-transition-fast: var(--transition-fast);
+  --navbar-border-radius: var(--radius-lg);
+  --navbar-primary-gradient: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-tertiary) 100%);
+  --navbar-accent-gradient: linear-gradient(135deg, var(--accent-secondary) 0%, #f5576c 100%);
+  --navbar-success-gradient: linear-gradient(135deg, var(--accent-tertiary) 0%, #00f2fe 100%);
 }
 
-/* ========================================
-   🌟 NAVBAR BASE
-   ======================================== */
+[data-theme="dark"] {
+  --navbar-primary-gradient: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-tertiary) 100%);
+  --navbar-accent-gradient: linear-gradient(135deg, var(--accent-secondary) 0%, #ff3388 100%);
+  --navbar-success-gradient: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-tertiary) 100%);
+}
+
+/* ==========================================================================
+   Base Navbar Styles
+   ========================================================================== */
 
 nav {
   backdrop-filter: var(--navbar-blur);
   -webkit-backdrop-filter: var(--navbar-blur);
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-primary);
+  box-shadow: var(--shadow-subtle);
   transition: var(--navbar-transition-smooth);
   position: sticky;
   top: 0;
   z-index: 1000;
 }
 
+[data-theme="dark"] nav {
+  background: rgba(0, 0, 0, 0.8);
+  border-bottom: 1px solid var(--border-primary);
+}
+
 nav:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-elevated);
 }
 
 /* Contenedor principal del navbar */
 .navbar-container {
-  max-width: 1280px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 var(--space-lg);
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: var(--navbar-height);
 }
 
-/* ========================================
-   🎯 LOGO Y BRANDING
-   ======================================== */
+/* ==========================================================================
+   Logo y Branding
+   ========================================================================== */
 
 .navbar-logo {
   display: flex;
   align-items: center;
   text-decoration: none;
   transition: var(--navbar-transition-smooth);
-  padding: 0.5rem;
+  padding: var(--space-sm);
   border-radius: var(--navbar-border-radius);
 }
 
 .navbar-logo:hover {
   transform: translateY(-1px);
-  background: var(--bg-hover);
+  background: var(--bg-tertiary);
   text-decoration: none;
+}
+
+[data-theme="dark"] .navbar-logo:hover {
+  background: var(--bg-tertiary);
 }
 
 .logo-icon {
@@ -70,23 +88,45 @@ nav:hover {
   height: 2.5rem;
   margin-right: 0.75rem;
   background: var(--navbar-primary-gradient);
-  border-radius: 0.75rem;
+  border-radius: var(--navbar-border-radius);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-interactive);
   transition: var(--navbar-transition-smooth);
+}
+
+[data-theme="dark"] .logo-icon {
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
 }
 
 .navbar-logo:hover .logo-icon {
   transform: rotate(5deg) scale(1.05);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-elevated);
+}
+
+[data-theme="dark"] .navbar-logo:hover .logo-icon {
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+  animation: pulse-logo 1s ease-in-out;
+}
+
+@keyframes pulse-logo {
+  0%, 100% {
+    transform: rotate(5deg) scale(1.05);
+  }
+  50% {
+    transform: rotate(5deg) scale(1.15);
+  }
 }
 
 .logo-icon svg {
   width: 1.5rem;
   height: 1.5rem;
   color: white;
+}
+
+[data-theme="dark"] .logo-icon svg {
+  color: #000000;
 }
 
 .logo-text {
@@ -104,6 +144,12 @@ nav:hover {
   line-height: 1.2;
 }
 
+[data-theme="dark"] .logo-title {
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .logo-subtitle {
   font-size: 0.75rem;
   color: var(--text-secondary);
@@ -111,9 +157,14 @@ nav:hover {
   margin-top: -0.125rem;
 }
 
-/* ========================================
-   📱 MENÚ MÓVIL
-   ======================================== */
+[data-theme="dark"] .logo-subtitle {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+}
+
+/* ==========================================================================
+   Mobile Menu Button
+   ========================================================================== */
 
 .mobile-menu-button {
   display: none;
@@ -121,7 +172,7 @@ nav:hover {
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   background: transparent;
   border: none;
   color: var(--text-primary);
@@ -130,12 +181,17 @@ nav:hover {
 }
 
 .mobile-menu-button:hover {
-  background: var(--bg-hover);
+  background: var(--bg-tertiary);
   transform: scale(1.05);
 }
 
+[data-theme="dark"] .mobile-menu-button:hover {
+  background: var(--bg-tertiary);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+}
+
 .mobile-menu-button:focus {
-  outline: 2px solid var(--accent-blue);
+  outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }
 
@@ -145,14 +201,14 @@ nav:hover {
   }
 }
 
-/* ========================================
-   🧭 NAVEGACIÓN PRINCIPAL
-   ======================================== */
+/* ==========================================================================
+   Navigation Principal
+   ========================================================================== */
 
 .navbar-nav {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -165,102 +221,159 @@ nav:hover {
 }
 
 .nav-item {
-  position: relative;
+  position: relative !important;
 }
 
 .nav-link,
 .nav-button {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--navbar-border-radius);
   text-decoration: none;
   color: var(--text-primary);
+  font-family: "Space Grotesk", system-ui, sans-serif;
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 13px;
   transition: var(--navbar-transition-smooth);
   background: transparent;
   border: none;
   cursor: pointer;
   white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="dark"] .nav-link,
+[data-theme="dark"] .nav-button {
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 400;
 }
 
 .nav-link:hover,
 .nav-button:hover {
-  background: var(--bg-subtle, var(--bg-hover));
+  background: var(--bg-tertiary);
   color: var(--text-primary);
   text-decoration: none;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .nav-link:hover,
+[data-theme="dark"] .nav-button:hover {
+  background: var(--bg-tertiary);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
 }
 
 .nav-link:focus,
 .nav-button:focus {
-  outline: 2px solid var(--accent-blue);
+  outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }
 
-.nav-icon {
-  width: 1rem;
-  height: 1rem;
-  margin-right: 0.5rem;
-  transition: var(--navbar-transition-fast);
+/* Active Navigation State */
+.nav-link.active,
+.nav-button.active {
+  background: var(--accent-muted);
+  color: var(--accent-primary);
+  border: 1px solid rgba(0, 102, 204, 0.2);
 }
 
+[data-theme="dark"] .nav-link.active,
+[data-theme="dark"] .nav-button.active {
+  background: rgba(0, 255, 136, 0.1);
+  color: var(--accent-primary);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+/* Icons for navigation */
+.nav-icon {
+  margin-right: 6px;
+  width: 16px;
+  height: 16px;
+  transition: all var(--navbar-transition-fast);
+}
+
+/* Arrow for dropdowns */
 .nav-arrow {
-  width: 1rem;
-  height: 1rem;
-  margin-left: 0.5rem;
-  transition: var(--navbar-transition-smooth);
+  margin-left: 4px;
+  width: 12px;
+  height: 12px;
+  transition: transform var(--navbar-transition-fast);
 }
 
 .nav-button[aria-expanded="true"] .nav-arrow {
   transform: rotate(180deg);
 }
 
-/* ========================================
-   📋 DROPDOWNS
-   ======================================== */
+/* ==========================================================================
+   Dropdown Menus
+   ========================================================================== */
 
 .dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
-  min-width: 16rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  min-width: 180px;
+  max-width: 220px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
+  padding: 8px;
+  margin-top: 4px;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-10px) scale(0.95);
-  transition: var(--navbar-transition-smooth);
-  margin-top: 0.5rem;
-  overflow: hidden;
+  transform: translateY(-10px);
+  transition: all var(--navbar-transition-fast);
+  z-index: 1001;
+}
+
+[data-theme="dark"] .dropdown-menu {
+  border-radius: 2px;
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.1);
 }
 
 .dropdown-menu.show,
 .dropdown-menu:not(.hidden) {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0) scale(1);
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+}
+
+/* Forzar visibilidad cuando JavaScript aplica estilos inline */
+.dropdown-menu[style*="display: block"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
 }
 
 .dropdown-content {
-  padding: 0.75rem 0;
-  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .dropdown-item {
   display: flex;
   align-items: center;
-  padding: 0.875rem 1.25rem;
-  text-decoration: none;
+  padding: 0.5rem 0.75rem;
   color: var(--text-primary);
-  font-size: 0.875rem;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: all var(--navbar-transition-fast);
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 12px;
   font-weight: 500;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid var(--border-color-subtle, var(--border-color));
-  background: var(--bg-card);
+  letter-spacing: 0.01em;
+}
+
+[data-theme="dark"] .dropdown-item {
+  border-radius: 2px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .dropdown-item:last-child {
@@ -268,78 +381,103 @@ nav:hover {
 }
 
 .dropdown-item:hover {
-  background: var(--bg-subtle, var(--bg-hover));
+  background: var(--bg-tertiary);
   color: var(--text-primary);
-  padding-left: 1.5rem;
   text-decoration: none;
+  transform: translateX(4px);
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+  background: var(--bg-tertiary);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.1);
 }
 
 .dropdown-item:active {
-  background: var(--bg-hover);
+  transform: translateX(2px);
 }
 
 .dropdown-item:focus {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: -2px;
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 .dropdown-icon {
-  width: 1.125rem;
-  height: 1.125rem;
-  margin-right: 0.875rem;
-  opacity: 0.8;
-  transition: all 0.2s ease;
+  margin-right: 8px;
+  width: 14px;
+  height: 14px;
   color: var(--text-secondary);
+  transition: color var(--navbar-transition-fast);
 }
 
 .dropdown-item:hover .dropdown-icon {
-  opacity: 1;
-  color: var(--text-primary);
+  color: var(--accent-primary);
 }
 
-/* ========================================
-   📱 MENÚ MÓVIL DESPLEGABLE
-   ======================================== */
+[data-theme="dark"] .dropdown-item:hover .dropdown-icon {
+  color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   Mobile Menu
+   ========================================================================== */
 
 .mobile-menu {
-  display: none;
-  position: absolute;
-  top: 100%;
+  position: fixed;
+  top: var(--navbar-height);
   left: 0;
   right: 0;
-  background: var(--bg-card);
-  border-top: 1px solid var(--border-color);
-  box-shadow: var(--shadow-md);
-  backdrop-filter: var(--navbar-blur);
-  -webkit-backdrop-filter: var(--navbar-blur);
-  z-index: 999;
+  width: 100%;
+  max-height: calc(100vh - var(--navbar-height));
+  background: var(--bg-secondary);
+  border-top: 2px solid var(--border-primary);
+  padding: var(--space-lg);
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-10px);
-  transition: var(--navbar-transition-smooth);
+  transform: translateY(-20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 9999;
+  overflow-y: auto;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
+[data-theme="dark"] .mobile-menu {
+  background: rgba(0, 0, 0, 0.95);
+  border-top: 2px solid var(--accent-primary);
+  box-shadow: 0 -4px 20px rgba(0, 255, 136, 0.1);
+}
+
+/* Estados del menú móvil */
 .mobile-menu.show,
 .mobile-menu:not(.hidden) {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
 }
 
+/* Asegurar que se muestre en móviles */
 @media (max-width: 768px) {
   .mobile-menu {
     display: block;
   }
+  
+  /* Forzar visibilidad cuando no está hidden */
+  .mobile-menu:not(.hidden) {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+    display: block !important;
+  }
 }
 
 .mobile-nav {
-  padding: 1rem;
-  max-height: 70vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
 }
 
 .mobile-nav-item {
-  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .mobile-nav-link,
@@ -348,56 +486,289 @@ nav:hover {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 1rem;
-  border-radius: var(--navbar-border-radius);
-  text-decoration: none;
+  padding: 1rem 0;
   color: var(--text-primary);
+  text-decoration: none;
   font-weight: 500;
+  font-size: 1rem;
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: var(--navbar-transition-fast);
+  transition: all var(--navbar-transition-fast);
+}
+
+[data-theme="dark"] .mobile-nav-link,
+[data-theme="dark"] .mobile-nav-button {
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .mobile-nav-link:hover,
 .mobile-nav-button:hover {
-  background: var(--bg-hover);
-  color: var(--accent-blue);
+  color: var(--accent-primary);
   text-decoration: none;
+  padding-left: var(--space-sm);
 }
 
 .mobile-dropdown-content {
-  padding-left: 1rem;
-  margin-top: 0.5rem;
-  border-left: 2px solid var(--border-color);
+  padding-left: var(--space-lg);
+  margin-top: var(--space-sm);
+  border-left: 2px solid var(--border-primary);
 }
 
 .mobile-dropdown-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  border-radius: calc(var(--navbar-border-radius) - 0.25rem);
-  text-decoration: none;
+  display: block;
+  padding: 0.75rem 0;
   color: var(--text-secondary);
+  text-decoration: none;
   font-size: 0.875rem;
-  transition: var(--navbar-transition-fast);
-  margin-bottom: 0.25rem;
+  transition: all var(--navbar-transition-fast);
 }
 
 .mobile-dropdown-item:hover {
-  background: var(--bg-hover);
-  color: var(--accent-blue);
+  color: var(--accent-primary);
   text-decoration: none;
+  padding-left: var(--space-sm);
 }
 
-/* ========================================
-   ✨ ANIMACIONES Y EFECTOS
-   ======================================== */
+/* ==========================================================================
+   Mejoras para Menú Móvil
+   ========================================================================== */
+
+/* Overlay para cerrar el menú móvil */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Animaciones mejoradas para los submenús móviles */
+#mobile-controller-menu,
+#mobile-manager-menu,
+#mobile-project-manager-menu,
+#mobile-edp-menu,
+#mobile-admin-menu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  padding-top: 0;
+}
+
+#mobile-controller-menu:not(.hidden),
+#mobile-manager-menu:not(.hidden),
+#mobile-project-manager-menu:not(.hidden),
+#mobile-edp-menu:not(.hidden),
+#mobile-admin-menu:not(.hidden) {
+  max-height: 300px !important;
+  opacity: 1 !important;
+  padding-top: 0.25rem !important;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              padding-top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Estilo genérico para todos los contenidos de dropdown móvil */
+.mobile-dropdown-content {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Rotación de flechas */
+.transform {
+  transition: transform 0.2s ease-in-out;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* Estilos específicos para el botón hamburguesa */
+.mobile-menu-button {
+  position: relative;
+  z-index: 10000;
+}
+
+.mobile-menu-button svg {
+  transition: all 0.3s ease;
+}
+
+/* Estado activo del menú móvil */
+.mobile-menu-active .mobile-menu-button {
+  background: var(--accent-primary);
+  color: white;
+}
+
+[data-theme="dark"] .mobile-menu-active .mobile-menu-button {
+  background: var(--accent-primary);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+}
+
+/* Prevenir scroll del body cuando el menú está abierto */
+body.mobile-menu-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* Mejorar la visibilidad en dispositivos muy pequeños */
+@media (max-width: 480px) {
+  .mobile-menu {
+    padding: var(--space-md);
+  }
+  
+  .navbar-container {
+    padding: 0 var(--space-md);
+  }
+}
+
+/* Asegurar que Tailwind CSS no interfiera */
+.mobile-menu:not(.hidden) {
+  display: block !important;
+}
+
+/* Mejoras adicionales para submenús móviles */
+[id^="mobile-"][id$="-menu"] {
+  padding-left: 1.5rem;
+  border-left: 2px solid var(--border-primary);
+  margin-left: 0.75rem;
+}
+
+[id^="mobile-"][id$="-menu"] a {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+[id^="mobile-"][id$="-menu"] a:hover {
+  background-color: var(--bg-highlight);
+  color: var(--accent-primary);
+  transform: translateX(4px);
+}
+
+[data-theme="dark"] [id^="mobile-"][id$="-menu"] {
+  border-left-color: var(--accent-primary);
+}
+
+[data-theme="dark"] [id^="mobile-"][id$="-menu"] a {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] [id^="mobile-"][id$="-menu"] a:hover {
+  background-color: var(--bg-highlight);
+  color: var(--accent-primary);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+}
+
+/* Debugging para móvil */
+@media (max-width: 768px) {
+  [id^="mobile-"][id$="-menu"]:not(.hidden) {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* Forzar visibilidad en debugging */
+  .debug-mobile-submenu {
+    display: block !important;
+    opacity: 1 !important;
+    max-height: 300px !important;
+    background: rgba(255, 255, 0, 0.1) !important;
+    border: 1px solid yellow !important;
+  }
+}
+
+/* OVERRIDE FUERTE para submenús móviles - Sobrescribir TODO */
+#mobile-controller-menu,
+#mobile-manager-menu,
+#mobile-project-manager-menu, 
+#mobile-edp-menu,
+#mobile-admin-menu {
+  /* Reset completo */
+  all: unset !important;
+  
+  /* Aplicar estilos básicos */
+  display: none !important;
+  position: static !important;
+  width: 100% !important;
+  background: transparent !important;
+  color: inherit !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  
+  /* Animaciones */
+  max-height: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Estado visible */
+#mobile-controller-menu:not(.hidden),
+#mobile-manager-menu:not(.hidden),
+#mobile-project-manager-menu:not(.hidden),
+#mobile-edp-menu:not(.hidden),
+#mobile-admin-menu:not(.hidden) {
+  display: block !important;
+  max-height: 500px !important;
+  opacity: 1 !important;
+  padding: 0.5rem 0 !important;
+  margin-top: 0.5rem !important;
+  margin-left: 1rem !important;
+  border-left: 3px solid var(--accent-primary) !important;
+  padding-left: 1rem !important;
+}
+
+/* Links dentro de submenús */
+#mobile-controller-menu a,
+#mobile-manager-menu a,
+#mobile-project-manager-menu a,
+#mobile-edp-menu a,
+#mobile-admin-menu a {
+  display: block !important;
+  padding: 0.5rem 0.75rem !important;
+  color: var(--text-primary) !important;
+  text-decoration: none !important;
+  border-radius: 0.25rem !important;
+  margin: 0.125rem 0 !important;
+  transition: background-color 0.2s ease !important;
+}
+
+#mobile-controller-menu a:hover,
+#mobile-manager-menu a:hover,
+#mobile-project-manager-menu a:hover,
+#mobile-edp-menu a:hover,
+#mobile-admin-menu a:hover {
+  background-color: var(--bg-highlight) !important;
+  color: var(--accent-primary) !important;
+}
+
+/* ==========================================================================
+   Animation Classes
+   ========================================================================== */
 
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -408,11 +779,11 @@ nav:hover {
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
@@ -424,53 +795,59 @@ nav:hover {
   animation: fadeInUp 0.3s ease-out;
 }
 
-/* ========================================
-   🎨 EFECTOS ESPECIALES
-   ======================================== */
+/* ==========================================================================
+   Enhanced Interactions
+   ========================================================================== */
 
-/* Efecto sutil en hover - más profesional */
+/* Hover effects for links */
 .nav-link,
-.nav-button {
+.dropdown-item,
+.mobile-nav-link {
   position: relative;
-  overflow: hidden;
 }
 
 .nav-link::after,
-.nav-button::after {
+.dropdown-item::after {
   content: '';
   position: absolute;
   bottom: 0;
   left: 50%;
   width: 0;
   height: 2px;
-  background: var(--accent-blue);
-  transition: all 0.3s ease;
+  background: var(--accent-primary);
+  transition: all var(--navbar-transition-fast);
   transform: translateX(-50%);
 }
 
+[data-theme="dark"] .nav-link::after,
+[data-theme="dark"] .dropdown-item::after {
+  height: 1px;
+  background: var(--accent-primary);
+  box-shadow: 0 0 4px var(--accent-primary);
+}
+
 .nav-link:hover::after,
-.nav-button:hover::after {
+.dropdown-item:hover::after {
   width: 80%;
 }
 
-/* Indicador activo */
 .nav-link.active,
-.nav-button.active {
-  background: var(--navbar-primary-gradient);
-  color: white;
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+.dropdown-item.active {
+  color: var(--accent-primary);
 }
 
 .nav-link.active:hover,
-.nav-button.active:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+.dropdown-item.active:hover {
+  color: var(--accent-primary);
+  filter: brightness(1.1);
 }
 
-/* ========================================
-   🔧 UTILIDADES
-   ======================================== */
+[data-theme="dark"] .nav-link.active,
+[data-theme="dark"] .dropdown-item.active {
+  text-shadow: 0 0 8px var(--accent-primary);
+}
 
+/* Screen reader only */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -483,50 +860,52 @@ nav:hover {
   border: 0;
 }
 
-/* Focus visible para accesibilidad */
+/* Focus styles for accessibility */
 .nav-link:focus-visible,
 .nav-button:focus-visible,
-.dropdown-item:focus-visible {
-  outline: 2px solid var(--accent-blue);
+.dropdown-item:focus-visible,
+.mobile-nav-link:focus-visible {
+  outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
-/* ========================================
-   📐 RESPONSIVE BREAKPOINTS
-   ======================================== */
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
 
 @media (max-width: 640px) {
   .navbar-container {
-    padding: 0 0.75rem;
+    padding: 0 var(--space-md);
   }
-  
+
   .logo-title {
     font-size: 1.25rem;
   }
-  
+
   .logo-subtitle {
-    font-size: 0.6875rem;
+    display: none;
   }
 }
 
 @media (min-width: 1024px) {
   .navbar-nav {
-    gap: 0.75rem;
+    gap: var(--space-md);
   }
-  
+
   .nav-link,
   .nav-button {
     padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
   }
 }
 
-/* ========================================
-   🎯 ESTADOS DE CARGA
-   ======================================== */
+/* ==========================================================================
+   Loading States
+   ========================================================================== */
 
 .navbar-loading {
-  opacity: 0.7;
-  pointer-events: none;
+  position: relative;
 }
 
 .navbar-loading::after {
@@ -534,174 +913,323 @@ nav:hover {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
+  width: 100%;
   height: 2px;
-  background: var(--navbar-primary-gradient);
-  animation: loading 1.5s infinite;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent-primary),
+    transparent
+  );
+  animation: loading 2s infinite;
 }
 
 @keyframes loading {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
-/* ========================================
-   🔧 COMPATIBILIDAD CON MANAGER-THEME
-   ======================================== */
+/* ==========================================================================
+   Advanced Dropdown Enhancements
+   ========================================================================== */
 
-/* Asegurar que el navbar no interfiera con otros elementos */
 .navbar-nav,
-.navbar-nav *,
-.dropdown-menu,
-.dropdown-menu *,
-.mobile-menu,
-.mobile-menu * {
-  /* Resetear cualquier herencia no deseada */
-  box-sizing: border-box;
+.dropdown-menu {
+  /* Enhanced z-index management */
+  z-index: 1000;
 }
 
-/* Asegurar que los dropdowns tengan la máxima prioridad visual */
+.nav-item:hover .dropdown-menu,
+.nav-item:focus-within .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
 .dropdown-menu:not(.hidden) {
-  display: block !important;
-  position: absolute !important;
-  z-index: 999999 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  transform: translateY(0) scale(1) !important;
-  pointer-events: auto !important;
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border-color) !important;
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
-/* Estilos profesionales adicionales para dropdowns */
+/* Dropdown arrow */
 .dropdown-menu::before {
   content: '';
   position: absolute;
   top: -6px;
   left: 20px;
-  width: 12px;
-  height: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-bottom: none;
-  border-right: none;
-  transform: rotate(45deg);
-  z-index: -1;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid var(--bg-secondary);
 }
 
-/* Separadores en el dropdown */
+[data-theme="dark"] .dropdown-menu::before {
+  border-bottom-color: var(--bg-secondary);
+  filter: drop-shadow(0 -2px 4px rgba(0, 255, 136, 0.1));
+}
+
+/* Dropdown separators */
 .dropdown-separator {
   height: 1px;
-  background: var(--border-color);
-  margin: 0.5rem 0;
+  background: var(--border-primary);
+  margin: var(--space-xs) 0;
 }
 
-/* Títulos de sección en dropdown */
+/* Dropdown headers */
 .dropdown-header {
-  padding: 0.5rem 1.25rem 0.25rem;
+  padding: var(--space-sm) 1rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: var(--bg-subtle, var(--bg-card));
-  border-bottom: 1px solid var(--border-color-subtle, var(--border-color));
 }
 
-/* Mejorar contraste en modo oscuro */
+[data-theme="dark"] .dropdown-header {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+}
+
+/* ==========================================================================
+   Dark Theme Specific Enhancements
+   ========================================================================== */
+
 [data-theme="dark"] .dropdown-menu,
-.dark .dropdown-menu {
-  background: var(--bg-card) !important;
-  border-color: var(--border-color) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+[data-theme="dark"] .mobile-menu {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
 }
 
 [data-theme="dark"] .dropdown-content,
-.dark .dropdown-content {
-  background: var(--bg-card) !important;
+[data-theme="dark"] .mobile-nav {
+  background: transparent;
 }
 
 [data-theme="dark"] .dropdown-item,
-.dark .dropdown-item {
-  color: var(--text-primary) !important;
-  background: var(--bg-card) !important;
-  border-bottom-color: var(--border-color-subtle) !important;
+[data-theme="dark"] .mobile-nav-link {
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .dropdown-item:hover,
-.dark .dropdown-item:hover {
-  background: var(--bg-hover) !important;
-  color: var(--text-primary) !important;
+[data-theme="dark"] .mobile-nav-link:hover {
+  background: var(--bg-tertiary);
+  color: var(--accent-primary);
 }
 
 [data-theme="dark"] .dropdown-icon,
-.dark .dropdown-icon {
-  color: var(--text-secondary) !important;
+[data-theme="dark"] .nav-arrow {
+  color: var(--text-secondary);
 }
 
 [data-theme="dark"] .dropdown-item:hover .dropdown-icon,
-.dark .dropdown-item:hover .dropdown-icon {
-  color: var(--text-primary) !important;
+[data-theme="dark"] .nav-button:hover .nav-arrow {
+  color: var(--accent-primary);
 }
 
 [data-theme="dark"] .dropdown-menu::before,
-.dark .dropdown-menu::before {
-  background: var(--bg-card);
-  border-color: var(--border-color);
+[data-theme="dark"] .mobile-menu {
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
 }
 
-/* ========================================
-   🌙 MODO OSCURO - FORZAR ESTILOS CORRECTOS
-   ======================================== */
-
-/* Forzar estilos correctos en modo oscuro cuando JavaScript aplica estilos inline */
-[data-theme="dark"] .dropdown-menu:not(.hidden),
-.dark .dropdown-menu:not(.hidden) {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border-color) !important;
-  color: var(--text-primary) !important;
+[data-theme="dark"] .dropdown-menu:not(.hidden) {
+  border: 1px solid var(--border-secondary);
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.15);
 }
 
-/* Asegurar que todos los items del dropdown tengan el color correcto */
 [data-theme="dark"] .dropdown-menu a,
-[data-theme="dark"] .dropdown-menu button,
-.dark .dropdown-menu a,
-.dark .dropdown-menu button {
-  color: var(--text-primary) !important;
-  background: transparent !important;
+[data-theme="dark"] .mobile-nav-link {
+  color: var(--text-primary);
+  transition: all var(--navbar-transition-fast);
 }
 
 [data-theme="dark"] .dropdown-menu a:hover,
-[data-theme="dark"] .dropdown-menu button:hover,
-.dark .dropdown-menu a:hover,
-.dark .dropdown-menu button:hover {
-  background: var(--bg-hover) !important;
-  color: var(--text-primary) !important;
+[data-theme="dark"] .mobile-nav-link:hover {
+  color: var(--accent-primary);
+  text-shadow: 0 0 8px var(--accent-primary);
+  transform: translateX(4px);
 }
 
-/* Estilos para iconos en modo oscuro */
 [data-theme="dark"] .dropdown-menu svg,
-.dark .dropdown-menu svg {
-  color: var(--text-secondary) !important;
+[data-theme="dark"] .mobile-nav svg {
+  color: var(--text-secondary);
 }
 
 [data-theme="dark"] .dropdown-menu a:hover svg,
-[data-theme="dark"] .dropdown-menu button:hover svg,
-.dark .dropdown-menu a:hover svg,
-.dark .dropdown-menu button:hover svg {
-  color: var(--text-primary) !important;
+[data-theme="dark"] .mobile-nav-link:hover svg {
+  color: var(--accent-primary);
 }
 
-/* Separadores en modo oscuro */
 [data-theme="dark"] .dropdown-separator,
-.dark .dropdown-separator {
-  background: var(--border-color) !important;
+[data-theme="dark"] .mobile-nav-item {
+  border-color: var(--border-primary);
 }
 
-/* Headers en modo oscuro */
 [data-theme="dark"] .dropdown-header,
-.dark .dropdown-header {
-  color: var(--text-secondary) !important;
-  background: var(--bg-subtle) !important;
-  border-bottom-color: var(--border-color-subtle) !important;
+[data-theme="dark"] .mobile-dropdown-item {
+  color: var(--text-tertiary);
+}
+
+/* ==========================================================================
+   Pagora Logo Styles - Command Center Theme
+   ========================================================================== */
+
+.pagora-navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagora-navbar-icon {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+
+/* Terminal-style geometric icon */
+.pagora-navbar-icon-frame {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #00ff88;
+  background: #000000;
+  position: relative;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
+}
+
+.pagora-navbar-icon-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background: #00ff88;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 3px) 0,
+    100% 3px,
+    100% 100%,
+    3px 100%,
+    0 calc(100% - 3px)
+  );
+  animation: pagora-pulse 2s ease-in-out infinite;
+}
+
+@keyframes pagora-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 15px #00ff88;
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 8px #00ff88;
+  }
+}
+
+/* Esquinas removidas para diseño más limpio */
+
+.pagora-navbar-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.pagora-navbar-brand {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  line-height: 1;
+}
+
+.pagora-navbar-subtitle {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.15em;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+/* Data stream effect */
+.pagora-navbar-icon::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: calc(100% + 6px);
+  height: calc(100% + 6px);
+  border: 1px solid #0066ff;
+  opacity: 0.3;
+  animation: pagora-data-scan 4s linear infinite;
+}
+
+@keyframes pagora-data-scan {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.05);
+    opacity: 0.6;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Light theme adaptations */
+[data-theme="light"] .pagora-navbar-icon-frame {
+  background: linear-gradient(135deg, #0066cc, #1d4ed8);
+  border: 2px solid #0066cc;
+}
+
+[data-theme="light"] .pagora-navbar-icon-core {
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 102, 204, 0.3);
+}
+
+/* Esquinas removidas */
+
+[data-theme="light"] .pagora-navbar-brand {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+[data-theme="light"] .pagora-navbar-subtitle {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .pagora-navbar-icon::before {
+  border-color: #059669;
+}
+
+@keyframes pagora-pulse-light {
+  0%, 100% {
+    opacity: 0.95;
+    box-shadow: 0 0 12px rgba(0, 102, 204, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 102, 204, 0.5);
+  }
+}
+
+[data-theme="light"] .pagora-navbar-icon-core {
+  animation: pagora-pulse-light 2s ease-in-out infinite;
 }

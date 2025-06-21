@@ -96,7 +96,7 @@ class EDPService(BaseService):
             edp_data = self._format_edp_dates(edp_data)
             
             # Add calculated fields
-            edp_data['row_index'] = edp_found.index[0] + 2  # +2 for header and 0-indexing
+            # edp_data['row_index'] = edp_found.index[0] + 2  # Legacy Google Sheets logic (no longer needed)
             
             return ServiceResponse(
                 success=True,
@@ -149,7 +149,7 @@ class EDPService(BaseService):
             edp_data = self._format_edp_dates(edp_data)
             
             # Add calculated fields
-            edp_data['row_index'] = edp_found.index[0] + 2  # +2 for header and 0-indexing
+            # edp_data['row_index'] = edp_found.index[0] + 2  # Legacy Google Sheets logic (no longer needed)
             
             return ServiceResponse(
                 success=True,

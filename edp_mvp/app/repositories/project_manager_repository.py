@@ -428,9 +428,6 @@ class ProjectManagerRepository:
                 logger.error(f"EDP {edp_id} not found")
                 return False
             
-            # Get the row index (assuming it corresponds to sheet row)
-            row_index = edp_row.index[0] + 2  # +2 because sheets are 1-indexed and have header
-            
             # Prepare update data
             update_data = {
                 'estado': nuevo_estado,
@@ -438,28 +435,27 @@ class ProjectManagerRepository:
                 'fecha_registro': datetime.now().strftime('%Y-%m-%d')
             }
             
-            # Update in Google Sheets
+            # Update in Supabase using internal ID
             try:
-                update_success = update_row(row_index, update_data)
+                from ..utils.supabase_adapter import update_edp_by_id
+                update_success = update_edp_by_id(edp_id, update_data, usuario)
                 if update_success:
                     # Log the change
                     log_cambio_edp(
-                        edp_id=edp_id,
-                        campo_modificado='estado',
-                        valor_anterior=estado_anterior,
-                        valor_nuevo=nuevo_estado,
-                        usuario=usuario,
+                        n_edp=str(edp_id),  # Usar el ID como n_edp por ahora
                         proyecto=edp_row.iloc[0].get('proyecto', ''),
-                        observaciones=f'Cambio desde kanban JP: {estado_anterior} → {nuevo_estado}'
+                        campo='estado',
+                        antes=estado_anterior,
+                        despues=nuevo_estado,
                     )
-                    logger.info(f"EDP {edp_id} status updated successfully in Google Sheets")
+                    logger.info(f"EDP {edp_id} status updated successfully in Supabase")
                     return True
                 else:
-                    logger.error(f"Failed to update EDP {edp_id} in Google Sheets")
+                    logger.error(f"Failed to update EDP {edp_id} in Supabase")
                     return False
                     
-            except Exception as sheet_error:
-                logger.error(f"Error updating Google Sheets for EDP {edp_id}: {str(sheet_error)}")
+            except Exception as db_error:
+                logger.error(f"Error updating Supabase for EDP {edp_id}: {str(db_error)}")
                 return False
                 
         except Exception as e:

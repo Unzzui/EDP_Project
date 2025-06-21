@@ -507,13 +507,13 @@ def _apply_transformations(df: pd.DataFrame, table_name: str) -> pd.DataFrame:
                 else:
                     df["dias_habiles"] = df["dias_habiles"].fillna(0)
 
-            # Calculate critical status
-            if "dias_espera" in df.columns and len(df) > 0:
-                dias_espera_numeric = pd.to_numeric(df["dias_espera"], errors="coerce").fillna(0)
-                estado_not_final = ~df["estado"].isin(["validado", "pagado"])
-                df["critico"] = (dias_espera_numeric > 30) & estado_not_final
-            else:
-                df["critico"] = False
+            # Calculate critical status (comentado - campo no existe en BD Supabase)
+            # if "dias_espera" in df.columns and len(df) > 0:
+            #     dias_espera_numeric = pd.to_numeric(df["dias_espera"], errors="coerce").fillna(0)
+            #     estado_not_final = ~df["estado"].isin(["validado", "pagado"])
+            #     df["critico"] = (dias_espera_numeric > 30) & estado_not_final
+            # else:
+            #     df["critico"] = False
 
             # Calculate validation status
             if (

@@ -1,0 +1,548 @@
+<!-- DASHBOARD ADAPTATIVO - OPERATIVO DIARIO CON TRANSFORMACIÓN CRÍTICA -->
+
+<!-- LÓGICA DE ESTADO: Define umbrales críticos reales -->
+{% set aging_critico = kpis.aging_30_plus_pct|default(15) > 30 %} {% set
+cash_flow_critico = kpis.aging_60_plus_pct|default(8) > 15 %} {% set
+recursos_criticos = kpis.capacidad_promedio|default(85) > 100 %} {% set
+proyectos_criticos = kpis.proyectos_retraso_pct|default(10) > 20 %}
+
+<!-- ESTADO CRÍTICO: Si hay problemas >30 días, TRANSFORMAR dashboard -->
+{% if aging_critico or cash_flow_critico or recursos_criticos or
+proyectos_criticos %}
+
+<!-- MODO CRISIS: Prioridad absoluta en la parte superior -->
+<div class="mb-8">
+  <div
+    class="bg-red-950 border-4 border-red-400 rounded-xl p-6 shadow-2xl animate-pulse">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center">
+        <div class="bg-red-500 p-3 rounded-full mr-4 animate-bounce">
+          <svg
+            class="w-8 h-8 text-white"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-white text-3xl font-black">
+            ⚠️ PROBLEMAS CRÍTICOS DETECTADOS
+          </h1>
+          <p class="text-red-300 text-lg font-bold">
+            Operación fuera de parámetros normales - Acción inmediata requerida
+          </p>
+        </div>
+      </div>
+      <div
+        class="bg-red-500 text-white px-6 py-3 rounded-lg font-black text-xl">
+        CRISIS ACTIVA
+      </div>
+    </div>
+
+    <!-- Problemas específicos identificados -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {% if aging_critico %}
+      <div class="bg-red-900 border-2 border-red-500 rounded-lg p-4">
+        <div class="text-4xl font-black text-white">
+          {{ kpis.aging_30_plus_pct|default(15) }}%
+        </div>
+        <div class="text-red-200 text-sm font-bold">CUENTAS +30 DÍAS</div>
+        <div class="text-red-300 text-xs mt-1">UMBRAL CRÍTICO: >30%</div>
+        <div class="mt-2 text-white text-sm">
+          ${{ (kpis.monto_pendiente|default(180) *
+          kpis.aging_30_plus_pct|default(15) / 100)|round }}M en riesgo
+        </div>
+      </div>
+      {% endif %} {% if cash_flow_critico %}
+      <div class="bg-red-900 border-2 border-red-500 rounded-lg p-4">
+        <div class="text-4xl font-black text-white">
+          {{ kpis.aging_60_plus_pct|default(8) }}%
+        </div>
+        <div class="text-red-200 text-sm font-bold">CUENTAS +60 DÍAS</div>
+        <div class="text-red-300 text-xs mt-1">UMBRAL CRÍTICO: >15%</div>
+        <div class="mt-2 text-white text-sm">
+          ${{ (kpis.monto_pendiente|default(180) *
+          kpis.aging_60_plus_pct|default(8) / 100)|round }}M crítico
+        </div>
+      </div>
+      {% endif %} {% if recursos_criticos %}
+      <div class="bg-red-900 border-2 border-red-500 rounded-lg p-4">
+        <div class="text-4xl font-black text-white">
+          {{ kpis.capacidad_promedio|default(85) }}%
+        </div>
+        <div class="text-red-200 text-sm font-bold">CAPACIDAD PROMEDIO</div>
+        <div class="text-red-300 text-xs mt-1">UMBRAL CRÍTICO: >100%</div>
+        <div class="mt-2 text-white text-sm">
+          {{ kpis.recursos_sobrecarga|default(8) }} recursos en riesgo
+        </div>
+      </div>
+      {% endif %} {% if proyectos_criticos %}
+      <div
+        class="bg-red-900 border-2 border-red-500 rounded-lg p-4 cursor-pointer hover:bg-red-800"
+        id="show-critical-projects-btn"
+        data-modal="critical-projects">
+        <div class="text-4xl font-black text-white">
+          {{ kpis.proyectos_retraso_pct|default(10) }}%
+        </div>
+        <div class="text-red-200 text-sm font-bold">PROYECTOS RETRASADOS</div>
+        <div class="text-red-300 text-xs mt-1">UMBRAL CRÍTICO: >20%</div>
+        <div class="mt-2 text-white text-sm">
+          {{ kpis.proyectos_retraso_count|default(4) }} proyectos afectados
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Acción inmediata requerida -->
+    <div class="mt-6 pt-4 border-t border-red-600">
+      <div class="bg-red-800 rounded-lg p-4">
+        <h3 class="text-white font-bold text-lg mb-3">
+          🚨 ACCIÓN INMEDIATA REQUERIDA
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {% if aging_critico %}
+          <div class="bg-red-700 rounded p-3">
+            <div class="text-red-200 text-xs font-bold">PRIORIDAD 1 - HOY</div>
+            <div class="text-white font-bold">Acelerar cobranza +30 días</div>
+            <div class="text-red-300 text-xs mt-1">
+              Contactar {{ kpis.manager_cobranza|default('Laura Vega') }}
+            </div>
+          </div>
+          {% endif %} {% if recursos_criticos %}
+          <div class="bg-red-700 rounded p-3">
+            <div class="text-red-200 text-xs font-bold">PRIORIDAD 1 - HOY</div>
+            <div class="text-white font-bold">Reasignar recursos</div>
+            <div class="text-red-300 text-xs mt-1">
+              Reunión con {{ kpis.manager_recursos|default('Carlos Mendez') }}
+            </div>
+          </div>
+          {% endif %} {% if proyectos_criticos %}
+          <div class="bg-red-700 rounded p-3">
+            <div class="text-red-200 text-xs font-bold">
+              PRIORIDAD 2 - MAÑANA
+            </div>
+            <div class="text-white font-bold">Revisar proyectos críticos</div>
+            <div class="text-red-300 text-xs mt-1">
+              Sesión con {{ kpis.director_proyectos|default('Ana Torres') }}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+<!-- DASHBOARD OPERATIVO PRINCIPAL: Siempre visible, diseño limpio cuando todo está bien -->
+<div class="space-y-6">
+  <!-- MONITOREO OPERATIVO DIARIO - Diseño verde/limpio cuando no hay crisis -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- INGRESOS Y FACTURACIÓN -->
+    <div
+      class="{% if aging_critico or cash_flow_critico %}bg-orange-800 border-orange-600{% else %}bg-green-700 border-green-500{% endif %} border-2 rounded-xl p-6 shadow-lg">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-white text-xl font-bold">💰 Facturación</h2>
+        {% if aging_critico or cash_flow_critico %}
+        <div
+          class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+          ATENCIÓN
+        </div>
+        {% else %}
+        <div
+          class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+          NORMAL
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Ingresos facturados vs pendientes -->
+      <div class="space-y-4">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-200 text-sm">Facturado este mes:</span>
+          <span class="text-white text-lg font-bold"
+            >${{ kpis.ingresos_totales|default(42.7) }}M</span
+          >
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="text-gray-200 text-sm">Pendiente por facturar:</span>
+          <span class="text-white text-lg font-bold"
+            >${{ kpis.pendiente_facturar|default(18.3) }}M</span
+          >
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="text-gray-200 text-sm">Total cuentas por cobrar:</span>
+          <span class="text-white text-lg font-bold"
+            >${{ kpis.monto_pendiente|default(180) }}M</span
+          >
+        </div>
+
+        <!-- Meta mensual -->
+        <div class="pt-3 border-t border-gray-400">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-200 text-sm">Meta mensual:</span>
+            <span class="text-white font-bold"
+              >${{ kpis.meta_mensual|default(45.0) }}M</span
+            >
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-200 text-sm">Avance:</span>
+            <span class="text-white font-bold"
+              >{{ ((kpis.ingresos_totales|default(42.7) /
+              kpis.meta_mensual|default(45.0)) * 100)|round }}%</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AGING DETALLADO DE CUENTAS POR COBRAR -->
+    <div
+      class="{% if aging_critico %}bg-red-800 border-red-600{% elif cash_flow_critico %}bg-orange-800 border-orange-600{% else %}bg-blue-700 border-blue-500{% endif %} border-2 rounded-xl p-6 shadow-lg">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-white text-xl font-bold">
+          📊 Aging Cuentas por Cobrar
+        </h2>
+        {% if aging_critico %}
+        <div
+          class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+          CRÍTICO
+        </div>
+        {% elif cash_flow_critico %}
+        <div
+          class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+          ATENCIÓN
+        </div>
+        {% else %}
+        <div
+          class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+          NORMAL
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Distribución detallada -->
+      <div class="space-y-3">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-green-400 rounded-full mr-2"></div>
+            <span class="text-gray-200 text-sm">0-30 días:</span>
+          </div>
+          <div class="text-right">
+            <div class="text-white font-bold">
+              {{ kpis.aging_0_30_pct|default(70) }}%
+            </div>
+            <div class="text-gray-300 text-xs">
+              ${{ (kpis.monto_pendiente|default(180) *
+              kpis.aging_0_30_pct|default(70) / 100)|round }}M
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
+            <span class="text-gray-200 text-sm">31-60 días:</span>
+          </div>
+          <div class="text-right">
+            <div class="text-white font-bold">
+              {{ kpis.aging_31_60_pct|default(20) }}%
+            </div>
+            <div class="text-gray-300 text-xs">
+              ${{ (kpis.monto_pendiente|default(180) *
+              kpis.aging_31_60_pct|default(20) / 100)|round }}M
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-orange-400 rounded-full mr-2"></div>
+            <span class="text-gray-200 text-sm">61-90 días:</span>
+          </div>
+          <div class="text-right">
+            <div class="text-white font-bold">
+              {{ kpis.aging_61_90_pct|default(7) }}%
+            </div>
+            <div class="text-gray-300 text-xs">
+              ${{ (kpis.monto_pendiente|default(180) *
+              kpis.aging_61_90_pct|default(7) / 100)|round }}M
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-red-400 rounded-full mr-2"></div>
+            <span class="text-gray-200 text-sm">+90 días:</span>
+          </div>
+          <div class="text-right">
+            <div
+              class="text-white font-bold {% if kpis.aging_90_plus_pct|default(3) > 10 %}text-red-300{% endif %}">
+              {{ kpis.aging_90_plus_pct|default(3) }}%
+            </div>
+            <div class="text-gray-300 text-xs">
+              ${{ (kpis.monto_pendiente|default(180) *
+              kpis.aging_90_plus_pct|default(3) / 100)|round }}M
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra visual de aging -->
+        <div class="pt-3">
+          <div class="flex h-3 rounded-full overflow-hidden">
+            <div
+              class="bg-green-400"
+              style="width: {{ kpis.aging_0_30_pct|default(70) }}%"></div>
+            <div
+              class="bg-yellow-400"
+              style="width: {{ kpis.aging_31_60_pct|default(20) }}%"></div>
+            <div
+              class="bg-orange-400"
+              style="width: {{ kpis.aging_61_90_pct|default(7) }}%"></div>
+            <div
+              class="bg-red-400"
+              style="width: {{ kpis.aging_90_plus_pct|default(3) }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOP DEUDORES CON INFORMACIÓN ESPECÍFICA -->
+    <div
+      class="{% if aging_critico or cash_flow_critico %}bg-orange-800 border-orange-600{% else %}bg-indigo-700 border-indigo-500{% endif %} border-2 rounded-xl p-6 shadow-lg">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-white text-xl font-bold">🏢 Top Deudores</h2>
+        {% if aging_critico or cash_flow_critico %}
+        <div
+          class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+          REVISAR
+        </div>
+        {% else %}
+        <div
+          class="bg-indigo-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+          MONITOREO
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Lista específica de deudores -->
+      <div class="space-y-3">
+        <div class="bg-gray-800 rounded-lg p-3">
+          <div class="flex justify-between items-center mb-1">
+            <div class="text-white font-bold text-sm">
+              {{ kpis.top_deudor_1_nombre|default('Corporación Alpha') }}
+            </div>
+            <div class="text-white font-bold">
+              ${{ kpis.top_deudor_1_monto|default(45.2) }}M
+            </div>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-gray-300"
+              >{{ kpis.deudor_1_dias|default(35) }} días promedio</span
+            >
+            <span
+              class="{% if kpis.deudor_1_dias|default(35) > 30 %}text-red-300{% elif kpis.deudor_1_dias|default(35) > 15 %}text-yellow-300{% else %}text-green-300{% endif %}">
+              {% if kpis.deudor_1_dias|default(35) > 30 %}CRÍTICO{% elif
+              kpis.deudor_1_dias|default(35) > 15 %}ATENCIÓN{% else %}NORMAL{%
+              endif %}
+            </span>
+          </div>
+          <div class="text-gray-400 text-xs mt-1">
+            Contacto: {{ kpis.deudor_1_contacto|default('Ana Torres') }} - {{
+            kpis.deudor_1_telefono|default('555-0123') }}
+          </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg p-3">
+          <div class="flex justify-between items-center mb-1">
+            <div class="text-white font-bold text-sm">
+              {{ kpis.top_deudor_2_nombre|default('Industrias Beta') }}
+            </div>
+            <div class="text-white font-bold">
+              ${{ kpis.top_deudor_2_monto|default(32.8) }}M
+            </div>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-gray-300"
+              >{{ kpis.deudor_2_dias|default(22) }} días promedio</span
+            >
+            <span
+              class="{% if kpis.deudor_2_dias|default(22) > 30 %}text-red-300{% elif kpis.deudor_2_dias|default(22) > 15 %}text-yellow-300{% else %}text-green-300{% endif %}">
+              {% if kpis.deudor_2_dias|default(22) > 30 %}CRÍTICO{% elif
+              kpis.deudor_2_dias|default(22) > 15 %}ATENCIÓN{% else %}NORMAL{%
+              endif %}
+            </span>
+          </div>
+          <div class="text-gray-400 text-xs mt-1">
+            Contacto: {{ kpis.deudor_2_contacto|default('Roberto Silva') }} - {{
+            kpis.deudor_2_telefono|default('555-0456') }}
+          </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg p-3">
+          <div class="flex justify-between items-center mb-1">
+            <div class="text-white font-bold text-sm">
+              {{ kpis.top_deudor_3_nombre|default('Servicios Gamma') }}
+            </div>
+            <div class="text-white font-bold">
+              ${{ kpis.top_deudor_3_monto|default(28.1) }}M
+            </div>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-gray-300"
+              >{{ kpis.deudor_3_dias|default(12) }} días promedio</span
+            >
+            <span
+              class="{% if kpis.deudor_3_dias|default(12) > 30 %}text-red-300{% elif kpis.deudor_3_dias|default(12) > 15 %}text-yellow-300{% else %}text-green-300{% endif %}">
+              {% if kpis.deudor_3_dias|default(12) > 30 %}CRÍTICO{% elif
+              kpis.deudor_3_dias|default(12) > 15 %}ATENCIÓN{% else %}NORMAL{%
+              endif %}
+            </span>
+          </div>
+          <div class="text-gray-400 text-xs mt-1">
+            Contacto: {{ kpis.deudor_3_contacto|default('Carmen López') }} - {{
+            kpis.deudor_3_telefono|default('555-0789') }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIPELINE DE FACTURACIÓN PRÓXIMA -->
+  <div
+    class="{% if aging_critico or cash_flow_critico %}bg-yellow-800 border-yellow-600{% else %}bg-green-700 border-green-500{% endif %} border-2 rounded-xl p-6 shadow-lg">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-white text-xl font-bold">
+        📅 Pipeline de Facturación - Próximos 30 días
+      </h2>
+      <div
+        class="{% if aging_critico or cash_flow_critico %}bg-yellow-500{% else %}bg-green-500{% endif %} text-white text-xs px-3 py-1 rounded-full font-bold">
+        ${{ kpis.pipeline_30_dias|default(67.3) }}M pendientes
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Próxima semana -->
+      <div class="bg-gray-800 rounded-lg p-4">
+        <div class="text-2xl font-bold text-white">
+          ${{ kpis.pipeline_semana_1|default(18.5) }}M
+        </div>
+        <div class="text-gray-300 text-sm">Próxima semana</div>
+        <div class="text-gray-400 text-xs mt-1">
+          {{ kpis.facturas_semana_1|default(12) }} facturas
+        </div>
+      </div>
+
+      <!-- Semana 2 -->
+      <div class="bg-gray-800 rounded-lg p-4">
+        <div class="text-2xl font-bold text-white">
+          ${{ kpis.pipeline_semana_2|default(22.1) }}M
+        </div>
+        <div class="text-gray-300 text-sm">Semana 2</div>
+        <div class="text-gray-400 text-xs mt-1">
+          {{ kpis.facturas_semana_2|default(15) }} facturas
+        </div>
+      </div>
+
+      <!-- Semana 3 -->
+      <div class="bg-gray-800 rounded-lg p-4">
+        <div class="text-2xl font-bold text-white">
+          ${{ kpis.pipeline_semana_3|default(15.8) }}M
+        </div>
+        <div class="text-gray-300 text-sm">Semana 3</div>
+        <div class="text-gray-400 text-xs mt-1">
+          {{ kpis.facturas_semana_3|default(9) }} facturas
+        </div>
+      </div>
+
+      <!-- Semana 4 -->
+      <div class="bg-gray-800 rounded-lg p-4">
+        <div class="text-2xl font-bold text-white">
+          ${{ kpis.pipeline_semana_4|default(10.9) }}M
+        </div>
+        <div class="text-gray-300 text-sm">Semana 4</div>
+        <div class="text-gray-400 text-xs mt-1">
+          {{ kpis.facturas_semana_4|default(7) }} facturas
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROYECTOS - Solo aparece información crítica si hay problemas -->
+  {% if proyectos_criticos %}
+  <div
+    class="bg-red-800 border-2 border-red-600 rounded-xl p-6 shadow-lg cursor-pointer hover:bg-red-700 transition-colors"
+    id="show-critical-projects-btn"
+    data-modal="critical-projects">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-white text-xl font-bold">🚨 Proyectos Críticos</h2>
+      <div
+        class="bg-red-500 text-white text-sm px-3 py-1 rounded-full font-bold">
+        {{ kpis.proyectos_retraso_count|default(4) }} CRÍTICOS
+      </div>
+    </div>
+    <div class="text-white">
+      <p class="text-lg">
+        {{ kpis.proyectos_retraso_pct|default(10) }}% de proyectos activos están
+        retrasados
+      </p>
+      <p class="text-red-300 text-sm mt-2">
+        Click para ver detalles y asignar acciones correctivas
+      </p>
+    </div>
+  </div>
+  {% else %}
+  <!-- Estado normal de proyectos -->
+  <div class="bg-green-700 border-2 border-green-500 rounded-xl p-6 shadow-lg">
+    <div class="flex items-center justify-center">
+      <svg
+        class="w-8 h-8 text-green-300 mr-3"
+        fill="currentColor"
+        viewBox="0 0 20 20">
+        <path
+          fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+          clip-rule="evenodd"></path>
+      </svg>
+      <div>
+        <h3 class="text-white font-bold text-xl">✅ Proyectos en Tiempo</h3>
+        <p class="text-green-200">
+          Todos los proyectos dentro de cronograma - {{
+          kpis.proyectos_activos|default(23) }} proyectos activos
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  /* Animación suave para transiciones de estado */
+  .status-transition {
+    transition: all 0.5s ease-in-out;
+  }
+
+  /* Efecto especial para elementos críticos */
+  .critical-alert {
+    animation: critical-pulse 2s infinite;
+  }
+
+  @keyframes critical-pulse {
+    0%,
+    100% {
+      background-color: rgb(69, 10, 10);
+      transform: scale(1);
+    }
+    50% {
+      background-color: rgb(127, 29, 29);
+      transform: scale(1.02);
+    }
+  }
+</style>

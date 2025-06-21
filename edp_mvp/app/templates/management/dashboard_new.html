@@ -1,0 +1,646 @@
+{% extends "base.html" %} {% block title %}Dashboard Ejecutivo - EDP Manager{%
+endblock %} {% block content %}
+
+<style>
+  /* Command Center Dashboard Styles */
+  .command-center {
+    background: linear-gradient(
+      135deg,
+      var(--bg-dark) 0%,
+      var(--bg-darker) 100%
+    );
+    min-height: 100vh;
+    color: var(--text-primary);
+    font-family: "Inter", "SF Pro Display", system-ui, sans-serif;
+  }
+
+  .command-header {
+    background: var(--bg-darker);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+
+  .command-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .command-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .command-panel:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .command-panel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      var(--accent-blue),
+      var(--accent-purple)
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .command-panel:hover::before {
+    opacity: 1;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .panel-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+    margin: 0.5rem 0;
+  }
+
+  .metric-change {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .metric-change.positive {
+    color: var(--success-color);
+  }
+
+  .metric-change.negative {
+    color: var(--error-color);
+  }
+
+  .metric-change.neutral {
+    color: var(--text-secondary);
+  }
+
+  .data-table {
+    width: 100%;
+    font-size: 0.875rem;
+  }
+
+  .data-table th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .data-table td {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .status-badge.active {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+  }
+
+  .status-badge.warning {
+    background: rgba(251, 191, 36, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+  }
+
+  .status-badge.critical {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error-color);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  .alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+  }
+
+  .alert-item:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.2);
+  }
+
+  .alert-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    color: var(--accent-blue);
+  }
+
+  .alert-content {
+    flex: 1;
+  }
+
+  .alert-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .alert-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .team-member {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-subtle);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+  }
+
+  .team-member:hover {
+    background: rgba(59, 130, 246, 0.05);
+  }
+
+  .team-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: linear-gradient(
+      135deg,
+      var(--accent-blue),
+      var(--accent-purple)
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .team-info {
+    flex: 1;
+  }
+
+  .team-name {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .team-role {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
+  .team-status {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .chart-container {
+    height: 200px;
+    position: relative;
+    margin-top: 1rem;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-subtle);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      var(--accent-blue),
+      var(--accent-purple)
+    );
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+
+  @media (max-width: 768px) {
+    .command-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .command-panel {
+      padding: 1rem;
+    }
+
+    .metric-value {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<div class="command-center">
+  <!-- Command Header -->
+  <div class="command-header">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-[color:var(--text-primary)]">
+            Command Center
+          </h1>
+          <p class="text-sm text-[color:var(--text-secondary)]">
+            Dashboard Ejecutivo - EDP Manager
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-sm text-[color:var(--text-secondary)]">
+            Última actualización:
+            <span class="text-[color:var(--text-primary)] font-medium"
+              >{{ current_time or 'Ahora' }}</span
+            >
+          </div>
+          <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mx-auto px-4 py-6">
+    <!-- Executive Summary -->
+    <div class="command-grid">
+      <!-- Revenue Overview -->
+      <div class="command-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Facturación Total</h3>
+          <svg
+            class="w-5 h-5 text-[color:var(--accent-blue)]"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path
+              d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zM14 6a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h8zM6 10a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H8a2 2 0 01-2-2v-2z" />
+          </svg>
+        </div>
+        <div class="metric-value">
+          €{{ "{:,.0f}".format(kpis.facturacion_total if kpis and
+          kpis.facturacion_total else 0) }}
+        </div>
+        <div class="metric-change positive">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" />
+          </svg>
+          +{{ kpis.variacion_facturacion if kpis and kpis.variacion_facturacion
+          else 0 }}% vs período anterior
+        </div>
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            style="width: {{ (kpis.facturacion_total / kpis.objetivo_facturacion * 100) if kpis and kpis.objetivo_facturacion else 0 }}%"></div>
+        </div>
+      </div>
+
+      <!-- Active Projects -->
+      <div class="command-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Proyectos Activos</h3>
+          <svg
+            class="w-5 h-5 text-[color:var(--accent-blue)]"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="metric-value">
+          {{ kpis.proyectos_activos if kpis and kpis.proyectos_activos else 0 }}
+        </div>
+        <div class="metric-change neutral">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
+          </svg>
+          {{ kpis.proyectos_completados or 0 }} completados este mes
+        </div>
+      </div>
+
+      <!-- Efficiency Metric -->
+      <div class="command-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Eficiencia Operacional</h3>
+          <svg
+            class="w-5 h-5 text-[color:var(--accent-blue)]"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" />
+          </svg>
+        </div>
+        <div class="metric-value">
+          {{ kpis.eficiencia_operacional if kpis and kpis.eficiencia_operacional
+          else 0 }}%
+        </div>
+        <div class="metric-change positive">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" />
+          </svg>
+          Objetivo: 95%
+        </div>
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            style="width: {{ kpis.eficiencia_operacional if kpis and kpis.eficiencia_operacional else 0 }}%"></div>
+        </div>
+      </div>
+
+      <!-- Team Utilization -->
+      <div class="command-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Utilización del Equipo</h3>
+          <svg
+            class="w-5 h-5 text-[color:var(--accent-blue)]"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path
+              d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+          </svg>
+        </div>
+        <div class="metric-value">
+          {{ kpis.utilizacion_equipo if kpis and kpis.utilizacion_equipo else 0
+          }}%
+        </div>
+        <div class="metric-change warning">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" />
+          </svg>
+          Capacidad máxima alcanzada
+        </div>
+      </div>
+    </div>
+
+    <!-- Intelligence Alerts -->
+    <div class="command-panel" style="grid-column: 1 / -1">
+      <div class="panel-header">
+        <h3 class="panel-title">Alertas Inteligentes</h3>
+        <span class="status-badge critical"
+          >{{ alertas|length if alertas else 0 }} Activas</span
+        >
+      </div>
+
+      {% if alertas %} {% for alerta in alertas %}
+      <div class="alert-item">
+        <svg class="alert-icon" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" />
+        </svg>
+        <div class="alert-content">
+          <div class="alert-title">{{ alerta.titulo }}</div>
+          <div class="alert-description">{{ alerta.descripcion }}</div>
+        </div>
+      </div>
+      {% endfor %} {% else %}
+      <div class="alert-item">
+        <svg
+          class="alert-icon text-green-400"
+          fill="currentColor"
+          viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+        </svg>
+        <div class="alert-content">
+          <div class="alert-title">Sistema Operacional</div>
+          <div class="alert-description">
+            Todos los sistemas funcionan correctamente. No se detectaron
+            anomalías.
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Performance Grid -->
+    <div class="command-grid">
+      <!-- Project Performance -->
+      <div class="command-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Rendimiento de Proyectos</h3>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Proyecto</th>
+              <th>Estado</th>
+              <th>Progreso</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if proyectos_rendimiento %} {% for proyecto in
+            proyectos_rendimiento[:5] %}
+            <tr>
+              <td class="font-medium">{{ proyecto.nombre[:20] }}...</td>
+              <td>
+                <span
+                  class="status-badge {{ 'active' if proyecto.estado == 'En progreso' else 'warning' if proyecto.estado == 'Pendiente' else 'critical' }}">
+                  {{ proyecto.estado }}
+                </span>
+              </td>
+              <td>{{ proyecto.progreso }}%</td>
+            </tr>
+            {% endfor %} {% else %}
+            <tr>
+              <td
+                colspan="3"
+                class="text-center text-[color:var(--text-secondary)]">
+                No hay datos disponibles
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Team Performance -->
+      <div class="command-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Equipo Operacional</h3>
+        </div>
+
+        {% if equipo_operacional %} {% for miembro in equipo_operacional %}
+        <div class="team-member">
+          <div class="team-avatar">
+            {{ miembro.nombre[0]|upper }}{{ miembro.apellido[0]|upper if
+            miembro.apellido else '' }}
+          </div>
+          <div class="team-info">
+            <div class="team-name">
+              {{ miembro.nombre }} {{ miembro.apellido or '' }}
+            </div>
+            <div class="team-role">{{ miembro.rol or 'Especialista' }}</div>
+          </div>
+          <div
+            class="team-status status-badge {{ 'active' if miembro.activo else 'warning' }}">
+            {{ 'Activo' if miembro.activo else 'Inactivo' }}
+          </div>
+        </div>
+        {% endfor %} {% else %}
+        <div class="text-center text-[color:var(--text-secondary)] py-4">
+          No hay datos del equipo disponibles
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Predictive Analytics -->
+    <div class="command-panel" style="grid-column: 1 / -1">
+      <div class="panel-header">
+        <h3 class="panel-title">Analítica Predictiva</h3>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-[color:var(--text-secondary)]"
+            >Powered by IA</span
+          >
+          <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-[color:var(--accent-blue)] mb-2">
+            {{ predicciones.ingresos_proyectados if predicciones and
+            predicciones.ingresos_proyectados else 'N/A' }}
+          </div>
+          <div class="text-sm text-[color:var(--text-secondary)]">
+            Ingresos Proyectados (30d)
+          </div>
+        </div>
+        <div class="text-center">
+          <div
+            class="text-2xl font-bold text-[color:var(--accent-purple)] mb-2">
+            {{ predicciones.riesgo_retrasos if predicciones and
+            predicciones.riesgo_retrasos else 'Bajo' }}
+          </div>
+          <div class="text-sm text-[color:var(--text-secondary)]">
+            Riesgo de Retrasos
+          </div>
+        </div>
+        <div class="text-center">
+          <div
+            class="text-2xl font-bold text-[color:var(--success-color)] mb-2">
+            {{ predicciones.eficiencia_esperada if predicciones and
+            predicciones.eficiencia_esperada else '95%' }}
+          </div>
+          <div class="text-sm text-[color:var(--text-secondary)]">
+            Eficiencia Esperada
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'management/modal-proyectos-criticos.html' %}
+
+<script>
+  // Auto-refresh functionality
+  setInterval(function () {
+    // Subtle indication of data refresh
+    const indicators = document.querySelectorAll(".animate-pulse");
+    indicators.forEach((indicator) => {
+      indicator.style.opacity = "0.5";
+      setTimeout(() => {
+        indicator.style.opacity = "1";
+      }, 200);
+    });
+  }, 30000); // Refresh every 30 seconds
+
+  // Enhanced interactivity
+  document.addEventListener("DOMContentLoaded", function () {
+    // Add hover effects to metric panels
+    const panels = document.querySelectorAll(".command-panel");
+    panels.forEach((panel) => {
+      panel.addEventListener("mouseenter", function () {
+        this.style.transform = "translateY(-4px)";
+      });
+
+      panel.addEventListener("mouseleave", function () {
+        this.style.transform = "translateY(-2px)";
+      });
+    });
+
+    // Animate progress bars on load
+    const progressBars = document.querySelectorAll(".progress-fill");
+    progressBars.forEach((bar) => {
+      const width = bar.style.width;
+      bar.style.width = "0%";
+      setTimeout(() => {
+        bar.style.width = width;
+      }, 500);
+    });
+  });
+</script>
+
+{% endblock %}

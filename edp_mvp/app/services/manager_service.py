@@ -26,6 +26,7 @@ from ..models import EDP, KPI
 from ..repositories.edp_repository import EDPRepository
 from ..repositories.project_repository import ProjectRepository
 from ..services.cost_service import CostService
+from ..services.kpi_service import KPIService
 from ..utils.date_utils import DateUtils
 from ..utils.format_utils import FormatUtils
 from ..utils.validation_utils import ValidationUtils
@@ -41,6 +42,7 @@ class ManagerService(BaseService):
         self.edp_repo = EDPRepository()
         self.project_repo = ProjectRepository()
         self.cost_service = CostService()
+        self.kpi_service = KPIService()  # Use centralized KPI service
         # Cache configuration
         self.cache_ttl = {
             "dashboard": 300,  # 5 minutes for dashboard data
@@ -403,146 +405,16 @@ class ManagerService(BaseService):
     def _calculate_essential_kpis(
         self, df_full: pd.DataFrame, df_filtered: pd.DataFrame
     ) -> Dict[str, Any]:
-        """Calculate essential KPIs for immediate response, including template requirements."""
+        """Calculate essential KPIs for immediate response using centralized KPI service."""
         try:
-            if df_full.empty:
+            kpi_response = self.kpi_service.calculate_essential_kpis(df_full, df_filtered)
+            if kpi_response.success:
+                return kpi_response.data
+            else:
+                logger.error(f"KPI service error: {kpi_response.message}")
                 return self.get_empty_kpis()
-
-            df_full = self._prepare_kpi_data(df_full)
-
-            # Only calculate most critical KPIs
-            total_edps = len(df_full)
-            df_numeric = df_full.copy()
-
-            # Ensure numeric columns
-            for col in ["monto_propuesto", "monto_aprobado"]:
-                if col in df_numeric.columns:
-                    df_numeric[col] = pd.to_numeric(
-                        df_numeric[col], errors="coerce"
-                    ).fillna(0)
-
-            # Basic financial metrics
-            total_amount = df_numeric["monto_propuesto"].sum()
-            approved_amount = df_numeric["monto_aprobado"].sum()
-
-            # Status counts
-            status_counts = df_full["estado"].value_counts()
-            paid_count = status_counts.get("pagado", 0)
-            pending_count = status_counts.get("enviado", 0) + status_counts.get(
-                "validado", 0
-            )
-
-            # Basic ratios
-            approval_rate = (
-                (approved_amount / total_amount * 100) if total_amount > 0 else 0
-            )
-            payment_rate = (paid_count / total_edps * 100) if total_edps > 0 else 0
-
-            # Calculate additional KPIs required by template
-            # Meta de ingresos (estimado como 90% del monto propuesto)
-            meta_ingresos = total_amount * 0.9
-            vs_meta_ingresos = (
-                ((approved_amount - meta_ingresos) / meta_ingresos * 100)
-                if meta_ingresos > 0
-                else 0
-            )
-
-            # Forecast this year (simple projection)
-            forecast_year = approved_amount * 1.2  # Simple 20% growth projection
-
-            # Budget variance
-            presupuesto_anual = (
-                total_amount * 1.1
-            )  # Assume annual budget is 110% of current amount
-            variacion_presupuesto = (
-                ((approved_amount - presupuesto_anual) / presupuesto_anual * 100)
-                if presupuesto_anual > 0
-                else 0
-            )
-
-            # Calculate ingresos_totales (sum of approved amounts from completed EDPs)
-            estados_completados = ["pagado", "validado", "pagado ", "validado "]
-            ingresos_totales = (
-                df_full[df_full["estado"].str.strip().isin(estados_completados)][
-                    "monto_aprobado"
-                ].sum()
-                / 1_000_000
-            )
-
-            return {
-                # Financial KPIs (including the missing ingresos_totales)
-                "ingresos_totales": round(ingresos_totales, 1),
-                "monto_pendiente": round(
-                    (total_amount - approved_amount) / 1_000_000, 1
-                ),
-                "meta_ingresos": round(meta_ingresos / 1_000_000, 1),
-                "vs_meta_ingresos": round(vs_meta_ingresos, 1),
-                "pct_meta_ingresos": round(
-                    (
-                        (ingresos_totales / (meta_ingresos / 1_000_000) * 100)
-                        if meta_ingresos > 0
-                        else 0
-                    ),
-                    1,
-                ),
-                # Basic operational KPIs
-                "total_edps": total_edps,
-                "total_approved": paid_count,
-                "total_pending": pending_count,
-                "approval_rate": round(approval_rate, 1),
-                "critical_edps": max(0, pending_count - 5),  # Simple estimation
-                "critical_amount": round(
-                    max(0, (pending_count - 5) * (approved_amount / max(1, paid_count)))
-                    / 1_000_000,
-                    1,
-                ),
-                # Basic DSO and client metrics
-                "dso": 45.0,  # Default DSO
-                "dso_cliente_principal": 30.0,
-                "pct_ingresos_principal": 35.5,
-                # Project timing
-                "proyectos_on_time": 75,
-                "proyectos_retrasados": 15,
-                # Basic rentability
-                "rentabilidad_general": round(approval_rate * 0.8, 1),
-                "vs_meta_rentabilidad": 5.2,
-                "meta_rentabilidad": 15.0,
-                "pct_meta_rentabilidad": round((approval_rate * 0.8 / 15.0 * 100), 1),
-                # Basic efficiency
-                "efficiency_score": 75.0,
-                "tiempo_medio_ciclo": 45.0,
-                "tiempo_medio_ciclo_pct": 15.0,
-                # Aging buckets (simplified)
-                "pct_30d": 60.0,
-                "pct_60d": 25.0,
-                "pct_90d": 10.0,
-                "pct_mas90d": 5.0,
-                # Additional template compatibility fields
-                "monto_total_formatted": FormatUtils.format_currency(total_amount),
-                "monto_aprobado_formatted": FormatUtils.format_currency(
-                    approved_amount
-                ),
-                "forecast_year_formatted": FormatUtils.format_currency(forecast_year),
-                "meta_ingresos_formatted": FormatUtils.format_currency(meta_ingresos),
-                "presupuesto_anual_formatted": FormatUtils.format_currency(
-                    presupuesto_anual
-                ),
-                "variacion_presupuesto": round(variacion_presupuesto, 1),
-                "budget_utilization": (
-                    round((approved_amount / (total_amount * 1.1) * 100), 1)
-                    if total_amount > 0
-                    else 0
-                ),
-                # Driver information
-                "top_driver_1_name": "Proyecto Principal",
-                "top_driver_1_value": round(ingresos_totales * 0.4, 1),
-                "top_driver_2_name": "Operaciones",
-                "top_driver_2_value": round(ingresos_totales * 0.3, 1),
-                "_is_essential": True,
-            }
-
         except Exception as e:
-            logger.error(f"Error calculating essential KPIs: {e}")
+            logger.error(f"Error delegating to KPI service: {e}")
             return self.get_empty_kpis()
 
     def get_performance_analysis(self, period: str = "monthly") -> ServiceResponse:
@@ -634,40 +506,16 @@ class ManagerService(BaseService):
     def _calculate_executive_kpis(
         self, df_full: pd.DataFrame, df_filtered: pd.DataFrame
     ) -> Dict[str, Any]:
-        """Calculate executive-level KPIs that match template expectations."""
+        """Calculate executive-level KPIs using centralized KPI service."""
         try:
-            if df_full.empty:
-                logger.info("Warning: DataFrame is empty, returning default KPIs")
+            kpi_response = self.kpi_service.calculate_manager_dashboard_kpis(df_full, df_filtered)
+            if kpi_response.success:
+                return kpi_response.data
+            else:
+                logger.error(f"KPI service error: {kpi_response.message}")
                 return self.get_empty_kpis()
-
-            # Prepare data
-            df_full = self._prepare_kpi_data(df_full)
-
-            # Calculate different KPI categories
-            financial_kpis = self._calculate_financial_kpis(df_full)
-            operational_kpis = self._calculate_operational_kpis(df_full)
-            profitability_kpis = self._calculate_profitability_kpis(df_full)
-            aging_kpis = self._calculate_aging_kpis(df_full)
-            efficiency_kpis = self._calculate_efficiency_kpis(df_full)
-            critical_projects_kpis = self._calculate_critical_projects_kpis(df_full)
-
-            # Combine all KPIs
-            kpis = {
-                **financial_kpis,
-                **operational_kpis,
-                **profitability_kpis,
-                **aging_kpis,
-                **efficiency_kpis,
-                **critical_projects_kpis,
-            }
-
-            return kpis
-
         except Exception as e:
-            logger.info(f"Error in _calculate_executive_kpis: {str(e)}")
-            import traceback
-
-            traceback.print_exc()
+            logger.error(f"Error delegating to KPI service: {e}")
             return self.get_empty_kpis()
 
     def _calculate_financial_metrics(
@@ -1911,57 +1759,8 @@ class ManagerService(BaseService):
             )
 
     def get_empty_kpis(self) -> Dict[str, Any]:
-        """Get empty KPI structure for error cases that matches template expectations."""
-        return {
-            # Financial KPIs that match template
-            "ingresos_totales": 0,
-            "monto_pendiente": 0,
-            "meta_ingresos": 0,
-            "run_rate_anual": 0,
-            "vs_meta_ingresos": 0,
-            "pct_meta_ingresos": 0,
-            "crecimiento_ingresos": 0,
-            "tendencia_pendiente": 0,
-            "historial_6_meses": [0, 0, 0, 0, 0, 0],
-            # DSO and payment metrics
-            "dso": 45,  # Default reasonable DSO
-            "dso_cliente_principal": 30,
-            "pct_ingresos_principal": 25,
-            "riesgo_pago_principal": 15,
-            "tendencia_pago_principal": "estable",
-            # Rentabilidad KPIs - MISSING ONES CAUSING ERRORS
-            "rentabilidad_general": 0,
-            "tendencia_rentabilidad": 0,  # This was causing the TypeError
-            "posicion_vs_benchmark": 0,
-            "vs_meta_rentabilidad": 0,
-            "meta_rentabilidad": 35.0, # Default target
-            "pct_meta_rentabilidad": 0,  # Percentage of target achieved
-            "mejora_eficiencia": 0,
-            "eficiencia_global": 0,
-            # Additional financial metrics
-            "margen_bruto_absoluto": 0,
-            "costos_totales": 0,
-            # Additional KPIs for aging buckets
-            "pct_30d": 25,
-            "pct_60d": 25,
-            "pct_90d": 25,
-            "pct_mas90d": 25,
-            # Project timing KPIs - MISSING ONES CAUSING CURRENT ERROR
-            "proyectos_on_time": 75,  # Default 75% on time
-            "proyectos_retrasados": 15,  # Default 15% delayed
-            # Top drivers
-            "top_driver_1_name": "Sin datos",
-            "top_driver_1_value": 0,
-            "top_driver_2_name": "Sin datos",
-            "top_driver_2_value": 0,
-            # Legacy fields for compatibility
-            "total_edps": 0,
-            "total_approved": 0,
-            "total_pending": 0,
-            "approval_rate": 0,
-            "critical_edps": 0,
-            "efficiency_score": 0,
-        }
+        """Get empty KPI structure using centralized KPI service."""
+        return self.kpi_service.get_empty_manager_kpis()
 
     def get_selector_lists(self, datos_relacionados: Dict[str, Any]) -> ServiceResponse:
         """Get lists for dashboard selectors."""
@@ -2284,8 +2083,7 @@ class ManagerService(BaseService):
 
             # Filtrar pendientes
             df_pendientes = df_datos[
-                ~df_datos["estado"].str.strip().str.lower().isin(["pagado", "validado"])
-            ]
+                ~df_datos["estado"] == "pagado"]
 
             if df_pendientes.empty:
                 return ServiceResponse(
@@ -2690,7 +2488,7 @@ class ManagerService(BaseService):
 
                 # Calculate approval rate
                 approved_count = len(
-                    group[group["estado"].isin(["pagado", "validado"])]
+                    group[group["estado"]== 'pagado']
                 )
                 approval_rate = (
                     (approved_count / edp_count * 100) if edp_count > 0 else 0
@@ -2806,12 +2604,12 @@ class ManagerService(BaseService):
                 df["monto_propuesto"].sum() if "monto_propuesto" in df.columns else 0
             )
             total_paid = (
-                df[df["estado"].isin(["pagado", "validado"])]["monto_aprobado"].sum()
+                df[df["estado"] == 'pagado']["monto_aprobado"].sum()
                 if "monto_aprobado" in df.columns
                 else 0
             )
             pending_amount = (
-                df[df["estado"].isin(["enviado", "revisión", "pendiente"])][
+                df[df["estado"].isin(["enviado", "revisión", "pendiente",'validado'])][
                     "monto_propuesto"
                 ].sum()
                 if "monto_propuesto" in df.columns
@@ -2819,9 +2617,7 @@ class ManagerService(BaseService):
             )
 
             # Calculate target and performance metrics
-            meta_ingresos = (
-                total_proposed * 1.1
-            )  # Assume target is 10% higher than proposed
+            meta_ingresos = 1_200_000  # Mock target TODO
             vs_meta_ingresos = (
                 ((total_paid - meta_ingresos) / meta_ingresos * 100)
                 if meta_ingresos > 0
@@ -2832,8 +2628,8 @@ class ManagerService(BaseService):
             )
 
             # Growth calculations (simulate monthly growth)
-            crecimiento_ingresos = 5.2  # Mock positive growth
-            tendencia_pendiente = -2.1  # Mock declining pending trend
+            crecimiento_ingresos = 5.2  # Mock positive growth TODO
+            tendencia_pendiente = -2.1  # Mock declining pending trend TODO
 
             # Format values to match template expectations (in millions)
             ingresos_totales = round(total_paid / 1_000_000, 1)
@@ -2841,21 +2637,7 @@ class ManagerService(BaseService):
             meta_ingresos_m = round(meta_ingresos / 1_000_000, 1)
             run_rate_anual = round(ingresos_totales * 12, 1)
 
-            # Generate sample historical data for sparkline
-            historial_6_meses = [
-                round(ingresos_totales * 0.8, 1),
-                round(ingresos_totales * 0.9, 1),
-                round(ingresos_totales * 0.85, 1),
-                round(ingresos_totales * 1.1, 1),
-                round(ingresos_totales * 1.05, 1),
-                ingresos_totales,
-            ]
-
-            # Top drivers (mock data for now)
-            top_driver_1_name = "Proyecto Principal"
-            top_driver_1_value = round(ingresos_totales * 0.3, 1)
-            top_driver_2_name = "Cliente Premium"
-            top_driver_2_value = round(ingresos_totales * 0.25, 1)
+    
 
             return {
                 "ingresos_totales": ingresos_totales,
@@ -2866,11 +2648,8 @@ class ManagerService(BaseService):
                 "pct_meta_ingresos": min(round(pct_meta_ingresos, 1), 100),
                 "crecimiento_ingresos": crecimiento_ingresos,
                 "tendencia_pendiente": tendencia_pendiente,
-                "historial_6_meses": historial_6_meses,
-                "top_driver_1_name": top_driver_1_name,
-                "top_driver_1_value": top_driver_1_value,
-                "top_driver_2_name": top_driver_2_name,
-                "top_driver_2_value": top_driver_2_value,
+      
+
             }
 
         except Exception as e:
@@ -2882,9 +2661,9 @@ class ManagerService(BaseService):
         try:
             # Basic counts
             total_edps = len(df)
-            total_approved = len(df[df["estado"].isin(["pagado", "validado"])])
+            total_approved = len(df[df["estado"] == 'pagado' ])
             total_pending = len(
-                df[df["estado"].isin(["enviado", "revisión", "pendiente"])]
+                df[df["estado"].isin(["enviado", "revisión", "pendiente","validado"])]
             )
 
             # Critical EDPs
@@ -3019,7 +2798,7 @@ class ManagerService(BaseService):
         """Calculate aging bucket KPIs using REAL data."""
         try:
             # Filter pending EDPs with real data
-            df_pending = df[df["estado"].isin(["enviado", "revisión", "pendiente"])]
+            df_pending = df[~df["estado"] == "pagado"].copy()
             total_pending = len(df_pending)
             
             if total_pending > 0 and "dias_espera" in df.columns:
@@ -3040,7 +2819,7 @@ class ManagerService(BaseService):
                 aging_90_plus_pct = round(aging_90_plus / total_pending * 100, 1)
                 
                 # Calculate REAL recovery rate based on paid vs total EDPs
-                df_paid = df[df["estado"].isin(["pagado", "validado"])]
+                df_paid = df[df["estado"] == "pagado"].copy()
                 total_processed = len(df_paid) + total_pending
                 recovery_rate = round((len(df_paid) / total_processed * 100), 1) if total_processed > 0 else 0
                 

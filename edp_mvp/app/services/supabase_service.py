@@ -134,40 +134,15 @@ class SupabaseService:
         
         logger.info("🧹 Cache en memoria limpiado")
 
-    def _convert_updates_for_json(self, updates: Dict) -> Dict:
-        """Convertir tipos de pandas/numpy a tipos nativos de Python para serialización JSON"""
-        import numpy as np
-        import pandas as pd
-        
-        converted = {}
-        for key, value in updates.items():
-            if value is None:
-                converted[key] = None
-            elif isinstance(value, (np.integer, pd.Int64Dtype)):
-                converted[key] = int(value)
-            elif isinstance(value, (np.floating, pd.Float64Dtype)):
-                converted[key] = float(value)
-            elif isinstance(value, (np.bool_, pd.BooleanDtype)):
-                converted[key] = bool(value)
-            elif isinstance(value, pd.Timestamp):
-                converted[key] = value.isoformat()
-            elif isinstance(value, np.ndarray):
-                converted[key] = value.tolist()
-            elif hasattr(value, 'item'):  # For numpy scalars
-                converted[key] = value.item()
-            elif pd.isna(value):
-                converted[key] = None
-            # Conversiones específicas para campos EDP
-            elif key == 'conformidad_enviada':
-                # Convertir "Sí"/"No" a boolean para Supabase
-                if isinstance(value, str):
-                    converted[key] = value.lower() in ['sí', 'si', 'yes', 'true', '1']
-                else:
-                    converted[key] = bool(value)
-            else:
-                converted[key] = value
-        
-        return converted
+    def _convert_updates_for_json(self, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Convierte updates para que sean compatibles con JSON y con la base de datos.
+        IMPORTANTE: Los montos se convierten específicamente a float para coincidir 
+        con el tipo 'numeric' de PostgreSQL.
+        """
+        # Usar la función centralizada de conversión
+        from ..utils.type_conversion import convert_edp_updates_for_db
+        return convert_edp_updates_for_db(updates)
     
     def _make_request(self, method: str, endpoint: str, data: Dict = None, params: Dict = None) -> requests.Response:
         """Realizar petición HTTP a Supabase"""
@@ -350,20 +325,55 @@ class SupabaseService:
     
     def create_edp(self, edp_data: Dict) -> Dict:
         """Crear nuevo EDP"""
-        # Agregar timestamp
-        edp_data["created_at"] = datetime.now().isoformat()
-        edp_data["updated_at"] = datetime.now().isoformat()
+        # Filtrar campos válidos antes de crear
+        filtered_data = self._filter_valid_edp_fields(edp_data)
         
-        result = self.insert("edp", edp_data)
+        # Agregar timestamp
+        filtered_data["created_at"] = datetime.now().isoformat()
+        filtered_data["updated_at"] = datetime.now().isoformat()
+        
+        result = self.insert("edp", filtered_data)
         return result[0] if isinstance(result, list) else result
     
+    def _filter_valid_edp_fields(self, updates: Dict) -> Dict:
+        """Filtrar campos válidos para la tabla EDP basándose en el esquema real de la BD"""
+        # Campos válidos según el esquema de Supabase proporcionado por el usuario
+        valid_fields = {
+            'id', 'n_edp', 'proyecto', 'cliente', 'gestor', 'jefe_proyecto', 'mes',
+            'fecha_emision', 'fecha_envio_cliente', 'monto_propuesto', 'monto_aprobado',
+            'fecha_estimada_pago', 'conformidad_enviada', 'n_conformidad', 'fecha_conformidad',
+            'estado', 'observaciones', 'registrado_por', 'estado_detallado', 'fecha_registro',
+            'motivo_no_aprobado', 'tipo_falla', 'created_at', 'updated_at', 'dias_en_cliente',
+            'prioridad', 'fecha_ultimo_seguimiento', 'dso_actual', 'esta_vencido', 'categoria_aging'
+            # 'last_modified_by' campo no existe en BD
+        }
+        
+        # Filtrar solo campos válidos
+        filtered_updates = {}
+        invalid_fields = []
+        
+        for key, value in updates.items():
+            if key in valid_fields:
+                filtered_updates[key] = value
+            else:
+                invalid_fields.append(key)
+        
+        # Log de campos inválidos para debugging
+        if invalid_fields:
+            logger.warning(f"🔍 Campos ignorados (no existen en BD): {invalid_fields}")
+        
+        return filtered_updates
+
     def update_edp(self, edp_id: int, updates: Dict, usuario: str = None) -> Dict:
         """Actualizar EDP"""
-        updates["updated_at"] = datetime.now().isoformat()
-        if usuario:
-            updates["last_modified_by"] = usuario
+        # Filtrar campos válidos antes de actualizar
+        filtered_updates = self._filter_valid_edp_fields(updates)
         
-        result = self.update("edp", {"id": edp_id}, updates)
+        filtered_updates["updated_at"] = datetime.now().isoformat()
+        # if usuario:
+        #     filtered_updates["last_modified_by"] = usuario  # Campo no existe en BD
+        
+        result = self.update("edp", {"id": edp_id}, filtered_updates)
         
         # Registrar en log (opcional - no bloquear si falla)
         if result:
@@ -373,7 +383,7 @@ class SupabaseService:
                     "log_type": "update",
                     "message": f"EDP actualizado por {usuario or 'sistema'}",
                     "user": usuario or "sistema",
-                    "details": json.dumps(updates)
+                    "details": json.dumps(filtered_updates)
                 })
             except Exception as log_error:
                 logger.warning(f"No se pudo registrar log para EDP {edp_id}: {log_error}")

@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pagora Logo Design Systems</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+      /* COMMAND CENTER VARIABLES */
+      .command-theme {
+        --primary-bg: #000000;
+        --secondary-bg: #0a0a0a;
+        --tertiary-bg: #111111;
+        --primary-accent: #00ff88;
+        --secondary-accent: #ff0066;
+        --tertiary-accent: #0066ff;
+        --text-primary: #ffffff;
+        --text-secondary: #888888;
+        --text-tertiary: #444444;
+        --border-primary: #1a1a1a;
+        --border-secondary: #333333;
+      }
+
+      /* EXECUTIVE SUITE VARIABLES */
+      .executive-theme {
+        --primary-bg: #fafafa;
+        --secondary-bg: #ffffff;
+        --tertiary-bg: #f5f5f5;
+        --quaternary-bg: #f0f0f0;
+        --primary-accent: #0066cc;
+        --secondary-accent: #dc2626;
+        --tertiary-accent: #059669;
+        --accent-muted: #e6f3ff;
+        --text-primary: #1a1a1a;
+        --text-secondary: #6b7280;
+        --text-tertiary: #9ca3af;
+        --border-primary: #e5e7eb;
+        --border-secondary: #d1d5db;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--primary-bg);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        padding: 40px;
+      }
+
+      .theme-switcher {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        padding: 8px 16px;
+        background: var(--primary-accent);
+        color: var(--primary-bg);
+        border: 1px solid var(--primary-accent);
+        border-radius: 0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .theme-switcher:hover {
+        background: transparent;
+        color: var(--primary-accent);
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .section-title {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 40px;
+        text-align: center;
+        color: var(--text-primary);
+      }
+
+      .logo-showcase {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        margin-bottom: 80px;
+      }
+
+      .logo-variant {
+        text-align: center;
+      }
+
+      .variant-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 30px;
+        color: var(--text-primary);
+      }
+
+      .logo-container {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 60px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 300px;
+      }
+
+      /* ==================== COMMAND CENTER LOGO ==================== */
+      .command-logo {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .command-icon {
+        position: relative;
+        width: 48px;
+        height: 48px;
+      }
+
+      /* Terminal-style geometric icon */
+      .command-icon-frame {
+        width: 48px;
+        height: 48px;
+        border: 2px solid var(--primary-accent);
+        background: var(--primary-bg);
+        position: relative;
+        clip-path: polygon(
+          0 0,
+          calc(100% - 8px) 0,
+          100% 8px,
+          100% 100%,
+          8px 100%,
+          0 calc(100% - 8px)
+        );
+      }
+
+      .command-icon-core {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 20px;
+        height: 20px;
+        background: var(--primary-accent);
+        clip-path: polygon(
+          0 0,
+          calc(100% - 4px) 0,
+          100% 4px,
+          100% 100%,
+          4px 100%,
+          0 calc(100% - 4px)
+        );
+        animation: command-pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes command-pulse {
+        0%,
+        100% {
+          opacity: 1;
+          box-shadow: 0 0 20px var(--primary-accent);
+        }
+        50% {
+          opacity: 0.7;
+          box-shadow: 0 0 10px var(--primary-accent);
+        }
+      }
+
+      .command-icon-corners {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+      }
+
+      .command-corner {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: var(--secondary-accent);
+      }
+
+      .command-corner:nth-child(1) {
+        top: -1px;
+        left: -1px;
+      }
+      .command-corner:nth-child(2) {
+        top: -1px;
+        right: -1px;
+      }
+      .command-corner:nth-child(3) {
+        bottom: -1px;
+        left: -1px;
+      }
+      .command-corner:nth-child(4) {
+        bottom: -1px;
+        right: -1px;
+      }
+
+      .command-text {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--text-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        position: relative;
+      }
+
+      .command-text::after {
+        content: "ADMIN";
+        position: absolute;
+        bottom: -16px;
+        left: 0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        letter-spacing: 0.2em;
+      }
+
+      /* Data stream effect */
+      .command-icon::before {
+        content: "";
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        width: calc(100% + 8px);
+        height: calc(100% + 8px);
+        border: 1px solid var(--tertiary-accent);
+        opacity: 0.3;
+        animation: data-scan 4s linear infinite;
+      }
+
+      @keyframes data-scan {
+        0% {
+          transform: rotate(0deg) scale(1);
+          opacity: 0.3;
+        }
+        50% {
+          transform: rotate(180deg) scale(1.05);
+          opacity: 0.6;
+        }
+        100% {
+          transform: rotate(360deg) scale(1);
+          opacity: 0.3;
+        }
+      }
+
+      /* ==================== EXECUTIVE LOGO ==================== */
+      .executive-logo {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .executive-icon {
+        position: relative;
+        width: 56px;
+        height: 56px;
+      }
+
+      /* Professional diamond/geometric icon */
+      .executive-icon-base {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, var(--primary-accent), #1d4ed8);
+        border-radius: 12px;
+        position: relative;
+        box-shadow: 0 8px 24px rgba(0, 102, 204, 0.2);
+      }
+
+      .executive-icon-shape {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(45deg);
+        width: 24px;
+        height: 24px;
+        background: white;
+        border-radius: 3px;
+        opacity: 0.95;
+      }
+
+      .executive-icon-accent {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(45deg);
+        width: 12px;
+        height: 12px;
+        background: var(--primary-accent);
+        border-radius: 1px;
+      }
+
+      /* Professional highlight */
+      .executive-icon-highlight {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        width: 16px;
+        height: 16px;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.4),
+          transparent
+        );
+        border-radius: 8px;
+      }
+
+      .executive-text {
+        font-family: "Inter", sans-serif;
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+        position: relative;
+      }
+
+      .executive-text::after {
+        content: "Admin";
+        position: absolute;
+        bottom: -18px;
+        left: 0;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        letter-spacing: -0.01em;
+      }
+
+      /* ==================== SIZE VARIATIONS ==================== */
+      .size-variations {
+        margin-top: 80px;
+      }
+
+      .size-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+      }
+
+      .size-demo {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border-primary);
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .size-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 600;
+      }
+
+      /* Small size - 24px */
+      .logo-small .command-icon {
+        width: 24px;
+        height: 24px;
+      }
+
+      .logo-small .command-icon-frame {
+        width: 24px;
+        height: 24px;
+        border: 1px solid var(--primary-accent);
+      }
+
+      .logo-small .command-icon-core {
+        width: 10px;
+        height: 10px;
+      }
+
+      .logo-small .command-corner {
+        width: 3px;
+        height: 3px;
+      }
+
+      .logo-small .command-text {
+        font-size: 16px;
+      }
+
+      .logo-small .command-text::after {
+        font-size: 8px;
+        bottom: -12px;
+      }
+
+      .logo-small .executive-icon {
+        width: 28px;
+        height: 28px;
+      }
+
+      .logo-small .executive-icon-base {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+      }
+
+      .logo-small .executive-icon-shape {
+        width: 12px;
+        height: 12px;
+      }
+
+      .logo-small .executive-icon-accent {
+        width: 6px;
+        height: 6px;
+      }
+
+      .logo-small .executive-icon-highlight {
+        width: 8px;
+        height: 8px;
+        top: 4px;
+        left: 4px;
+      }
+
+      .logo-small .executive-text {
+        font-size: 18px;
+      }
+
+      .logo-small .executive-text::after {
+        font-size: 10px;
+        bottom: -14px;
+      }
+
+      /* Medium size - 32px */
+      .logo-medium .command-icon {
+        width: 32px;
+        height: 32px;
+      }
+
+      .logo-medium .command-icon-frame {
+        width: 32px;
+        height: 32px;
+      }
+
+      .logo-medium .command-icon-core {
+        width: 14px;
+        height: 14px;
+      }
+
+      .logo-medium .command-corner {
+        width: 4px;
+        height: 4px;
+      }
+
+      .logo-medium .command-text {
+        font-size: 20px;
+      }
+
+      .logo-medium .command-text::after {
+        font-size: 9px;
+        bottom: -14px;
+      }
+
+      .logo-medium .executive-icon {
+        width: 36px;
+        height: 36px;
+      }
+
+      .logo-medium .executive-icon-base {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+      }
+
+      .logo-medium .executive-icon-shape {
+        width: 16px;
+        height: 16px;
+      }
+
+      .logo-medium .executive-icon-accent {
+        width: 8px;
+        height: 8px;
+      }
+
+      .logo-medium .executive-icon-highlight {
+        width: 12px;
+        height: 12px;
+        top: 6px;
+        left: 6px;
+      }
+
+      .logo-medium .executive-text {
+        font-size: 22px;
+      }
+
+      .logo-medium .executive-text::after {
+        font-size: 12px;
+        bottom: -16px;
+      }
+
+      /* Large size - 64px */
+      .logo-large .command-icon {
+        width: 64px;
+        height: 64px;
+      }
+
+      .logo-large .command-icon-frame {
+        width: 64px;
+        height: 64px;
+        border: 3px solid var(--primary-accent);
+      }
+
+      .logo-large .command-icon-core {
+        width: 28px;
+        height: 28px;
+      }
+
+      .logo-large .command-corner {
+        width: 8px;
+        height: 8px;
+      }
+
+      .logo-large .command-text {
+        font-size: 36px;
+      }
+
+      .logo-large .command-text::after {
+        font-size: 12px;
+        bottom: -18px;
+      }
+
+      .logo-large .executive-icon {
+        width: 72px;
+        height: 72px;
+      }
+
+      .logo-large .executive-icon-base {
+        width: 72px;
+        height: 72px;
+        border-radius: 16px;
+      }
+
+      .logo-large .executive-icon-shape {
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+      }
+
+      .logo-large .executive-icon-accent {
+        width: 16px;
+        height: 16px;
+      }
+
+      .logo-large .executive-icon-highlight {
+        width: 20px;
+        height: 20px;
+        top: 10px;
+        left: 10px;
+      }
+
+      .logo-large .executive-text {
+        font-size: 40px;
+      }
+
+      .logo-large .executive-text::after {
+        font-size: 16px;
+        bottom: -20px;
+      }
+
+      /* Usage Guidelines */
+      .guidelines {
+        margin-top: 60px;
+        background: var(--secondary-bg);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 40px;
+      }
+
+      .guidelines-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: var(--text-primary);
+      }
+
+      .guidelines-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+      }
+
+      .guideline-item {
+        margin-bottom: 16px;
+      }
+
+      .guideline-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+      }
+
+      .guideline-text {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+
+      @media (max-width: 768px) {
+        .logo-showcase {
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+
+        .guidelines-content {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .size-grid {
+          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body class="command-theme">
+    <button class="theme-switcher" onclick="toggleTheme()">EXEC_MODE</button>
+
+    <div class="container">
+      <h1 class="section-title">Pagora Logo Design Systems</h1>
+
+      <div class="logo-showcase">
+        <!-- Command Center Logo -->
+        <div class="logo-variant">
+          <h2 class="variant-title">Command Center Logo</h2>
+          <div class="logo-container">
+            <div class="command-logo">
+              <div class="command-icon">
+                <div class="command-icon-frame">
+                  <div class="command-icon-core"></div>
+                </div>
+                <div class="command-icon-corners">
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                </div>
+              </div>
+              <div class="command-text">Pagora</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Executive Suite Logo -->
+        <div class="logo-variant">
+          <h2 class="variant-title">Executive Suite Logo</h2>
+          <div class="logo-container">
+            <div class="executive-logo">
+              <div class="executive-icon">
+                <div class="executive-icon-base">
+                  <div class="executive-icon-highlight"></div>
+                  <div class="executive-icon-shape"></div>
+                  <div class="executive-icon-accent"></div>
+                </div>
+              </div>
+              <div class="executive-text">Pagora</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="size-variations">
+        <h2 class="section-title">Size Variations</h2>
+
+        <div class="size-grid">
+          <div class="size-demo">
+            <div class="size-label">Small (24px)</div>
+            <div class="command-logo logo-small" id="commandSmall">
+              <div class="command-icon">
+                <div class="command-icon-frame">
+                  <div class="command-icon-core"></div>
+                </div>
+                <div class="command-icon-corners">
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                </div>
+              </div>
+              <div class="command-text">Pagora</div>
+            </div>
+          </div>
+
+          <div class="size-demo">
+            <div class="size-label">Medium (32px)</div>
+            <div class="command-logo logo-medium" id="commandMedium">
+              <div class="command-icon">
+                <div class="command-icon-frame">
+                  <div class="command-icon-core"></div>
+                </div>
+                <div class="command-icon-corners">
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                </div>
+              </div>
+              <div class="command-text">Pagora</div>
+            </div>
+          </div>
+
+          <div class="size-demo">
+            <div class="size-label">Large (64px)</div>
+            <div class="command-logo logo-large" id="commandLarge">
+              <div class="command-icon">
+                <div class="command-icon-frame">
+                  <div class="command-icon-core"></div>
+                </div>
+                <div class="command-icon-corners">
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                  <div class="command-corner"></div>
+                </div>
+              </div>
+              <div class="command-text">Pagora</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="guidelines">
+        <h3 class="guidelines-title">Usage Guidelines</h3>
+        <div class="guidelines-content">
+          <div>
+            <div class="guideline-item">
+              <div class="guideline-label">Command Center Usage</div>
+              <div class="guideline-text">
+                Terminal-inspired logo with geometric clipped corners and
+                pulsing core. Use for operational dashboards, monitoring
+                systems, and technical interfaces.
+              </div>
+            </div>
+            <div class="guideline-item">
+              <div class="guideline-label">Color Requirements</div>
+              <div class="guideline-text">
+                Primary: #00ff88 (high-visibility green)<br />
+                Secondary: #ff0066 (alert pink)<br />
+                Background: #000000 (pure black)
+              </div>
+            </div>
+            <div class="guideline-item">
+              <div class="guideline-label">Typography</div>
+              <div class="guideline-text">
+                Space Grotesk 800 weight, uppercase, 0.15em letter-spacing.
+                "ADMIN" subtitle in JetBrains Mono 500 weight.
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="guideline-item">
+              <div class="guideline-label">Executive Suite Usage</div>
+              <div class="guideline-text">
+                Professional diamond logo with gradient background and subtle
+                highlight. Use for boardroom presentations, corporate
+                communications, and executive interfaces.
+              </div>
+            </div>
+            <div class="guideline-item">
+              <div class="guideline-label">Color Requirements</div>
+              <div class="guideline-text">
+                Primary: #0066cc (professional blue)<br />
+                Gradient: #0066cc to #1d4ed8<br />
+                Background: #fafafa (warm off-white)
+              </div>
+            </div>
+            <div class="guideline-item">
+              <div class="guideline-label">Typography</div>
+              <div class="guideline-text">
+                Inter 700 weight, -0.02em letter-spacing. "Admin" subtitle in
+                Inter 500 weight, proper case.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let isCommand = true;
+
+      function toggleTheme() {
+        const body = document.body;
+        const switcher = document.querySelector(".theme-switcher");
+
+        // Get all size demo logos
+        const logos = [
+          document.getElementById("commandSmall"),
+          document.getElementById("commandMedium"),
+          document.getElementById("commandLarge"),
+        ];
+
+        if (isCommand) {
+          // Switch to Executive
+          body.className = "executive-theme";
+          switcher.textContent = "CMD_MODE";
+
+          // Replace command logos with executive logos
+          logos.forEach((logo) => {
+            if (logo) {
+              const size = logo.classList.contains("logo-small")
+                ? "logo-small"
+                : logo.classList.contains("logo-medium")
+                ? "logo-medium"
+                : "logo-large";
+
+              logo.className = `executive-logo ${size}`;
+              logo.innerHTML = `
+                            <div class="executive-icon">
+                                <div class="executive-icon-base">
+                                    <div class="executive-icon-highlight"></div>
+                                    <div class="executive-icon-shape"></div>
+                                    <div class="executive-icon-accent"></div>
+                                </div>
+                            </div>
+                            <div class="executive-text">Pagora</div>
+                        `;
+            }
+          });
+
+          isCommand = false;
+        } else {
+          // Switch to Command
+          body.className = "command-theme";
+          switcher.textContent = "EXEC_MODE";
+
+          // Replace executive logos with command logos
+          logos.forEach((logo) => {
+            if (logo) {
+              const size = logo.classList.contains("logo-small")
+                ? "logo-small"
+                : logo.classList.contains("logo-medium")
+                ? "logo-medium"
+                : "logo-large";
+
+              logo.className = `command-logo ${size}`;
+              logo.innerHTML = `
+                            <div class="command-icon">
+                                <div class="command-icon-frame">
+                                    <div class="command-icon-core"></div>
+                                </div>
+                                <div class="command-icon-corners">
+                                    <div class="command-corner"></div>
+                                    <div class="command-corner"></div>
+                                    <div class="command-corner"></div>
+                                    <div class="command-corner"></div>
+                                </div>
+                            </div>
+                            <div class="command-text">Pagora</div>
+                        `;
+            }
+          });
+
+          isCommand = true;
+        }
+      }
+    </script>
+  </body>
+</html>

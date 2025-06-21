@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Executive Command Center - Light Mode</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap");
+
+      :root {
+        --bg-primary: #fafafa;
+        --bg-secondary: #ffffff;
+        --bg-tertiary: #f5f5f5;
+        --bg-quaternary: #f0f0f0;
+        --accent-primary: #0066cc;
+        --accent-secondary: #dc2626;
+        --accent-tertiary: #059669;
+        --accent-muted: #e6f3ff;
+        --text-primary: #1a1a1a;
+        --text-secondary: #6b7280;
+        --text-tertiary: #9ca3af;
+        --border-primary: #e5e7eb;
+        --border-secondary: #d1d5db;
+        --border-accent: #0066cc;
+        --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.05);
+        --shadow-interactive: 0 2px 8px rgba(0, 102, 204, 0.1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.5;
+        font-feature-settings: "kern" 1, "liga" 1, "tnum" 1;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      .command-center {
+        min-height: 100vh;
+        background: radial-gradient(
+            circle at 20% 20%,
+            rgba(0, 102, 204, 0.02) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 80%,
+            rgba(5, 150, 105, 0.02) 0%,
+            transparent 50%
+          ),
+          var(--bg-primary);
+      }
+
+      .header {
+        padding: 20px 32px;
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-primary);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(20px);
+      }
+
+      .header-content {
+        max-width: 1600px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo {
+        width: 6px;
+        height: 6px;
+        background: var(--accent-primary);
+        border-radius: 50%;
+        position: relative;
+      }
+
+      .logo::after {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        width: 10px;
+        height: 10px;
+        border: 1px solid var(--accent-primary);
+        border-radius: 50%;
+        opacity: 0.3;
+      }
+
+      .title {
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--text-primary);
+      }
+
+      .header-meta {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: var(--accent-muted);
+        border: 1px solid rgba(0, 102, 204, 0.2);
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--accent-primary);
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        background: var(--accent-tertiary);
+        border-radius: 50%;
+      }
+
+      .timestamp {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--text-secondary);
+        letter-spacing: 0.05em;
+      }
+
+      .main-grid {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 32px;
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 32px;
+      }
+
+      .primary-section {
+        display: grid;
+        gap: 24px;
+      }
+
+      .metrics-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 20px;
+      }
+
+      .metric-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        padding: 28px;
+        position: relative;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--shadow-subtle);
+      }
+
+      .metric-card:hover {
+        border-color: var(--border-accent);
+        box-shadow: var(--shadow-interactive);
+        transform: translateY(-1px);
+      }
+
+      .revenue-card {
+        background: linear-gradient(
+          135deg,
+          var(--bg-secondary) 0%,
+          #f8fafc 100%
+        );
+        border-color: var(--accent-primary);
+        border-width: 2px;
+      }
+
+      .revenue-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          var(--accent-primary),
+          var(--accent-tertiary)
+        );
+        border-radius: 8px 8px 0 0;
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+
+      .card-label {
+        font-size: 11px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 600;
+      }
+
+      .card-status {
+        padding: 3px 8px;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-radius: 4px;
+      }
+
+      .status-optimal {
+        background: rgba(5, 150, 105, 0.1);
+        color: var(--accent-tertiary);
+        border: 1px solid rgba(5, 150, 105, 0.2);
+      }
+
+      .status-warning {
+        background: rgba(220, 38, 38, 0.1);
+        color: var(--accent-secondary);
+        border: 1px solid rgba(220, 38, 38, 0.2);
+      }
+
+      .status-primary {
+        background: var(--accent-muted);
+        color: var(--accent-primary);
+        border: 1px solid rgba(0, 102, 204, 0.2);
+      }
+
+      .metric-value {
+        font-size: 36px;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 8px;
+        font-family: "JetBrains Mono", monospace;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+      }
+
+      .revenue-value {
+        font-size: 48px;
+        color: var(--accent-primary);
+        font-weight: 800;
+      }
+
+      .metric-change {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 500;
+      }
+
+      .change-positive {
+        color: var(--accent-tertiary);
+      }
+
+      .change-negative {
+        color: var(--accent-secondary);
+      }
+
+      .aging-section {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        padding: 32px;
+        box-shadow: var(--shadow-subtle);
+      }
+
+      .aging-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border-primary);
+      }
+
+      .aging-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .aging-total {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .aging-bars {
+        display: grid;
+        gap: 20px;
+      }
+
+      .aging-bar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .aging-label {
+        min-width: 70px;
+        font-size: 11px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .aging-progress {
+        flex: 1;
+        height: 12px;
+        background: var(--bg-quaternary);
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid var(--border-primary);
+      }
+
+      .aging-fill {
+        height: 100%;
+        transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
+
+      .fill-healthy {
+        background: linear-gradient(90deg, var(--accent-tertiary), #10b981);
+      }
+      .fill-caution {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+      }
+      .fill-critical {
+        background: linear-gradient(90deg, var(--accent-secondary), #ef4444);
+      }
+
+      .aging-percentage {
+        min-width: 45px;
+        text-align: right;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .sidebar {
+        display: grid;
+        gap: 20px;
+      }
+
+      .client-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        padding: 24px;
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-subtle);
+        position: relative;
+      }
+
+      .client-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--border-primary);
+        border-radius: 8px 0 0 8px;
+        transition: background 0.2s ease;
+      }
+
+      .client-card:hover::before {
+        background: var(--accent-primary);
+      }
+
+      .client-card:hover {
+        border-color: var(--border-accent);
+        box-shadow: var(--shadow-interactive);
+        transform: translateY(-1px);
+      }
+
+      .client-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+      }
+
+      .client-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .client-tier {
+        padding: 2px 6px;
+        font-size: 8px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-radius: 3px;
+      }
+
+      .tier-vip {
+        background: linear-gradient(45deg, var(--accent-secondary), #f87171);
+        color: white;
+      }
+
+      .tier-standard {
+        background: var(--bg-quaternary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-secondary);
+      }
+
+      .client-amount {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: var(--text-primary);
+      }
+
+      .client-days {
+        font-size: 11px;
+        color: var(--text-secondary);
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .system-section {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        padding: 20px;
+        font-family: "JetBrains Mono", monospace;
+        box-shadow: var(--shadow-subtle);
+      }
+
+      .system-header {
+        color: var(--accent-primary);
+        font-size: 10px;
+        margin-bottom: 16px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 600;
+      }
+
+      .system-line {
+        font-size: 11px;
+        line-height: 1.6;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .system-value {
+        color: var(--accent-tertiary);
+        font-weight: 600;
+      }
+
+      .system-warning {
+        color: var(--accent-secondary);
+        font-weight: 600;
+      }
+
+      /* Enhanced scrollbar for light mode */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--bg-tertiary);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--border-secondary);
+        border-radius: 3px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-tertiary);
+      }
+
+      @media (max-width: 1200px) {
+        .main-grid {
+          grid-template-columns: 1fr;
+          padding: 24px;
+        }
+
+        .metrics-row {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .revenue-card {
+          grid-column: span 2;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .main-grid {
+          padding: 16px;
+        }
+
+        .metrics-row {
+          grid-template-columns: 1fr;
+        }
+
+        .revenue-card {
+          grid-column: span 1;
+        }
+      }
+
+      /* Subtle animations for professional feel */
+      .metric-card,
+      .client-card,
+      .aging-section,
+      .system-section {
+        animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+
+      .client-card:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+      .client-card:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+      .client-card:nth-child(4) {
+        animation-delay: 0.3s;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="command-center">
+      <header class="header">
+        <div class="header-content">
+          <div class="logo-section">
+            <div class="logo"></div>
+            <h1 class="title">Executive Dashboard</h1>
+          </div>
+          <div class="header-meta">
+            <div class="status-indicator">
+              <div class="status-dot"></div>
+              <span>Operational</span>
+            </div>
+            <div class="timestamp" id="timestamp">19.06.2025 14:23:07</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="main-grid">
+        <div class="primary-section">
+          <div class="metrics-row">
+            <div class="metric-card revenue-card">
+              <div class="card-header">
+                <span class="card-label">Total Revenue</span>
+                <span class="card-status status-primary">STRONG</span>
+              </div>
+              <div class="metric-value revenue-value">$303.8M</div>
+              <div class="metric-change change-positive">
+                +5.2% MoM • 675% of target
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="card-header">
+                <span class="card-label">Team Capacity</span>
+                <span class="card-status status-optimal">HEALTHY</span>
+              </div>
+              <div class="metric-value">
+                85<span style="font-size: 20px; color: var(--text-secondary)"
+                  >%</span
+                >
+              </div>
+              <div class="metric-change change-positive">+3% WoW</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="card-header">
+                <span class="card-label">Active Projects</span>
+                <span class="card-status status-warning">WATCH</span>
+              </div>
+              <div class="metric-value">32</div>
+              <div class="metric-change change-negative">10% delayed</div>
+            </div>
+          </div>
+
+          <div class="aging-section">
+            <div class="aging-header">
+              <h2 class="aging-title">Accounts Receivable Analysis</h2>
+              <span class="aging-total">Outstanding: $4,520.9M</span>
+            </div>
+
+            <div class="aging-bars">
+              <div class="aging-bar">
+                <span class="aging-label">Current</span>
+                <div class="aging-progress">
+                  <div class="aging-fill fill-healthy" style="width: 85%"></div>
+                </div>
+                <span class="aging-percentage">85%</span>
+              </div>
+
+              <div class="aging-bar">
+                <span class="aging-label">30-60d</span>
+                <div class="aging-progress">
+                  <div class="aging-fill fill-caution" style="width: 7%"></div>
+                </div>
+                <span class="aging-percentage">7%</span>
+              </div>
+
+              <div class="aging-bar">
+                <span class="aging-label">60-90d</span>
+                <div class="aging-progress">
+                  <div class="aging-fill fill-caution" style="width: 0%"></div>
+                </div>
+                <span class="aging-percentage">0%</span>
+              </div>
+
+              <div class="aging-bar">
+                <span class="aging-label">90d+</span>
+                <div class="aging-progress">
+                  <div class="aging-fill fill-critical" style="width: 8%"></div>
+                </div>
+                <span class="aging-percentage">8%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar">
+          <div class="client-card">
+            <div class="client-header">
+              <span class="client-name">Codelco</span>
+              <span class="client-tier tier-vip">VIP</span>
+            </div>
+            <div class="client-amount">$45.2M</div>
+            <div class="client-days">35 days average</div>
+          </div>
+
+          <div class="client-card">
+            <div class="client-header">
+              <span class="client-name">Arauco</span>
+              <span class="client-tier tier-standard">Standard</span>
+            </div>
+            <div class="client-amount">$23.1M</div>
+            <div class="client-days">22 days average</div>
+          </div>
+
+          <div class="client-card">
+            <div class="client-header">
+              <span class="client-name">Minera Escondida</span>
+              <span class="client-tier tier-standard">Standard</span>
+            </div>
+            <div class="client-amount">$18.7M</div>
+            <div class="client-days">12 days average</div>
+          </div>
+
+          <div class="system-section">
+            <div class="system-header">System Health</div>
+            <div class="system-line">
+              <span>Uptime</span>
+              <span class="system-value">99.97%</span>
+            </div>
+            <div class="system-line">
+              <span>Response</span>
+              <span class="system-value">12ms</span>
+            </div>
+            <div class="system-line">
+              <span>Alerts</span>
+              <span class="system-warning">0 Critical</span>
+            </div>
+            <div class="system-line">
+              <span>Last Sync</span>
+              <span class="system-value">Live</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function updateTimestamp() {
+        const now = new Date();
+        const timestamp = now
+          .toLocaleString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })
+          .replace(",", "");
+        document.getElementById("timestamp").textContent = timestamp;
+      }
+
+      updateTimestamp();
+      setInterval(updateTimestamp, 1000);
+
+      // Smooth bar animations on load
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.querySelectorAll(".aging-fill").forEach((bar, index) => {
+            setTimeout(() => {
+              bar.style.width = bar.style.width;
+            }, index * 100);
+          });
+        }, 800);
+      });
+    </script>
+  </body>
+</html>

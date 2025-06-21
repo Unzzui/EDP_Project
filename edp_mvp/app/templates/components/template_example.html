@@ -1,0 +1,227 @@
+<!-- 
+  EJEMPLO DE USO DE LOS ESTILOS DEL TEMPLATE
+  Este archivo muestra cómo aplicar los estilos inspirados en el template dark mode
+  en los componentes de tu proyecto EDP.
+-->
+
+<!-- Layout Principal con Fondo Cuadriculado (Ya incluido en base.html) -->
+<div class="command-center-layout">
+  <!-- Header Mejorado (Opcional - ya tienes uno) -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo-section">
+        <div class="logo"></div>
+        <h1 class="title-large">COMMAND CENTER</h1>
+      </div>
+      <div class="timestamp mono-font" id="timestamp">
+        {{ current_date.strftime('%d.%m.%Y %H:%M:%S') }} UTC
+      </div>
+    </div>
+  </header>
+
+  <!-- Grid Principal -->
+  <div class="main-grid">
+    <!-- Sección Principal -->
+    <div class="primary-section">
+      <!-- Fila de Métricas -->
+      <div class="metrics-row">
+        <!-- Tarjeta de Revenue Destacada -->
+        <div class="metric-card revenue-card">
+          <div class="card-header">
+            <span class="card-label">Revenue Stream</span>
+            <span class="badge status-optimal">OPTIMAL</span>
+          </div>
+          <div class="revenue-value-large mono-font">$303.8M</div>
+          <div class="metric-change change-positive">
+            +5.2% MoM ↗ TARGET: 675%
+          </div>
+        </div>
+
+        <!-- Métricas Regulares -->
+        <div class="metric-card">
+          <div class="card-header">
+            <span class="card-label">Capacidad</span>
+            <span class="badge status-optimal">NOMINAL</span>
+          </div>
+          <div class="metric-value-large">
+            85<span style="font-size: 24px">%</span>
+          </div>
+          <div class="metric-change change-positive">+3% WoW ↗</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="card-header">
+            <span class="card-label">Operaciones</span>
+            <span class="badge status-warning">MONITOR</span>
+          </div>
+          <div class="metric-value-large">32</div>
+          <div class="metric-change change-negative">10% DELAYED ↘</div>
+        </div>
+      </div>
+
+      <!-- Sección de Aging/Distribución -->
+      <div class="aging-section card">
+        <div class="aging-header">
+          <h2 class="aging-title">RECEIVABLES DISTRIBUTION</h2>
+          <span class="aging-total mono-font">TOTAL: $4,520.9M</span>
+        </div>
+
+        <div class="aging-bars">
+          <div class="aging-bar">
+            <span class="aging-label">0-30d</span>
+            <div class="aging-progress">
+              <div class="aging-fill fill-healthy" style="width: 85%"></div>
+            </div>
+            <span class="aging-percentage mono-font">85%</span>
+          </div>
+
+          <div class="aging-bar">
+            <span class="aging-label">30-60d</span>
+            <div class="aging-progress">
+              <div class="aging-fill fill-caution" style="width: 7%"></div>
+            </div>
+            <span class="aging-percentage mono-font">7%</span>
+          </div>
+
+          <div class="aging-bar">
+            <span class="aging-label">60-90d</span>
+            <div class="aging-progress">
+              <div class="aging-fill fill-caution" style="width: 0%"></div>
+            </div>
+            <span class="aging-percentage mono-font">0%</span>
+          </div>
+
+          <div class="aging-bar">
+            <span class="aging-label">+90d</span>
+            <div class="aging-progress">
+              <div class="aging-fill fill-critical" style="width: 8%"></div>
+            </div>
+            <span class="aging-percentage mono-font">8%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Tarjetas de Clientes -->
+      <div class="client-card card">
+        <div class="client-header">
+          <span class="client-name">CODELCO</span>
+          <span class="client-tier tier-vip">VIP</span>
+        </div>
+        <div class="client-amount mono-font">$45.2M</div>
+        <div class="client-days">35d avg</div>
+      </div>
+
+      <div class="client-card card">
+        <div class="client-header">
+          <span class="client-name">ARAUCO</span>
+          <span class="client-tier tier-standard">STD</span>
+        </div>
+        <div class="client-amount mono-font">$23.1M</div>
+        <div class="client-days">22d avg</div>
+      </div>
+
+      <div class="client-card card">
+        <div class="client-header">
+          <span class="client-name">ESCONDIDA</span>
+          <span class="client-tier tier-standard">STD</span>
+        </div>
+        <div class="client-amount mono-font">$18.7M</div>
+        <div class="client-days">12d avg</div>
+      </div>
+
+      <!-- Sección Terminal/Sistema -->
+      <div class="terminal-section">
+        <div class="terminal-header">/// SYSTEM STATUS</div>
+        <div class="terminal-line">
+          UPTIME: <span class="terminal-value">99.97%</span>
+        </div>
+        <div class="terminal-line">
+          LATENCY: <span class="terminal-value">12ms</span>
+        </div>
+        <div class="terminal-line">
+          ALERTS: <span class="terminal-warning">0 CRITICAL</span>
+        </div>
+        <div class="terminal-line">
+          SYNC: <span class="terminal-value">REAL-TIME</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Script para timestamp en tiempo real -->
+<script>
+  function updateTimestamp() {
+    const now = new Date();
+    const timestamp =
+      now.toISOString().replace("T", " ").substr(0, 19) + " UTC";
+    const element = document.getElementById("timestamp");
+    if (element) {
+      element.textContent = timestamp;
+    }
+  }
+
+  // Actualizar cada segundo si existe el elemento
+  if (document.getElementById("timestamp")) {
+    updateTimestamp();
+    setInterval(updateTimestamp, 1000);
+  }
+
+  // Animar barras en carga
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      document.querySelectorAll(".aging-fill").forEach((bar) => {
+        bar.style.width = bar.style.width;
+      });
+    }, 500);
+  });
+</script>
+
+<!-- 
+  CÓMO USAR ESTOS ESTILOS EN TUS COMPONENTES:
+
+  1. FONDO CUADRICULADO: Ya está incluido automáticamente en base.html
+
+  2. TARJETAS CON EFECTOS:
+     - Usa class="card" para tarjetas básicas con efectos hover
+     - Usa class="metric-card" para tarjetas de métricas
+     - Usa class="terminal-section" para componentes tipo terminal
+
+  3. TIPOGRAFÍA:
+     - class="mono-font" para fuente monoespaciada 
+     - class="title-large" para títulos grandes
+     - class="metric-value-large" para valores grandes
+     - class="revenue-value-large" para valores destacados
+
+  4. LAYOUT:
+     - class="command-center-layout" para layout completo
+     - class="main-grid" para grid principal
+     - class="metrics-row" para fila de métricas
+     - class="primary-section" para sección principal
+     - class="sidebar" para barra lateral
+
+  5. BADGES Y ESTADOS:
+     - class="badge status-optimal" para estado óptimo
+     - class="badge status-warning" para advertencias
+     - class="badge status-danger" para peligro
+
+  6. COLORES Y EFECTOS:
+     - class="change-positive" para cambios positivos (verde)
+     - class="change-negative" para cambios negativos (rojo)
+     - class="terminal-value" para valores en terminal
+     - class="terminal-warning" para advertencias en terminal
+
+  EJEMPLO DE USO EN TUS TEMPLATES EXISTENTES:
+  
+  Reemplaza:
+  <div class="bg-white shadow rounded p-4">
+  
+  Por:
+  <div class="card">
+  
+  O para métricas:
+  <div class="metric-card">
+-->

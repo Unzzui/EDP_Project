@@ -8,30 +8,27 @@
 <nav
   class="bg-[color:var(--bg-card)] border-b border-[color:var(--border-color)] shadow-sm sticky top-0 z-50">
   <div class="navbar-container">
-    <!-- Logo y título -->
+    <!-- Logo y título con nuevo diseño Pagora -->
     <div class="flex items-center">
       <a
         href="{{ url_for('landing.index') }}"
-        class="flex items-center text-lg font-bold transition-transform hover:scale-105 hover:no-underline">
-        <div class="w-8 h-8 relative flex items-center justify-center mr-1">
-          <svg viewBox="0 0 24 24" class="w-full h-full" fill="none">
-            <path
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              stroke="#3b82f6"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round" />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <div
-            class="bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-green)] bg-clip-text text-transparent">
-            Pagora
+        class="flex items-center transition-transform hover:scale-105 hover:no-underline">
+        <!-- Pagora Command Center Logo -->
+        <div class="pagora-navbar-logo">
+          <div class="pagora-navbar-icon">
+            <div class="pagora-navbar-icon-frame">
+              <div class="pagora-navbar-icon-core"></div>
+            </div>
           </div>
-          <div class="text-xs text-[color:var(--text-secondary)] -mt-1">
-            {% if current_user.is_authenticated %} {{
-            current_user.rol.replace('_', ' ').title() if current_user.rol else
-            'Usuario' }} {% else %} Sistema de Control {% endif %}
+          <div class="pagora-navbar-text">
+            <div class="pagora-navbar-brand">Pagora</div>
+            <div class="pagora-navbar-subtitle">
+              {% if current_user.is_authenticated %} {% if current_user.rol ==
+              'admin' %}ADMIN {% elif current_user.rol == 'manager' %}EXECUTIVE
+              {% elif current_user.rol == 'controller' %}CONTROL {% elif
+              current_user.rol == 'jefe_proyecto' %}PROJECT.MGR {% else %}USER
+              {% endif %} {% else %}SYSTEM{% endif %}
+            </div>
           </div>
         </div>
       </a>
@@ -168,12 +165,10 @@
 
       <!-- Dropdown: Gestión de Proyectos (para jefe_proyecto y miembro_equipo_proyecto) -->
       {% if current_user.rol in ['jefe_proyecto', 'miembro_equipo_proyecto'] %}
-      <li class="relative">
-        <button
-          id="project-manager-menu-button"
-          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)]">
+      <li class="nav-item">
+        <button id="project-manager-menu-button" class="nav-button">
           <svg
-            class="w-4 h-4 mr-1.5"
+            class="nav-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -185,7 +180,7 @@
           </svg>
           Gestión de Proyectos
           <svg
-            class="w-4 h-4 ml-1 transform transition-transform duration-200"
+            class="nav-arrow"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -198,15 +193,13 @@
         </button>
 
         <!-- Dropdown de Gestión de Proyectos -->
-        <div
-          id="project-manager-menu"
-          class="hidden absolute left-0 mt-2 w-56 bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-md shadow-lg z-50">
-          <div class="py-2">
+        <div id="project-manager-menu" class="dropdown-menu hidden">
+          <div class="dropdown-content">
             <a
               href="{{ url_for('project_management.dashboard') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -221,9 +214,9 @@
 
             <a
               href="{{ url_for('project_management.team_dashboard') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -238,9 +231,9 @@
 
             <a
               href="{{ url_for('project_management.reports') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -259,12 +252,10 @@
 
       <!-- Dropdown: Gestión Ejecutiva (para managers y admins) -->
       {% if current_user.rol in ['manager', 'admin'] %}
-      <li class="relative">
-        <button
-          id="manager-menu-button"
-          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)]">
+      <li class="nav-item">
+        <button id="manager-menu-button" class="nav-button">
           <svg
-            class="w-4 h-4 mr-1.5"
+            class="nav-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -276,7 +267,7 @@
           </svg>
           Gestión Ejecutiva
           <svg
-            class="w-4 h-4 ml-1 transform transition-transform duration-200"
+            class="nav-arrow"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -289,15 +280,13 @@
         </button>
 
         <!-- Dropdown de Gestión Ejecutiva -->
-        <div
-          id="manager-menu"
-          class="hidden absolute left-0 mt-2 w-56 bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-md shadow-lg z-50">
-          <div class="py-2">
+        <div id="manager-menu" class="dropdown-menu hidden">
+          <div class="dropdown-content">
             <a
               href="{{ url_for('management.dashboard') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -312,9 +301,9 @@
 
             <a
               href="{{ url_for('management.operational_dashboard') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -333,9 +322,9 @@
 
             <a
               href="{{ url_for('management.analytics_dashboard') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -353,12 +342,10 @@
       {% endif %}
 
       <!-- Dropdown: EDPs (para todos los usuarios autenticados) -->
-      <li class="relative">
-        <button
-          id="edp-menu-button"
-          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)]">
+      <li class="nav-item">
+        <button id="edp-menu-button" class="nav-button">
           <svg
-            class="w-4 h-4 mr-1.5"
+            class="nav-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -370,7 +357,7 @@
           </svg>
           EDPs
           <svg
-            class="w-4 h-4 ml-1 transform transition-transform duration-200"
+            class="nav-arrow"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -383,17 +370,15 @@
         </button>
 
         <!-- Dropdown de EDPs -->
-        <div
-          id="edp-menu"
-          class="hidden absolute left-0 mt-2 w-48 bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-md shadow-lg z-50">
-          <div class="py-2">
+        <div id="edp-menu" class="dropdown-menu hidden">
+          <div class="dropdown-content">
             {% if current_user.rol in ['manager', 'admin', 'controller',
             'jefe_proyecto', 'miembro_equipo_proyecto'] %}
             <a
               href="{{ url_for('edp_upload.upload_page') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -408,9 +393,9 @@
 
             <a
               href="{{ url_for('edp_management.manage_edps') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -433,12 +418,10 @@
 
       <!-- Dropdown: Administración (solo para admins) -->
       {% if current_user.rol == 'admin' %}
-      <li class="relative">
-        <button
-          id="admin-menu-button"
-          class="flex items-center py-2 px-3 rounded-md transition-all duration-200 hover:text-[color:var(--accent-blue)] hover:bg-[color:var(--bg-highlight)]">
+      <li class="nav-item">
+        <button id="admin-menu-button" class="nav-button">
           <svg
-            class="w-4 h-4 mr-1.5"
+            class="nav-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -450,7 +433,7 @@
           </svg>
           Administración
           <svg
-            class="w-4 h-4 ml-1 transform transition-transform duration-200"
+            class="nav-arrow"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -463,15 +446,11 @@
         </button>
 
         <!-- Dropdown de Administración -->
-        <div
-          id="admin-menu"
-          class="hidden absolute left-0 mt-2 w-52 bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-md shadow-lg z-50">
-          <div class="py-2">
-            <a
-              href="{{ url_for('admin.usuarios') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+        <div id="admin-menu" class="dropdown-menu hidden">
+          <div class="dropdown-content">
+            <a href="{{ url_for('admin.usuarios') }}" class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -486,9 +465,9 @@
 
             <a
               href="{{ url_for('admin.nuevo_usuario') }}"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
+              class="dropdown-item">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -501,18 +480,13 @@
               Crear Usuario
             </a>
 
-            <div class="border-t border-[color:var(--border-color)] my-1"></div>
+            <div class="dropdown-separator"></div>
 
-            <div
-              class="px-4 py-2 text-xs text-[color:var(--text-secondary)] font-medium">
-              Sistema
-            </div>
+            <div class="dropdown-header">Sistema</div>
 
-            <a
-              href="#"
-              class="block px-4 py-2 text-sm hover:bg-[color:var(--bg-highlight)] transition-colors text-[color:var(--text-secondary)]">
+            <a href="#" class="dropdown-item" style="opacity: 0.6">
               <svg
-                class="w-4 h-4 inline mr-2"
+                class="dropdown-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

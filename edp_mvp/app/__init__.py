@@ -5,6 +5,10 @@ from .extensions import socketio, login_manager, db
 from celery import Celery
 import os
 import logging
+import json
+import numpy as np
+import pandas as pd
+from typing import Any
 
 # Celery application with improved error handling
 def create_celery():
@@ -56,6 +60,59 @@ try:
     from werkzeug.middleware.profiler import ProfilerMiddleware
 except Exception:  # pragma: no cover - optional dependency
     ProfilerMiddleware = None
+
+# 🔧 PATCH GLOBAL: Solución definitiva para "Object of type int64 is not JSON serializable"
+import json
+import numpy as np
+import pandas as pd
+from typing import Any
+
+# Patch global de json.dumps usando la función centralizada
+original_json_dumps = json.dumps
+
+def patched_json_dumps(obj, *args, **kwargs):
+    """Versión patcheada de json.dumps que maneja tipos numpy automáticamente"""
+    try:
+        return original_json_dumps(obj, *args, **kwargs)
+    except TypeError as e:
+        error_str = str(e)
+        if any(error_type in error_str for error_type in ["int64", "float64", "bool_", "Timestamp", "DictToObject"]):
+            # Usar la función centralizada de conversión
+            from .utils.type_conversion import convert_numpy_types_for_json
+            converted_obj = convert_numpy_types_for_json(obj)
+            return original_json_dumps(converted_obj, *args, **kwargs)
+        else:
+            raise e
+
+# Aplicar el patch globalmente
+json.dumps = patched_json_dumps
+
+# También patchear jsonify de Flask
+from flask import json as flask_json
+
+original_flask_dumps = flask_json.dumps
+
+def patched_flask_dumps(obj, *args, **kwargs):
+    """Versión patcheada de Flask json.dumps"""
+    try:
+        return original_flask_dumps(obj, *args, **kwargs)
+    except TypeError as e:
+        error_str = str(e)
+        if any(error_type in error_str for error_type in ["int64", "float64", "bool_", "Timestamp", "DictToObject"]):
+            # Usar la función centralizada de conversión
+            from .utils.type_conversion import convert_numpy_types_for_json
+            converted_obj = convert_numpy_types_for_json(obj)
+            return original_flask_dumps(converted_obj, *args, **kwargs)
+        else:
+            raise e
+
+flask_json.dumps = patched_flask_dumps
+
+print("🔧 JSON SERIALIZATION PATCH APLICADO GLOBALMENTE")
+print("   - json.dumps patcheado")
+print("   - flask.json.dumps patcheado") 
+print("   - Conversión automática de tipos numpy/pandas activada")
+print("   - Montos convertidos específicamente a float para BD")
 
 def create_app():
     app = Flask(__name__)

@@ -373,8 +373,76 @@ function initializeViewToggle() {
             tablaContainer.style.display = '';
             tablaContainer.classList.remove('hidden');
             
+            // IMPORTANTE: Inicializar/actualizar la paginación al cambiar a vista tabla
             setTimeout(() => {
                 window.dispatchEvent(new Event('resize'));
+                
+                // Verificar si existe la función de paginación y aplicarla
+                if (typeof window.applyFiltersAndUpdatePagination === 'function') {
+                    console.log('🔄 Aplicando paginación al cambiar a vista tabla...');
+                    window.applyFiltersAndUpdatePagination();
+                } else if (typeof window.updatePagination === 'function') {
+                    console.log('🔄 Aplicando paginación directa al cambiar a vista tabla...');
+                    window.updatePagination();
+                } else {
+                    console.warn('⚠️ Funciones de paginación no encontradas, aplicando paginación de emergencia...');
+                    // PAGINACIÓN DE EMERGENCIA MEJORADA
+                    const table = document.getElementById('edp-table');
+                    if (table) {
+                        const tbody = table.querySelector('tbody');
+                        if (tbody) {
+                            const rows = Array.from(tbody.querySelectorAll('tr'));
+                            // Filtrar filas que no son de "no hay registros" o mensajes especiales
+                            const dataRows = rows.filter(row => 
+                                row.cells.length > 1 || 
+                                (row.cells.length === 1 && !row.cells[0].getAttribute('colspan'))
+                            );
+                            const visibleRows = dataRows.filter(row => !row.classList.contains('hidden'));
+                            const pageSize = parseInt(document.getElementById('page-size')?.value || '10');
+                            
+                            console.log(`📊 EMERGENCIA: ${visibleRows.length} filas visibles, aplicando límite de ${pageSize}`);
+                            
+                            // PASO 1: Ocultar TODAS las filas de datos
+                            dataRows.forEach(row => {
+                                row.style.display = 'none';
+                            });
+                            
+                            // PASO 2: Mostrar EXACTAMENTE el número permitido
+                            const maxToShow = Math.min(pageSize, visibleRows.length);
+                            for (let i = 0; i < maxToShow; i++) {
+                                if (visibleRows[i]) {
+                                    visibleRows[i].style.display = '';
+                                }
+                            }
+                            
+                            // PASO 3: Actualizar contadores de paginación
+                            const showingFrom = document.getElementById('showing-from');
+                            const showingTo = document.getElementById('showing-to');
+                            const totalCount = document.getElementById('total-count');
+                            
+                            if (showingFrom) showingFrom.textContent = visibleRows.length > 0 ? '1' : '0';
+                            if (showingTo) showingTo.textContent = maxToShow.toString();
+                            if (totalCount) totalCount.textContent = visibleRows.length.toString();
+                            
+                            console.log(`✅ EMERGENCIA COMPLETADA: ${maxToShow} filas mostradas de ${visibleRows.length} total`);
+                            
+                            // PASO 4: Verificación doble después de un momento
+                            setTimeout(() => {
+                                const nowVisible = dataRows.filter(row => 
+                                    row.style.display !== 'none' && 
+                                    !row.classList.contains('hidden')
+                                );
+                                if (nowVisible.length > pageSize) {
+                                    console.error(`🚨 DOBLE VERIFICACIÓN: ${nowVisible.length} filas visibles, corrigiendo...`);
+                                    nowVisible.slice(pageSize).forEach(row => {
+                                        row.style.display = 'none';
+                                    });
+                                    console.log(`🔧 Corrección aplicada: ${pageSize} filas visibles máximo`);
+                                }
+                            }, 100);
+                        }
+                    }
+                }
             }, 100);
         }
         
@@ -395,6 +463,14 @@ function initializeViewToggle() {
         if (currentView !== 'lista') {
             showListaView();
             localStorage.setItem('kanban_view_preference', 'lista');
+            
+            // Forzar aplicación de paginación después de un breve delay
+            setTimeout(() => {
+                if (typeof window.applyFiltersAndUpdatePagination === 'function') {
+                    window.applyFiltersAndUpdatePagination();
+                    console.log('🔄 Paginación forzada después del cambio de vista');
+                }
+            }, 200);
         }
     });
     

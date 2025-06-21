@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Executive Navigation Systems</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
+      /* DARK MODE VARIABLES */
+      .dark-theme {
+        --bg-primary: #000000;
+        --bg-secondary: #0a0a0a;
+        --bg-tertiary: #111111;
+        --accent-primary: #00ff88;
+        --accent-secondary: #ff0066;
+        --accent-tertiary: #0066ff;
+        --text-primary: #ffffff;
+        --text-secondary: #888888;
+        --text-tertiary: #444444;
+        --border-primary: #1a1a1a;
+        --border-secondary: #333333;
+        --shadow-primary: 0 0 50px rgba(0, 255, 136, 0.1);
+        --shadow-secondary: 0 0 30px rgba(255, 0, 102, 0.1);
+      }
+
+      /* LIGHT MODE VARIABLES */
+      .light-theme {
+        --bg-primary: #fafafa;
+        --bg-secondary: #ffffff;
+        --bg-tertiary: #f5f5f5;
+        --bg-quaternary: #f0f0f0;
+        --accent-primary: #0066cc;
+        --accent-secondary: #dc2626;
+        --accent-tertiary: #059669;
+        --accent-muted: #e6f3ff;
+        --text-primary: #1a1a1a;
+        --text-secondary: #6b7280;
+        --text-tertiary: #9ca3af;
+        --border-primary: #e5e7eb;
+        --border-secondary: #d1d5db;
+        --border-accent: #0066cc;
+        --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.05);
+        --shadow-interactive: 0 2px 8px rgba(0, 102, 204, 0.1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.5;
+      }
+
+      .demo-container {
+        min-height: 100vh;
+        background: var(--bg-primary);
+      }
+
+      .theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        padding: 12px 20px;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: all 0.3s ease;
+      }
+
+      .theme-toggle:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      /* ==================== DARK MODE NAVBAR ==================== */
+      .dark-navbar {
+        background: rgba(0, 0, 0, 0.9);
+        border-bottom: 1px solid var(--border-primary);
+        backdrop-filter: blur(20px);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        font-family: "Space Grotesk", sans-serif;
+      }
+
+      .dark-nav-content {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 0 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 72px;
+      }
+
+      .dark-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .dark-logo {
+        width: 8px;
+        height: 8px;
+        background: var(--accent-primary);
+        border-radius: 50%;
+        position: relative;
+        animation: pulse-dark 3s infinite ease-in-out;
+      }
+
+      .dark-logo::after {
+        content: "";
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        width: 16px;
+        height: 16px;
+        border: 1px solid var(--accent-primary);
+        border-radius: 50%;
+        opacity: 0.3;
+      }
+
+      @keyframes pulse-dark {
+        0%,
+        100% {
+          box-shadow: 0 0 20px var(--accent-primary);
+          transform: scale(1);
+        }
+        50% {
+          box-shadow: 0 0 30px var(--accent-primary);
+          transform: scale(1.2);
+        }
+      }
+
+      .dark-brand-text {
+        font-size: 18px;
+        font-weight: 300;
+        letter-spacing: 0.1em;
+        color: var(--text-primary);
+        text-transform: uppercase;
+      }
+
+      .dark-nav-menu {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        list-style: none;
+      }
+
+      .dark-nav-item {
+        position: relative;
+      }
+
+      .dark-nav-link {
+        display: flex;
+        align-items: center;
+        padding: 16px 24px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        border-radius: 0;
+      }
+
+      .dark-nav-link::before {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--accent-primary);
+        transition: width 0.3s ease;
+      }
+
+      .dark-nav-link:hover {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .dark-nav-link:hover::before {
+        width: 100%;
+      }
+
+      .dark-nav-link.active {
+        color: var(--accent-primary);
+        background: rgba(0, 255, 136, 0.05);
+      }
+
+      .dark-nav-link.active::before {
+        width: 100%;
+      }
+
+      .dark-nav-badge {
+        display: inline-block;
+        background: var(--accent-secondary);
+        color: var(--text-primary);
+        font-size: 8px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 8px;
+        font-weight: 700;
+        min-width: 16px;
+        text-align: center;
+      }
+
+      .dark-nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .dark-search {
+        display: flex;
+        align-items: center;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        border-radius: 0;
+        padding: 8px 16px;
+        width: 240px;
+        transition: all 0.3s ease;
+      }
+
+      .dark-search:focus-within {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+      }
+
+      .dark-search-input {
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        font-size: 12px;
+        width: 100%;
+        outline: none;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .dark-search-input::placeholder {
+        color: var(--text-tertiary);
+      }
+
+      .dark-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 16px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        border-radius: 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .dark-profile:hover {
+        border-color: var(--accent-primary);
+        background: var(--bg-secondary);
+      }
+
+      .dark-avatar {
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(
+          135deg,
+          var(--accent-primary),
+          var(--accent-tertiary)
+        );
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--bg-primary);
+      }
+
+      .dark-user-info {
+        font-size: 11px;
+        color: var(--text-secondary);
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* ==================== LIGHT MODE NAVBAR ==================== */
+      .light-navbar {
+        background: rgba(255, 255, 255, 0.95);
+        border-bottom: 2px solid var(--border-primary);
+        backdrop-filter: blur(20px);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: var(--shadow-subtle);
+      }
+
+      .light-nav-content {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 0 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 68px;
+      }
+
+      .light-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .light-logo {
+        width: 28px;
+        height: 28px;
+        background: var(--accent-primary);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .light-logo::before {
+        content: "";
+        width: 12px;
+        height: 12px;
+        background: white;
+        border-radius: 2px;
+      }
+
+      .light-brand-text {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+      }
+
+      .light-nav-menu {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        list-style: none;
+      }
+
+      .light-nav-item {
+        position: relative;
+      }
+
+      .light-nav-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
+
+      .light-nav-link:hover {
+        color: var(--text-primary);
+        background: var(--bg-tertiary);
+      }
+
+      .light-nav-link.active {
+        color: var(--accent-primary);
+        background: var(--accent-muted);
+        font-weight: 600;
+      }
+
+      .light-nav-badge {
+        display: inline-block;
+        background: var(--accent-secondary);
+        color: white;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 8px;
+        font-weight: 700;
+        min-width: 18px;
+        text-align: center;
+      }
+
+      .light-nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .light-search {
+        display: flex;
+        align-items: center;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        padding: 10px 16px;
+        width: 280px;
+        transition: all 0.2s ease;
+      }
+
+      .light-search:focus-within {
+        border-color: var(--accent-primary);
+        box-shadow: var(--shadow-interactive);
+        background: var(--bg-secondary);
+      }
+
+      .light-search-input {
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        font-size: 14px;
+        width: 100%;
+        outline: none;
+      }
+
+      .light-search-input::placeholder {
+        color: var(--text-tertiary);
+      }
+
+      .light-notifications {
+        position: relative;
+        padding: 8px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .light-notifications:hover {
+        border-color: var(--accent-primary);
+        background: var(--bg-secondary);
+      }
+
+      .light-notification-dot {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 8px;
+        height: 8px;
+        background: var(--accent-secondary);
+        border-radius: 50%;
+        border: 2px solid var(--bg-secondary);
+      }
+
+      .light-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 16px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-subtle);
+      }
+
+      .light-profile:hover {
+        border-color: var(--accent-primary);
+        box-shadow: var(--shadow-interactive);
+      }
+
+      .light-avatar {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(
+          135deg,
+          var(--accent-primary),
+          var(--accent-tertiary)
+        );
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: white;
+      }
+
+      .light-user-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .light-user-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.2;
+      }
+
+      .light-user-role {
+        font-size: 11px;
+        color: var(--text-secondary);
+        line-height: 1.2;
+      }
+
+      /* Demo Content */
+      .demo-content {
+        padding: 60px 32px;
+        max-width: 1200px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .demo-title {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: var(--text-primary);
+      }
+
+      .demo-description {
+        font-size: 16px;
+        color: var(--text-secondary);
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      /* Mobile Responsiveness */
+      @media (max-width: 768px) {
+        .dark-nav-content,
+        .light-nav-content {
+          padding: 0 16px;
+        }
+
+        .dark-nav-menu,
+        .light-nav-menu {
+          display: none;
+        }
+
+        .dark-search,
+        .light-search {
+          width: 200px;
+        }
+      }
+
+      /* Icon placeholders */
+      .nav-icon {
+        width: 16px;
+        height: 16px;
+        background: currentColor;
+        border-radius: 2px;
+        opacity: 0.7;
+      }
+    </style>
+  </head>
+  <body class="dark-theme">
+    <button class="theme-toggle" onclick="toggleTheme()">Switch Theme</button>
+
+    <!-- DARK MODE NAVBAR -->
+    <nav class="dark-navbar" id="darkNav">
+      <div class="dark-nav-content">
+        <div class="dark-brand">
+          <div class="dark-logo"></div>
+          <span class="dark-brand-text">Command</span>
+        </div>
+
+        <ul class="dark-nav-menu">
+          <li class="dark-nav-item">
+            <a href="#" class="dark-nav-link active"> Overview </a>
+          </li>
+          <li class="dark-nav-item">
+            <a href="#" class="dark-nav-link">
+              Analytics
+              <span class="dark-nav-badge">3</span>
+            </a>
+          </li>
+          <li class="dark-nav-item">
+            <a href="#" class="dark-nav-link"> Operations </a>
+          </li>
+          <li class="dark-nav-item">
+            <a href="#" class="dark-nav-link"> Reports </a>
+          </li>
+          <li class="dark-nav-item">
+            <a href="#" class="dark-nav-link">
+              System
+              <span class="dark-nav-badge">!</span>
+            </a>
+          </li>
+        </ul>
+
+        <div class="dark-nav-actions">
+          <div class="dark-search">
+            <input
+              type="text"
+              class="dark-search-input"
+              placeholder="Search..." />
+          </div>
+          <div class="dark-profile">
+            <div class="dark-avatar">JD</div>
+            <div class="dark-user-info">admin.exec</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- LIGHT MODE NAVBAR -->
+    <nav class="light-navbar" id="lightNav" style="display: none">
+      <div class="light-nav-content">
+        <div class="light-brand">
+          <div class="light-logo"></div>
+          <span class="light-brand-text">Executive Suite</span>
+        </div>
+
+        <ul class="light-nav-menu">
+          <li class="light-nav-item">
+            <a href="#" class="light-nav-link active"> Dashboard </a>
+          </li>
+          <li class="light-nav-item">
+            <a href="#" class="light-nav-link">
+              Financial
+              <span class="light-nav-badge">2</span>
+            </a>
+          </li>
+          <li class="light-nav-item">
+            <a href="#" class="light-nav-link"> Operations </a>
+          </li>
+          <li class="light-nav-item">
+            <a href="#" class="light-nav-link"> Analytics </a>
+          </li>
+          <li class="light-nav-item">
+            <a href="#" class="light-nav-link"> Team </a>
+          </li>
+          <li class="light-nav-item">
+            <a href="#" class="light-nav-link"> Settings </a>
+          </li>
+        </ul>
+
+        <div class="light-nav-actions">
+          <div class="light-search">
+            <input
+              type="text"
+              class="light-search-input"
+              placeholder="Search anything..." />
+          </div>
+          <div class="light-notifications">
+            <div class="nav-icon"></div>
+            <div class="light-notification-dot"></div>
+          </div>
+          <div class="light-profile">
+            <div class="light-avatar">JD</div>
+            <div class="light-user-info">
+              <div class="light-user-name">John Doe</div>
+              <div class="light-user-role">Chief Executive</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="demo-content">
+      <h1 class="demo-title">Executive Navigation Systems</h1>
+      <p class="demo-description">
+        Two distinct navigation approaches: Dark mode for command-center
+        aesthetics with terminal-inspired elements, and light mode for
+        professional corporate environments with clean, accessible design
+        patterns.
+      </p>
+    </div>
+
+    <script>
+      let isDark = true;
+
+      function toggleTheme() {
+        const body = document.body;
+        const darkNav = document.getElementById("darkNav");
+        const lightNav = document.getElementById("lightNav");
+        const toggleBtn = document.querySelector(".theme-toggle");
+
+        if (isDark) {
+          // Switch to light
+          body.className = "light-theme";
+          darkNav.style.display = "none";
+          lightNav.style.display = "block";
+          toggleBtn.textContent = "Dark Mode";
+          isDark = false;
+        } else {
+          // Switch to dark
+          body.className = "dark-theme";
+          darkNav.style.display = "block";
+          lightNav.style.display = "none";
+          toggleBtn.textContent = "Light Mode";
+          isDark = true;
+        }
+      }
+
+      // Add click handlers for nav links
+      document.addEventListener("DOMContentLoaded", function () {
+        const navLinks = document.querySelectorAll(
+          ".dark-nav-link, .light-nav-link"
+        );
+
+        navLinks.forEach((link) => {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+
+            // Remove active class from siblings
+            const parentNav = this.closest("nav");
+            const allLinks = parentNav.querySelectorAll(
+              ".dark-nav-link, .light-nav-link"
+            );
+            allLinks.forEach((l) => l.classList.remove("active"));
+
+            // Add active class to clicked link
+            this.classList.add("active");
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -526,7 +526,8 @@
             }
           }
 
-          updateShowingCount();
+          // Usar la función mejorada para actualizar la paginación
+          applyFiltersAndUpdatePagination();
         });
       });
 
@@ -540,7 +541,8 @@
           row.classList.toggle('hidden', !isMatch);
         });
 
-        updateShowingCount();
+        // Usar la función mejorada para actualizar la paginación
+        applyFiltersAndUpdatePagination();
       }
 
       // === PAGINACIÓN ===
@@ -568,24 +570,52 @@
       }
 
       function updatePagination() {
+        // PRIMERO: Actualizar la lista de filas filtradas ANTES de calcular totales
+        filteredRows = rows.filter(row => !row.classList.contains('hidden'));
+        
+        // CRÍTICO: Verificar que pageSize esté configurado correctamente
+        if (!pageSize || pageSize <= 0) {
+          pageSize = parseInt(document.getElementById('page-size')?.value) || 10;
+          console.warn(`⚠️ pageSize no válido, usando valor por defecto: ${pageSize}`);
+        }
+        
         // Calcular totales
         const totalPages = Math.ceil(filteredRows.length / pageSize);
         const startIndex = (currentPage - 1) * pageSize;
         const endIndex = Math.min(startIndex + pageSize, filteredRows.length);
 
-        // Ocultar todas las filas primero
-        rows.forEach(row => row.style.display = 'none');
+        console.log(`📊 Paginación: Página ${currentPage}/${totalPages}, mostrando ${startIndex + 1}-${endIndex} de ${filteredRows.length} filas`);
 
-        // Mostrar solo las filas de la página actual
-        for (let i = startIndex; i < endIndex; i++) {
+        // PASO 1: Ocultar TODAS las filas primero (incluyendo las filtradas)
+        rows.forEach(row => {
+          row.style.display = 'none';
+        });
+
+        // PASO 2: Mostrar SOLO las filas de la página actual
+        let actuallyShown = 0;
+        for (let i = startIndex; i < endIndex && i < filteredRows.length; i++) {
           if (filteredRows[i]) {
             filteredRows[i].style.display = '';
+            actuallyShown++;
+          }
+        }
+        
+        console.log(`✅ Filas mostradas: ${actuallyShown} (máximo permitido: ${pageSize})`);
+        
+        // VERIFICACIÓN: Si se muestran más filas de las esperadas, forzar ocultación
+        if (actuallyShown > pageSize) {
+          console.error(`🚨 ERROR: Se están mostrando ${actuallyShown} filas cuando el máximo es ${pageSize}`);
+          // Forzar corrección ocultando las filas extras
+          for (let i = startIndex + pageSize; i < endIndex; i++) {
+            if (filteredRows[i]) {
+              filteredRows[i].style.display = 'none';
+            }
           }
         }
 
         // Actualizar información de registros
         if (showingFrom) showingFrom.textContent = filteredRows.length > 0 ? startIndex + 1 : 0;
-        if (showingTo) showingTo.textContent = endIndex;
+        if (showingTo) showingTo.textContent = Math.min(startIndex + pageSize, filteredRows.length);
         if (totalCount) totalCount.textContent = filteredRows.length;
 
         // Mostrar información de filtrado si es necesario
@@ -601,11 +631,13 @@
         if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
 
         // Actualizar números de página
-        updatePageNumbers(totalPages);
+        if (pageNumbersContainer) updatePageNumbers(totalPages);
 
-        // Actualizar input de ir a página
-        gotoPageInput.max = totalPages;
-        gotoPageInput.placeholder = currentPage.toString();
+        // Actualizar input de ir a página si existe
+        if (gotoPageInput) {
+          gotoPageInput.max = totalPages;
+          gotoPageInput.placeholder = currentPage.toString();
+        }
       }
 
       function updatePageNumbers(totalPages) {
@@ -680,11 +712,50 @@
         // Recopilar filas visibles (no ocultas por filtros)
         filteredRows = rows.filter(row => !row.classList.contains('hidden'));
 
-        // Resetear a la primera página
-        currentPage = 1;
+        // Resetear a la primera página si no hay elementos en la página actual
+        const totalPages = Math.ceil(filteredRows.length / pageSize);
+        if (currentPage > totalPages && totalPages > 0) {
+          currentPage = totalPages;
+        } else if (filteredRows.length > 0 && currentPage < 1) {
+          currentPage = 1;
+        }
 
         // Actualizar paginación
         updatePagination();
+      }
+
+      function applyInitialFilter(filterType) {
+        console.log(`🎯 Aplicando filtro inicial: ${filterType}`);
+        
+        rows.forEach(row => {
+          const estado = row.getAttribute('data-estado') || '';
+          let shouldShow = true;
+          
+          switch(filterType) {
+            case 'pendientes':
+              shouldShow = estado !== 'validado' && estado !== 'pagado';
+              break;
+            case 'criticos':
+              const dias = parseInt(row.getAttribute('data-dias')) || 0;
+              shouldShow = dias > 15;
+              break;
+            case 'recientes':
+              const dias_recientes = parseInt(row.getAttribute('data-dias')) || 0;
+              shouldShow = dias_recientes <= 7;
+              break;
+            case 'validados':
+              shouldShow = estado === 'validado';
+              break;
+            default:
+              shouldShow = true;
+          }
+          
+          row.classList.toggle('hidden', !shouldShow);
+        });
+        
+        // Actualizar filas filtradas
+        filteredRows = rows.filter(row => !row.classList.contains('hidden'));
+        console.log(`🔍 Filtro aplicado: ${filteredRows.length} filas visibles de ${rows.length} total`);
       }
 
       // Event listeners para paginación
@@ -729,10 +800,7 @@
         });
       }
 
-      function updateShowingCount() {
-        // Esta función ahora es manejada por updatePagination()
-        applyFiltersAndUpdatePagination();
-      }
+      // Función eliminada - ahora se usa applyFiltersAndUpdatePagination() directamente
 
       // Agregar eventos de clic a los encabezados para ordenar
     headers.forEach(header => {
@@ -1184,10 +1252,43 @@
       sortTable('dias', false);          // false → descendente
     }
 
-    // Inicializar paginación
-    updatePagination();
+          // CRÍTICO: Aplicar paginación inmediatamente al cargar la página
+      // Primero configurar el tamaño de página desde el select
+      if (pageSizeSelect) {
+        pageSize = parseInt(pageSizeSelect.value) || 10;
+        console.log(`📏 Tamaño de página configurado: ${pageSize}`);
+      }
+      
+      // Asegurar que todas las filas estén inicialmente visibles para el filtro
+      filteredRows = [...rows];
+      
+      // Aplicar cualquier filtro inicial si existe
+      if (initialFilter !== 'todos') {
+        // Aplicar filtro pero sin cambiar la página
+        applyInitialFilter(initialFilter);
+      }
+      
+      // FORZAR aplicación inmediata de la paginación
+      console.log(`🔄 Aplicando paginación inicial: ${filteredRows.length} filas, ${pageSize} por página`);
+      updatePagination();
+      
+      // Verificar que la paginación se aplicó correctamente
+      setTimeout(() => {
+        const visibleRows = rows.filter(row => row.style.display !== 'none');
+        console.log(`✅ Verificación paginación: ${visibleRows.length} filas visibles de ${filteredRows.length} total`);
+        if (visibleRows.length > pageSize) {
+          console.warn(`⚠️ PROBLEMA: Se muestran ${visibleRows.length} filas pero deberían ser máximo ${pageSize}`);
+          // Forzar corrección
+          updatePagination();
+        }
+      }, 100);
 
-    // Mostrar en consola el estado del filtro (para depuración)
-    console.log("Estado del filtro: " + initialFilter);
+      // Hacer funciones disponibles globalmente para acceso desde otros módulos
+      window.updatePagination = updatePagination;
+      window.applyFiltersAndUpdatePagination = applyFiltersAndUpdatePagination;
+      window.goToPage = goToPage;
+
+      // Mostrar en consola el estado del filtro (para depuración)
+      console.log("Estado del filtro: " + initialFilter);
   }); // End of DOMContentLoaded event listener
 

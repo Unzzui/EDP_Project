@@ -678,21 +678,45 @@ def _procesar_actualizacion_estado(edp_id: str, nuevo_estado: str, conformidad: 
             cache_invalidation.register_data_change('edp_state_changed', [edp_id], 
                                                   {'updated_fields': updated_fields})
             
+            # Importar función de conversión centralizada
+            from ..utils.type_conversion import convert_numpy_types_for_json
+            
+            # Convertir tipos numpy a tipos nativos antes de emitir
+            def convert_numpy_types_for_emit(obj):
+                """Convierte tipos numpy a tipos nativos de Python para serialización JSON"""
+                if isinstance(obj, dict):
+                    return {key: convert_numpy_types_for_emit(value) for key, value in obj.items()}
+                elif isinstance(obj, list):
+                    return [convert_numpy_types_for_emit(item) for item in obj]
+                elif hasattr(obj, 'item'):  # numpy types
+                    return obj.item()
+                elif hasattr(obj, 'tolist'):  # numpy arrays
+                    return obj.tolist()
+                elif pd.isna(obj):  # pandas NaT/NaN
+                    return None
+                else:
+                    return obj
+            
+            # Convertir datos antes de emitir
+            updates_data = {"estado": nuevo_estado, **resp.data.get("updates", {})}
+            updates_serializable = convert_numpy_types_for_json(updates_data)
+            cambios_serializable = convert_numpy_types_for_json(resp.data.get("updates", {}))
+            
             # Emit events for both manager dashboard and kanban board
             socketio.emit("edp_actualizado", {
-                "edp_id": edp_id, 
-                "updates": {"estado": nuevo_estado, **resp.data.get("updates", {})},
-                "usuario": usuario,
+                "edp_id": str(edp_id), 
+                "updates": updates_serializable,
+                "usuario": str(usuario),
                 "timestamp": datetime.now().isoformat()
             })
             socketio.emit("estado_actualizado", {
-                "edp_id": edp_id, 
-                "nuevo_estado": nuevo_estado, 
-                "cambios": resp.data.get("updates", {})
+                "edp_id": str(edp_id), 
+                "nuevo_estado": str(nuevo_estado), 
+                "cambios": cambios_serializable
             })
             socketio.emit("cache_invalidated", {
                 "type": "edp_state_changed",
-                "affected_ids": [edp_id],
+                "affected_ids": [str(edp_id)],
                 "timestamp": datetime.now().isoformat()
             })
             print(f"✅ Actualización de estado completada exitosamente para EDP {edp_id}")
@@ -950,23 +974,43 @@ def actualizar_estado_detallado():
         cache_invalidation.register_data_change('edp_state_changed', [search_id], 
                                               {'updated_fields': list(cambios.keys())})
 
+        # Convertir tipos numpy a tipos nativos antes de emitir
+        def convert_numpy_types_for_emit(obj):
+            """Convierte tipos numpy a tipos nativos de Python para serialización JSON"""
+            if isinstance(obj, dict):
+                return {key: convert_numpy_types_for_emit(value) for key, value in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_numpy_types_for_emit(item) for item in obj]
+            elif hasattr(obj, 'item'):  # numpy types
+                return obj.item()
+            elif hasattr(obj, 'tolist'):  # numpy arrays
+                return obj.tolist()
+            elif pd.isna(obj):  # pandas NaT/NaN
+                return None
+            else:
+                return obj
+        
+        # Convertir datos antes de emitir
+        cambios_serializable = convert_numpy_types_for_emit(cambios)
+        internal_id_safe = int(edp_data.get("id")) if edp_data.get("id") is not None else None
+        
         # Notificar via Socket.IO
         socketio.emit("edp_actualizado", {
-            "edp_id": final_n_edp, 
-            "internal_id": edp_data.get("id"),
-            "updates": cambios,
-            "usuario": usuario,
+            "edp_id": str(final_n_edp), 
+            "internal_id": internal_id_safe,
+            "updates": cambios_serializable,
+            "usuario": str(usuario),
             "timestamp": datetime.now().isoformat()
         })
         socketio.emit("estado_actualizado", {
-            "edp_id": final_n_edp,
-            "internal_id": edp_data.get("id"), 
-            "nuevo_estado": nuevo_estado, 
-            "cambios": cambios
+            "edp_id": str(final_n_edp),
+            "internal_id": internal_id_safe, 
+            "nuevo_estado": str(nuevo_estado), 
+            "cambios": cambios_serializable
         })
         socketio.emit("cache_invalidated", {
             "type": "edp_state_changed",
-            "affected_ids": [final_n_edp],
+            "affected_ids": [str(final_n_edp)],
             "timestamp": datetime.now().isoformat()
         })
 
@@ -1002,7 +1046,28 @@ def get_edp_data(edp_id):
             return jsonify({"error": f"EDP {edp_id} no encontrado"}), 404
 
         # Convertir a diccionario para la respuesta JSON
-        edp_data = edp.iloc[0].to_dict()
+        edp_data_raw = edp.iloc[0].to_dict()
+        
+        # 🔧 CORRECCIÓN: Convertir tipos numpy a tipos nativos Python
+        edp_data = {}
+        for key, value in edp_data_raw.items():
+            if pd.isna(value):
+                edp_data[key] = None
+            elif isinstance(value, (np.integer, np.int64, np.int32)):
+                edp_data[key] = int(value)
+            elif isinstance(value, (np.floating, np.float64, np.float32)):
+                if np.isnan(value):
+                    edp_data[key] = None
+                else:
+                    edp_data[key] = float(value)
+            elif isinstance(value, (np.bool_, np.bool8)):
+                edp_data[key] = bool(value)
+            elif isinstance(value, pd.Timestamp):
+                edp_data[key] = value.isoformat()
+            elif hasattr(value, 'item'):  # numpy scalars
+                edp_data[key] = value.item()
+            else:
+                edp_data[key] = value
      
         # Asegurar que las fechas estén en formato YYYY-MM-DD para campos de fecha
         for campo in [
@@ -1012,18 +1077,21 @@ def get_edp_data(edp_id):
             "fecha_conformidad",
         ]:
             if campo in edp_data:
-                # Primero verificar si es NaT o None
-                if pd.isna(edp_data[campo]) or edp_data[campo] is None:
-                    edp_data[campo] = (
-                        None  # Asignar None para que sea JSON serializable
-                    )
+                # Primero verificar si es None
+                if edp_data[campo] is None:
+                    continue
                 else:
                     try:
                         # Si ya es timestamp, usarlo directamente
-                        if isinstance(edp_data[campo], pd.Timestamp):
-                            edp_data[campo] = edp_data[campo].strftime("%Y-%m-%d")
-                        else:
-                            # Si es otro tipo, intentar convertir
+                        if isinstance(edp_data[campo], str) and 'T' in edp_data[campo]:
+                            # Ya está en formato ISO, convertir a fecha
+                            fecha = pd.to_datetime(edp_data[campo], errors="coerce")
+                            if pd.notna(fecha):
+                                edp_data[campo] = fecha.strftime("%Y-%m-%d")
+                            else:
+                                edp_data[campo] = None
+                        elif isinstance(edp_data[campo], str):
+                            # Intentar parsear como fecha
                             fecha = pd.to_datetime(edp_data[campo], errors="coerce")
                             if pd.notna(fecha):
                                 edp_data[campo] = fecha.strftime("%Y-%m-%d")
@@ -1036,6 +1104,9 @@ def get_edp_data(edp_id):
         return jsonify(edp_data)
 
     except Exception as e:
+        import traceback
+        print(f"❌ Error en get_edp_data: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
 @dashboard_bp.route("/api/edp-details/<n_edp>", methods=["GET"])
@@ -1104,50 +1175,105 @@ def api_get_edp_details(n_edp):
 def get_edp_data_by_internal_id(internal_id):
     """API endpoint to get EDP data by internal ID."""
     try:
-        df = controller_service.load_related_data()
-        datos_relacionados = df.data
+        print(f"🔍 get_edp_data_by_internal_id - Buscando EDP con ID interno: {internal_id}")
+        
+        # Cargar datos con manejo de errores mejorado
+        datos_response = controller_service.load_related_data()
+        if not datos_response.success:
+            print(f"❌ Error cargando datos: {datos_response.message}")
+            return jsonify({"error": f"Error cargando datos: {datos_response.message}"}), 500
+        
+        datos_relacionados = datos_response.data
+        if not datos_relacionados or "edps" not in datos_relacionados:
+            print("❌ No se encontraron datos de EDPs")
+            return jsonify({"error": "No se encontraron datos de EDPs"}), 500
+        
         df = pd.DataFrame(datos_relacionados.get("edps", []))
+        print(f"📊 DataFrame creado con {len(df)} registros")
+        
+        if df.empty:
+            print("❌ DataFrame de EDPs está vacío")
+            return jsonify({"error": "No hay EDPs disponibles"}), 404
+        
+        # Verificar que la columna 'id' existe
+        if 'id' not in df.columns:
+            print(f"❌ Columna 'id' no encontrada. Columnas disponibles: {df.columns.tolist()}")
+            return jsonify({"error": "Estructura de datos incorrecta"}), 500
+        
+        # Buscar EDP por ID interno
         edp = df[df["id"] == internal_id]
+        print(f"🔍 Búsqueda por ID {internal_id}: {len(edp)} resultados encontrados")
 
         if edp.empty:
+            print(f"❌ EDP con ID interno {internal_id} no encontrado")
             return jsonify({"error": f"EDP con ID {internal_id} no encontrado"}), 404
 
         # Convertir a diccionario para la respuesta JSON
-        edp_data = edp.iloc[0].to_dict()
+        edp_data_raw = edp.iloc[0].to_dict()
+        print(f"📝 Datos raw obtenidos para EDP ID {internal_id}")
+        
+        # 🔧 CORRECCIÓN: Convertir tipos numpy a tipos nativos Python
+        def convert_numpy_types_safe(obj):
+            """Convierte tipos numpy de forma segura"""
+            try:
+                if pd.isna(obj):
+                    return None
+                elif isinstance(obj, (np.integer, np.int64, np.int32, np.int16, np.int8)):
+                    return int(obj)
+                elif isinstance(obj, (np.floating, np.float64, np.float32)):
+                    if np.isnan(obj):
+                        return None
+                    return float(obj)
+                elif isinstance(obj, (np.bool_, np.bool8)):
+                    return bool(obj)
+                elif isinstance(obj, pd.Timestamp):
+                    return obj.isoformat()
+                elif hasattr(obj, 'item'):  # numpy scalars
+                    return obj.item()
+                else:
+                    return obj
+            except Exception as ex:
+                print(f"⚠️ Error convirtiendo valor {obj} (tipo: {type(obj)}): {str(ex)}")
+                return str(obj) if obj is not None else None
+        
+        edp_data = {}
+        for key, value in edp_data_raw.items():
+            edp_data[key] = convert_numpy_types_safe(value)
      
         # Asegurar que las fechas estén en formato YYYY-MM-DD para campos de fecha
-        for campo in [
-            "fecha_emision",
-            "fecha_envio_cliente",
-            "fecha_estimada_pago",
-            "fecha_conformidad",
-        ]:
-            if campo in edp_data:
-                # Primero verificar si es NaT o None
-                if pd.isna(edp_data[campo]) or edp_data[campo] is None:
-                    edp_data[campo] = (
-                        None  # Asignar None para que sea JSON serializable
-                    )
-                else:
-                    try:
-                        # Si ya es timestamp, usarlo directamente
-                        if isinstance(edp_data[campo], pd.Timestamp):
-                            edp_data[campo] = edp_data[campo].strftime("%Y-%m-%d")
+        fecha_campos = ["fecha_emision", "fecha_envio_cliente", "fecha_estimada_pago", "fecha_conformidad"]
+        for campo in fecha_campos:
+            if campo in edp_data and edp_data[campo] is not None:
+                try:
+                    # Si ya es timestamp, usarlo directamente
+                    if isinstance(edp_data[campo], str) and 'T' in edp_data[campo]:
+                        # Ya está en formato ISO, convertir a fecha
+                        fecha = pd.to_datetime(edp_data[campo], errors="coerce")
+                        if pd.notna(fecha):
+                            edp_data[campo] = fecha.strftime("%Y-%m-%d")
                         else:
-                            # Si es otro tipo, intentar convertir
-                            fecha = pd.to_datetime(edp_data[campo], errors="coerce")
-                            if pd.notna(fecha):
-                                edp_data[campo] = fecha.strftime("%Y-%m-%d")
-                            else:
-                                edp_data[campo] = None
-                    except Exception as ex:
-                        print(f"Error formateando {campo}: {str(ex)}")
-                        edp_data[campo] = None
+                            edp_data[campo] = None
+                    elif isinstance(edp_data[campo], str):
+                        # Intentar parsear como fecha
+                        fecha = pd.to_datetime(edp_data[campo], errors="coerce")
+                        if pd.notna(fecha):
+                            edp_data[campo] = fecha.strftime("%Y-%m-%d")
+                        else:
+                            edp_data[campo] = None
+                except Exception as ex:
+                    print(f"⚠️ Error formateando fecha {campo}: {str(ex)}")
+                    edp_data[campo] = None
 
+        print(f"✅ Datos procesados exitosamente para EDP ID {internal_id}")
         return jsonify(edp_data)
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        error_msg = f"Error en get_edp_data_by_internal_id para ID {internal_id}: {str(e)}"
+        print(f"❌ {error_msg}")
+        print("📋 Traceback completo:")
+        print(traceback.format_exc())
+        return jsonify({"error": error_msg}), 500
 
 
 @dashboard_bp.route("/api/edp-details-by-id/<int:internal_id>", methods=["GET"])
@@ -1170,14 +1296,30 @@ def api_get_edp_details_by_internal_id(internal_id):
     if edp.empty:
         return jsonify({"error": "EDP no encontrado"}), 404
 
-    edp_data = edp.iloc[0].to_dict()
-
-    # Limpiar valores NaT/NaN y formatear fechas
-    for key, value in edp_data.items():
-        if pd.isna(value):
-            edp_data[key] = None
-        elif isinstance(value, pd.Timestamp):
-            edp_data[key] = value.strftime("%Y-%m-%d")
+    edp_data_raw = edp.iloc[0].to_dict()
+    
+    # 🔧 CORRECCIÓN: Convertir tipos numpy a tipos nativos Python
+    def convert_numpy_types_safe(obj):
+        """Convierte tipos numpy a tipos nativos de Python para serialización JSON"""
+        if isinstance(obj, dict):
+            return {key: convert_numpy_types_safe(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_numpy_types_safe(item) for item in obj]
+        elif isinstance(obj, (np.integer, np.int64, np.int32, np.int16, np.int8)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float64, np.float32)):
+            return float(obj)
+        elif isinstance(obj, np.bool_):
+            return bool(obj)
+        elif isinstance(obj, pd.Timestamp):
+            return obj.strftime("%Y-%m-%d")
+        elif pd.isna(obj):
+            return None
+        else:
+            return obj
+    
+    # Aplicar conversión de tipos
+    edp_data = convert_numpy_types_safe(edp_data_raw)
 
     return jsonify(edp_data)
 
@@ -1197,7 +1339,6 @@ def api_update_edp(n_edp):
             "monto_propuesto": request.form.get("monto_propuesto") or "",
             "monto_aprobado": request.form.get("monto_aprobado") or "",
             "fecha_estimada_pago": request.form.get("fecha_estimada_pago") or "",
-            "critico": request.form.get("critico") == "true",
             "observaciones": request.form.get("observaciones") or "",
         }
 
@@ -1248,7 +1389,6 @@ def api_update_edp_by_internal_id(internal_id):
             "monto_propuesto": request.form.get("monto_propuesto") or "",
             "monto_aprobado": request.form.get("monto_aprobado") or "",
             "fecha_estimada_pago": request.form.get("fecha_estimada_pago") or "",
-            "critico": request.form.get("critico") == "true",
             "observaciones": request.form.get("observaciones") or "",
         }
 
@@ -1286,7 +1426,7 @@ def api_update_edp_by_internal_id(internal_id):
 
 def _background_update_edp_by_id(internal_id: int, updates: Dict[str, Any], usuario: str):
     """Procesa la actualización de un EDP por ID interno en un hilo de fondo."""
-    from ..utils.supabase_adapter import _range_cache
+    from ..utils.supabase_adapter import _range_cache, update_edp_by_id
     from ..services.cache_invalidation_service import CacheInvalidationService
 
     try:
@@ -1302,7 +1442,6 @@ def _background_update_edp_by_id(internal_id: int, updates: Dict[str, Any], usua
             logger.error(f"EDP con ID {internal_id} no encontrado")
             return
 
-        row_idx = edp.index[0] + 2
         edp_data = edp.iloc[0].to_dict()
         n_edp = edp_data.get("n_edp", "")
 
@@ -1318,7 +1457,8 @@ def _background_update_edp_by_id(internal_id: int, updates: Dict[str, Any], usua
                     # usuario se auto-detecta automáticamente, no necesitamos pasarlo
                 )
 
-        update_row(row_idx, updates, sheet_name="edp", usuario=usuario, force_update=True)
+        # Usar update_edp_by_id en lugar de update_row para Supabase
+        success = update_edp_by_id(internal_id, updates, usuario)
         _range_cache.clear()
         
         # Invalidar cache automáticamente basado en cambios reales
@@ -1330,17 +1470,36 @@ def _background_update_edp_by_id(internal_id: int, updates: Dict[str, Any], usua
             cache_invalidation.register_data_change('edp_updated', [n_edp], 
                                                   {'updated_fields': list(updates.keys())})
         
+        # Convertir tipos numpy a tipos nativos antes de emitir
+        def convert_numpy_types_for_emit(obj):
+            """Convierte tipos numpy a tipos nativos de Python para serialización JSON"""
+            if isinstance(obj, dict):
+                return {key: convert_numpy_types_for_emit(value) for key, value in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_numpy_types_for_emit(item) for item in obj]
+            elif hasattr(obj, 'item'):  # numpy types
+                return obj.item()
+            elif hasattr(obj, 'tolist'):  # numpy arrays
+                return obj.tolist()
+            elif pd.isna(obj):  # pandas NaT/NaN
+                return None
+            else:
+                return obj
+        
+        # Convertir updates antes de emitir
+        updates_serializable = convert_numpy_types_for_emit(updates)
+        
         # Emit both EDP update and cache invalidation events
         socketio.emit("edp_actualizado", {
-            "edp_id": n_edp, 
-            "internal_id": internal_id,
-            "updates": updates,
-            "usuario": usuario,
+            "edp_id": str(n_edp), 
+            "internal_id": int(internal_id),
+            "updates": updates_serializable,
+            "usuario": str(usuario),
             "timestamp": datetime.now().isoformat()
         })
         socketio.emit("cache_invalidated", {
             "type": "edp_state_changed" if 'estado' in updates else "edp_updated",
-            "affected_ids": [n_edp],
+            "affected_ids": [str(n_edp)],
             "timestamp": datetime.now().isoformat()
         })
     except Exception as exc:
@@ -1350,7 +1509,7 @@ def _background_update_edp_by_id(internal_id: int, updates: Dict[str, Any], usua
 
 def _background_update_edp(n_edp: str, updates: Dict[str, Any], usuario: str):
     """Procesa la actualización de un EDP en un hilo de fondo."""
-    from ..utils.supabase_adapter import _range_cache
+    from ..utils.supabase_adapter import _range_cache, update_edp_by_id
     from ..services.cache_invalidation_service import CacheInvalidationService
 
     try:
@@ -1366,8 +1525,12 @@ def _background_update_edp(n_edp: str, updates: Dict[str, Any], usuario: str):
             logger.error(f"EDP {n_edp} no encontrado")
             return
 
-        row_idx = edp.index[0] + 2
         edp_data = edp.iloc[0].to_dict()
+        internal_id = edp_data.get("id")
+        
+        if not internal_id:
+            logger.error(f"EDP {n_edp} no tiene ID interno válido")
+            return
 
         for campo, nuevo in updates.items():
             viejo = str(edp_data.get(campo, ""))
@@ -1381,7 +1544,8 @@ def _background_update_edp(n_edp: str, updates: Dict[str, Any], usuario: str):
                     # usuario se auto-detecta automáticamente, no necesitamos pasarlo
                 )
 
-        update_row(row_idx, updates, sheet_name="edp", usuario=usuario, force_update=True)
+        # Usar update_edp_by_id en lugar de update_row para Supabase
+        success = update_edp_by_id(internal_id, updates, usuario)
         _range_cache.clear()
         
         # Invalidar cache automáticamente basado en cambios reales
@@ -1393,16 +1557,35 @@ def _background_update_edp(n_edp: str, updates: Dict[str, Any], usuario: str):
             cache_invalidation.register_data_change('edp_updated', [n_edp], 
                                                   {'updated_fields': list(updates.keys())})
         
+        # Convertir tipos numpy a tipos nativos antes de emitir
+        def convert_numpy_types_for_emit(obj):
+            """Convierte tipos numpy a tipos nativos de Python para serialización JSON"""
+            if isinstance(obj, dict):
+                return {key: convert_numpy_types_for_emit(value) for key, value in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_numpy_types_for_emit(item) for item in obj]
+            elif hasattr(obj, 'item'):  # numpy types
+                return obj.item()
+            elif hasattr(obj, 'tolist'):  # numpy arrays
+                return obj.tolist()
+            elif pd.isna(obj):  # pandas NaT/NaN
+                return None
+            else:
+                return obj
+        
+        # Convertir updates antes de emitir
+        updates_serializable = convert_numpy_types_for_emit(updates)
+        
         # Emit both EDP update and cache invalidation events
         socketio.emit("edp_actualizado", {
-            "edp_id": n_edp, 
-            "updates": updates,
-            "usuario": usuario,
+            "edp_id": str(n_edp), 
+            "updates": updates_serializable,
+            "usuario": str(usuario),
             "timestamp": datetime.now().isoformat()
         })
         socketio.emit("cache_invalidated", {
             "type": "edp_state_changed" if 'estado' in updates else "edp_updated",
-            "affected_ids": [n_edp],
+            "affected_ids": [str(n_edp)],
             "timestamp": datetime.now().isoformat()
         })
     except Exception as exc:

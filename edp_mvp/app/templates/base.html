@@ -13,11 +13,16 @@
       })();
     </script>
 
-    <title>{% block title %}EDP Control{% endblock %}</title>
+    <title>{% block title %}Pagora - EDP Control{% endblock %}</title>
     <link
       rel="icon"
       type="image/x-icon"
       href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkgMTl2LTZhMiAyIDAgMDAtMi0ySDVhMiAyIDAgMDAtMiAydjZhMiAyIDAgMDAyIDJoMmEyIDIgMCAwMDItMnptMCAwVjlhMiAyIDAgMDEyLTJoMmEyIDIgMCAwMTIgMnYxMG0tNiAwYTIgMiAwIDAwMiAyaDJhMiAyIDAgMDAyLTJtMCAwVjVhMiAyIDAgMDEyLTJoMmEyIDIgMCAwMTIgMnYxNGEyIDIgMCAwMS0yIDJoLTJhMiAyIDAgMDEtMi0yeiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K" />
+
+    <!-- Pagora Logo Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <link
@@ -55,10 +60,13 @@
    
 
   <body class="bg-[color:var(--background)] text-[color:var(--text-primary)]">
+    <!-- Grid Overlay Background Effect -->
+    <div class="grid-overlay"></div>
+    
     <!-- Incluir nueva navegación con control de roles jerárquico -->
     {% include 'components/navbar.html' %}
 
-    <div class="container mx-auto px-4 py-6">
+    <div class="container mx-auto px-4 py-6 relative z-10">
       {% block content %}{% endblock %}
     </div>
   </body>

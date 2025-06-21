@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Operations Visual Intelligence</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: "Space Grotesk", sans-serif;
+        line-height: 1.4;
+        overflow-x: hidden;
+      }
+
+      .dashboard-container {
+        min-height: 100vh;
+        padding: 20px;
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        gap: 20px;
+      }
+
+      /* Header - Compact */
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 32px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid #1a1a1a;
+        border-radius: 2px;
+      }
+
+      .header h1 {
+        font-size: 24px;
+        font-weight: 600;
+        color: #00ff88;
+      }
+
+      .header-metrics {
+        display: flex;
+        gap: 32px;
+        align-items: center;
+      }
+
+      .header-metric {
+        text-align: center;
+      }
+
+      .header-metric-value {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .header-metric-value.critical {
+        color: #ff0066;
+      }
+      .header-metric-value.warning {
+        color: #ffa500;
+      }
+      .header-metric-value.positive {
+        color: #00ff88;
+      }
+
+      .header-metric-label {
+        font-size: 11px;
+        color: #888888;
+        text-transform: uppercase;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* KPI Cards Row */
+      .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+      }
+
+      .kpi-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid #1a1a1a;
+        border-radius: 2px;
+        padding: 24px;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .kpi-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-2px);
+      }
+
+      .kpi-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .kpi-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #888888;
+        text-transform: uppercase;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .kpi-trend {
+        font-size: 12px;
+        font-weight: 700;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .kpi-trend.up {
+        color: #00ff88;
+      }
+      .kpi-trend.down {
+        color: #ff0066;
+      }
+      .kpi-trend.stable {
+        color: #888888;
+      }
+
+      .kpi-value {
+        font-size: 32px;
+        font-weight: 700;
+        font-family: "JetBrains Mono", monospace;
+        margin-bottom: 8px;
+      }
+
+      .kpi-value.critical {
+        color: #ff0066;
+      }
+      .kpi-value.warning {
+        color: #ffa500;
+      }
+      .kpi-value.positive {
+        color: #00ff88;
+      }
+
+      .kpi-context {
+        font-size: 13px;
+        color: #888888;
+        line-height: 1.4;
+      }
+
+      .kpi-impact {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      .kpi-impact.critical {
+        background: #ff0066;
+      }
+      .kpi-impact.warning {
+        background: #ffa500;
+      }
+      .kpi-impact.positive {
+        background: #00ff88;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      /* Main Analytics Grid */
+      .analytics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: 300px 250px;
+        gap: 20px;
+      }
+
+      .chart-panel {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid #1a1a1a;
+        border-radius: 2px;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .chart-panel.large {
+        grid-row: span 2;
+      }
+
+      .chart-panel.wide {
+        grid-column: span 2;
+      }
+
+      .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .chart-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #ffffff;
+      }
+
+      .chart-action {
+        background: transparent;
+        border: 1px solid #00ff88;
+        color: #00ff88;
+        padding: 6px 12px;
+        font-size: 11px;
+        border-radius: 2px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .chart-action:hover {
+        background: #00ff88;
+        color: #000000;
+      }
+
+      .chart-action.critical {
+        border-color: #ff0066;
+        color: #ff0066;
+      }
+
+      .chart-action.critical:hover {
+        background: #ff0066;
+        color: #ffffff;
+      }
+
+      /* Custom Chart Containers */
+      .chart-container {
+        position: relative;
+        height: calc(100% - 60px);
+        width: 100%;
+      }
+
+      /* DSO Heatmap */
+      .dso-heatmap {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        height: 100%;
+      }
+
+      .dso-cell {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid #1a1a1a;
+        border-radius: 2px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .dso-cell:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .dso-cell.critical {
+        background: rgba(255, 0, 102, 0.2);
+        border-color: #ff0066;
+      }
+
+      .dso-cell.warning {
+        background: rgba(255, 165, 0, 0.2);
+        border-color: #ffa500;
+      }
+
+      .dso-cell.good {
+        background: rgba(0, 255, 136, 0.2);
+        border-color: #00ff88;
+      }
+
+      .dso-manager {
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #ffffff;
+      }
+
+      .dso-days {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+
+      .dso-amount {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        color: #888888;
+      }
+
+      /* Cash Flow Bars */
+      .cashflow-bars {
+        display: flex;
+        align-items: end;
+        height: 100%;
+        gap: 12px;
+        padding: 20px 0;
+      }
+
+      .cashflow-day {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+      }
+
+      .cashflow-bar {
+        width: 100%;
+        background: #1a1a1a;
+        border-radius: 2px 2px 0 0;
+        position: relative;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .cashflow-bar:hover {
+        transform: scaleY(1.05);
+      }
+
+      .cashflow-fill {
+        width: 100%;
+        border-radius: 2px 2px 0 0;
+        transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
+
+      .cashflow-fill.high {
+        background: linear-gradient(180deg, #00ff88, #00cc66);
+      }
+      .cashflow-fill.medium {
+        background: linear-gradient(180deg, #ffa500, #cc7700);
+      }
+      .cashflow-fill.low {
+        background: linear-gradient(180deg, #ff0066, #cc0044);
+      }
+
+      .cashflow-value {
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        font-weight: 700;
+        color: #ffffff;
+        white-space: nowrap;
+      }
+
+      .cashflow-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        color: #888888;
+        text-align: center;
+      }
+
+      .cashflow-prob {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        color: #666666;
+        margin-top: 2px;
+      }
+
+      /* Alert Panel */
+      .alert-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        height: 100%;
+      }
+
+      .alert-item {
+        padding: 16px;
+        border-radius: 2px;
+        border-left: 4px solid;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .alert-item:hover {
+        transform: translateX(4px);
+      }
+
+      .alert-item.critical {
+        background: rgba(255, 0, 102, 0.1);
+        border-color: #ff0066;
+      }
+
+      .alert-item.warning {
+        background: rgba(255, 165, 0, 0.1);
+        border-color: #ffa500;
+      }
+
+      .alert-item.info {
+        background: rgba(0, 255, 136, 0.1);
+        border-color: #00ff88;
+      }
+
+      .alert-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .alert-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #ffffff;
+      }
+
+      .alert-impact {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .alert-impact.critical {
+        color: #ff0066;
+      }
+      .alert-impact.warning {
+        color: #ffa500;
+      }
+      .alert-impact.info {
+        color: #00ff88;
+      }
+
+      .alert-description {
+        font-size: 12px;
+        color: #888888;
+        line-height: 1.4;
+      }
+
+      /* Target Progress Rings */
+      .progress-rings {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        height: 100%;
+      }
+
+      .progress-ring {
+        position: relative;
+        width: 80px;
+        height: 80px;
+      }
+
+      .progress-ring svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+      }
+
+      .progress-ring circle {
+        fill: none;
+        stroke-width: 8;
+      }
+
+      .progress-ring .bg {
+        stroke: #1a1a1a;
+      }
+
+      .progress-ring .progress {
+        stroke-linecap: round;
+        transition: stroke-dasharray 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .progress-ring.critical .progress {
+        stroke: #ff0066;
+      }
+      .progress-ring.warning .progress {
+        stroke: #ffa500;
+      }
+      .progress-ring.good .progress {
+        stroke: #00ff88;
+      }
+
+      .progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+      }
+
+      .progress-value {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 14px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+
+      .progress-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        color: #888888;
+        text-transform: uppercase;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1400px) {
+        .analytics-grid {
+          grid-template-columns: 1fr 1fr;
+          grid-template-rows: auto;
+        }
+
+        .chart-panel.wide {
+          grid-column: span 1;
+        }
+      }
+
+      @media (max-width: 1000px) {
+        .kpi-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .analytics-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .header-metrics {
+          flex-direction: column;
+          gap: 12px;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .kpi-row {
+          grid-template-columns: 1fr;
+        }
+
+        .dso-heatmap {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- Compact Header -->
+      <header class="header">
+        <h1>Operations Visual Intelligence</h1>
+        <div class="header-metrics">
+          <div class="header-metric">
+            <div class="header-metric-value critical">47.2</div>
+            <div class="header-metric-label">DSO Actual</div>
+          </div>
+          <div class="header-metric">
+            <div class="header-metric-value critical">-420k</div>
+            <div class="header-metric-label">CLP/Día Perdido</div>
+          </div>
+          <div class="header-metric">
+            <div class="header-metric-value warning">6.8M</div>
+            <div class="header-metric-label">Forecast 7D</div>
+          </div>
+          <div class="header-metric">
+            <div class="header-metric-value positive">78%</div>
+            <div class="header-metric-label">Meta Mensual</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- KPI Cards Row -->
+      <section class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-impact critical"></div>
+          <div class="kpi-header">
+            <div class="kpi-title">EDPs Críticos</div>
+            <div class="kpi-trend down">↓ 12%</div>
+          </div>
+          <div class="kpi-value critical">7</div>
+          <div class="kpi-context">EDPs >60 días • 8.2M CLP en riesgo alto</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-impact warning"></div>
+          <div class="kpi-header">
+            <div class="kpi-title">Aging 31-60</div>
+            <div class="kpi-trend up">↑ 8%</div>
+          </div>
+          <div class="kpi-value warning">12</div>
+          <div class="kpi-context">EDPs en zona warning • 4.5M CLP</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-impact positive"></div>
+          <div class="kpi-header">
+            <div class="kpi-title">Cobro Rápido</div>
+            <div class="kpi-trend up">↑ 15%</div>
+          </div>
+          <div class="kpi-value positive">18</div>
+          <div class="kpi-context">EDPs <30 días • 6.1M CLP saludable</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-impact warning"></div>
+          <div class="kpi-header">
+            <div class="kpi-title">Meta Gap</div>
+            <div class="kpi-trend stable">→ 0%</div>
+          </div>
+          <div class="kpi-value warning">5.5M</div>
+          <div class="kpi-context">CLP restantes • 8 días disponibles</div>
+        </div>
+      </section>
+
+      <!-- Main Analytics Grid -->
+      <section class="analytics-grid">
+        <!-- DSO Heatmap by Project Manager -->
+        <div class="chart-panel">
+          <div class="chart-header">
+            <div class="chart-title">DSO por Jefe Proyecto</div>
+            <button class="chart-action critical">Coordinar</button>
+          </div>
+          <div class="chart-container">
+            <div class="dso-heatmap">
+              <div class="dso-cell critical">
+                <div class="dso-manager">Carlos M.</div>
+                <div class="dso-days" style="color: #ff0066">67d</div>
+                <div class="dso-amount">2.3M CLP</div>
+              </div>
+              <div class="dso-cell warning">
+                <div class="dso-manager">María G.</div>
+                <div class="dso-days" style="color: #ffa500">51d</div>
+                <div class="dso-amount">3.1M CLP</div>
+              </div>
+              <div class="dso-cell warning">
+                <div class="dso-manager">Ana R.</div>
+                <div class="dso-days" style="color: #ffa500">42d</div>
+                <div class="dso-amount">1.8M CLP</div>
+              </div>
+              <div class="dso-cell good">
+                <div class="dso-manager">Roberto S.</div>
+                <div class="dso-days" style="color: #00ff88">28d</div>
+                <div class="dso-amount">1.2M CLP</div>
+              </div>
+              <div class="dso-cell warning">
+                <div class="dso-manager">Luis P.</div>
+                <div class="dso-days" style="color: #ffa500">45d</div>
+                <div class="dso-amount">2.0M CLP</div>
+              </div>
+              <div class="dso-cell good">
+                <div class="dso-manager">Carmen V.</div>
+                <div class="dso-days" style="color: #00ff88">32d</div>
+                <div class="dso-amount">1.5M CLP</div>
+              </div>
+              <div class="dso-cell critical">
+                <div class="dso-manager">Diego L.</div>
+                <div class="dso-days" style="color: #ff0066">72d</div>
+                <div class="dso-amount">1.9M CLP</div>
+              </div>
+              <div class="dso-cell good">
+                <div class="dso-manager">Sofia T.</div>
+                <div class="dso-days" style="color: #00ff88">25d</div>
+                <div class="dso-amount">0.8M CLP</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cash Flow Forecast Chart -->
+        <div class="chart-panel wide">
+          <div class="chart-header">
+            <div class="chart-title">Forecast Ingresos - Próximos 7 Días</div>
+            <button class="chart-action">Exportar</button>
+          </div>
+          <div class="chart-container">
+            <div class="cashflow-bars">
+              <div class="cashflow-day">
+                <div class="cashflow-bar" style="height: 80%">
+                  <div class="cashflow-fill high" style="height: 100%">
+                    <div class="cashflow-value">1.2M</div>
+                  </div>
+                </div>
+                <div class="cashflow-label">Lun 24</div>
+                <div class="cashflow-prob">85% prob</div>
+              </div>
+              <div class="cashflow-day">
+                <div class="cashflow-bar" style="height: 100%">
+                  <div class="cashflow-fill high" style="height: 100%">
+                    <div class="cashflow-value">2.3M</div>
+                  </div>
+                </div>
+                <div class="cashflow-label">Mar 25</div>
+                <div class="cashflow-prob">72% prob</div>
+              </div>
+              <div class="cashflow-day">
+                <div class="cashflow-bar" style="height: 70%">
+                  <div class="cashflow-fill medium" style="height: 100%">
+                    <div class="cashflow-value">1.8M</div>
+                  </div>
+                </div>
+                <div class="cashflow-label">Mié 26</div>
+                <div class="cashflow-prob">68% prob</div>
+              </div>
+              <div class="cashflow-day">
+                <div class="cashflow-bar" style="height: 40%">
+                  <div class="cashflow-fill low" style="height: 100%">
+                    <div class="cashflow-value">0.9M</div>
+                  </div>
+                </div>
+                <div class="cashflow-label">Jue 27</div>
+                <div class="cashflow-prob">45% prob</div>
+              </div>
+              <div class="cashflow-day">
+                <div class="cashflow-bar" style="height: 50%">
+                  <div class="cashflow-fill medium" style="height: 100%">
+                    <div class="cashflow-value">0.6M</div>
+                  </div>
+                </div>
+                <div class="cashflow-label">Vie 28</div>
+                <div class="cashflow-prob">78% prob</div>
+              </div>
+              <div class="cashflow-day">
+                <div class="cashflow-bar" style="height: 30%">
+                  <div class="cashflow-fill low" style="height: 100%">
+                    <div class="cashflow-value">0.4M</div>
+                  </div>
+                </div>
+                <div class="cashflow-label">Sáb 29</div>
+                <div class="cashflow-prob">25% prob</div>
+              </div>
+              <div class="cashflow-day">
+                <div class="cashflow-bar" style="height: 25%">
+                  <div class="cashflow-fill low" style="height: 100%">
+                    <div class="cashflow-value">0.2M</div>
+                  </div>
+                </div>
+                <div class="cashflow-label">Dom 30</div>
+                <div class="cashflow-prob">15% prob</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerts & Actions Panel -->
+        <div class="chart-panel">
+          <div class="chart-header">
+            <div class="chart-title">Alertas Operacionales</div>
+            <button class="chart-action critical">Actuar</button>
+          </div>
+          <div class="chart-container">
+            <div class="alert-panel">
+              <div class="alert-item critical">
+                <div class="alert-header">
+                  <div class="alert-title">Cliente ABC Corp</div>
+                  <div class="alert-impact critical">2.3M</div>
+                </div>
+                <div class="alert-description">
+                  67 días sin respuesta • Escalar a Carlos Mendoza
+                </div>
+              </div>
+
+              <div class="alert-item warning">
+                <div class="alert-header">
+                  <div class="alert-title">DSO Deterioro</div>
+                  <div class="alert-impact warning">-420k/d</div>
+                </div>
+                <div class="alert-description">
+                  +12 días vs benchmark • Revisar procesos
+                </div>
+              </div>
+
+              <div class="alert-item warning">
+                <div class="alert-header">
+                  <div class="alert-title">7 EDPs >60d</div>
+                  <div class="alert-impact warning">8.2M</div>
+                </div>
+                <div class="alert-description">
+                  Concentración riesgo • Diversificar seguimiento
+                </div>
+              </div>
+
+              <div class="alert-item info">
+                <div class="alert-header">
+                  <div class="alert-title">Meta Mensual</div>
+                  <div class="alert-impact info">78%</div>
+                </div>
+                <div class="alert-description">
+                  En objetivo • 5.5M CLP restantes factibles
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Targets -->
+        <div class="chart-panel">
+          <div class="chart-header">
+            <div class="chart-title">Objetivos del Mes</div>
+            <button class="chart-action">Detalles</button>
+          </div>
+          <div class="chart-container">
+            <div class="progress-rings">
+              <div class="progress-ring warning">
+                <svg>
+                  <circle class="bg" cx="40" cy="40" r="30"></circle>
+                  <circle
+                    class="progress"
+                    cx="40"
+                    cy="40"
+                    r="30"
+                    style="stroke-dasharray: 146.6, 188.4"></circle>
+                </svg>
+                <div class="progress-text">
+                  <div class="progress-value">78%</div>
+                  <div class="progress-label">Ingresos</div>
+                </div>
+              </div>
+
+              <div class="progress-ring critical">
+                <svg>
+                  <circle class="bg" cx="40" cy="40" r="30"></circle>
+                  <circle
+                    class="progress"
+                    cx="40"
+                    cy="40"
+                    r="30"
+                    style="stroke-dasharray: 75.4, 188.4"></circle>
+                </svg>
+                <div class="progress-text">
+                  <div class="progress-value">40%</div>
+                  <div class="progress-label">DSO Target</div>
+                </div>
+              </div>
+
+              <div class="progress-ring good">
+                <svg>
+                  <circle class="bg" cx="40" cy="40" r="30"></circle>
+                  <circle
+                    class="progress"
+                    cx="40"
+                    cy="40"
+                    r="30"
+                    style="stroke-dasharray: 169.6, 188.4"></circle>
+                </svg>
+                <div class="progress-text">
+                  <div class="progress-value">90%</div>
+                  <div class="progress-label">Calidad</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Panel with Chart.js -->
+        <div class="chart-panel">
+          <div class="chart-header">
+            <div class="chart-title">Tendencia DSO</div>
+            <button class="chart-action">Analizar</button>
+          </div>
+          <div class="chart-container">
+            <canvas id="dsoTrendChart"></canvas>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Initialize DSO Trend Chart
+      const ctx = document.getElementById("dsoTrendChart").getContext("2d");
+
+      const dsoChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun"],
+          datasets: [
+            {
+              label: "DSO Actual",
+              data: [38, 42, 45, 41, 44, 47.2],
+              borderColor: "#ff0066",
+              backgroundColor: "rgba(255, 0, 102, 0.1)",
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+            },
+            {
+              label: "Target DSO",
+              data: [35, 35, 35, 35, 35, 35],
+              borderColor: "#00ff88",
+              borderWidth: 2,
+              borderDash: [5, 5],
+              fill: false,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false,
+            },
+          },
+          scales: {
+            x: {
+              grid: {
+                color: "#1a1a1a",
+              },
+              ticks: {
+                color: "#888888",
+                font: {
+                  family: "JetBrains Mono",
+                  size: 10,
+                },
+              },
+            },
+            y: {
+              grid: {
+                color: "#1a1a1a",
+              },
+              ticks: {
+                color: "#888888",
+                font: {
+                  family: "JetBrains Mono",
+                  size: 10,
+                },
+              },
+              min: 25,
+              max: 50,
+            },
+          },
+          elements: {
+            point: {
+              radius: 4,
+              hoverRadius: 6,
+            },
+          },
+        },
+      });
+
+      // Interactive DSO Heatmap
+      document.querySelectorAll(".dso-cell").forEach((cell) => {
+        cell.addEventListener("click", function () {
+          const manager = this.querySelector(".dso-manager").textContent;
+          const days = this.querySelector(".dso-days").textContent;
+          const amount = this.querySelector(".dso-amount").textContent;
+
+          showManagerDetail(manager, days, amount);
+        });
+      });
+
+      function showManagerDetail(manager, days, amount) {
+        const modal = document.createElement("div");
+        modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                backdrop-filter: blur(10px);
+            `;
+
+        modal.innerHTML = `
+                <div style="
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid #333333;
+                    border-radius: 4px;
+                    padding: 32px;
+                    max-width: 400px;
+                    width: 90%;
+                ">
+                    <h3 style="color: #00ff88; margin-bottom: 16px; font-family: 'Space Grotesk', sans-serif;">
+                        ${manager} - Detalle DSO
+                    </h3>
+                    <div style="margin-bottom: 20px;">
+                        <div style="color: #ffffff; margin-bottom: 8px;">DSO Actual: <span style="color: #ff0066; font-family: 'JetBrains Mono', monospace;">${days}</span></div>
+                        <div style="color: #ffffff; margin-bottom: 8px;">Monto Gestionado: <span style="color: #00ff88; font-family: 'JetBrains Mono', monospace;">${amount}</span></div>
+                        <div style="color: #888888; font-size: 14px; margin-top: 16px;">
+                            Recomendación: ${getDSORecommendation(days)}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button onclick="coordinateWithManager('${manager}')" style="
+                            background: transparent;
+                            border: 1px solid #00ff88;
+                            color: #00ff88;
+                            padding: 8px 16px;
+                            border-radius: 2px;
+                            cursor: pointer;
+                            font-family: 'JetBrains Mono', monospace;
+                            font-size: 12px;
+                        ">COORDINAR</button>
+                        <button onclick="this.closest('.modal').remove()" style="
+                            background: transparent;
+                            border: 1px solid #888888;
+                            color: #888888;
+                            padding: 8px 16px;
+                            border-radius: 2px;
+                            cursor: pointer;
+                            font-family: 'JetBrains Mono', monospace;
+                            font-size: 12px;
+                        ">CERRAR</button>
+                    </div>
+                </div>
+            `;
+
+        modal.className = "modal";
+        modal.addEventListener("click", function (e) {
+          if (e.target === modal) {
+            modal.remove();
+          }
+        });
+
+        document.body.appendChild(modal);
+      }
+
+      function getDSORecommendation(days) {
+        const dsoValue = parseInt(days);
+        if (dsoValue > 60) {
+          return "Escalar inmediatamente. Revisar estrategia de cobranza.";
+        } else if (dsoValue > 45) {
+          return "Intensificar seguimiento. Evaluar incentivos de pago.";
+        } else if (dsoValue > 35) {
+          return "Monitoreo cercano. Mantener comunicación regular.";
+        } else {
+          return "Excelente performance. Replicar mejores prácticas.";
+        }
+      }
+
+      function coordinateWithManager(manager) {
+        // Simulate coordination action
+        const alert = document.createElement("div");
+        alert.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 24px;
+                background: rgba(0, 255, 136, 0.1);
+                border: 1px solid #00ff88;
+                color: #00ff88;
+                padding: 16px;
+                border-radius: 2px;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 12px;
+                z-index: 1001;
+                animation: slideIn 0.3s ease;
+            `;
+        alert.textContent = `Coordinación iniciada con ${manager}`;
+
+        document.body.appendChild(alert);
+
+        setTimeout(() => {
+          alert.remove();
+        }, 3000);
+
+        // Close modal
+        document.querySelector(".modal").remove();
+      }
+
+      // Interactive Cash Flow Bars
+      document.querySelectorAll(".cashflow-day").forEach((day) => {
+        day.addEventListener("click", function () {
+          const label = this.querySelector(".cashflow-label").textContent;
+          const value = this.querySelector(".cashflow-value").textContent;
+          const prob = this.querySelector(".cashflow-prob").textContent;
+
+          showForecastDetail(label, value, prob);
+        });
+      });
+
+      function showForecastDetail(day, amount, probability) {
+        const details = {
+          "Lun 24":
+            "EDPs: ABC-001, XYZ-045, DEF-012 • Cliente ABC histórico pago lunes",
+          "Mar 25":
+            "EDPs: GHI-078, JKL-092 • Cliente XYZ programó revisión martes",
+          "Mié 26": "EDPs: MNO-134, PQR-156 • Seguimiento EDPs rezagados",
+          "Jue 27": "EDP: STU-189 • Cliente nuevo, patrón incierto",
+          "Vie 28": "EDPs: VWX-201, YZA-234 • Fin de mes, pico histórico",
+          "Sáb 29": "EDP: BCD-267 • Probabilidad baja fin de semana",
+          "Dom 30": "EDP: EFG-289 • Muy improbable domingo",
+        };
+
+        const alert = document.createElement("div");
+        alert.style.cssText = `
+                position: fixed;
+                top: 150px;
+                right: 24px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid #333333;
+                color: #ffffff;
+                padding: 20px;
+                border-radius: 2px;
+                font-family: 'Space Grotesk', sans-serif;
+                font-size: 13px;
+                z-index: 1001;
+                max-width: 300px;
+                animation: slideIn 0.3s ease;
+            `;
+        alert.innerHTML = `
+                <div style="color: #00ff88; font-weight: 600; margin-bottom: 8px;">${day} - ${amount}</div>
+                <div style="color: #888888; margin-bottom: 12px;">${probability}</div>
+                <div style="line-height: 1.4;">${
+                  details[day] || "Información detallada no disponible"
+                }</div>
+            `;
+
+        document.body.appendChild(alert);
+
+        setTimeout(() => {
+          alert.remove();
+        }, 5000);
+      }
+
+      // Interactive Alert Items
+      document.querySelectorAll(".alert-item").forEach((alert) => {
+        alert.addEventListener("click", function () {
+          const title = this.querySelector(".alert-title").textContent;
+          const impact = this.querySelector(".alert-impact").textContent;
+          const description =
+            this.querySelector(".alert-description").textContent;
+
+          executeAlert(title, impact, description);
+        });
+      });
+
+      function executeAlert(title, impact, description) {
+        const actions = {
+          "Cliente ABC Corp":
+            "Email automático enviado a Carlos Mendoza para escalación",
+          "DSO Deterioro": "Reporte generado para revisión de procesos",
+          "7 EDPs >60d": "Reunión programada con jefes de proyecto afectados",
+          "Meta Mensual": "Seguimiento intensificado últimos 8 días del mes",
+        };
+
+        const alert = document.createElement("div");
+        alert.style.cssText = `
+                position: fixed;
+                top: 200px;
+                right: 24px;
+                background: rgba(0, 255, 136, 0.1);
+                border: 1px solid #00ff88;
+                color: #00ff88;
+                padding: 16px;
+                border-radius: 2px;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 12px;
+                z-index: 1001;
+                max-width: 250px;
+                animation: slideIn 0.3s ease;
+            `;
+        alert.innerHTML = `
+                <div style="font-weight: 700; margin-bottom: 8px;">ACCIÓN EJECUTADA</div>
+                <div>${actions[title] || "Acción estándar iniciada"}</div>
+            `;
+
+        document.body.appendChild(alert);
+
+        setTimeout(() => {
+          alert.remove();
+        }, 4000);
+      }
+
+      // Chart Action Buttons
+      document.querySelectorAll(".chart-action").forEach((button) => {
+        button.addEventListener("click", function () {
+          const action = this.textContent;
+          const panel = this.closest(".chart-panel");
+          const title = panel.querySelector(".chart-title").textContent;
+
+          executeChartAction(action, title);
+        });
+      });
+
+      function executeChartAction(action, chartTitle) {
+        const actions = {
+          Coordinar: `Iniciando coordinación basada en ${chartTitle}`,
+          Exportar: `Exportando datos de ${chartTitle} a Excel`,
+          Actuar: `Ejecutando acciones automáticas para ${chartTitle}`,
+          Detalles: `Generando reporte detallado de ${chartTitle}`,
+          Analizar: `Iniciando análisis profundo de ${chartTitle}`,
+        };
+
+        const alert = document.createElement("div");
+        alert.style.cssText = `
+                position: fixed;
+                top: 120px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid #00ff88;
+                color: #00ff88;
+                padding: 16px 24px;
+                border-radius: 2px;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 12px;
+                z-index: 1001;
+                animation: slideIn 0.3s ease;
+            `;
+        alert.textContent = actions[action] || `Ejecutando ${action}`;
+
+        document.body.appendChild(alert);
+
+        setTimeout(() => {
+          alert.remove();
+        }, 3000);
+      }
+
+      // Real-time updates simulation
+      function simulateRealTimeUpdates() {
+        // Update header metrics
+        const dsoValue = document.querySelector(
+          ".header-metric-value.critical"
+        );
+        const currentDSO = parseFloat(dsoValue.textContent);
+        const newDSO = Math.max(
+          35,
+          Math.min(50, currentDSO + (Math.random() - 0.5) * 0.5)
+        );
+        dsoValue.textContent = newDSO.toFixed(1);
+
+        // Update cost per day
+        const costValue = document.querySelectorAll(
+          ".header-metric-value.critical"
+        )[1];
+        const newCost = Math.round((newDSO - 35) * 35);
+        costValue.textContent = `-${newCost}k`;
+
+        // Update forecast
+        const forecastValue = document.querySelector(
+          ".header-metric-value.warning"
+        );
+        const currentForecast = parseFloat(
+          forecastValue.textContent.replace("M", "")
+        );
+        const newForecast = Math.max(
+          5,
+          Math.min(8, currentForecast + (Math.random() - 0.5) * 0.3)
+        );
+        forecastValue.textContent = newForecast.toFixed(1) + "M";
+      }
+
+      // Start real-time simulation
+      setInterval(simulateRealTimeUpdates, 30000);
+
+      // Add CSS animation for slideIn
+      const style = document.createElement("style");
+      style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+      document.head.appendChild(style);
+
+      // Progress ring animations
+      function animateProgressRings() {
+        const rings = document.querySelectorAll(".progress-ring");
+        rings.forEach((ring) => {
+          const circle = ring.querySelector(".progress");
+          const percentage = parseInt(
+            ring.querySelector(".progress-value").textContent
+          );
+          const circumference = 2 * Math.PI * 30; // radius = 30
+          const strokeDasharray = (percentage / 100) * circumference;
+          const strokeDashoffset = circumference - strokeDasharray;
+
+          circle.style.strokeDasharray = `${strokeDasharray}, ${circumference}`;
+        });
+      }
+
+      // Initialize animations
+      setTimeout(animateProgressRings, 500);
+    </script>
+  </body>
+</html>

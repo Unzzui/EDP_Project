@@ -1,0 +1,519 @@
+<!-- DASHBOARD EJECUTIVO UNIFICADO - LÓGICA DE CRITICIDAD COHERENTE -->
+
+<!-- 
+REGLAS DE CRITICIDAD ESTRICTAS:
+1. VERDE: Solo si TODO está bien (aging <15%, proyectos <10% retraso, capacidad <85%)
+2. AMARILLO: Atención requerida (aging 15-30%, proyectos 10-20% retraso, capacidad 85-100%)
+3. ROJO: Crisis operativa (aging >30%, proyectos >20% retraso, capacidad >100%, cash flow crítico)
+
+NUNCA mostrar verde si hay problemas reales.
+-->
+
+{% set aging_30_pct = kpis.aging_30_plus_pct|default(15) %} {% set aging_60_pct
+= kpis.aging_60_plus_pct|default(8) %} {% set aging_90_pct =
+kpis.aging_90_plus_pct|default(3) %} {% set proyectos_retraso_pct =
+kpis.proyectos_retraso_pct|default(10) %} {% set capacidad_promedio =
+kpis.capacidad_promedio|default(85) %} {% set ingresos_totales =
+kpis.ingresos_totales|default(42.7) %} {% set meta_mensual =
+kpis.meta_mensual|default(45.0) %} {% set avance_meta_pct = ((ingresos_totales /
+meta_mensual) * 100) %}
+
+<!-- EVALUACIÓN DE ESTADO OPERATIVO -->
+{% set crisis_aging = aging_30_pct > 30 or aging_90_pct > 5 %} {% set
+crisis_cash_flow = aging_60_pct > 15 %} {% set crisis_recursos =
+capacidad_promedio > 100 %} {% set crisis_proyectos = proyectos_retraso_pct > 20
+%} {% set atencion_aging = aging_30_pct > 15 and aging_30_pct <= 30 %} {% set
+atencion_proyectos = proyectos_retraso_pct > 10 and proyectos_retraso_pct <= 20
+%} {% set atencion_recursos = capacidad_promedio > 85 and capacidad_promedio <=
+100 %}
+
+<!-- ESTADO GLOBAL -->
+{% set estado_crisis = crisis_aging or crisis_cash_flow or crisis_recursos or
+crisis_proyectos %} {% set estado_atencion = (atencion_aging or
+atencion_proyectos or atencion_recursos) and not estado_crisis %} {% set
+estado_normal = not estado_crisis and not estado_atencion %}
+
+<!-- SI HAY CRISIS: ZONA ROJA DRAMÁTICA EN LA PARTE SUPERIOR -->
+{% if estado_crisis %}
+<div class="mb-8">
+  <div class="bg-red-950 border-4 border-red-400 rounded-xl p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center">
+        <div class="bg-red-500 p-3 rounded-full mr-4 animate-pulse">
+          <svg
+            class="w-8 h-8 text-white"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-white text-3xl font-black">
+            🚨 CRISIS OPERATIVA DETECTADA
+          </h1>
+          <p class="text-red-300 text-lg font-bold">
+            La operación está fuera de parámetros seguros
+          </p>
+        </div>
+      </div>
+      <div
+        class="bg-red-500 text-white px-6 py-3 rounded-lg font-black text-xl">
+        ACCIÓN INMEDIATA
+      </div>
+    </div>
+
+    <!-- PROBLEMAS ESPECÍFICOS IDENTIFICADOS -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {% if crisis_aging %}
+      <div class="bg-red-900 border-2 border-red-500 rounded-lg p-4">
+        <div class="text-4xl font-black text-white">{{ aging_30_pct }}%</div>
+        <div class="text-red-200 text-sm font-bold">CUENTAS +30 DÍAS</div>
+        <div class="text-red-300 text-xs mt-1">CRÍTICO: >30%</div>
+        {% if aging_90_pct > 5 %}
+        <div class="text-red-200 text-xs mt-1 font-bold">
+          {{ aging_90_pct }}% en +90 días!
+        </div>
+        {% endif %}
+        <div class="mt-2 text-white text-sm">
+          ${{ (kpis.monto_pendiente|default(180) * aging_30_pct / 100)|round }}M
+          en riesgo
+        </div>
+      </div>
+      {% endif %} {% if crisis_cash_flow %}
+      <div class="bg-red-900 border-2 border-red-500 rounded-lg p-4">
+        <div class="text-4xl font-black text-white">{{ aging_60_pct }}%</div>
+        <div class="text-red-200 text-sm font-bold">CASH FLOW CRÍTICO</div>
+        <div class="text-red-300 text-xs mt-1">CRÍTICO: >15%</div>
+        <div class="mt-2 text-white text-sm">
+          ${{ (kpis.monto_pendiente|default(180) * aging_60_pct / 100)|round }}M
+          bloqueado
+        </div>
+      </div>
+      {% endif %} {% if crisis_recursos %}
+      <div class="bg-red-900 border-2 border-red-500 rounded-lg p-4">
+        <div class="text-4xl font-black text-white">
+          {{ capacidad_promedio }}%
+        </div>
+        <div class="text-red-200 text-sm font-bold">SOBRECARGA CRÍTICA</div>
+        <div class="text-red-300 text-xs mt-1">CRÍTICO: >100%</div>
+        <div class="mt-2 text-white text-sm">
+          {{ kpis.recursos_sobrecarga|default(8) }} recursos afectados
+        </div>
+      </div>
+      {% endif %} {% if crisis_proyectos %}
+      <div
+        class="bg-red-900 border-2 border-red-500 rounded-lg p-4 cursor-pointer hover:bg-red-800"
+        id="show-critical-projects-btn"
+        data-modal="critical-projects">
+        <div class="text-4xl font-black text-white">
+          {{ proyectos_retraso_pct }}%
+        </div>
+        <div class="text-red-200 text-sm font-bold">PROYECTOS CRÍTICOS</div>
+        <div class="text-red-300 text-xs mt-1">CRÍTICO: >20%</div>
+        <div class="mt-2 text-white text-sm">
+          {{ kpis.proyectos_retraso_count|default(4) }} proyectos afectados
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ACCIONES INMEDIATAS - MÁXIMO 2 PRIORIDADES -->
+    <div class="bg-red-800 rounded-lg p-4">
+      <h3 class="text-white font-bold text-lg mb-3">
+        🚨 ACCIÓN INMEDIATA REQUERIDA
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- Prioridad 1: El problema más crítico -->
+        {% if crisis_aging or crisis_cash_flow %}
+        <div class="bg-red-700 rounded p-3">
+          <div class="text-red-200 text-xs font-bold">PRIORIDAD 1 - HOY</div>
+          <div class="text-white font-bold">Acelerar cobranza urgente</div>
+          <div class="text-red-300 text-xs mt-1">
+            Contactar {{ kpis.manager_cobranza|default('Laura Vega') }} -
+            Enfoque en +60 días
+          </div>
+          <div class="text-red-300 text-xs">
+            Meta: Reducir aging crítico a <15% en 48h
+          </div>
+        </div>
+        {% elif crisis_recursos %}
+        <div class="bg-red-700 rounded p-3">
+          <div class="text-red-200 text-xs font-bold">PRIORIDAD 1 - HOY</div>
+          <div class="text-white font-bold">Redistribuir carga urgente</div>
+          <div class="text-red-300 text-xs mt-1">
+            Reunión con {{ kpis.manager_recursos|default('Carlos Mendez') }}
+          </div>
+          <div class="text-red-300 text-xs">Meta: Capacidad <100% en 24h</div>
+        </div>
+        {% endif %}
+
+        <!-- Prioridad 2: Segundo problema más crítico -->
+        {% if crisis_proyectos and (crisis_aging or crisis_cash_flow or
+        crisis_recursos) %}
+        <div class="bg-red-700 rounded p-3">
+          <div class="text-red-200 text-xs font-bold">PRIORIDAD 2 - MAÑANA</div>
+          <div class="text-white font-bold">Revisar proyectos críticos</div>
+          <div class="text-red-300 text-xs mt-1">
+            Sesión con {{ kpis.director_proyectos|default('Ana Torres') }}
+          </div>
+          <div class="text-red-300 text-xs">
+            Meta: Plan de contingencia en 48h
+          </div>
+        </div>
+        {% elif crisis_recursos and crisis_aging %}
+        <div class="bg-red-700 rounded p-3">
+          <div class="text-red-200 text-xs font-bold">PRIORIDAD 2 - MAÑANA</div>
+          <div class="text-white font-bold">
+            Evaluar capacidad a mediano plazo
+          </div>
+          <div class="text-red-300 text-xs mt-1">
+            Análisis con {{ kpis.manager_recursos|default('Carlos Mendez') }}
+          </div>
+          <div class="text-red-300 text-xs">
+            Meta: Plan escalabilidad semanal
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- DASHBOARD OPERATIVO PRINCIPAL -->
+<div class="space-y-6">
+  <!-- PANEL DE ESTADO GENERAL -->
+  <div
+    class="{% if estado_crisis %}bg-red-900 border-red-600{% elif estado_atencion %}bg-orange-900 border-orange-600{% else %}bg-green-900 border-green-600{% endif %} border-2 rounded-xl p-6 shadow-lg">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-white text-2xl font-bold">
+        {% if estado_crisis %} 🚨 Estado Operativo: CRISIS {% elif
+        estado_atencion %} ⚠️ Estado Operativo: ATENCIÓN REQUERIDA {% else %} ✅
+        Estado Operativo: NORMAL {% endif %}
+      </h2>
+      <div
+        class="{% if estado_crisis %}bg-red-500{% elif estado_atencion %}bg-orange-500{% else %}bg-green-500{% endif %} text-white text-sm px-4 py-2 rounded-full font-bold">
+        {% if estado_crisis %} ACCIÓN INMEDIATA {% elif estado_atencion %}
+        MONITOREO ACTIVO {% else %} OPERACIÓN ESTABLE {% endif %}
+      </div>
+    </div>
+
+    <!-- RESUMEN EJECUTIVO DE INDICADORES CLAVE -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <!-- Aging de cartera -->
+      <div class="text-center">
+        <div
+          class="text-3xl font-bold {% if aging_30_pct > 30 %}text-red-300{% elif aging_30_pct > 15 %}text-orange-300{% else %}text-green-300{% endif %}">
+          {{ aging_30_pct }}%
+        </div>
+        <div class="text-gray-300 text-sm">Aging +30 días</div>
+        <div
+          class="text-xs {% if aging_30_pct > 30 %}text-red-400{% elif aging_30_pct > 15 %}text-orange-400{% else %}text-green-400{% endif %}">
+          {% if aging_30_pct > 30 %}CRÍTICO{% elif aging_30_pct > 15
+          %}ATENCIÓN{% else %}NORMAL{% endif %}
+        </div>
+      </div>
+
+      <!-- Proyectos en riesgo -->
+      <div class="text-center">
+        <div
+          class="text-3xl font-bold {% if proyectos_retraso_pct > 20 %}text-red-300{% elif proyectos_retraso_pct > 10 %}text-orange-300{% else %}text-green-300{% endif %}">
+          {{ proyectos_retraso_pct }}%
+        </div>
+        <div class="text-gray-300 text-sm">Proyectos retrasados</div>
+        <div
+          class="text-xs {% if proyectos_retraso_pct > 20 %}text-red-400{% elif proyectos_retraso_pct > 10 %}text-orange-400{% else %}text-green-400{% endif %}">
+          {% if proyectos_retraso_pct > 20 %}CRÍTICO{% elif
+          proyectos_retraso_pct > 10 %}ATENCIÓN{% else %}NORMAL{% endif %}
+        </div>
+      </div>
+
+      <!-- Capacidad de recursos -->
+      <div class="text-center">
+        <div
+          class="text-3xl font-bold {% if capacidad_promedio > 100 %}text-red-300{% elif capacidad_promedio > 85 %}text-orange-300{% else %}text-green-300{% endif %}">
+          {{ capacidad_promedio }}%
+        </div>
+        <div class="text-gray-300 text-sm">Capacidad promedio</div>
+        <div
+          class="text-xs {% if capacidad_promedio > 100 %}text-red-400{% elif capacidad_promedio > 85 %}text-orange-400{% else %}text-green-400{% endif %}">
+          {% if capacidad_promedio > 100 %}SOBRECARGA{% elif capacidad_promedio
+          > 85 %}ATENCIÓN{% else %}NORMAL{% endif %}
+        </div>
+      </div>
+
+      <!-- Avance de meta -->
+      <div class="text-center">
+        <div
+          class="text-3xl font-bold {% if avance_meta_pct < 80 %}text-orange-300{% elif avance_meta_pct > 110 %}text-green-300{% else %}text-white{% endif %}">
+          {{ avance_meta_pct|round }}%
+        </div>
+        <div class="text-gray-300 text-sm">Avance meta</div>
+        <div
+          class="text-xs {% if avance_meta_pct < 80 %}text-orange-400{% elif avance_meta_pct > 110 %}text-green-400{% else %}text-gray-400{% endif %}">
+          {% if avance_meta_pct < 80 %}BAJO META{% elif avance_meta_pct > 110
+          %}SOBRE META{% else %}EN META{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANELES OPERATIVOS DETALLADOS -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- INGRESOS Y FACTURACIÓN -->
+    <div
+      class="{% if estado_crisis %}bg-gray-800 border-gray-600{% elif estado_atencion %}bg-orange-800 border-orange-600{% else %}bg-blue-800 border-blue-600{% endif %} border-2 rounded-xl p-6 shadow-lg">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-white text-xl font-bold">💰 Facturación</h3>
+        <div
+          class="{% if estado_crisis %}bg-gray-600{% elif estado_atencion %}bg-orange-600{% else %}bg-blue-600{% endif %} text-white text-xs px-2 py-1 rounded-full font-bold">
+          {% if avance_meta_pct < 80 %}BAJO{% elif avance_meta_pct > 110
+          %}EXCELENTE{% else %}NORMAL{% endif %}
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-300 text-sm">Facturado este mes:</span>
+          <span class="text-white text-lg font-bold"
+            >${{ ingresos_totales }}M</span
+          >
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="text-gray-300 text-sm">Meta mensual:</span>
+          <span class="text-white font-bold">${{ meta_mensual }}M</span>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="text-gray-300 text-sm">Pendiente facturar:</span>
+          <span class="text-white text-lg font-bold"
+            >${{ kpis.pendiente_facturar|default(18.3) }}M</span
+          >
+        </div>
+
+        <div class="pt-3 border-t border-gray-500">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-300 text-sm">Total por cobrar:</span>
+            <span class="text-white text-lg font-bold"
+              >${{ kpis.monto_pendiente|default(180) }}M</span
+            >
+          </div>
+        </div>
+
+        <!-- Barra de progreso de meta -->
+        <div class="mt-4">
+          <div class="flex justify-between text-xs text-gray-400 mb-1">
+            <span>Avance de meta</span>
+            <span>{{ avance_meta_pct|round }}%</span>
+          </div>
+          <div class="w-full bg-gray-700 rounded-full h-2">
+            <div
+              class="{% if avance_meta_pct < 80 %}bg-orange-500{% elif avance_meta_pct > 110 %}bg-green-500{% else %}bg-blue-500{% endif %} h-2 rounded-full"
+              style="width: {{ [avance_meta_pct, 100]|min }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AGING DE CARTERA -->
+    <div
+      class="{% if crisis_aging or crisis_cash_flow %}bg-red-800 border-red-600{% elif atencion_aging %}bg-orange-800 border-orange-600{% else %}bg-green-800 border-green-600{% endif %} border-2 rounded-xl p-6 shadow-lg">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-white text-xl font-bold">📊 Aging de Cartera</h3>
+        <div
+          class="{% if crisis_aging or crisis_cash_flow %}bg-red-600{% elif atencion_aging %}bg-orange-600{% else %}bg-green-600{% endif %} text-white text-xs px-2 py-1 rounded-full font-bold">
+          {% if crisis_aging or crisis_cash_flow %}CRÍTICO{% elif atencion_aging
+          %}ATENCIÓN{% else %}SALUDABLE{% endif %}
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-300 text-sm">0-30 días:</span>
+          <span class="text-white font-bold"
+            >{{ (100 - aging_30_pct)|round }}%</span
+          >
+        </div>
+
+        <div
+          class="flex justify-between items-center {% if aging_30_pct > 15 %}text-orange-300{% endif %}">
+          <span class="text-gray-300 text-sm">30-60 días:</span>
+          <span
+            class="{% if aging_30_pct > 15 %}text-orange-300{% else %}text-white{% endif %} font-bold">
+            {{ (aging_30_pct - aging_60_pct)|round }}%
+          </span>
+        </div>
+
+        <div
+          class="flex justify-between items-center {% if aging_60_pct > 8 %}text-red-300{% endif %}">
+          <span class="text-gray-300 text-sm">60-90 días:</span>
+          <span
+            class="{% if aging_60_pct > 8 %}text-red-300{% else %}text-white{% endif %} font-bold">
+            {{ (aging_60_pct - aging_90_pct)|round }}%
+          </span>
+        </div>
+
+        <div
+          class="flex justify-between items-center {% if aging_90_pct > 2 %}text-red-300 font-bold{% endif %}">
+          <span class="text-gray-300 text-sm">+90 días:</span>
+          <span
+            class="{% if aging_90_pct > 2 %}text-red-300{% else %}text-white{% endif %} font-bold">
+            {{ aging_90_pct }}% {% if aging_90_pct > 5 %}<span
+              class="text-red-400 text-xs ml-1"
+              >CRÍTICO</span
+            >{% endif %}
+          </span>
+        </div>
+
+        <!-- Indicador visual de aging -->
+        <div class="mt-4">
+          <div class="text-xs text-gray-400 mb-1">Distribución de aging</div>
+          <div class="flex h-3 rounded-full overflow-hidden">
+            <div
+              class="bg-green-500"
+              style="width: {{ (100 - aging_30_pct) }}%"></div>
+            <div
+              class="bg-orange-500"
+              style="width: {{ (aging_30_pct - aging_60_pct) }}%"></div>
+            <div class="bg-red-500" style="width: {{ aging_60_pct }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROYECTOS Y RECURSOS -->
+    <div
+      class="{% if crisis_proyectos or crisis_recursos %}bg-red-800 border-red-600{% elif atencion_proyectos or atencion_recursos %}bg-orange-800 border-orange-600{% else %}bg-purple-800 border-purple-600{% endif %} border-2 rounded-xl p-6 shadow-lg">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-white text-xl font-bold">🚀 Proyectos</h3>
+        <div
+          class="{% if crisis_proyectos or crisis_recursos %}bg-red-600{% elif atencion_proyectos or atencion_recursos %}bg-orange-600{% else %}bg-purple-600{% endif %} text-white text-xs px-2 py-1 rounded-full font-bold">
+          {% if crisis_proyectos or crisis_recursos %}CRÍTICO{% elif
+          atencion_proyectos or atencion_recursos %}ATENCIÓN{% else %}ESTABLE{%
+          endif %}
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-300 text-sm">Total proyectos:</span>
+          <span class="text-white font-bold"
+            >{{ kpis.total_proyectos|default(32) }}</span
+          >
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="text-gray-300 text-sm">En tiempo:</span>
+          <span class="text-white font-bold"
+            >{{ (100 - proyectos_retraso_pct)|round }}%</span
+          >
+        </div>
+
+        <div
+          class="flex justify-between items-center {% if proyectos_retraso_pct > 10 %}text-orange-300{% endif %}">
+          <span class="text-gray-300 text-sm">Con retraso:</span>
+          <span
+            class="{% if proyectos_retraso_pct > 20 %}text-red-300{% elif proyectos_retraso_pct > 10 %}text-orange-300{% else %}text-white{% endif %} font-bold">
+            {{ proyectos_retraso_pct }}% {% if proyectos_retraso_pct > 20
+            %}<span class="text-red-400 text-xs ml-1">CRÍTICO</span>{% endif %}
+          </span>
+        </div>
+
+        <div class="pt-3 border-t border-gray-500">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-300 text-sm">Capacidad promedio:</span>
+            <span
+              class="{% if capacidad_promedio > 100 %}text-red-300{% elif capacidad_promedio > 85 %}text-orange-300{% else %}text-white{% endif %} font-bold">
+              {{ capacidad_promedio }}% {% if capacidad_promedio > 100 %}<span
+                class="text-red-400 text-xs ml-1"
+                >SOBRECARGA</span
+              >{% endif %}
+            </span>
+          </div>
+        </div>
+
+        {% if crisis_proyectos %}
+        <div class="mt-4 pt-3 border-t border-red-600">
+          <button
+            class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded text-sm font-bold transition-colors"
+            id="show-critical-projects-btn"
+            data-modal="critical-projects">
+            Ver {{ kpis.proyectos_retraso_count|default(4) }} proyectos críticos
+            →
+          </button>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP DEUDORES - Solo si no hay crisis crítica -->
+  {% if not estado_crisis %}
+  <div class="bg-gray-800 border border-gray-600 rounded-xl p-6 shadow-lg">
+    <h3 class="text-white text-xl font-bold mb-4">🏢 Top Deudores</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {% for cliente in kpis.top_deudores|default([ {'nombre': 'Codelco',
+      'monto': 45.2, 'aging': 'VIP - 180 días', 'criticidad': 'vip'}, {'nombre':
+      'Empresa B', 'monto': 23.1, 'aging': '45 días', 'criticidad': 'atencion'},
+      {'nombre': 'Empresa C', 'monto': 18.7, 'aging': '22 días', 'criticidad':
+      'normal'} ]) %}
+      <div
+        class="{% if cliente.criticidad == 'vip' %}bg-purple-900 border-purple-600{% elif cliente.criticidad == 'atencion' %}bg-orange-900 border-orange-600{% else %}bg-blue-900 border-blue-600{% endif %} border rounded-lg p-4">
+        <div class="flex justify-between items-start">
+          <div>
+            <h4 class="text-white font-bold">{{ cliente.nombre }}</h4>
+            <p
+              class="text-2xl font-bold {% if cliente.criticidad == 'vip' %}text-purple-300{% elif cliente.criticidad == 'atencion' %}text-orange-300{% else %}text-blue-300{% endif %}">
+              ${{ cliente.monto }}M
+            </p>
+            <p
+              class="text-xs {% if cliente.criticidad == 'vip' %}text-purple-400{% elif cliente.criticidad == 'atencion' %}text-orange-400{% else %}text-gray-400{% endif %}">
+              {{ cliente.aging }}
+            </p>
+          </div>
+          {% if cliente.criticidad == 'vip' %}
+          <div
+            class="bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">
+            VIP
+          </div>
+          {% elif cliente.criticidad == 'atencion' %}
+          <div
+            class="bg-orange-600 text-white text-xs px-2 py-1 rounded-full font-bold">
+            ATENCIÓN
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Script para manejo de modales y interacciones -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Manejo del botón de proyectos críticos
+    const showCriticalBtn = document.getElementById('show-critical-projects-btn');
+    if (showCriticalBtn) {
+      showCriticalBtn.addEventListener('click', function() {
+        const modalId = this.getAttribute('data-modal');
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.classList.remove('hidden');
+        }
+      });
+    }
+
+    // Auto-refresh cada 5 minutos en modo crisis
+    {% if estado_crisis %}
+    setTimeout(function() {
+      location.reload();
+    }, 300000); // 5 minutos
+    {% endif %}
+  });
+</script>

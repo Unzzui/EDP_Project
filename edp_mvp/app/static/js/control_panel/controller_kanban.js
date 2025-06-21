@@ -2334,13 +2334,22 @@ function openEdpModal(edpId, item = null) {
   let apiUrl = null;
   let useInternalId = false;
   
-  if (item) {
+  // 🔧 CORREGIDO: Verificar si edpId es un ID interno (número) o n_edp (string)
+  const isNumericId = !isNaN(parseInt(edpId)) && parseInt(edpId) > 0;
+  
+  if (isNumericId) {
+    // edpId es un ID interno numérico
+    apiUrl = `/dashboard/api/edp-details-by-id/${edpId}`;
+    useInternalId = true;
+    console.log(`🔍 Usando API por ID interno directo: ${apiUrl} (ID: ${edpId})`);
+  } else if (item) {
+    // edpId es n_edp, intentar obtener ID interno del item
     const internalId = item.getAttribute('data-internal-id');
     useInternalId = internalId && internalId !== '' && internalId !== 'null';
     
     if (useInternalId) {
       apiUrl = `/dashboard/api/edp-details-by-id/${internalId}`;
-      console.log(`🔍 Usando API por ID interno: ${apiUrl} (ID: ${internalId})`);
+      console.log(`🔍 Usando API por ID interno desde item: ${apiUrl} (ID: ${internalId})`);
     } else {
       console.warn(`⚠️ EDP ${edpId} no tiene ID interno disponible. Esto puede causar problemas si hay múltiples EDPs con el mismo n_edp.`);
       console.warn(`⚠️ Considerando usar fallback a n_edp, pero es riesgoso.`);
@@ -2349,7 +2358,7 @@ function openEdpModal(edpId, item = null) {
       console.log(`🔍 FALLBACK: Usando API por n_edp: ${apiUrl} (RIESGOSO)`);
     }
   } else {
-    // No tenemos elemento item, usar n_edp como último recurso
+    // No tenemos elemento item y edpId no es numérico, usar n_edp como último recurso
     console.warn(`⚠️ No hay elemento item disponible para EDP ${edpId}. Usando n_edp como último recurso.`);
     apiUrl = `/dashboard/api/edp-details/${edpId}`;
     console.log(`🔍 ÚLTIMO RECURSO: Usando API por n_edp: ${apiUrl}`);

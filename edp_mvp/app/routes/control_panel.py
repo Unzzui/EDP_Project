@@ -347,21 +347,42 @@ def _procesar_actualizacion_estado(edp_id: str, nuevo_estado: str, conformidad: 
             cache_invalidation.register_data_change('edp_state_changed', [edp_id], 
                                                   {'updated_fields': updated_fields})
             
+            # Convertir tipos numpy a tipos nativos antes de emitir
+            def convert_numpy_types_for_emit(obj):
+                """Convierte tipos numpy a tipos nativos de Python para serialización JSON"""
+                if isinstance(obj, dict):
+                    return {key: convert_numpy_types_for_emit(value) for key, value in obj.items()}
+                elif isinstance(obj, list):
+                    return [convert_numpy_types_for_emit(item) for item in obj]
+                elif hasattr(obj, 'item'):  # numpy types
+                    return obj.item()
+                elif hasattr(obj, 'tolist'):  # numpy arrays
+                    return obj.tolist()
+                elif pd.isna(obj):  # pandas NaT/NaN
+                    return None
+                else:
+                    return obj
+            
+            # Convertir datos antes de emitir
+            updates_data = {"estado": nuevo_estado, **resp.data.get("updates", {})}
+            updates_serializable = convert_numpy_types_for_emit(updates_data)
+            cambios_serializable = convert_numpy_types_for_emit(resp.data.get("updates", {}))
+            
             # Emit events for both manager dashboard and kanban board
             socketio.emit("edp_actualizado", {
-                "edp_id": edp_id, 
-                "updates": {"estado": nuevo_estado, **resp.data.get("updates", {})},
-                "usuario": usuario,
+                "edp_id": str(edp_id), 
+                "updates": updates_serializable,
+                "usuario": str(usuario),
                 "timestamp": datetime.now().isoformat()
             })
             socketio.emit("estado_actualizado", {
-                "edp_id": edp_id, 
-                "nuevo_estado": nuevo_estado, 
-                "cambios": resp.data.get("updates", {})
+                "edp_id": str(edp_id), 
+                "nuevo_estado": str(nuevo_estado), 
+                "cambios": cambios_serializable
             })
             socketio.emit("cache_invalidated", {
                 "type": "edp_state_changed",
-                "affected_ids": [edp_id],
+                "affected_ids": [str(edp_id)],
                 "timestamp": datetime.now().isoformat()
             })
             logger.info(f"✅ Actualización de estado completada exitosamente para EDP {edp_id}")
@@ -445,23 +466,44 @@ def _procesar_actualizacion_estado_by_id(internal_id: int, edp_id: str, nuevo_es
             cache_invalidation.register_data_change('edp_state_changed', [edp_id], 
                                                   {'updated_fields': updated_fields})
             
+            # Convertir tipos numpy a tipos nativos antes de emitir
+            def convert_numpy_types_for_emit(obj):
+                """Convierte tipos numpy a tipos nativos de Python para serialización JSON"""
+                if isinstance(obj, dict):
+                    return {key: convert_numpy_types_for_emit(value) for key, value in obj.items()}
+                elif isinstance(obj, list):
+                    return [convert_numpy_types_for_emit(item) for item in obj]
+                elif hasattr(obj, 'item'):  # numpy types
+                    return obj.item()
+                elif hasattr(obj, 'tolist'):  # numpy arrays
+                    return obj.tolist()
+                elif pd.isna(obj):  # pandas NaT/NaN
+                    return None
+                else:
+                    return obj
+            
+            # Convertir datos antes de emitir
+            updates_data = {"estado": nuevo_estado, **resp.data.get("updates", {})}
+            updates_serializable = convert_numpy_types_for_emit(updates_data)
+            cambios_serializable = convert_numpy_types_for_emit(resp.data.get("updates", {}))
+            
             # Emit events for both manager dashboard and kanban board
             socketio.emit("edp_actualizado", {
-                "edp_id": edp_id,
-                "internal_id": internal_id,
-                "updates": {"estado": nuevo_estado, **resp.data.get("updates", {})},
-                "usuario": usuario,
+                "edp_id": str(edp_id),
+                "internal_id": int(internal_id),
+                "updates": updates_serializable,
+                "usuario": str(usuario),
                 "timestamp": datetime.now().isoformat()
             })
             socketio.emit("estado_actualizado", {
-                "edp_id": edp_id,
-                "internal_id": internal_id,
-                "nuevo_estado": nuevo_estado, 
-                "cambios": resp.data.get("updates", {})
+                "edp_id": str(edp_id),
+                "internal_id": int(internal_id),
+                "nuevo_estado": str(nuevo_estado), 
+                "cambios": cambios_serializable
             })
             socketio.emit("cache_invalidated", {
                 "type": "edp_state_changed",
-                "affected_ids": [edp_id],
+                "affected_ids": [str(edp_id)],
                 "timestamp": datetime.now().isoformat()
             })
             logger.info(f"✅ Actualización de estado completada exitosamente para EDP {edp_id} (ID interno {internal_id})")

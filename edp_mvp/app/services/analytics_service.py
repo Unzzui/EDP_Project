@@ -335,8 +335,15 @@ class AnalyticsService:
             # DSO
             dso = self._calcular_dso_dataset(df_encargado)
 
-            # Criticidad
-            edps_criticos = len(df_encargado[df_encargado["critico"] == 1])
+            # Criticidad - calcular basado en dias_espera si no existe la columna critico
+            if "critico" in df_encargado.columns:
+                edps_criticos = len(df_encargado[df_encargado["critico"] == 1])
+            else:
+                # Considerar críticos los EDPs con más de 30 días de espera
+                edps_criticos = len(df_encargado[
+                    (df_encargado["dias_espera"].fillna(0) > 30) &
+                    (~df_encargado["estado"].isin(["pagado", "validado"]))
+                ])
 
             analisis[encargado] = {
                 "total_edps": total_edps,
@@ -699,7 +706,14 @@ class AnalyticsService:
             tasa_aprobacion_global = 0
 
         # Análisis de criticidad
-        edps_criticos = df_encargado[df_encargado["critico"] == 1]
+        if "critico" in df_encargado.columns:
+            edps_criticos = df_encargado[df_encargado["critico"] == 1]
+        else:
+            # Considerar críticos los EDPs con más de 30 días de espera
+            edps_criticos = df_encargado[
+                (df_encargado["dias_espera"].fillna(0) > 30) &
+                (~df_encargado["estado"].isin(["pagado", "validado"]))
+            ]
         porcentaje_criticos = (
             (len(edps_criticos) / len(df_encargado) * 100)
             if len(df_encargado) > 0
@@ -773,17 +787,36 @@ class AnalyticsService:
 
     def _generar_resumen_proyectos(self, df_encargado: pd.DataFrame) -> Dict:
         """Genera resumen por proyecto para el encargado"""
+        
+        # Preparar datos agregados - manejar la ausencia de columna 'critico'
+        agg_dict = {
+            "n_edp": "count",
+            "monto_propuesto": "sum",
+            "monto_aprobado": "sum",
+        }
+        
+        # Crear columna critico si no existe
+        if "critico" not in df_encargado.columns:
+            df_encargado = df_encargado.copy()
+            df_encargado["critico"] = (
+                (df_encargado["dias_espera"].fillna(0) > 30) &
+                (~df_encargado["estado"].isin(["pagado", "validado"]))
+            ).astype(int)
+        
+        agg_dict["critico"] = "sum"
+        
+        # Crear columna validado si no existe
+        if "validado" not in df_encargado.columns:
+            df_encargado = df_encargado.copy()
+            df_encargado["validado"] = (
+                df_encargado["estado"].isin(["pagado", "validado"])
+            ).astype(int)
+        
+        agg_dict["validado"] = "sum"
+        
         resumen = (
             df_encargado.groupby("proyecto")
-            .agg(
-                {
-                    "n_edp": "count",
-                    "critico": "sum",
-                    "validado": "sum",
-                    "monto_propuesto": "sum",
-                    "monto_aprobado": "sum",
-                }
-            )
+            .agg(agg_dict)
             .rename(
                 columns={
                     "n_edp": "Total_EDP",
@@ -1062,7 +1095,11 @@ class AnalyticsService:
                 elif col == "cliente":
                     df_pendientes[col] = "Cliente No Especificado"
                 elif col == "critico":
-                    df_pendientes[col] = 0
+                    # Calcular critico basado en dias_espera si no existe
+                    df_pendientes[col] = (
+                        (df_pendientes["dias_espera"].fillna(0) > 30) &
+                        (~df_pendientes["estado"].isin(["pagado", "validado"]))
+                    ).astype(int)
                 else:
                     df_pendientes[col] = f"No especificado ({col})"
 

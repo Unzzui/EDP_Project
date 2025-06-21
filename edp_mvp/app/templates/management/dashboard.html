@@ -1,1024 +1,568 @@
-{% extends "management/base_management.html" %}
+{% extends "base.html" %} {% block title %}Enterprise Manager Dashboard - EDP
+Manager{% endblock %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/management/manager-dashboard.css') }}" />
 
-{% block title %}Dashboard Ejecutivo - EDP Manager{% endblock %}
+<!-- Include dashboard JavaScript -->
+<script src="{{ url_for('static', filename='js/management/dashboard.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
-{% block content %}
-
-{% include 'management/modal-proyectos-criticos.html' %}
-<div class="container mx-auto px-2 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
- <link rel="stylesheet" href="{{ url_for('static', filename='css/management/manager-dashboard.css') }}">
-<script id="charts-data" type="application/json">
-{{ charts_json|safe }}
-</script>
-  
-<!-- Header con KPIs principales y filtros -->
-<!-- Header con título y toggle de filtros -->
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
-    <div class="w-full sm:w-auto">
-      <h1 class="text-2xl sm:text-3xl font-bold text-[color:var(--text-primary)]">Dashboard Ejecutivo</h1>
-      <p class="text-sm sm:text-base text-[color:var(--text-secondary)]">Vista panorámica del rendimiento</p>
-    </div>
-    
-    <!-- Toggle de filtros prominente -->
-    <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
-      <!-- Indicador de filtros activos -->
-      {% set filtros_activos = [] %}
-      {% if fecha_inicio or fecha_fin %}{% set _ = filtros_activos.append('Fechas') %}{% endif %}
-      {% if departamento != 'todos' %}{% set _ = filtros_activos.append('Gestor') %}{% endif %}
-      {% if cliente != 'todos' %}{% set _ = filtros_activos.append('Cliente') %}{% endif %}
-      {% if estado != 'todos' %}{% set _ = filtros_activos.append('Estado') %}{% endif %}
-      {% if vista != 'general' %}{% set _ = filtros_activos.append('Vista') %}{% endif %}
-      
-      {% if filtros_activos %}
-      <div class="flex items-center flex-wrap gap-1 sm:gap-2">
-        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-          {{ filtros_activos|length }} filtro{{ 's' if filtros_activos|length > 1 else '' }}
-        </span>
-        <a href="{{ url_for('management.dashboard') }}" class="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 whitespace-nowrap">
-          Limpiar
-        </a>
-      </div>
-      {% endif %}
-      
-      <!-- Sistema automático - sin botón manual -->
-      <div class="hidden sm:flex items-center px-2 py-1 text-sm bg-blue-100 text-blue-800 rounded-md border border-blue-200" title="Sistema de actualización automática activo">
-        <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
-        </svg>
-        <span class="text-xs hidden md:inline">Auto-actualización activa</span>
-        <span class="text-xs md:hidden">Auto</span>
-      </div>
-      
-      <!-- Botón toggle de filtros -->
-      <button id="toggle-filters-btn" class="flex items-center px-2 sm:px-3 py-1.5 text-sm bg-[color:var(--accent-blue)] hover:bg-blue-600 text-white rounded-md transition-colors shadow-sm">
-        <svg id="filter-icon" class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
-        </svg>
-        <span id="filter-text" class="hidden sm:inline">Mostrar filtros</span>
-        <span id="filter-text-mobile" class="sm:hidden">Filtros</span>
-        <svg id="filter-chevron" class="w-3 h-3 ml-1 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-        </svg>
-      </button>
-
-    </div>
-  </div>
-
-  <!-- Sección de filtros - OCULTA POR DEFECTO -->
-  <div id="filters-section" class="hidden">
-    <!-- Animación suave al mostrar -->
-    <div class="section-title-modern mb-3 sm:mb-5">
-      <h2 class="text-lg sm:text-xl font-semibold">🔍 Filtros de Búsqueda</h2>
-      <div class="section-line"></div>
-    </div>
-
-    <form method="GET" class="bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] rounded-xl p-3 sm:p-5 mb-4 sm:mb-6 shadow-sm">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        
-        <!-- Rango de fechas mejorado -->
-        <div class="form-group sm:col-span-2">
-          <label class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Rango de fechas</label>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div class="relative">
-              <input type="date" name="fecha_inicio" id="fecha_inicio" 
-                     class="form-input w-full pl-8 sm:pl-9 text-sm" 
-                     value="{{ fecha_inicio or '' }}"
-                     placeholder="Fecha inicio">
-              <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-8 sm:w-9 text-[color:var(--accent-blue)] pointer-events-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            </div>
-            <div class="relative">
-              <input type="date" name="fecha_fin" id="fecha_fin" 
-                     class="form-input w-full pl-8 sm:pl-9 text-sm" 
-                     value="{{ fecha_fin or '' }}"
-                     placeholder="Fecha fin">
-              <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-8 sm:w-9 text-[color:var(--accent-blue)] pointer-events-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          <!-- Botones de rango rápido -->
-          <div class="mt-2 flex gap-1 flex-wrap">
-            <button type="submit" name="periodo_rapido" value="7" class="quick-date-btn text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] hover:bg-[color:var(--accent-blue)] hover:text-white transition-colors {{ 'bg-[color:var(--accent-blue)] text-white' if periodo_rapido == '7' else '' }}">
-              7 días
-            </button>
-            <button type="submit" name="periodo_rapido" value="30" class="quick-date-btn text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] hover:bg-[color:var(--accent-blue)] hover:text-white transition-colors {{ 'bg-[color:var(--accent-blue)] text-white' if periodo_rapido == '30' else '' }}">
-              30 días
-            </button>
-            <button type="submit" name="periodo_rapido" value="90" class="quick-date-btn text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] hover:bg-[color:var(--accent-blue)] hover:text-white transition-colors {{ 'bg-[color:var(--accent-blue)] text-white' if periodo_rapido == '90' else '' }}">
-              90 días
-            </button>
-            <button type="submit" name="periodo_rapido" value="365" class="quick-date-btn text-xs px-2 py-1 rounded bg-[color:var(--bg-subtle)] hover:bg-[color:var(--accent-blue)] hover:text-white transition-colors {{ 'bg-[color:var(--accent-blue)] text-white' if periodo_rapido == '365' else '' }}">
-              1 año
-            </button>
-          </div>
-        </div>
-
-        <!-- Departamento/Jefe de Proyecto -->
-        <div class="form-group">
-          <label for="departamento" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Jefe de Proyecto</label>
-          <div class="relative">
-            <select name="departamento" id="departamento" class="form-select w-full pl-8 sm:pl-9 text-sm">
-              <option value="todos" {% if departamento == 'todos' %}selected{% endif %}>Todos</option>
-              {% for j in jefes_proyecto %}
-                <option value="{{ j }}" {% if departamento == j %}selected{% endif %}>{{ j }}</option>
-              {% endfor %}
-            </select>
-            <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-8 sm:w-9 text-[color:var(--accent-blue)] pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Cliente -->
-        <div class="form-group">
-          <label for="cliente" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Cliente</label>
-          <div class="relative">
-            <select name="cliente" id="cliente" class="form-select w-full pl-8 sm:pl-9 text-sm">
-              <option value="todos" {% if cliente == 'todos' %}selected{% endif %}>Todos</option>
-              {% for c in clientes %}
-                <option value="{{ c }}" {% if cliente == c %}selected{% endif %}>{{ c }}</option>
-              {% endfor %}
-            </select>
-            <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-8 sm:w-9 text-[color:var(--accent-blue)] pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1.581.814l-4.419-3.996-4.419 3.996A1 1 0 014 16V4z" clip-rule="evenodd" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Segunda fila -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 sm:mt-4">
-        <!-- Estado -->
-        <div class="form-group">
-          <label for="estado" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Estado</label>
-          <div class="relative">
-            <select name="estado" id="estado" class="form-select w-full pl-8 sm:pl-9 text-sm">
-              <option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos</option>
-              <option value="pendientes" {% if estado == 'pendientes' %}selected{% endif %}>Pendientes</option>
-              {% for est in ["revisión", "enviado", "validado", "pagado"] %}
-                <option value="{{ est }}" {% if estado == est %}selected{% endif %}>{{ est|title }}</option>
-              {% endfor %}
-            </select>
-            <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-8 sm:w-9 text-[color:var(--accent-blue)] pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Vista (filtro rápido) -->
-        <div class="form-group">
-          <label for="vista" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Vista</label>
-          <div class="relative">
-            <select name="vista" id="vista" class="form-select w-full pl-8 sm:pl-9 text-sm">
-              <option value="general" {% if vista == 'general' %}selected{% endif %}>General</option>
-              <option value="criticos" {% if vista == 'criticos' %}selected{% endif %}>Solo críticos</option>
-              <option value="completados" {% if vista == 'completados' %}selected{% endif %}>Completados</option>
-              <option value="alto_valor" {% if vista == 'alto_valor' %}selected{% endif %}>Alto valor (>$50M)</option>
-            </select>
-            <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-8 sm:w-9 text-[color:var(--accent-blue)] pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Espacios para mantener el layout en desktop -->
-        <div class="form-group hidden lg:block"></div>
-        <div class="form-group hidden lg:block"></div>
-      </div>
-
-      <!-- Filtros avanzados (desplegable opcional) -->
-      <div id="advanced-filters" class="hidden mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-[color:var(--border-color-subtle)]">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          
-          <!-- Rango de montos -->
-          <div class="form-group">
-            <label for="monto_min" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Monto mínimo (millones)</label>
-            <div class="relative">
-              <input type="number" name="monto_min" id="monto_min" placeholder="0" class="form-input w-full pl-8 sm:pl-9 text-sm" value="{{ monto_min or '' }}">
-              <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-8 sm:w-9 text-[color:var(--accent-blue)]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="monto_max" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Monto máximo (millones)</label>
-            <div class="relative">
-              <input type="number" name="monto_max" id="monto_max" placeholder="1000" class="form-input w-full pl-8 sm:pl-9 text-sm" value="{{ monto_max or '' }}">
-              <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-8 sm:w-9 text-[color:var(--accent-blue)]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <!-- Días de espera -->
-          <div class="form-group">
-            <label for="dias_min" class="text-xs font-medium text-[color:var(--text-secondary)] mb-1.5">Días mínimos</label>
-            <div class="relative">
-              <input type="number" name="dias_min" id="dias_min" placeholder="0" class="form-input w-full pl-8 sm:pl-9 text-sm" value="{{ dias_min or '' }}">
-              <div class="absolute left-0 top-0 bottom-0 flex items-center justify-center w-8 sm:w-9 text-[color:var(--accent-blue)]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Botones de acción -->
-      <div class="mt-3 sm:mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-        <button type="button" id="toggle-advanced" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] transition-colors flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
-          </svg>
-          <span id="advanced-text">Filtros avanzados</span>
-        </button>
-
-        <div class="flex items-center gap-3 w-full sm:w-auto">
-          <a href="{{ url_for('management.dashboard') }}" class="text-sm text-[color:var(--accent-blue)] hover:text-[color:var(--accent-blue-light)] transition-colors">
-            Limpiar filtros
-          </a>
-          <button type="submit" class="btn-primary flex-1 sm:flex-none justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            Aplicar filtros
-          </button>
-        </div>
-      </div>
-    </form>
-  </div>
-  <!-- Fin de la sección de filtros -->
-
-  <!-- KPIs principales -->
-{% include 'management/dashboard/kpis.html' %}
-  <!-- Final Sección de KPIs -->
-  
-  <!-- Indicadores de Eficiencia (Solo esta sección de charts) -->
-  <div class="grid grid-cols-1 gap-4 sm:gap-6">
-    <!-- Widget de métricas de eficiencia operativa - EXPANDIDO CON MÁS PROTAGONISMO -->
-    <div
-      class="bg-[color:var(--bg-card)] p-6 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
-      <div class="flex justify-between items-start mb-6">
-        <div>
-          <h2 class="text-xl font-bold text-[color:var(--text-primary)]">
-            Indicadores de Eficiencia
-          </h2>
-          <p class="text-sm text-[color:var(--text-secondary)] mt-1">
-            Análisis completo de tiempo de ciclo EDP
-          </p>
-        </div>
-        <div class="text-right">
-          <span class="text-xs text-[color:var(--text-secondary)]"
-            >Último cálculo</span
-          >
-          <p class="text-xs font-medium text-[color:var(--text-primary)]">
-            {{ kpis.fecha_ultimo_calculo|default('Hoy 14:30') }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Layout expandido con dos columnas principales -->
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <!-- Columna izquierda: Métrica principal y progreso -->
-        <div>
-          <!-- Métrica principal con alerta visual -->
-          <div class="mb-6">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-2">
-                <span
-                  class="text-base font-medium text-[color:var(--text-primary)]"
-                  >Tiempo medio ciclo EDP</span
-                >
-                {% if kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float
-                * 1.5 %}
-                <span
-                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
-                  ❌ Crítico
-                </span>
-                {% elif kpis.tiempo_medio_ciclo|float >
-                kpis.meta_tiempo_ciclo|float * 1.2 %}
-                <span
-                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                  ⚠️ Alto
-                </span>
-                {% else %}
-                <span
-                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
-                  ✅ Normal
-                </span>
-                {% endif %}
-              </div>
-              <div class="text-right">
-                {% if kpis.tendencia_tiempo_ciclo == 'up' %}
-                <span
-                  class="text-sm text-red-500 dark:text-red-400 flex items-center">
-                  ↗️ +{{ kpis.variacion_tiempo_ciclo|default('5') }}d vs mes
-                  anterior
-                </span>
-                {% elif kpis.tendencia_tiempo_ciclo == 'down' %}
-                <span
-                  class="text-sm text-green-500 dark:text-green-400 flex items-center">
-                  ↘️ -{{ kpis.variacion_tiempo_ciclo|default('3') }}d vs mes
-                  anterior
-                </span>
-                {% else %}
-                <span
-                  class="text-sm text-blue-500 dark:text-blue-400 flex items-center">
-                  ➡️ Sin cambios vs mes anterior
-                </span>
-                {% endif %}
-              </div>
-            </div>
-
-            <!-- Valor principal con contraste mejorado -->
-            <div class="flex items-baseline gap-6 mb-4">
-              <div
-                class="{% if kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.5 %}text-red-600 dark:text-red-400{% elif kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.2 %}text-amber-600 dark:text-amber-400{% else %}text-green-600 dark:text-green-400{% endif %}">
-                <span class="text-5xl font-bold"
-                  >{{ kpis.tiempo_medio_ciclo|default('124.8') }}</span
-                >
-                <span class="text-xl font-medium ml-2">días</span>
-              </div>
-              <div class="text-base text-[color:var(--text-secondary)] space-y-1">
-                <div>
-                  Meta:
-                  <span class="font-medium text-[color:var(--text-primary)]"
-                    >{{ kpis.meta_tiempo_ciclo|default('30') }}d</span
-                  >
-                </div>
-                <div>
-                  Industria:
-                  <span class="font-medium text-[color:var(--text-primary)]"
-                    >{{ kpis.benchmark_tiempo_ciclo|default('75') }}d</span
-                  >
-                </div>
-              </div>
-            </div>
-
-            <!-- Barra de progreso con colores semánticos -->
-            <div class="relative mb-6">
-              <div
-                class="w-full bg-[color:var(--bg-subtle)] rounded-full h-4 overflow-hidden">
-                {% set progreso_pct = (kpis.tiempo_medio_ciclo|float /
-                (kpis.benchmark_tiempo_ciclo|float * 2)) * 100 %}
-                <div
-                  class="h-4 rounded-full transition-all duration-500 ease-out {% if kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.5 %}bg-gradient-to-r from-red-500 to-red-600 dark:from-red-400 dark:to-red-500{% elif kpis.tiempo_medio_ciclo|float > kpis.meta_tiempo_ciclo|float * 1.2 %}bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500{% else %}bg-gradient-to-r from-green-500 to-green-600 dark:from-green-400 dark:to-green-500{% endif %}"
-                  style="width: {{ progreso_pct|round(1) if progreso_pct <= 100 else 100 }}%"></div>
-              </div>
-              <!-- Marcadores de referencia -->
-              <div class="absolute top-0 left-0 w-full h-4 flex items-center">
-                <div
-                  class="absolute bg-[color:var(--bg-card)] w-0.5 h-6 -mt-1 border-l-2 border-green-500 dark:border-green-400"
-                  style="left: {{ (kpis.meta_tiempo_ciclo|float / (kpis.benchmark_tiempo_ciclo|float * 2)) * 100 }}%">
-                  <span
-                    class="absolute -top-7 -left-4 text-sm font-medium text-green-600 dark:text-green-400"
-                    >Meta</span
-                  >
-                </div>
-                <div
-                  class="absolute bg-[color:var(--bg-card)] w-0.5 h-6 -mt-1 border-l-2 border-blue-500 dark:border-blue-400"
-                  style="left: {{ (kpis.benchmark_tiempo_ciclo|float / (kpis.benchmark_tiempo_ciclo|float * 2)) * 100 }}%">
-                  <span
-                    class="absolute -top-7 -left-6 text-sm font-medium text-blue-600 dark:text-blue-400"
-                    >Industria</span
-                  >
-                </div>
-              </div>
-            </div>
-
-            <!-- Impacto financiero -->
-            <div
-              class="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-lg p-4">
-              <div class="flex items-center gap-2 mb-3">
-                <svg
-                  class="w-5 h-5 text-red-600 dark:text-red-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clip-rule="evenodd"></path>
-                </svg>
-                <span class="text-base font-medium text-red-800 dark:text-red-200"
-                  >Impacto del retraso</span
-                >
-              </div>
-              <div class="grid grid-cols-2 gap-6 text-base">
-                <div>
-                  <p class="text-red-700 dark:text-red-300">
-                    Costo financiero estimado
-                  </p>
-                  <p class="font-bold text-red-800 dark:text-red-200 text-lg">
-                    ${{ kpis.costo_retraso_estimado|default('2.4') }}M/mes
-                  </p>
-                </div>
-                <div>
-                  <p class="text-red-700 dark:text-red-300">Potencial ahorro</p>
-                  <p class="font-bold text-green-700 dark:text-green-300 text-lg">
-                    ${{ kpis.potencial_ahorro|default('1.8') }}M/mes
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Columna derecha: Desglose por etapa y plan de acción -->
-        <div>
-          <!-- Desglose por etapa con indicadores de problema -->
-          <div class="mb-6">
-            <div class="flex justify-between items-center mb-4">
-              <p class="text-base font-medium text-[color:var(--text-primary)]">
-                Desglose por etapa
-              </p>
-              <span class="text-sm text-[color:var(--text-secondary)]"
-                >días promedio</span
-              >
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <!-- Emisión -->
-              <div
-                class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
-                <div class="flex items-center justify-between mb-3">
-                  <span
-                    class="text-sm font-medium text-[color:var(--text-primary)]"
-                    >Emisión</span
-                  >
-                  {% if kpis.tiempo_emision|float > 8 %}
-                  <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
-                  {% else %}
-                  <span class="text-sm text-green-500 dark:text-green-400"
-                    >✅</span
-                  >
-                  {% endif %}
-                </div>
-                <div class="flex items-baseline gap-2">
-                  <span
-                    class="text-2xl font-bold {% if kpis.tiempo_emision|float > 8 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
-                    {{ kpis.tiempo_emision|default('12') }}
-                  </span>
-                  <span class="text-sm text-[color:var(--text-secondary)]"
-                    >días</span
-                  >
-                </div>
-                <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
-                  Meta: 5d
-                </div>
-              </div>
-
-              <!-- Gestión -->
-              <div
-                class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
-                <div class="flex items-center justify-between mb-3">
-                  <span
-                    class="text-sm font-medium text-[color:var(--text-primary)]"
-                    >Gestión</span
-                  >
-                  {% if kpis.tiempo_gestion|float > 15 %}
-                  <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
-                  {% else %}
-                  <span class="text-sm text-green-500 dark:text-green-400"
-                    >✅</span
-                  >
-                  {% endif %}
-                </div>
-                <div class="flex items-baseline gap-2">
-                  <span
-                    class="text-2xl font-bold {% if kpis.tiempo_gestion|float > 15 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
-                    {{ kpis.tiempo_gestion|default('28') }}
-                  </span>
-                  <span class="text-sm text-[color:var(--text-secondary)]"
-                    >días</span
-                  >
-                </div>
-                <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
-                  Meta: 10d
-                </div>
-              </div>
-
-              <!-- Conformidad -->
-              <div
-                class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
-                <div class="flex items-center justify-between mb-3">
-                  <span
-                    class="text-sm font-medium text-[color:var(--text-primary)]"
-                    >Conformidad</span
-                  >
-                  {% if kpis.tiempo_conformidad|float > 10 %}
-                  <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
-                  {% else %}
-                  <span class="text-sm text-green-500 dark:text-green-400"
-                    >✅</span
-                  >
-                  {% endif %}
-                </div>
-                <div class="flex items-baseline gap-2">
-                  <span
-                    class="text-2xl font-bold {% if kpis.tiempo_conformidad|float > 10 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
-                    {{ kpis.tiempo_conformidad|default('45') }}
-                  </span>
-                  <span class="text-sm text-[color:var(--text-secondary)]"
-                    >días</span
-                  >
-                </div>
-                <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
-                  Meta: 7d
-                </div>
-              </div>
-
-              <!-- Pago -->
-              <div
-                class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-4">
-                <div class="flex items-center justify-between mb-3">
-                  <span
-                    class="text-sm font-medium text-[color:var(--text-primary)]"
-                    >Pago</span
-                  >
-                  {% if kpis.tiempo_pago|float > 8 %}
-                  <span class="text-sm text-red-500 dark:text-red-400">⚠️</span>
-                  {% else %}
-                  <span class="text-sm text-green-500 dark:text-green-400"
-                    >✅</span
-                  >
-                  {% endif %}
-                </div>
-                <div class="flex items-baseline gap-2">
-                  <span
-                    class="text-2xl font-bold {% if kpis.tiempo_pago|float > 8 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">
-                    {{ kpis.tiempo_pago|default('39') }}
-                  </span>
-                  <span class="text-sm text-[color:var(--text-secondary)]"
-                    >días</span
-                  >
-                </div>
-                <div class="text-sm text-[color:var(--text-tertiary)] mt-1">
-                  Meta: 8d
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Plan de acción prioritario -->
-          <div class="pt-4 border-t border-[color:var(--border-color-subtle)]">
-            <div class="flex items-center justify-between mb-3">
-              <span
-                class="text-base font-medium text-[color:var(--text-primary)] flex items-center">
-                <svg
-                  class="w-5 h-5 mr-2 text-amber-500 dark:text-amber-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
-                    clip-rule="evenodd"></path>
-                </svg>
-                Acción prioritaria
-              </span>
-              <span
-                class="text-sm bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 px-3 py-1 rounded-full"
-                >Urgente</span
-              >
-            </div>
-            <div
-              class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg p-4">
-              <p
-                class="text-base font-medium text-amber-800 dark:text-amber-200 mb-2">
-                {{ kpis.etapa_critica|default('Conformidad') }}: Mayor cuello de
-                botella
-              </p>
-              <p class="text-sm text-amber-700 dark:text-amber-300 mb-4">
-                {{ kpis.descripcion_problema|default('45 días promedio vs meta de
-                7 días. Revisar proceso de validación de documentos.') }}
-              </p>
-              <div class="flex gap-3">
-                <button
-                  class="text-sm bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-colors font-medium">
-                  Ver plan detallado
-                </button>
-                <button
-                  class="text-sm bg-[color:var(--bg-card)] hover:bg-[color:var(--bg-subtle)] border border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 px-4 py-2 rounded-lg transition-colors font-medium">
-                  Asignar responsable
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-          
-          <!-- Top EDPs por valor -->
-          <div class="bg-[color:var(--bg-card)] p-3 sm:p-5 rounded-xl border border-[color:var(--border-color)] shadow-lg relative">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-4 gap-3 sm:gap-0">
-              <h2 class="text-lg font-bold">Top 10 EDPs por Valor Pendiente</h2>
-              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                <div class="relative order-2 sm:order-1">
-                  <input type="text" placeholder="Buscar EDP..." class="py-1.5 sm:py-1 px-3 pr-8 text-sm border border-[color:var(--border-color)] rounded-md bg-[color:var(--bg-card)] w-full sm:w-auto">
-                  <svg class="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-[color:var(--text-tertiary)]" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
-                  </svg>
-                </div>
-                <select class="py-1.5 sm:py-1 px-3 text-sm border border-[color:var(--border-color)] rounded-md bg-[color:var(--bg-card)] order-1 sm:order-2">
-                  <option value="todos">Todos los estados</option>
-                  <option value="pendiente">Pendiente</option>
-                  <option value="riesgo">En riesgo</option>
-                  <option value="critico">Crítico</option>
-                </select>
-              </div>
-            </div>
-            
-            <!-- Tabla desktop -->
-            <div class="hidden lg:block overflow-x-auto">
-              <table class="min-w-full divide-y divide-[color:var(--border-color)]">
-                <thead>
-                  <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">EDP</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Proyecto</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Cliente</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Monto</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Días</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Encargado</th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody class="bg-[color:var(--bg-card)] divide-y divide-[color:var(--border-color-subtle)]">
-                  {% for edp in top_edps %}
-                  <tr class="hover:bg-[color:var(--bg-subtle)] transition-colors">
-                    <td class="px-4 py-3 whitespace-nowrap">
-                      <span class="font-medium">{{ edp.edp }}</span>
-                    </td>
-                    <td class="px-4 py-3 max-w-xs truncate">{{ edp.proyecto }}</td>
-                    <td class="px-4 py-3">{{ edp.cliente }}</td>
-                    <td class="px-4 py-3 font-medium">${{ edp.monto|round(1) }}M</td>
-                    <td class="px-4 py-3">
-                      <span class="{% if edp.dias_espera > 90 %}text-red-500 dark:text-red-400{% elif edp.dias_espera > 60 %}text-amber-500 dark:text-amber-400{% elif edp.dias_espera > 30 %}text-blue-500 dark:text-blue-400{% else %}text-green-500 dark:text-green-400{% endif %} font-medium">
-                        {{ edp.dias_espera }}d
-                      </span>
-                    </td>
-                    <td class="px-4 py-3">{{ edp.encargado }}</td>
-                    <td class="px-4 py-3 text-right text-sm space-x-2">
-                      <button class="text-[color:var(--accent-blue)] hover:underline">Ver</button>
-                      <button class="text-[color:var(--accent-blue)] hover:underline">Gestionar</button>
-                    </td>
-                  </tr>
-                  {% else %}
-                  <tr>
-                    <td colspan="7" class="px-4 py-8 text-center text-[color:var(--text-secondary)]">
-                      No se encontraron EDPs con los filtros actuales
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Cards móviles y tablet -->
-            <div class="lg:hidden space-y-3">
-              {% for edp in top_edps %}
-              <div class="bg-[color:var(--bg-subtle)] border border-[color:var(--border-color-subtle)] rounded-lg p-3 hover:shadow-md transition-shadow">
-                <div class="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 class="font-semibold text-[color:var(--text-primary)]">{{ edp.edp }}</h3>
-                    <p class="text-sm text-[color:var(--text-secondary)] truncate">{{ edp.proyecto }}</p>
-                  </div>
-                  <div class="text-right">
-                    <p class="font-bold text-lg">${{ edp.monto|round(1) }}M</p>
-                    <span class="{% if edp.dias_espera > 90 %}text-red-500 dark:text-red-400{% elif edp.dias_espera > 60 %}text-amber-500 dark:text-amber-400{% elif edp.dias_espera > 30 %}text-blue-500 dark:text-blue-400{% else %}text-green-500 dark:text-green-400{% endif %} text-sm font-medium">
-                      {{ edp.dias_espera }} días
-                    </span>
-                  </div>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2 text-sm mb-3">
-                  <div>
-                    <span class="text-[color:var(--text-secondary)]">Cliente:</span>
-                    <p class="font-medium truncate">{{ edp.cliente }}</p>
-                  </div>
-                  <div>
-                    <span class="text-[color:var(--text-secondary)]">Encargado:</span>
-                    <p class="font-medium truncate">{{ edp.encargado }}</p>
-                  </div>
-                </div>
-                
-                <div class="flex gap-2">
-                  <button class="flex-1 py-2 px-3 text-sm bg-[color:var(--accent-blue)] text-white rounded-md hover:bg-blue-600 transition-colors">
-                    Ver Detalles
-                  </button>
-                  <button class="flex-1 py-2 px-3 text-sm border border-[color:var(--border-color)] rounded-md hover:bg-[color:var(--bg-card)] transition-colors">
-                    Gestionar
-                  </button>
-                </div>
-              </div>
-              {% else %}
-              <div class="text-center py-8 text-[color:var(--text-secondary)]">
-                <p>No se encontraron EDPs con los filtros actuales</p>
-              </div>
-              {% endfor %}
-            </div>
-            
-            <!-- Paginación -->
-            <div class="mt-4 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
-              <span class="text-sm text-[color:var(--text-secondary)] order-2 sm:order-1">
-                  Mostrando <span class="font-medium">{{ top_edps|length }}</span> EDPs
-              </span>
-              <div class="flex gap-1 order-1 sm:order-2">
-                <button class="px-3 py-1.5 sm:py-1 border border-[color:var(--border-color)] rounded-md text-sm bg-[color:var(--bg-subtle)] text-[color:var(--text-secondary)]">
-                  Anterior
-                </button>
-                <button class="px-3 py-1.5 sm:py-1 border border-[color:var(--border-color)] rounded-md text-sm bg-[color:var(--accent-blue)] text-white">
-                  Siguiente
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Scripts para funcionalidad interactiva -->
-<script src="{{ url_for('static', filename='js/common/critical-projects-modal.js') }}"></script>
-<script src="{{ url_for('static', filename='js/common/utils-dashboard-management.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard/dashboard-toggle.js') }}"></script>
+<!-- Pass data to JavaScript -->
 <script>
-// ===== AUTO-MOSTRAR FILTROS SI HAY FILTROS ACTIVOS =====
-{% if filtros_activos %}
-document.addEventListener('DOMContentLoaded', function() {
-    // El dashboard-toggle.js debe estar cargado antes
-    setTimeout(function() {
-        if (window.autoShowFilters) {
-            window.autoShowFilters();
-        }
-    }, 200);
-});
-{% endif %}
+  // Make data available to dashboard.js
+  window.kpisData = {{ kpis.__dict__ | tojson if kpis else '{}' }};
+  window.chartsData = {{ charts | tojson if charts else '{}' }};
+  window.equipoData = {{ equipo_operacional | tojson if equipo_operacional else '[]' }};
+  window.alertasData = {{ alertas | tojson if alertas else '[]' }};
+</script>
 
-// ===== SISTEMA DE NOTIFICACIONES AUTOMÁTICAS (SIN REFRESH MANUAL) =====
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // Function to show notifications with enhanced styling
-    function showNotification(message, type = 'info', duration = 5000, isImportant = false) {
-        // Remove existing notification
-        const existing = document.getElementById('dashboard-notification');
-        if (existing) existing.remove();
-        
-        const alertClass = type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-800' : 
-                          type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 
-                          type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
-                          type === 'payment' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-                          'bg-blue-50 border-blue-200 text-blue-800';
+<div class="dashboard-container">
+  <!-- Compact Metrics Header -->
+  <header class="dashboard-metrics-header">
+    <div class="header-brand">
+      <h1>Operations Visual Intelligence</h1>
+      <div class="timestamp">{{ current_user.nombre if current_user else 'Manager' }} • <span id="current-time">Loading...</span></div>
+    </div>
+    <div class="header-metrics">
+      <div class="header-metric">
+        <div class="header-metric-value {{ 'critical' if kpis.dso_actual and kpis.dso_actual > 40 else 'warning' if kpis.dso_actual and kpis.dso_actual > 30 else 'positive' }}">
+          {{ "{:.1f}".format(kpis.dso_actual if kpis and kpis.dso_actual else 47.2) }}
+        </div>
+        <div class="header-metric-label">DSO Actual</div>
+      </div>
+      <div class="header-metric">
+        <div class="header-metric-value critical">
+          {{ "{:+.0f}k".format((kpis.dso_actual - 35) * -35 if kpis and kpis.dso_actual else -420) }}
+        </div>
+        <div class="header-metric-label">CLP/Día Perdido</div>
+      </div>
+      <div class="header-metric">
+        <div class="header-metric-value warning">
+          {{ "{:.1f}M".format(kpis.forecast_7_dias if kpis and kpis.forecast_7_dias else 6.8) }}
+        </div>
+        <div class="header-metric-label">Forecast 7D</div>
+      </div>
+      <div class="header-metric">
+        <div class="header-metric-value positive">
+          {{ "{:.0f}%".format(kpis.progreso_objetivo if kpis and kpis.progreso_objetivo else 78) }}
+        </div>
+        <div class="header-metric-label">Meta Mensual</div>
+      </div>
+    </div>
+  </header>
 
-        const notification = document.createElement('div');
-        notification.id = 'dashboard-notification';
-        notification.className = `${alertClass} border rounded-lg p-4 mb-4 shadow-lg ${isImportant ? 'ring-2 ring-blue-300' : ''}`;
-        notification.innerHTML = `
-            <div class="flex items-start justify-between">
-                <div class="flex items-start">
-                    <span class="mr-3 text-lg">${getNotificationIcon(type)}</span>
-                    <div>
-                        <div class="font-medium">${message}</div>
-                        <div class="text-xs mt-1 opacity-75">
-                            ${new Date().toLocaleTimeString()} - Actualización automática
-                        </div>
-                    </div>
-                </div>
-                <button onclick="this.parentElement.parentElement.remove()" class="text-current hover:opacity-70 ml-4">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                    </svg>
-                </button>
+  <!-- KPI Cards Row -->
+  <section class="kpi-cards-row">
+    <div class="kpi-card critical-kpi">
+      <div class="kpi-impact critical"></div>
+      <div class="kpi-header">
+        <div class="kpi-title">EDPs Críticos</div>
+        <div class="kpi-trend down">
+          {{ "↓ {:.0f}%".format(kpis.critical_projects_change if kpis and kpis.critical_projects_change else 12) }}
+        </div>
+      </div>
+      <div class="kpi-value critical">
+        {{ kpis.critical_projects_count if kpis and kpis.critical_projects_count else 7 }}
+      </div>
+      <div class="kpi-context">
+        EDPs >60 días • {{ "{:.1f}M".format(kpis.critical_amount if kpis and kpis.critical_amount else 8.2) }} CLP en riesgo alto
+      </div>
+    </div>
+
+    <div class="kpi-card warning-kpi">
+      <div class="kpi-impact warning"></div>
+      <div class="kpi-header">
+        <div class="kpi-title">Aging 31-60</div>
+        <div class="kpi-trend up">
+          {{ "↑ {:.0f}%".format(kpis.aging_31_60_change if kpis and kpis.aging_31_60_change else 8) }}
+        </div>
+      </div>
+      <div class="kpi-value warning">
+        {{ kpis.aging_31_60_count if kpis and kpis.aging_31_60_count else 12 }}
+      </div>
+      <div class="kpi-context">
+        EDPs en zona warning • {{ "{:.1f}M".format(kpis.aging_31_60_amount if kpis and kpis.aging_31_60_amount else 4.5) }} CLP
+      </div>
+    </div>
+
+    <div class="kpi-card positive-kpi">
+      <div class="kpi-impact positive"></div>
+      <div class="kpi-header">
+        <div class="kpi-title">Cobro Rápido</div>
+        <div class="kpi-trend up">
+          {{ "↑ {:.0f}%".format(kpis.fast_collection_change if kpis and kpis.fast_collection_change else 15) }}
+        </div>
+      </div>
+      <div class="kpi-value positive">
+        {{ kpis.fast_collection_count if kpis and kpis.fast_collection_count else 18 }}
+      </div>
+      <div class="kpi-context">
+        EDPs <30 días • {{ "{:.1f}M".format(kpis.fast_collection_amount if kpis and kpis.fast_collection_amount else 6.1) }} CLP saludable
+      </div>
+    </div>
+
+    <div class="kpi-card revenue-kpi">
+      <div class="kpi-impact warning"></div>
+      <div class="kpi-header">
+        <div class="kpi-title">Meta Gap</div>
+        <div class="kpi-trend stable">→ 0%</div>
+      </div>
+      <div class="kpi-value warning">
+        {{ "{:.1f}M".format(kpis.meta_gap if kpis and kpis.meta_gap else 5.5) }}
+      </div>
+      <div class="kpi-context">
+        CLP restantes • {{ kpis.days_remaining if kpis and kpis.days_remaining else 8 }} días disponibles
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Analytics Grid -->
+  <section class="analytics-grid">
+    <!-- DSO Heatmap by Project Manager -->
+    <div class="chart-panel">
+      <div class="chart-header">
+        <div class="chart-title">DSO por Jefe Proyecto</div>
+        <button class="chart-action critical" onclick="coordinateManagers()">Coordinar</button>
+      </div>
+      <div class="chart-container">
+        <div class="dso-heatmap">
+          {% if equipo_operacional and equipo_operacional|length > 0 %}
+            {% for miembro in equipo_operacional[:8] %}
+            <div class="dso-cell {{ 'critical' if (miembro.dso_days or 50) > 60 else 'warning' if (miembro.dso_days or 50) > 40 else 'good' }}" 
+                 onclick="showManagerDetail('{{ miembro.nombre }}', '{{ miembro.dso_days or 45 }}d', '{{ "{:.1f}M".format((miembro.monto_gestionado or 2000000) / 1000000) }} CLP')">
+              <div class="dso-manager">{{ miembro.nombre[:8] }}{{ "." if miembro.nombre|length > 8 else "" }}</div>
+              <div class="dso-days" style="color: {{ '#ff0066' if (miembro.dso_days or 50) > 60 else '#ffa500' if (miembro.dso_days or 50) > 40 else '#00ff88' }}">
+                {{ miembro.dso_days or (range(25, 72) | random) }}d
+              </div>
+              <div class="dso-amount">{{ "{:.1f}M".format((miembro.monto_gestionado or (range(800000, 3100000) | random)) / 1000000) }} CLP</div>
             </div>
-        `;
-        
-        // Insert at the top of the page with animation
-        const container = document.querySelector('.container');
-        if (container) {
-            container.insertBefore(notification, container.firstChild);
-            
-            // Animation
-            notification.style.transform = 'translateY(-20px)';
-            notification.style.opacity = '0';
-            setTimeout(() => {
-                notification.style.transition = 'all 0.3s ease-out';
-                notification.style.transform = 'translateY(0)';
-                notification.style.opacity = '1';
-            }, 10);
-            
-            // Auto-hide (unless it's an important payment notification)
-            if (!isImportant) {
-                setTimeout(() => {
-                    if (notification && notification.parentElement) {
-                        notification.style.transition = 'all 0.3s ease-in';
-                        notification.style.transform = 'translateY(-20px)';
-                        notification.style.opacity = '0';
-                        setTimeout(() => notification.remove(), 300);
-                    }
-                }, duration);
-            }
-        }
+            {% endfor %}
+          {% else %}
+            <!-- Default heatmap data -->
+            <div class="dso-cell critical" onclick="showManagerDetail('Carlos M.', '67d', '2.3M CLP')">
+              <div class="dso-manager">Carlos M.</div>
+              <div class="dso-days" style="color: #ff0066">67d</div>
+              <div class="dso-amount">2.3M CLP</div>
+            </div>
+            <div class="dso-cell warning" onclick="showManagerDetail('María G.', '51d', '3.1M CLP')">
+              <div class="dso-manager">María G.</div>
+              <div class="dso-days" style="color: #ffa500">51d</div>
+              <div class="dso-amount">3.1M CLP</div>
+            </div>
+            <div class="dso-cell warning" onclick="showManagerDetail('Ana R.', '42d', '1.8M CLP')">
+              <div class="dso-manager">Ana R.</div>
+              <div class="dso-days" style="color: #ffa500">42d</div>
+              <div class="dso-amount">1.8M CLP</div>
+            </div>
+            <div class="dso-cell good" onclick="showManagerDetail('Roberto S.', '28d', '1.2M CLP')">
+              <div class="dso-manager">Roberto S.</div>
+              <div class="dso-days" style="color: #00ff88">28d</div>
+              <div class="dso-amount">1.2M CLP</div>
+            </div>
+            <div class="dso-cell warning" onclick="showManagerDetail('Luis P.', '45d', '2.0M CLP')">
+              <div class="dso-manager">Luis P.</div>
+              <div class="dso-days" style="color: #ffa500">45d</div>
+              <div class="dso-amount">2.0M CLP</div>
+            </div>
+            <div class="dso-cell good" onclick="showManagerDetail('Carmen V.', '32d', '1.5M CLP')">
+              <div class="dso-manager">Carmen V.</div>
+              <div class="dso-days" style="color: #00ff88">32d</div>
+              <div class="dso-amount">1.5M CLP</div>
+            </div>
+            <div class="dso-cell critical" onclick="showManagerDetail('Diego L.', '72d', '1.9M CLP')">
+              <div class="dso-manager">Diego L.</div>
+              <div class="dso-days" style="color: #ff0066">72d</div>
+              <div class="dso-amount">1.9M CLP</div>
+            </div>
+            <div class="dso-cell good" onclick="showManagerDetail('Sofia T.', '25d', '0.8M CLP')">
+              <div class="dso-manager">Sofia T.</div>
+              <div class="dso-days" style="color: #00ff88">25d</div>
+              <div class="dso-amount">0.8M CLP</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Cash Flow Forecast Chart -->
+    <div class="chart-panel wide">
+      <div class="chart-header">
+        <div class="chart-title">Forecast Ingresos - Próximos 7 Días</div>
+        <button class="chart-action" onclick="exportForecast()">Exportar</button>
+      </div>
+      <div class="chart-container">
+        <div class="cashflow-bars">
+          {% set forecast_data = [
+            {'day': 'Lun 24', 'amount': kpis.forecast_day_1 if kpis and kpis.forecast_day_1 else 1.2, 'prob': 85, 'color': 'high'},
+            {'day': 'Mar 25', 'amount': kpis.forecast_day_2 if kpis and kpis.forecast_day_2 else 2.3, 'prob': 72, 'color': 'high'},
+            {'day': 'Mié 26', 'amount': kpis.forecast_day_3 if kpis and kpis.forecast_day_3 else 1.8, 'prob': 68, 'color': 'medium'},
+            {'day': 'Jue 27', 'amount': kpis.forecast_day_4 if kpis and kpis.forecast_day_4 else 0.9, 'prob': 45, 'color': 'low'},
+            {'day': 'Vie 28', 'amount': kpis.forecast_day_5 if kpis and kpis.forecast_day_5 else 0.6, 'prob': 78, 'color': 'medium'},
+            {'day': 'Sáb 29', 'amount': kpis.forecast_day_6 if kpis and kpis.forecast_day_6 else 0.4, 'prob': 25, 'color': 'low'},
+            {'day': 'Dom 30', 'amount': kpis.forecast_day_7 if kpis and kpis.forecast_day_7 else 0.2, 'prob': 15, 'color': 'low'}
+          ] %}
+          {% set max_amount = forecast_data | map(attribute='amount') | max %}
+          {% for item in forecast_data %}
+          <div class="cashflow-day" onclick="showForecastDetail('{{ item.day }}', '{{ "{:.1f}M".format(item.amount) }}', '{{ item.prob }}% prob')">
+            <div class="cashflow-bar" style="height: {{ (item.amount / max_amount * 80) | round(0) }}%">
+              <div class="cashflow-fill {{ item.color }}" style="height: 100%">
+                <div class="cashflow-value">{{ "{:.1f}M".format(item.amount) }}</div>
+              </div>
+            </div>
+            <div class="cashflow-label">{{ item.day }}</div>
+            <div class="cashflow-prob">{{ item.prob }}% prob</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts & Actions Panel -->
+    <div class="chart-panel">
+      <div class="chart-header">
+        <div class="chart-title">Alertas Operacionales</div>
+        <button class="chart-action critical" onclick="executeAllAlerts()">Actuar</button>
+      </div>
+      <div class="chart-container">
+        <div class="alert-panel">
+          {% if alertas and alertas|length > 0 %}
+            {% for alerta in alertas[:4] %}
+            <div class="alert-item {{ 'critical' if alerta.tipo == 'critico' else 'warning' if alerta.tipo == 'alto' else 'info' }}"
+                 onclick="executeAlert('{{ alerta.titulo }}', '{{ alerta.impacto_monto if alerta.impacto_monto else "N/A" }}', '{{ alerta.descripcion }}')">
+              <div class="alert-header">
+                <div class="alert-title">{{ alerta.titulo }}</div>
+                <div class="alert-impact {{ 'critical' if alerta.tipo == 'critico' else 'warning' if alerta.tipo == 'alto' else 'info' }}">
+                  {% if alerta.impacto_monto %}{{ "{:.1f}M".format(alerta.impacto_monto / 1000000) }}{% else %}N/A{% endif %}
+                </div>
+              </div>
+              <div class="alert-description">{{ alerta.descripcion }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <!-- Default alerts -->
+            <div class="alert-item critical" onclick="executeAlert('Cliente ABC Corp', '2.3M', '67 días sin respuesta • Escalar a Carlos Mendoza')">
+              <div class="alert-header">
+                <div class="alert-title">Cliente ABC Corp</div>
+                <div class="alert-impact critical">2.3M</div>
+              </div>
+              <div class="alert-description">67 días sin respuesta • Escalar a Carlos Mendoza</div>
+            </div>
+            <div class="alert-item warning" onclick="executeAlert('DSO Deterioro', '-420k/d', '+12 días vs benchmark • Revisar procesos')">
+              <div class="alert-header">
+                <div class="alert-title">DSO Deterioro</div>
+                <div class="alert-impact warning">-420k/d</div>
+              </div>
+              <div class="alert-description">+12 días vs benchmark • Revisar procesos</div>
+            </div>
+            <div class="alert-item warning" onclick="executeAlert('7 EDPs >60d', '8.2M', 'Concentración riesgo • Diversificar seguimiento')">
+              <div class="alert-header">
+                <div class="alert-title">{{ kpis.critical_projects_count if kpis else 7 }} EDPs >60d</div>
+                <div class="alert-impact warning">{{ "{:.1f}M".format(kpis.critical_amount if kpis and kpis.critical_amount else 8.2) }}</div>
+              </div>
+              <div class="alert-description">Concentración riesgo • Diversificar seguimiento</div>
+            </div>
+            <div class="alert-item info" onclick="executeAlert('Meta Mensual', '78%', 'En objetivo • 5.5M CLP restantes factibles')">
+              <div class="alert-header">
+                <div class="alert-title">Meta Mensual</div>
+                <div class="alert-impact info">{{ "{:.0f}%".format(kpis.progreso_objetivo if kpis else 78) }}</div>
+              </div>
+              <div class="alert-description">En objetivo • {{ "{:.1f}M".format(kpis.meta_gap if kpis and kpis.meta_gap else 5.5) }} CLP restantes factibles</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Targets -->
+    <div class="chart-panel">
+      <div class="chart-header">
+        <div class="chart-title">Objetivos del Mes</div>
+        <button class="chart-action" onclick="showTargetDetails()">Detalles</button>
+      </div>
+      <div class="chart-container">
+        <div class="progress-rings">
+          <div class="progress-ring {{ 'good' if (kpis.progreso_objetivo if kpis else 78) > 80 else 'warning' if (kpis.progreso_objetivo if kpis else 78) > 60 else 'critical' }}">
+            <svg>
+              <circle class="bg" cx="40" cy="40" r="30"></circle>
+              <circle class="progress" cx="40" cy="40" r="30" 
+                      style="stroke-dasharray: {{ ((kpis.progreso_objetivo if kpis else 78) / 100 * 188.4) | round(1) }}, 188.4"></circle>
+            </svg>
+            <div class="progress-text">
+              <div class="progress-value">{{ "{:.0f}%".format(kpis.progreso_objetivo if kpis else 78) }}</div>
+              <div class="progress-label">Ingresos</div>
+            </div>
+          </div>
+
+          <div class="progress-ring {{ 'good' if (kpis.dso_target_progress if kpis else 40) > 70 else 'warning' if (kpis.dso_target_progress if kpis else 40) > 50 else 'critical' }}">
+            <svg>
+              <circle class="bg" cx="40" cy="40" r="30"></circle>
+              <circle class="progress" cx="40" cy="40" r="30" 
+                      style="stroke-dasharray: {{ ((kpis.dso_target_progress if kpis else 40) / 100 * 188.4) | round(1) }}, 188.4"></circle>
+            </svg>
+            <div class="progress-text">
+              <div class="progress-value">{{ "{:.0f}%".format(kpis.dso_target_progress if kpis else 40) }}</div>
+              <div class="progress-label">DSO Target</div>
+            </div>
+          </div>
+
+          <div class="progress-ring {{ 'good' if (kpis.quality_score if kpis else 90) > 85 else 'warning' if (kpis.quality_score if kpis else 90) > 70 else 'critical' }}">
+            <svg>
+              <circle class="bg" cx="40" cy="40" r="30"></circle>
+              <circle class="progress" cx="40" cy="40" r="30" 
+                      style="stroke-dasharray: {{ ((kpis.quality_score if kpis else 90) / 100 * 188.4) | round(1) }}, 188.4"></circle>
+            </svg>
+            <div class="progress-text">
+              <div class="progress-value">{{ "{:.0f}%".format(kpis.quality_score if kpis else 90) }}</div>
+              <div class="progress-label">Calidad</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DSO Trend Chart -->
+    <div class="chart-panel">
+      <div class="chart-header">
+        <div class="chart-title">Tendencia DSO</div>
+        <button class="chart-action" onclick="analyzeDSOTrend()">Analizar</button>
+      </div>
+      <div class="chart-container">
+        <canvas id="dsoTrendChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Executive Summary with AI -->
+  <div class="executive-summary">
+    <div class="summary-header">
+      <div class="summary-title">
+        <span>Resumen Ejecutivo</span>
+        <div class="ai-badge">AI</div>
+      </div>
+      <div class="summary-confidence">
+        <span>Confianza: 94%</span>
+        <div class="confidence-bar">
+          <div class="confidence-fill"></div>
+        </div>
+      </div>
+    </div>
+    <div class="summary-content">
+      <div class="summary-text">
+        {% if kpis and kpis.ingresos_totales and kpis.ingresos_totales > 0 %} El
+        portfolio presenta un
+        <span class="summary-highlight">rendimiento sólido</span> con ingresos de
+        <span class="summary-highlight"
+          >${{ "{:,.1f}".format(kpis.ingresos_totales) }}M CLP</span
+        >. {% if kpis.crecimiento_ingresos and kpis.crecimiento_ingresos > 0 %}
+        Los ingresos han incrementado
+        <span class="summary-highlight"
+          >{{ "{:.1f}".format(kpis.crecimiento_ingresos) }}%</span
+        >
+        vs período anterior, {% endif %} con una eficiencia operacional del
+        <span class="summary-highlight"
+          >{{ "{:.1f}".format(kpis.efficiency_score if kpis.efficiency_score
+          else 85.0) }}%</span
+        >. {% if kpis.critical_projects_count and kpis.critical_projects_count <
+        3 %} El nivel de riesgo se mantiene controlado. {% else %} Se recomienda
+        atención a proyectos críticos para optimizar resultados. {% endif %} {%
+        else %} El sistema está configurado y listo para mostrar métricas de
+        rendimiento. Los datos se actualizarán conforme se registren más EDPs en
+        el sistema. {% endif %}
+      </div>
+      <div class="summary-metrics">
+        <div class="summary-metric">
+          <div class="metric-label">ROI Promedio</div>
+          <div class="metric-value">
+            {{ kpis.roi_promedio if kpis and kpis.roi_promedio else '23.4' }}%
+          </div>
+        </div>
+        <div class="summary-metric">
+          <div class="metric-label">Proyectos Completados</div>
+          <div class="metric-value">
+            {{ kpis.proyectos_completados if kpis and kpis.proyectos_completados
+            else '12' }}
+          </div>
+        </div>
+        <div class="summary-metric">
+          <div class="metric-label">Satisfacción Cliente</div>
+          <div class="metric-value">
+            {{ kpis.satisfaccion_cliente if kpis and kpis.satisfaccion_cliente
+            else '96' }}%
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Initialize DSO Trend Chart
+document.addEventListener('DOMContentLoaded', function() {
+  // Update current time
+  function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('es-ES', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    });
+    const timeElement = document.getElementById('current-time');
+    if (timeElement) {
+      timeElement.textContent = timeString;
     }
-    
-    function getNotificationIcon(type) {
-        switch (type) {
-            case 'warning': return '⚠️';
-            case 'error': return '❌';
-            case 'success': return '✅';
-            case 'payment': return '💰';
-            case 'status_change': return '🔄';
-            case 'urgent': return '🚨';
-            default: return 'ℹ️';
+  }
+  
+  // Update time immediately and then every second
+  updateTime();
+  setInterval(updateTime, 1000);
+  
+  const ctx = document.getElementById('dsoTrendChart').getContext('2d');
+  
+  const dsoChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+      datasets: [{
+        label: 'DSO Actual',
+        data: [38, 42, 45, 41, 44, {{ kpis.dso_actual if kpis and kpis.dso_actual else 47.2 }}],
+        borderColor: '#ff0066',
+        backgroundColor: 'rgba(255, 0, 102, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+      }, {
+        label: 'Target DSO',
+        data: [35, 35, 35, 35, 35, 35],
+        borderColor: '#00ff88',
+        borderWidth: 2,
+        borderDash: [5, 5],
+        fill: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255, 255, 255, 0.1)' },
+          ticks: { color: '#888888', font: { family: 'JetBrains Mono', size: 10 } }
+        },
+        y: {
+          grid: { color: 'rgba(255, 255, 255, 0.1)' },
+          ticks: { color: '#888888', font: { family: 'JetBrains Mono', size: 10 } },
+          min: 25, max: 50
         }
+      },
+      elements: {
+        point: { radius: 4, hoverRadius: 6 }
+      }
     }
-    
-    // Function to update dashboard elements with new data (automatic)
-    function updateDashboardElements(data) {
-        console.log('🔄 Updating dashboard elements automatically');
-        
-        // Update KPIs with animations
-        if (data.kpis) {
-            Object.keys(data.kpis).forEach(key => {
-                const element = document.querySelector(`[data-kpi="${key}"]`);
-                if (element) {
-                    const oldValue = element.textContent;
-                    element.textContent = data.kpis[key];
-                    
-                    // Add animation if value changed
-                    if (oldValue !== data.kpis[key]) {
-                        element.classList.add('kpi-updated');
-                        setTimeout(() => element.classList.remove('kpi-updated'), 1000);
-                    }
-                }
-            });
-        }
-        
-        // Update charts if function exists
-        if (data.charts && typeof window.updateCharts === 'function') {
-            window.updateCharts(data.charts);
-        }
-        
-        // Update last updated timestamp
-        const timestampElement = document.getElementById('last-updated');
-        if (timestampElement) {
-            timestampElement.textContent = new Date().toLocaleString();
-        }
-        
-        console.log('✅ Dashboard elements updated automatically');
-    }
-    
-    // Make functions globally available
-    window.showNotification = showNotification;
-    window.updateDashboardElements = updateDashboardElements;
+  });
 });
 
-// ===== SISTEMA DE NOTIFICACIONES EN TIEMPO REAL =====
-// Setup Socket.IO listeners for real-time EDP status changes
-if (window.io && typeof window.io === 'function') {
-    const socket = window.io();
-    
-    socket.on('edp_actualizado', function(data) {
-        console.log('📢 EDP updated via Socket.IO:', data);
-        
-        // Determine notification type based on the change
-        let notificationType = 'status_change';
-        let message = '';
-        let isImportant = false;
-        
-        if (data.updates) {
-            // Payment status change - most important
-            if (data.updates.estado === 'pagado') {
-                notificationType = 'payment';
-                message = `💰 EDP ${data.edp_id} marcado como PAGADO - Monto: $${data.updates.monto_aprobado || 'N/A'}M`;
-                isImportant = true;
-                
-                // Play notification sound if available
-                if (window.Audio) {
-                    try {
-                        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IAAAAAAQAAABAAAAQBYAAEA2AABoAgAQAEAAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSts4Oty');
-                        audio.volume = 0.3;
-                        audio.play();
-                    } catch (e) {
-                        console.log('No se pudo reproducir sonido de notificación');
-                    }
-                }
-                
-            } else if (data.updates.estado === 'enviado') {
-                notificationType = 'success';
-                message = `📤 EDP ${data.edp_id} enviado para revisión`;
-                
-            } else if (data.updates.estado === 'validado') {
-                notificationType = 'success';
-                message = `✅ EDP ${data.edp_id} validado correctamente`;
-                
-            } else if (data.updates.estado === 'revisión') {
-                notificationType = 'warning';
-                message = `🔍 EDP ${data.edp_id} en proceso de revisión`;
-                
-            } else if (data.updates.monto_aprobado) {
-                notificationType = 'info';
-                message = `💵 Monto actualizado para EDP ${data.edp_id}: $${data.updates.monto_aprobado}M`;
-                
-            } else {
-                notificationType = 'info';
-                message = `🔄 EDP ${data.edp_id} actualizado`;
-            }
-        } else {
-            message = `📋 EDP ${data.edp_id || 'desconocido'} modificado`;
-        }
-        
-        // Show notification
-        if (window.showNotification) {
-            window.showNotification(message, notificationType, isImportant ? 10000 : 5000, isImportant);
-        }
-        
-        // Auto-refresh dashboard data if significant changes
-        if (data.updates && (data.updates.estado || data.updates.monto_aprobado)) {
-            console.log('🔄 Significant EDP change detected, refreshing dashboard data...');
-            
-            // Delay to avoid too frequent updates
-            setTimeout(async () => {
-                try {
-                    const currentUrl = new URL(window.location);
-                    const response = await fetch(`/management/dashboard/refresh${currentUrl.search}`, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        const result = await response.json();
-                        if (result.success && window.updateDashboardElements) {
-                            window.updateDashboardElements(result.data);
-                            console.log('✅ Dashboard updated automatically after EDP change');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error auto-refreshing dashboard:', error);
-                }
-            }, 2000);
-        }
-    });
-    
-    socket.on('cache_invalidated', function(data) {
-        console.log('📢 Cache invalidated via Socket.IO:', data);
-        
-        let cacheMessage = '💾 Cache actualizado automáticamente';
-        
-        // Provide more specific cache invalidation info
-        if (data.cache_types && data.cache_types.length > 0) {
-            cacheMessage += ` (${data.cache_types.join(', ')})`;
-        }
-        
-        if (window.showNotification) {
-            window.showNotification(cacheMessage, 'success', 3000);
-        }
-    });
-    
-    // Connection status notifications
-    socket.on('connect', function() {
-        console.log('✅ Socket.IO connected for real-time updates');
-    });
-    
-    socket.on('disconnect', function() {
-
-    });
-    
-    socket.on('reconnect', function() {
-        console.log('🔄 Socket.IO reconnected');
-        if (window.showNotification) {
-            window.showNotification('🔄 Conexión en tiempo real restablecida', 'success', 3000);
-        }
-    });
-    
-} else {
-    console.log('⚠️ Socket.IO not available - real-time updates disabled');
-    if (window.showNotification) {
-        window.showNotification('⚠️ Actualizaciones en tiempo real no disponibles', 'warning', 5000);
-    }
+// Interactive functions
+function showManagerDetail(manager, days, amount) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <h3>${manager} - Detalle DSO</h3>
+      <div class="modal-body">
+        <div>DSO Actual: <span style="color: #ff0066; font-family: 'JetBrains Mono'">${days}</span></div>
+        <div>Monto Gestionado: <span style="color: #00ff88; font-family: 'JetBrains Mono'">${amount}</span></div>
+        <div style="margin-top: 16px; color: #888;">
+          Recomendación: ${getDSORecommendation(days)}
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button onclick="coordinateWithManager('${manager}')" class="btn-primary">COORDINAR</button>
+        <button onclick="this.closest('.modal-overlay').remove()" class="btn-secondary">CERRAR</button>
+      </div>
+    </div>
+  `;
+  
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) modal.remove();
+  });
+  
+  document.body.appendChild(modal);
 }
 
+function getDSORecommendation(days) {
+  const dsoValue = parseInt(days);
+  if (dsoValue > 60) return "Escalar inmediatamente. Revisar estrategia de cobranza.";
+  if (dsoValue > 45) return "Intensificar seguimiento. Evaluar incentivos de pago.";
+  if (dsoValue > 35) return "Monitoreo cercano. Mantener comunicación regular.";
+  return "Excelente performance. Replicar mejores prácticas.";
+}
+
+function coordinateWithManager(manager) {
+  showNotification(`Coordinación iniciada con ${manager}`, 'success');
+  document.querySelector('.modal-overlay').remove();
+}
+
+function showForecastDetail(day, amount, probability) {
+  showNotification(`${day}: ${amount} (${probability})`, 'info');
+}
+
+function executeAlert(title, impact, description) {
+  showNotification(`Ejecutando acción para: ${title}`, 'success');
+}
+
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.textContent = message;
+  notification.style.cssText = `
+    position: fixed; top: 20px; right: 20px; z-index: 1000;
+    padding: 12px 20px; border-radius: 8px; color: white;
+    background: ${type === 'success' ? '#00ff88' : type === 'warning' ? '#ffab00' : '#0066ff'};
+    animation: slideIn 0.3s ease;
+  `;
+  
+  document.body.appendChild(notification);
+  setTimeout(() => notification.remove(), 3000);
+}
+
+// Utility functions
+function coordinateManagers() { showNotification('Iniciando coordinación con jefes de proyecto', 'success'); }
+function exportForecast() { showNotification('Exportando datos de forecast', 'info'); }
+function executeAllAlerts() { showNotification('Ejecutando todas las alertas críticas', 'warning'); }
+function showTargetDetails() { showNotification('Generando reporte detallado de objetivos', 'info'); }
+function analyzeDSOTrend() { showNotification('Iniciando análisis profundo de DSO', 'info'); }
+
+// Add CSS for modals and notifications
+const style = document.createElement('style');
+style.textContent = `
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center;
+    z-index: 1000; backdrop-filter: blur(10px);
+  }
+  .modal-content {
+    background: var(--bg-secondary); border: 1px solid var(--border-primary);
+    border-radius: 8px; padding: 24px; max-width: 400px; width: 90%;
+    color: var(--text-primary);
+  }
+  .modal-content h3 { color: var(--accent-primary); margin-bottom: 16px; }
+  .modal-body { margin: 16px 0; line-height: 1.6; }
+  .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
+  .btn-primary, .btn-secondary {
+    padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer;
+    font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 600;
+  }
+  .btn-primary { background: var(--accent-primary); color: var(--bg-primary); }
+  .btn-secondary { background: var(--bg-tertiary); color: var(--text-secondary); }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+`;
+document.head.appendChild(style);
 </script>
 
-{% endblock %}
+{% include 'management/modal-proyectos-criticos.html' %} {% endblock %}

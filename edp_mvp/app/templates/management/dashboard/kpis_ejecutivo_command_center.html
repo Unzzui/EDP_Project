@@ -1,0 +1,851 @@
+<!-- 
+EXECUTIVE COMMAND CENTER - INSPIRED BY MODERN TERMINAL DESIGN
+==============================================================
+
+Design Philosophy: Clean, professional command center interface
+Inspired by template_dark_mode.html with enhanced visual hierarchy
+-->
+
+{% set aging_30_pct = kpis.aging_30_plus_pct|default(15) %} {% set aging_60_pct
+= kpis.aging_60_plus_pct|default(8) %} {% set aging_90_pct =
+kpis.aging_90_plus_pct|default(3) %} {% set proyectos_retraso_pct =
+kpis.proyectos_retraso_pct|default(10) %} {% set capacidad_promedio =
+kpis.capacidad_promedio|default(85) %} {% set ingresos_totales =
+kpis.ingresos_totales|default(42.7) %} {% set meta_mensual =
+kpis.meta_mensual|default(45.0) %}
+
+<!-- TENDENCIAS HISTÓRICAS -->
+{% set aging_30_anterior = kpis.aging_30_anterior|default(18) %} {% set
+ingresos_anterior = kpis.ingresos_anterior|default(38.2) %} {% set
+capacidad_anterior = kpis.capacidad_anterior|default(88) %} {% set
+tendencia_aging = "⬇️ mejorando" if aging_30_pct < aging_30_anterior else "⬆️
+empeorando" %} {% set tendencia_ingresos = "⬆️ creciendo" if ingresos_totales >
+ingresos_anterior else "⬇️ declinando" %} {% set tendencia_capacidad = "⬇️
+aliviando" if capacidad_promedio < capacidad_anterior else "⬆️ aumentando" %}
+
+<!-- CÁLCULOS -->
+{% set avance_meta_pct = ((ingresos_totales / meta_mensual) * 100) %} {% set
+meta_sospechosa = avance_meta_pct > 200 %}
+
+<!-- EVALUACIÓN DE CRISIS -->
+{% set crisis_aging = aging_30_pct > 25 and aging_90_pct > 8 %} {% set
+crisis_cash_flow = aging_60_pct > 20 %} {% set crisis_recursos =
+capacidad_promedio > 110 %} {% set crisis_proyectos = proyectos_retraso_pct > 30
+%}
+
+<!-- ALERTAS TEMPRANAS -->
+{% set alerta_aging = aging_30_pct > 20 and not crisis_aging %} {% set
+alerta_proyectos = proyectos_retraso_pct > 20 and not crisis_proyectos %} {% set
+alerta_recursos = capacidad_promedio > 95 and not crisis_recursos %}
+
+<!-- ESTADO GLOBAL -->
+{% set estado_crisis = crisis_aging or crisis_cash_flow or crisis_recursos or
+crisis_proyectos %} {% set estado_alerta = (alerta_aging or alerta_proyectos or
+alerta_recursos) and not estado_crisis %} {% set estado_normal = not
+estado_crisis and not estado_alerta %}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
+  .command-center {
+    min-height: 100vh;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    position: relative;
+    overflow-x: hidden;
+    font-feature-settings: "kern" 1, "liga" 1, "tnum" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .grid-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(
+        rgba(255, 255, 255, 0.01) 1px,
+        transparent 1px
+      ),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .header {
+    position: relative;
+    z-index: 10;
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border-primary);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(20px);
+  }
+
+  .header-content {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-primary, #00ff88);
+    border-radius: 50%;
+    box-shadow: 0 0 20px var(--accent-primary, #00ff88);
+    animation: pulse-logo 3s infinite ease-in-out;
+  }
+
+  @keyframes pulse-logo {
+    0%,
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 20px var(--accent-primary, #00ff88);
+    }
+    50% {
+      transform: scale(1.2);
+      box-shadow: 0 0 30px var(--accent-primary, #00ff88);
+    }
+  }
+
+  .title {
+    font-size: 20px;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+  }
+
+  .timestamp {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em;
+  }
+
+  .main-grid {
+    position: relative;
+    z-index: 1;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 32px;
+  }
+
+  .primary-section {
+    display: grid;
+    gap: 24px;
+  }
+
+  .metrics-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 24px;
+    height: 200px;
+  }
+
+  .metric-card {
+    background: var(--bg-secondary, #0a0a0a);
+    border: 1px solid var(--border-primary, #1a1a1a);
+    border-radius: 2px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .metric-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--accent-primary, #00ff88),
+      transparent
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .metric-card:hover::before {
+    opacity: 1;
+  }
+
+  .metric-card:hover {
+    background: var(--bg-tertiary, #111111);
+    border-color: var(--border-secondary, #333333);
+    transform: translateY(-1px);
+  }
+
+  .revenue-card {
+    background: linear-gradient(
+      135deg,
+      var(--bg-secondary, #0a0a0a) 0%,
+      #001a0d 100%
+    );
+    border-color: #002211;
+  }
+
+  .revenue-card::before {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--accent-primary, #00ff88),
+      transparent
+    );
+  }
+
+  .crisis-card {
+    background: linear-gradient(
+      135deg,
+      var(--bg-secondary, #0a0a0a) 0%,
+      #1a000d 100%
+    );
+    border-color: var(--status-danger, #ff0066);
+  }
+
+  .crisis-card::before {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--status-danger, #ff0066),
+      transparent
+    );
+  }
+
+  .warning-card {
+    background: linear-gradient(
+      135deg,
+      var(--bg-secondary, #0a0a0a) 0%,
+      #1a1100 100%
+    );
+    border-color: var(--status-warning, #ffaa00);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+  }
+
+  .card-label {
+    font-size: 11px;
+    color: var(--text-secondary, #888888);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 500;
+  }
+
+  .card-status {
+    padding: 4px 8px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    border-radius: 1px;
+  }
+
+  .status-optimal {
+    background: rgba(0, 255, 136, 0.1);
+    color: var(--accent-primary, #00ff88);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+  }
+
+  .status-warning {
+    background: rgba(255, 170, 0, 0.1);
+    color: var(--status-warning, #ffaa00);
+    border: 1px solid rgba(255, 170, 0, 0.2);
+  }
+
+  .status-critical {
+    background: rgba(255, 0, 102, 0.1);
+    color: var(--status-danger, #ff0066);
+    border: 1px solid rgba(255, 0, 102, 0.2);
+  }
+
+  .metric-value {
+    font-size: 42px;
+    font-weight: 300;
+    line-height: 1;
+    margin-bottom: 12px;
+    font-family: "JetBrains Mono", monospace;
+    letter-spacing: -0.02em;
+  }
+
+  .revenue-value {
+    font-size: 56px;
+    color: var(--accent-primary, #00ff88);
+    text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+  }
+
+  .crisis-value {
+    color: var(--status-danger, #ff0066);
+    text-shadow: 0 0 20px rgba(255, 0, 102, 0.3);
+  }
+
+  .warning-value {
+    color: var(--status-warning, #ffaa00);
+  }
+
+  .metric-change {
+    font-size: 12px;
+    color: var(--text-secondary, #888888);
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  .change-positive {
+    color: var(--accent-primary, #00ff88);
+  }
+
+  .change-negative {
+    color: var(--status-danger, #ff0066);
+  }
+
+  .aging-section {
+    background: var(--bg-secondary, #0a0a0a);
+    border: 1px solid var(--border-primary, #1a1a1a);
+    border-radius: 2px;
+    padding: 32px;
+    position: relative;
+  }
+
+  .aging-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-primary, #1a1a1a);
+  }
+
+  .aging-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .aging-total {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    color: var(--text-secondary, #888888);
+  }
+
+  .aging-bars {
+    display: grid;
+    gap: 16px;
+  }
+
+  .aging-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .aging-label {
+    min-width: 80px;
+    font-size: 11px;
+    color: var(--text-secondary, #888888);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .aging-progress {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-tertiary, #111111);
+    border-radius: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .aging-fill {
+    height: 100%;
+    transition: width 1s ease;
+    position: relative;
+  }
+
+  .fill-healthy {
+    background: var(--accent-primary, #00ff88);
+  }
+  .fill-caution {
+    background: var(--status-warning, #ffaa00);
+  }
+  .fill-critical {
+    background: var(--status-danger, #ff0066);
+  }
+
+  .aging-percentage {
+    min-width: 40px;
+    text-align: right;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--text-primary);
+  }
+
+  .sidebar {
+    display: grid;
+    gap: 24px;
+  }
+
+  .client-card {
+    background: var(--bg-secondary, #0a0a0a);
+    border: 1px solid var(--border-primary, #1a1a1a);
+    border-radius: 2px;
+    padding: 24px;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  .client-card:hover {
+    background: var(--bg-tertiary, #111111);
+    border-color: var(--border-secondary, #333333);
+  }
+
+  .client-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .client-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .client-tier {
+    padding: 2px 6px;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-radius: 1px;
+  }
+
+  .tier-vip {
+    background: linear-gradient(45deg, var(--status-danger, #ff0066), #ff3388);
+    color: white;
+  }
+
+  .tier-standard {
+    background: var(--bg-tertiary, #111111);
+    color: var(--text-secondary, #888888);
+    border: 1px solid var(--border-secondary, #333333);
+  }
+
+  .client-amount {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 20px;
+    font-weight: 400;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+
+  .client-days {
+    font-size: 11px;
+    color: var(--text-secondary, #888888);
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  .terminal-section {
+    background: var(--bg-secondary, #0a0a0a);
+    border: 1px solid var(--border-primary, #1a1a1a);
+    border-radius: 2px;
+    padding: 24px;
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  .terminal-header {
+    color: var(--accent-primary, #00ff88);
+    font-size: 11px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .terminal-line {
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--text-secondary, #888888);
+    margin-bottom: 4px;
+  }
+
+  .terminal-value {
+    color: var(--accent-primary, #00ff88);
+  }
+
+  .terminal-warning {
+    color: var(--status-danger, #ff0066);
+  }
+
+  /* Crisis Section */
+  .crisis-section {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 0, 102, 0.1) 0%,
+      rgba(0, 0, 0, 0.8) 100%
+    );
+    border: 1px solid var(--status-danger, #ff0066);
+    border-radius: 2px;
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+    animation: glow-critical 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow-critical {
+    from {
+      box-shadow: 0 0 20px rgba(255, 0, 102, 0.2);
+    }
+    to {
+      box-shadow: 0 0 30px rgba(255, 0, 102, 0.4);
+    }
+  }
+
+  .crisis-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .crisis-indicator {
+    width: 8px;
+    height: 8px;
+    background: var(--status-danger, #ff0066);
+    border-radius: 50%;
+    margin-right: 16px;
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .crisis-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--status-danger, #ff0066);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 1200px) {
+    .main-grid {
+      grid-template-columns: 1fr;
+      padding: 24px;
+    }
+
+    .metrics-row {
+      grid-template-columns: 1fr 1fr;
+      height: auto;
+    }
+
+    .revenue-card {
+      grid-column: span 2;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .metrics-row {
+      grid-template-columns: 1fr;
+    }
+
+    .revenue-card {
+      grid-column: span 1;
+    }
+  }
+</style>
+
+<div class="command-center">
+  <div class="grid-overlay"></div>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="logo-section">
+        <div class="logo"></div>
+        <h1 class="title">EXECUTIVE COMMAND CENTER</h1>
+      </div>
+      <div class="timestamp" id="timestamp"></div>
+    </div>
+  </header>
+
+  <div class="main-grid">
+    <div class="primary-section">
+      <!-- Crisis Alert Section - Only if crisis exists -->
+      {% if estado_crisis %}
+      <div class="crisis-section">
+        <div class="crisis-header">
+          <div class="crisis-indicator"></div>
+          <h2 class="crisis-title">OPERATIONAL CRISIS DETECTED</h2>
+        </div>
+        <div class="metrics-row">
+          {% if crisis_aging %}
+          <div class="metric-card crisis-card">
+            <div class="card-header">
+              <span class="card-label">Portfolio Status</span>
+              <span class="card-status status-critical">CRITICAL</span>
+            </div>
+            <div class="metric-value crisis-value">{{ aging_30_pct }}%</div>
+            <div class="metric-change change-negative">
+              {{ aging_90_pct }}% over 90 days
+            </div>
+          </div>
+          {% endif %} {% if crisis_cash_flow %}
+          <div class="metric-card crisis-card">
+            <div class="card-header">
+              <span class="card-label">Cash Flow</span>
+              <span class="card-status status-critical">COMPROMISED</span>
+            </div>
+            <div class="metric-value crisis-value">{{ aging_60_pct }}%</div>
+            <div class="metric-change change-negative">
+              +60 days uncollected
+            </div>
+          </div>
+          {% endif %} {% if crisis_recursos %}
+          <div class="metric-card crisis-card">
+            <div class="card-header">
+              <span class="card-label">Team Capacity</span>
+              <span class="card-status status-critical">BURNOUT</span>
+            </div>
+            <div class="metric-value crisis-value">
+              {{ capacidad_promedio }}%
+            </div>
+            <div class="metric-change change-negative">Overload >110%</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Main Metrics Row -->
+      <div class="metrics-row">
+        <div class="metric-card revenue-card">
+          <div class="card-header">
+            <span class="card-label">Revenue Stream</span>
+            <span
+              class="card-status {% if meta_sospechosa %}status-warning{% elif avance_meta_pct < 80 %}status-warning{% else %}status-optimal{% endif %}">
+              {% if meta_sospechosa %}REVIEW{% elif avance_meta_pct < 80 %}LOW{%
+              else %}OPTIMAL{% endif %}
+            </span>
+          </div>
+          <div class="metric-value revenue-value">${{ ingresos_totales }}M</div>
+          <div
+            class="metric-change {% if ingresos_totales > ingresos_anterior %}change-positive{% else %}change-negative{% endif %}">
+            {{ tendencia_ingresos }} ↗ TARGET: {{ avance_meta_pct|round }}%
+          </div>
+        </div>
+
+        <div
+          class="metric-card {% if crisis_recursos or alerta_recursos %}warning-card{% endif %}">
+          <div class="card-header">
+            <span class="card-label">Capacity</span>
+            <span
+              class="card-status {% if crisis_recursos %}status-critical{% elif alerta_recursos %}status-warning{% else %}status-optimal{% endif %}">
+              {% if crisis_recursos %}CRITICAL{% elif alerta_recursos
+              %}MONITOR{% else %}NOMINAL{% endif %}
+            </span>
+          </div>
+          <div
+            class="metric-value {% if crisis_recursos %}crisis-value{% elif alerta_recursos %}warning-value{% endif %}">
+            {{ capacidad_promedio }}<span
+              style="font-size: 24px; color: var(--text-secondary)"
+              >%</span
+            >
+          </div>
+          <div
+            class="metric-change {% if capacidad_promedio > capacidad_anterior %}change-negative{% else %}change-positive{% endif %}">
+            {{ tendencia_capacidad }}
+          </div>
+        </div>
+
+        <div
+          class="metric-card {% if crisis_proyectos or alerta_proyectos %}warning-card{% endif %}">
+          <div class="card-header">
+            <span class="card-label">Operations</span>
+            <span
+              class="card-status {% if crisis_proyectos %}status-critical{% elif alerta_proyectos %}status-warning{% else %}status-optimal{% endif %}">
+              {% if crisis_proyectos %}COLLAPSE{% elif alerta_proyectos
+              %}MONITOR{% else %}STABLE{% endif %}
+            </span>
+          </div>
+          <div
+            class="metric-value {% if crisis_proyectos %}crisis-value{% elif alerta_proyectos %}warning-value{% endif %}">
+            {{ proyectos_retraso_pct }}
+          </div>
+          <div
+            class="metric-change {% if proyectos_retraso_pct > 20 %}change-negative{% else %}change-positive{% endif %}">
+            {% if proyectos_retraso_pct > 30 %}CRITICAL DELAY{% elif
+            proyectos_retraso_pct > 20 %}DELAYS{% else %}ON TRACK{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Aging Distribution Section -->
+      <div class="aging-section">
+        <div class="aging-header">
+          <h2 class="aging-title">RECEIVABLES DISTRIBUTION</h2>
+          <span class="aging-total"
+            >TOTAL: ${{ kpis.monto_pendiente|default(4520.9) }}M</span
+          >
+        </div>
+
+        <div class="aging-bars">
+          <div class="aging-bar">
+            <span class="aging-label">0-30d</span>
+            <div class="aging-progress">
+              <div
+                class="aging-fill fill-healthy"
+                style="width: {{ (100 - aging_30_pct) }}%"></div>
+            </div>
+            <span class="aging-percentage"
+              >{{ (100 - aging_30_pct)|round }}%</span
+            >
+          </div>
+
+          <div class="aging-bar">
+            <span class="aging-label">30-60d</span>
+            <div class="aging-progress">
+              <div
+                class="aging-fill fill-caution"
+                style="width: {{ (aging_30_pct - aging_60_pct) }}%"></div>
+            </div>
+            <span class="aging-percentage"
+              >{{ (aging_30_pct - aging_60_pct)|round }}%</span
+            >
+          </div>
+
+          <div class="aging-bar">
+            <span class="aging-label">60-90d</span>
+            <div class="aging-progress">
+              <div
+                class="aging-fill fill-caution"
+                style="width: {{ (aging_60_pct - aging_90_pct) }}%"></div>
+            </div>
+            <span class="aging-percentage"
+              >{{ (aging_60_pct - aging_90_pct)|round }}%</span
+            >
+          </div>
+
+          <div class="aging-bar">
+            <span class="aging-label">+90d</span>
+            <div class="aging-progress">
+              <div
+                class="aging-fill fill-critical"
+                style="width: {{ aging_90_pct }}%"></div>
+            </div>
+            <span class="aging-percentage">{{ aging_90_pct }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <!-- Top Clients -->
+      {% for cliente in kpis.top_deudores|default([ {'nombre': 'CODELCO',
+      'monto': 45.2, 'aging': '35d avg', 'criticidad': 'vip'}, {'nombre':
+      'ARAUCO', 'monto': 23.1, 'aging': '22d avg', 'criticidad': 'normal'},
+      {'nombre': 'ESCONDIDA', 'monto': 18.7, 'aging': '12d avg', 'criticidad':
+      'normal'} ]) %}
+      <div class="client-card">
+        <div class="client-header">
+          <span class="client-name">{{ cliente.nombre }}</span>
+          <span
+            class="client-tier {% if cliente.criticidad == 'vip' %}tier-vip{% else %}tier-standard{% endif %}">
+            {% if cliente.criticidad == 'vip' %}VIP{% else %}STD{% endif %}
+          </span>
+        </div>
+        <div class="client-amount">${{ cliente.monto }}M</div>
+        <div class="client-days">{{ cliente.aging }}</div>
+      </div>
+      {% endfor %}
+
+      <!-- System Status Terminal -->
+      <div class="terminal-section">
+        <div class="terminal-header">/// SYSTEM STATUS</div>
+        <div class="terminal-line">
+          UPTIME: <span class="terminal-value">99.97%</span>
+        </div>
+        <div class="terminal-line">
+          LATENCY: <span class="terminal-value">12ms</span>
+        </div>
+        <div class="terminal-line">
+          ALERTS:
+          <span
+            class="{% if estado_crisis %}terminal-warning{% else %}terminal-value{% endif %}">
+            {% if estado_crisis %}{{ [crisis_aging, crisis_cash_flow,
+            crisis_recursos, crisis_proyectos]|select|list|length }} CRITICAL{%
+            else %}0 CRITICAL{% endif %}
+          </span>
+        </div>
+        <div class="terminal-line">
+          SYNC: <span class="terminal-value">REAL-TIME</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Real-time timestamp
+  function updateTimestamp() {
+    const now = new Date();
+    const timestamp = now.toISOString().replace("T", " ").substr(0, 19) + " UTC";
+    document.getElementById("timestamp").textContent = timestamp;
+  }
+
+  updateTimestamp();
+  setInterval(updateTimestamp, 1000);
+
+  // Animate bars on load
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      document.querySelectorAll(".aging-fill").forEach((bar) => {
+        const width = bar.style.width;
+        bar.style.width = "0%";
+        setTimeout(() => {
+          bar.style.width = width;
+        }, 100);
+      });
+    }, 500);
+  });
+
+  // Auto-refresh based on system state
+  {% if estado_crisis %}
+  // Crisis mode: More frequent updates (3 minutes)
+  setTimeout(function() {
+    location.reload();
+  }, 180000);
+  {% elif estado_alerta %}
+  // Alert mode: Regular monitoring (10 minutes)
+  setTimeout(function() {
+    location.reload();
+  }, 600000);
+  {% endif %}
+</script>

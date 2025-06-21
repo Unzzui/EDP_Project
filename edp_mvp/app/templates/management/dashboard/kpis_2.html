@@ -1,0 +1,773 @@
+<!-- KPIs REDISEÑADOS - TRIAGE INTELIGENTE PARA DECISIONES EJECUTIVAS -->
+<div class="space-y-6">
+  <!-- SISTEMA DE TRIAGE: MÁXIMO 2 CRISIS SIMULTÁNEAS -->
+  {% set capacidad_critica = kpis.capacidad_critica|default(115) > 110 %} {% set
+  recursos_colapso = kpis.recursos_criticos|default(12) > 10 %} {% set
+  cash_flow_critico = kpis.aging_90_plus_pct|default(25) > 20 %} {% set
+  proyectos_riesgo_alto = kpis.high_risk_count|default(5) > 3 %}
+
+  <!-- CRISIS #1: CAPACIDAD OPERATIVA COLAPSADA (Más urgente que proyectos) -->
+  {% if capacidad_critica or recursos_colapso %}
+  <div class="bg-red-950 border-4 border-red-400 rounded-xl p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center">
+        <div class="bg-red-500 p-3 rounded-full mr-4 shadow-lg animate-pulse">
+          <svg
+            class="w-8 h-8 text-white"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-white text-2xl font-black">🚨 COLAPSO OPERATIVO</h2>
+          <p class="text-red-300 text-base font-bold">
+            DETENER TODO - REASIGNAR AHORA
+          </p>
+        </div>
+      </div>
+      <div
+        class="bg-red-500 text-white px-6 py-3 rounded-lg font-black text-xl animate-bounce">
+        CRISIS
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-red-900 border-2 border-red-500 rounded-lg p-6">
+        <div class="text-6xl font-black text-white mb-2">
+          {{ kpis.capacidad_critica|default(115) }}%
+        </div>
+        <div class="text-red-200 text-lg font-bold">CAPACIDAD SOBRECARGADA</div>
+        <div class="mt-4 text-white text-xl font-bold">
+          {{ kpis.recursos_criticos|default(12) }} recursos en riesgo de burnout
+        </div>
+        <div class="mt-4 pt-3 border-t border-red-600">
+          <div class="text-red-300 text-sm font-bold">⏰ ACCIÓN INMEDIATA:</div>
+          <div class="text-white text-base mt-1 font-bold">
+            Reunión emergencia con {{ kpis.manager_recursos|default('Carlos
+            Mendez') }}
+          </div>
+          <div class="text-yellow-300 text-sm mt-1">
+            📅 HOY 2:00 PM - Sala de Juntas A
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div class="bg-red-800 border border-red-600 rounded p-4">
+          <div class="text-red-300 text-sm font-bold">RECURSO CRÍTICO #1</div>
+          <div class="text-white text-lg font-bold">
+            {{ kpis.recurso_critico_1|default('María González') }}
+          </div>
+          <div class="text-red-300 text-sm">
+            {{ kpis.recurso_1_carga|default(145) }}% carga - 3 proyectos
+            críticos
+          </div>
+          <div class="text-yellow-300 text-xs mt-1">
+            📞 Ext. {{ kpis.recurso_1_ext|default(2847) }} - Reasignar proyecto
+            {{ kpis.proyecto_reasignar_1|default('Phoenix') }}
+          </div>
+        </div>
+        <div class="bg-red-800 border border-red-600 rounded p-4">
+          <div class="text-red-300 text-sm font-bold">RECURSO CRÍTICO #2</div>
+          <div class="text-white text-lg font-bold">
+            {{ kpis.recurso_critico_2|default('Luis Rodríguez') }}
+          </div>
+          <div class="text-red-300 text-sm">
+            {{ kpis.recurso_2_carga|default(138) }}% carga - 2 proyectos
+            críticos
+          </div>
+          <div class="text-yellow-300 text-xs mt-1">
+            📞 Ext. {{ kpis.recurso_2_ext|default(2951) }} - Reasignar proyecto
+            {{ kpis.proyecto_reasignar_2|default('Alpha') }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- CRISIS #2: CASH FLOW CRÍTICO O PROYECTOS ALTO RIESGO (Solo si no hay colapso operativo) -->
+  {% if (cash_flow_critico and not capacidad_critica and not recursos_colapso)
+  or (proyectos_riesgo_alto and not capacidad_critica and not recursos_colapso
+  and not cash_flow_critico) %}
+  <div class="bg-red-900 border-2 border-red-500 rounded-xl p-6 shadow-xl">
+    {% if cash_flow_critico %}
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div class="bg-red-500 p-2 rounded-full mr-3">
+          <svg
+            class="w-6 h-6 text-white"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
+              clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-white text-xl font-black">CASH FLOW CRÍTICO</h2>
+          <p class="text-red-200 text-sm">ACELERAR COBROS INMEDIATAMENTE</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <div class="text-5xl font-black text-white">
+          ${{ kpis.monto_pendiente|default(180) }}M
+        </div>
+        <div class="text-red-200 text-lg">pendiente de cobro</div>
+        <div class="mt-2 text-white text-xl">
+          {{ kpis.aging_90_plus_pct|default(25) }}% mayor a 90 días
+        </div>
+        <div class="mt-4 pt-3 border-t border-red-600">
+          <div class="text-red-300 text-sm font-bold">ACCIÓN HOY:</div>
+          <div class="text-white text-base">Llamadas de cobranza urgente</div>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div class="bg-red-800 border border-red-600 rounded p-3">
+          <div class="text-red-300 text-xs font-bold">
+            DEUDOR CRÍTICO #1 - LLAMAR HOY
+          </div>
+          <div class="text-white font-bold">
+            {{ kpis.top_deudor_1_nombre|default('Corporación Alpha') }}
+          </div>
+          <div class="text-red-300 text-sm">
+            ${{ kpis.top_deudor_1_monto|default(45) }}M - {{
+            kpis.deudor_1_dias|default(127) }} días
+          </div>
+          <div class="text-yellow-300 text-xs mt-1 font-bold">
+            📞 {{ kpis.deudor_1_contacto|default('Ana Torres') }} - {{
+            kpis.deudor_1_telefono|default('555-0123') }}
+          </div>
+          <div class="text-orange-300 text-xs">
+            Último contacto: {{ kpis.deudor_1_ultimo_contacto|default('hace 15
+            días') }}
+          </div>
+        </div>
+        <div class="bg-red-800 border border-red-600 rounded p-3">
+          <div class="text-red-300 text-xs font-bold">
+            DEUDOR CRÍTICO #2 - LLAMAR HOY
+          </div>
+          <div class="text-white font-bold">
+            {{ kpis.top_deudor_2_nombre|default('Industrias Beta') }}
+          </div>
+          <div class="text-red-300 text-sm">
+            ${{ kpis.top_deudor_2_monto|default(32) }}M - {{
+            kpis.deudor_2_dias|default(98) }} días
+          </div>
+          <div class="text-yellow-300 text-xs mt-1 font-bold">
+            📞 {{ kpis.deudor_2_contacto|default('Roberto Silva') }} - {{
+            kpis.deudor_2_telefono|default('555-0456') }}
+          </div>
+          <div class="text-orange-300 text-xs">
+            Último contacto: {{ kpis.deudor_2_ultimo_contacto|default('hace 8
+            días') }}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <!-- PROYECTOS ALTO RIESGO COMO SEGUNDA PRIORIDAD -->
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div class="bg-red-500 p-2 rounded-full mr-3">
+          <svg
+            class="w-6 h-6 text-white"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm8 0a1 1 0 011-1h6a1 1 0 011 1v2a1 1 0 01-1 1h-6a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h6a1 1 0 011 1v2a1 1 0 01-1 1h-6a1 1 0 01-1-1v-2z"
+              clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-white text-xl font-black">PROYECTOS CRÍTICOS</h2>
+          <p class="text-red-200 text-sm">INTERVENCIÓN INMEDIATA</p>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="cursor-pointer hover:bg-red-800 transition-colors rounded-lg p-2"
+      id="show-critical-projects-btn"
+      data-modal="critical-projects">
+      <div class="text-5xl font-black text-white">
+        {{ kpis.high_risk_count|default(5) }}
+      </div>
+      <div class="text-red-200 text-lg">proyectos alto riesgo</div>
+      <div class="mt-2 text-white text-xl">
+        ${{ kpis.critical_projects_amount|default(407) }}M en juego
+      </div>
+      <div class="mt-3 pt-3 border-t border-red-600">
+        <div class="text-red-300 text-sm font-bold">ACCIÓN INMEDIATA:</div>
+        <div class="text-white text-base">
+          Revisar proyecto {{ kpis.proyecto_mas_critico|default('Phoenix Data
+          Center') }} primero
+        </div>
+        <div class="text-yellow-300 text-sm">
+          👆 Click para asignar responsables específicos
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ZONA AMARILLA - MONITOREO CERCANO (Solo aparece si no hay crisis rojas) -->
+  {% if not capacidad_critica and not recursos_colapso and not cash_flow_critico
+  and not proyectos_riesgo_alto %}
+  <div class="bg-yellow-800 border border-yellow-600 rounded-lg p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-yellow-200 font-bold text-lg">
+        📊 MONITOREO - Atención Requerida
+      </h3>
+      <div
+        class="bg-yellow-600 text-yellow-900 text-sm px-3 py-1 rounded-full font-bold">
+        VIGILAR
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Solo mostrar ingresos si están bajo meta -->
+      {% if (kpis.ingresos_totales|default(42.7) /
+      kpis.meta_mensual|default(45.0)) < 0.95 %}
+      <div class="bg-yellow-700 border border-yellow-500 rounded p-4">
+        <div class="text-2xl font-bold text-white">
+          ${{ kpis.ingresos_totales|default(42.7) }}M
+        </div>
+        <div class="text-yellow-200 text-sm">
+          {{ ((kpis.ingresos_totales|default(42.7) /
+          kpis.meta_mensual|default(45.0)) * 100)|round }}% de meta mensual
+        </div>
+        <div class="mt-2 text-yellow-300 text-xs">
+          📈 Revisar estrategia comercial con {{
+          kpis.director_ventas|default('Patricia López') }} esta semana
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Solo mostrar rentabilidad si está bajo objetivo -->
+      {% if kpis.margen_operativo|default(22.1) < 20 %}
+      <div class="bg-yellow-700 border border-yellow-500 rounded p-4">
+        <div class="text-2xl font-bold text-white">
+          {{ kpis.margen_operativo|default(18.5) }}%
+        </div>
+        <div class="text-yellow-200 text-sm">margen operativo (meta: 20%)</div>
+        <div class="mt-2 text-yellow-300 text-xs">
+          💼 Analizar costos con {{ kpis.director_finanzas|default('Miguel
+          Castro') }} próxima semana
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ZONA VERDE - SOLO SI TODO ESTÁ BIEN -->
+  {% if not capacidad_critica and not recursos_colapso and not cash_flow_critico
+  and not proyectos_riesgo_alto and (kpis.ingresos_totales|default(42.7) /
+  kpis.meta_mensual|default(45.0)) >= 0.95 %}
+  <div class="bg-green-700 border border-green-500 rounded-lg p-6">
+    <div class="flex items-center justify-center">
+      <svg
+        class="w-12 h-12 text-green-300 mr-4"
+        fill="currentColor"
+        viewBox="0 0 20 20">
+        <path
+          fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+          clip-rule="evenodd"></path>
+      </svg>
+      <div>
+        <h3 class="text-white font-black text-2xl">✅ OPERACIONES NORMALES</h3>
+        <p class="text-green-200 text-lg">
+          Todos los indicadores dentro de parámetros normales
+        </p>
+        <p class="text-green-300 text-sm mt-2">
+          Continuar con operaciones estándar - Próxima revisión en 24 horas
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- PLAN DE ACCIÓN ESPECÍFICO (Solo aparece si hay crisis) -->
+  {% if capacidad_critica or recursos_colapso or cash_flow_critico or
+  proyectos_riesgo_alto %}
+  <div class="bg-gray-900 border border-gray-600 rounded-lg p-6">
+    <h3 class="text-white font-bold text-xl mb-4">
+      🎯 PLAN DE ACCIÓN - PRÓXIMAS 48 HORAS
+    </h3>
+
+    <div class="space-y-4">
+      {% if capacidad_critica or recursos_colapso %}
+      <!-- Acción #1 - Más específica -->
+      <div class="bg-red-900 border border-red-700 rounded p-4">
+        <div class="flex justify-between items-center mb-2">
+          <div class="text-red-300 font-bold">🚨 PRIORIDAD 1 - HOY 2:00 PM</div>
+          <div class="text-red-300 text-sm">
+            RESPONSABLE: {{ kpis.manager_recursos|default('Carlos Mendez') }}
+          </div>
+        </div>
+        <div class="text-white font-bold text-lg">
+          Emergencia: Reasignar {{ kpis.recursos_criticos|default(12) }}
+          recursos sobrecargados
+        </div>
+        <div class="text-red-300 text-sm mt-2">
+          ✅ Reunión sala A - ✅ Reasignar proyecto {{
+          kpis.proyecto_reasignar_1|default('Phoenix') }} - ✅ Contratar
+          temporales
+        </div>
+        <div class="text-yellow-300 text-xs mt-1">
+          IMPACTO: Evitar ${{ kpis.perdida_estimada|default(89) }}M en retrasos
+          y burnout
+        </div>
+      </div>
+      {% endif %} {% if cash_flow_critico %}
+      <!-- Acción #2 -->
+      <div class="bg-orange-900 border border-orange-700 rounded p-4">
+        <div class="flex justify-between items-center mb-2">
+          <div class="text-orange-300 font-bold">
+            📞 PRIORIDAD 2 - HOY 4:00 PM
+          </div>
+          <div class="text-orange-300 text-sm">
+            RESPONSABLE: {{ kpis.manager_cobranzas|default('Laura Vega') }}
+          </div>
+        </div>
+        <div class="text-white font-bold">
+          Llamadas urgentes: {{ kpis.top_deudor_1_nombre|default('Corporación
+          Alpha') }} y {{ kpis.top_deudor_2_nombre|default('Industrias Beta') }}
+        </div>
+        <div class="text-orange-300 text-sm mt-2">
+          ✅ Llamar {{ kpis.deudor_1_contacto|default('Ana Torres') }} - ✅
+          Proponer plan de pago - ✅ Escalar si necesario
+        </div>
+        <div class="text-yellow-300 text-xs mt-1">
+          OBJETIVO: Recuperar ${{ (kpis.top_deudor_1_monto|default(45) +
+          kpis.top_deudor_2_monto|default(32)) }}M esta semana
+        </div>
+      </div>
+      {% endif %} {% if proyectos_riesgo_alto %}
+      <!-- Acción #3 -->
+      <div class="bg-yellow-900 border border-yellow-700 rounded p-4">
+        <div class="flex justify-between items-center mb-2">
+          <div class="text-yellow-300 font-bold">
+            📋 PRIORIDAD 3 - MAÑANA 9:00 AM
+          </div>
+          <div class="text-yellow-300 text-sm">
+            RESPONSABLE: {{ kpis.director_proyectos|default('Fernando Ruiz') }}
+          </div>
+        </div>
+        <div class="text-white font-bold">
+          Intervención proyecto {{ kpis.proyecto_mas_critico|default('Phoenix
+          Data Center') }}
+        </div>
+        <div class="text-yellow-300 text-sm mt-2">
+          ✅ Reunión con cliente - ✅ Replantear timeline - ✅ Asignar PM senior
+        </div>
+        <div class="text-yellow-300 text-xs mt-1">
+          RIESGO: ${{ kpis.monto_proyecto_critico|default(156) }}M y relación
+          cliente estratégico
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  /* Animación específica para crisis */
+  @keyframes crisis-pulse {
+    0%,
+    100% {
+      background-color: rgb(69, 10, 10);
+      border-color: rgb(248, 113, 113);
+      transform: scale(1);
+    }
+    50% {
+      background-color: rgb(127, 29, 29);
+      border-color: rgb(239, 68, 68);
+      transform: scale(1.01);
+    }
+  }
+
+  .crisis-alert {
+    animation: crisis-pulse 3s infinite;
+  }
+
+  /* Mejoras específicas para elementos accionables */
+  .actionable-item {
+    transition: all 0.3s ease;
+  }
+
+  .actionable-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+  }
+</style>
+<div class="space-y-4">
+  <!-- ZONA CRÍTICA - OCUPA 40% SUPERIOR - ACCIÓN INMEDIATA REQUERIDA -->
+  <div class="bg-red-900 border-2 border-red-500 rounded-xl p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div class="bg-red-500 p-2 rounded-full mr-3 animate-pulse">
+          <svg
+            class="w-6 h-6 text-white"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-white text-xl font-black">ALERTA CRÍTICA</h2>
+          <p class="text-red-200 text-sm">ACCIÓN INMEDIATA REQUERIDA</p>
+        </div>
+      </div>
+      <div class="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-lg">
+        CRÍTICO
+      </div>
+    </div>
+
+    <!-- Grid de problemas críticos - Máximo 3 métricas clave -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- PROYECTOS EN RIESGO - PRIORIDAD #1 -->
+      <div
+        class="bg-red-800 border border-red-600 rounded-lg p-4 cursor-pointer hover:bg-red-700 transition-colors"
+        id="show-critical-projects-btn"
+        data-modal="critical-projects">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-white font-bold text-sm">PROYECTOS EN RIESGO</h3>
+          <div class="flex items-center">
+            <svg
+              class="w-4 h-4 text-red-300 mr-1"
+              fill="currentColor"
+              viewBox="0 0 20 20">
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                clip-rule="evenodd"></path>
+            </svg>
+            <span class="text-red-300 text-xs">Urgente</span>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <div class="text-4xl font-black text-white">
+            {{ kpis.critical_projects_count|default(8) }}
+          </div>
+          <div class="text-red-200 text-xs">proyectos críticos</div>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="text-red-300 text-sm">Alto riesgo:</span>
+          <span class="text-white font-bold text-lg"
+            >{{ kpis.high_risk_count|default(5) }}</span
+          >
+        </div>
+
+        <div class="flex justify-between items-center mt-1">
+          <span class="text-red-300 text-sm">Monto en riesgo:</span>
+          <span class="text-white font-bold text-lg"
+            >${{ kpis.critical_projects_amount|default(407) }}M</span
+          >
+        </div>
+
+        <div class="mt-3 pt-2 border-t border-red-600">
+          <div class="flex items-center text-white text-sm">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fill-rule="evenodd"
+                d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z"
+                clip-rule="evenodd"></path>
+            </svg>
+            Ver detalles críticos
+          </div>
+        </div>
+      </div>
+
+      <!-- FACTURACIÓN CRÍTICA - PRIORIDAD #2 -->
+      <div class="bg-red-800 border border-red-600 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-white font-bold text-sm">FACTURACIÓN CRÍTICA</h3>
+          {% if kpis.aging_90_plus_pct|default(25) > 20 %}
+          <div
+            class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+            CRÍTICO
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="mb-2">
+          <div class="text-4xl font-black text-white">
+            ${{ kpis.monto_pendiente|default(180) }}M
+          </div>
+          <div class="text-red-200 text-xs">pendiente cobro</div>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="text-red-300 text-sm">90+ días:</span>
+          <span class="text-white font-bold text-lg"
+            >{{ kpis.aging_90_plus_pct|default(25) }}%</span
+          >
+        </div>
+
+        <div class="flex justify-between items-center mt-1">
+          <span class="text-red-300 text-sm">DSO:</span>
+          <span
+            class="text-white font-bold text-lg {% if kpis.dso_actual|default(145) > 120 %}text-red-300{% endif %}">
+            {{ kpis.dso_actual|default(145) }} días
+          </span>
+        </div>
+
+        <!-- Tendencia crítica -->
+        <div class="mt-2 flex items-center">
+          {% if kpis.tendencia_pendiente|default(15.2) > 0 %}
+          <svg
+            class="w-4 h-4 text-red-300 mr-1"
+            fill="currentColor"
+            viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+              clip-rule="evenodd"></path>
+          </svg>
+          <span class="text-red-300 text-sm font-bold"
+            >↑{{ kpis.tendencia_pendiente|default(15.2) }}% vs mes
+            anterior</span
+          >
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- RECURSOS CRÍTICOS - PRIORIDAD #3 -->
+      <div class="bg-red-800 border border-red-600 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-white font-bold text-sm">RECURSOS CRÍTICOS</h3>
+          <div
+            class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+            URGENTE
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <div class="text-4xl font-black text-white">
+            {{ kpis.recursos_criticos|default(12) }}
+          </div>
+          <div class="text-red-200 text-xs">recursos en riesgo</div>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="text-red-300 text-sm">Sobrecarga:</span>
+          <span class="text-white font-bold text-lg"
+            >{{ kpis.recursos_sobrecarga|default(8) }}</span
+          >
+        </div>
+
+        <div class="flex justify-between items-center mt-1">
+          <span class="text-red-300 text-sm">Capacidad:</span>
+          <span class="text-white font-bold text-lg text-red-300"
+            >{{ kpis.capacidad_critica|default(115) }}%</span
+          >
+        </div>
+
+        <!-- Acción requerida -->
+        <div class="mt-3 pt-2 border-t border-red-600">
+          <div class="text-red-300 text-xs font-bold">
+            🚨 Reasignación inmediata requerida
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ZONA DE MONITOREO - AMARILLO/NARANJA - MONITOREO CERCANO -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- INGRESOS - SOLO SI HAY PROBLEMA -->
+    {% if kpis.crecimiento_ingresos|default(-2.1) < 0 or
+    (kpis.ingresos_totales|default(42.7) / kpis.meta_mensual|default(45.0)) <
+    0.9 %}
+    <div class="bg-orange-700 border border-orange-500 rounded-lg p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-white font-bold text-sm">INGRESOS - MONITOREO</h3>
+        <div
+          class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+          ATENCIÓN
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <div class="text-3xl font-black text-white">
+          ${{ kpis.ingresos_totales|default(42.7) }}M
+        </div>
+        <div class="text-orange-200 text-xs">
+          {{ ((kpis.ingresos_totales|default(42.7) /
+          kpis.meta_mensual|default(45.0)) * 100)|round }}% de meta
+        </div>
+      </div>
+
+      <div class="flex items-center">
+        {% if kpis.crecimiento_ingresos|default(-2.1) < 0 %}
+        <svg
+          class="w-4 h-4 text-red-300 mr-1 rotate-180"
+          fill="currentColor"
+          viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+            clip-rule="evenodd"></path>
+        </svg>
+        <span class="text-red-300 font-bold"
+          >↓{{ kpis.crecimiento_ingresos|default(-2.1)|abs }}% vs mes
+          anterior</span
+        >
+        {% endif %}
+      </div>
+
+      <div class="mt-2 text-orange-300 text-xs">
+        Proyección: ${{ kpis.proyeccion_fin_mes|default('41.2') }}M (bajo meta)
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- RENTABILIDAD - SOLO SI HAY PROBLEMA -->
+    {% if kpis.margen_operativo|default(18.5) < 20 %}
+    <div class="bg-orange-700 border border-orange-500 rounded-lg p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-white font-bold text-sm">RENTABILIDAD - MONITOREO</h3>
+        <div
+          class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+          BAJO META
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <div class="text-3xl font-black text-white">
+          {{ kpis.margen_operativo|default(18.5) }}%
+        </div>
+        <div class="text-orange-200 text-xs">margen operativo</div>
+      </div>
+
+      <div class="flex justify-between items-center">
+        <span class="text-orange-300 text-sm">Meta:</span>
+        <span class="text-white font-bold">20%</span>
+      </div>
+
+      <div class="mt-2 text-orange-300 text-xs">
+        Diferencia: -{{ (20 - kpis.margen_operativo|default(18.5))|round(1) }}%
+        bajo objetivo
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ZONA VERDE - SOLO SI TODO ESTÁ BIEN -->
+  {% if kpis.critical_projects_count|default(8) == 0 and
+  kpis.aging_90_plus_pct|default(25) < 10 %}
+  <div class="bg-green-700 border border-green-500 rounded-lg p-4">
+    <div class="flex items-center justify-center">
+      <svg
+        class="w-8 h-8 text-green-300 mr-3"
+        fill="currentColor"
+        viewBox="0 0 20 20">
+        <path
+          fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+          clip-rule="evenodd"></path>
+      </svg>
+      <div>
+        <h3 class="text-white font-bold text-lg">OPERACIONES NORMALES</h3>
+        <p class="text-green-200 text-sm">
+          Todos los sistemas funcionando correctamente
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- RESUMEN EJECUTIVO - ACCIÓN REQUERIDA -->
+  <div class="bg-gray-800 border border-gray-600 rounded-lg p-4">
+    <h3 class="text-white font-bold mb-3">
+      RESUMEN EJECUTIVO - PRÓXIMAS ACCIONES
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+      <!-- Acción #1 -->
+      <div class="bg-red-900 border border-red-700 rounded p-3">
+        <div class="text-red-300 font-bold mb-1">PRIORIDAD 1 - HOY</div>
+        <div class="text-white">
+          Revisar {{ kpis.high_risk_count|default(5) }} proyectos de alto riesgo
+        </div>
+        <div class="text-red-300 text-xs mt-1">
+          ${{ kpis.critical_projects_amount|default(407) }}M en juego
+        </div>
+      </div>
+
+      <!-- Acción #2 -->
+      <div class="bg-orange-900 border border-orange-700 rounded p-3">
+        <div class="text-orange-300 font-bold mb-1">
+          PRIORIDAD 2 - ESTA SEMANA
+        </div>
+        <div class="text-white">Acelerar cobros +90 días</div>
+        <div class="text-orange-300 text-xs mt-1">
+          ${{ (kpis.monto_pendiente|default(180) *
+          kpis.aging_90_plus_pct|default(25) / 100)|round }}M pendientes
+        </div>
+      </div>
+
+      <!-- Acción #3 -->
+      <div class="bg-yellow-900 border border-yellow-700 rounded p-3">
+        <div class="text-yellow-300 font-bold mb-1">
+          PRIORIDAD 3 - PRÓXIMA SEMANA
+        </div>
+        <div class="text-white">Reasignar recursos sobrecargados</div>
+        <div class="text-yellow-300 text-xs mt-1">
+          {{ kpis.recursos_sobrecarga|default(8) }} recursos en riesgo
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Animaciones para elementos críticos */
+  @keyframes pulse-red {
+    0%,
+    100% {
+      background-color: rgb(153, 27, 27);
+      border-color: rgb(239, 68, 68);
+    }
+    50% {
+      background-color: rgb(127, 29, 29);
+      border-color: rgb(220, 38, 38);
+    }
+  }
+
+  .animate-pulse-red {
+    animation: pulse-red 2s infinite;
+  }
+
+  /* Mejoras de contraste para texto crítico */
+  .text-critical {
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Hover effects para elementos interactivos */
+  .hover-critical:hover {
+    background-color: rgb(127, 29, 29);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  }
+</style>
