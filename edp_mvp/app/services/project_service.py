@@ -86,7 +86,7 @@ class ProjectManagerService:
                     'avg_processing_days': 0,
                     'target_days': 45
                 }
-            for col in ["monto_propuesto", "monto_aprobado", "monto_pagado", "dias_espera"]:
+            for col in ["monto_propuesto", "monto_aprobado", "monto_pagado", "dso_actual"]:
                 if col not in df.columns:
                     df[col] = 0
                 df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
@@ -115,7 +115,7 @@ class ProjectManagerService:
             total_approved = df['monto_aprobado'].sum()
             budget_performance = (total_approved / total_proposed * 100) if total_proposed > 0 else 0
             # Time Performance (average processing days vs target)
-            avg_processing = df['dias_espera'].mean() if 'dias_espera' in df.columns else 0
+            avg_processing = df['dso_actual'].mean() if 'dso_actual' in df.columns else 0
             target_days = 45
             time_performance = max(0, 100 - ((avg_processing - target_days) / target_days * 100))
             # Quality Score (based on rework rate)
@@ -169,7 +169,7 @@ class ProjectManagerService:
             df = pd.DataFrame(proyectos)
             if df.empty or 'proyecto' not in df.columns:
                 return []
-            for col in ["monto_propuesto", "monto_aprobado", "monto_pagado", "dias_espera"]:
+            for col in ["monto_propuesto", "monto_aprobado", "monto_pagado", "dso_actual"]:
                 if col not in df.columns:
                     df[col] = 0
                 df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
@@ -185,7 +185,7 @@ class ProjectManagerService:
                 total_proposed = group['monto_propuesto'].sum()
                 total_approved = group['monto_aprobado'].sum()
                 total_paid = group['monto_pagado'].sum()
-                avg_processing = group['dias_espera'].mean() if 'dias_espera' in group.columns else 0
+                avg_processing = group['dso_actual'].mean() if 'dso_actual' in group.columns else 0
                 completion_rate = (total_paid / total_approved * 100) if total_approved > 0 else 0
                 progress_class = 'green' if completion_rate >= 90 else 'amber' if completion_rate >= 60 else 'red'
                 status = 'completed' if completion_rate >= 99 else 'in_progress' if completion_rate >= 60 else 'pending'

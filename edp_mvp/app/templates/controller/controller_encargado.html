@@ -1,506 +1,702 @@
 {% extends "base.html" %} {% block title %}Gestión de {{ nombre }} | Panel de
 Control{% endblock %} {% block content %}
 
+<!-- Include Controller Encargado CSS -->
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/controller/controller_encargado.css') }}" />
+
 <!-- Agregar Chart.js para gráficos dinámicos -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <!-- Plugin de anotaciones para Chart.js (solo JavaScript, no tiene CSS) -->
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.0/dist/chartjs-plugin-annotation.min.js"></script>
-<!-- Header Moderno con Métricas Clave -->
-<div class="bg-gradient-to-r from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-5 mb-6 shadow-sm">
-  <!-- Sección superior con nombre y controles principales -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-    <!-- Nombre y Rol con Badge de Estatus -->
-    <div class="flex items-center">
-      <div class="relative">
-        <div class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-blue-dark)] rounded-xl shadow-md">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-7 md:w-7 text-white" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-          </svg>
+
+<!-- Pass data to JavaScript -->
+<script>
+  // Make data available to controller_encargado.js
+  window.tendenciaSemanal = {{ tendencia_semanal|tojson if tendencia_semanal else '[]' }};
+  window.topEdpsPendientes = {{ top_edps_pendientes|tojson if top_edps_pendientes else '[]' }};
+  window.distribucionAging = {{ distribucion_aging|tojson if distribucion_aging else '{}' }};
+  window.proyectosData = {{ proyectos|tojson if proyectos else '[]' }};
+  window.controlMetrics = {{ control_metrics|tojson if control_metrics else '{}' }};
+  window.montoPendienteGlobal = {{ monto_pendiente_global or 0 }};
+  window.dsoEncargado = {{ dso_encargado or 0 }};
+  window.dsoGlobal = {{ dso_global or 0 }};
+  window.montoAprobadoGlobal = {{ monto_aprobado_global or 0 }};
+  window.pendienteReciente = {{ pendiente_reciente or 0 }};
+  window.pendienteMedio = {{ pendiente_medio or 0 }};
+  window.pendienteCritico = {{ pendiente_critico or 0 }};
+  window.montoCobradoUltimoMes = {{ monto_cobrado_ultimo_mes or 0 }};
+  window.variacionMensualCobro = {{ variacion_mensual_cobro or 0 }};
+</script>
+
+<!-- Include Controller Encargado JavaScript -->
+<script src="{{ url_for('static', filename='js/controller/controller_encargado.js') }}"></script>
+
+<!-- Analytics Header - Matching Dashboard Style -->
+<header class="analytics-header">
+  <div class="analytics-header-content">
+    <div class="analytics-header-brand">
+      <h1>Gestión de {{ nombre }} - Analytics</h1>
+      <div class="analytics-header-status">
+        <div class="analytics-status-indicator">
+          <div class="status-dot status-active"></div>
+          <span class="status-text"
+            >Sistema Activo • Última actualización:
+            <span id="last-update">{{ now.strftime('%H:%M') }}</span></span
+          >
         </div>
-        <!-- Indicador de estado online -->
-        <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-[color:var(--accent-green)] border-2 border-[color:var(--bg-card)] rounded-full"></div>
+        <div class="timestamp">
+          {{ current_user.nombre if current_user else 'Manager' }} •
+          <span id="current-time">Loading...</span>
+        </div>
       </div>
-      
-      <div class="ml-3">
-        <div class="flex items-center">
-          <h1 class="text-xl md:text-2xl font-bold">{{ nombre }}</h1>
-          <span class="ml-2 px-2 py-0.5 bg-[color:var(--accent-blue)] bg-opacity-10 text-[color:var(--accent-white)] text-xs font-semibold rounded-md">Jefe Proyecto</span>
+    </div>
+
+    <!-- Real-time Management Metrics -->
+    <div class="analytics-header-metrics">
+      <div class="analytics-header-metric" data-tooltip="pendiente-tooltip">
+        <div
+          class="analytics-metric-value {{ 'critical' if monto_pendiente_global and monto_pendiente_global > 1000000000 else 'warning' if monto_pendiente_global and monto_pendiente_global > 500000000 else 'positive' if monto_pendiente_global and monto_pendiente_global > 0 else 'neutral' }}">
+          {% if monto_pendiente_global and monto_pendiente_global > 0 %} {{
+          "{:,.0f}".format(monto_pendiente_global/1000000).replace(",",".") }}M
+          {% else %} -- {% endif %}
         </div>
-        <div class="flex items-center mt-1">
-          <span class="text-sm text-[color:var(--text-secondary)] mr-3">{{ proyectos|length }} proyectos activos</span>
-          <!-- Indicadores de salud -->
-          <div class="flex items-center gap-2">
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] text-xs font-medium">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-              DSO: {{ (dso_encargado or 0)|round(1) }}d
-            </span>
-            
-            {% if stats and stats.porcentaje_retrabajos %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md {% if stats.porcentaje_retrabajos > 10 %}bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)]{% else %}bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)]{% endif %} text-xs font-medium">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              Re-trabajos: {{ stats.porcentaje_retrabajos|round(1) }}%
-            </span>
+        <div class="analytics-metric-label">PENDIENTE</div>
+        <!-- Pendiente Tooltip -->
+        <div class="metric-tooltip" id="pendiente-tooltip">
+          <div class="tooltip-header">
+            <span class="tooltip-title">Cartera Pendiente Total</span>
+            <span class="tooltip-formula"
+              >Suma de todos los montos pendientes</span
+            >
+          </div>
+          <div class="tooltip-content">
+            <div class="tooltip-metric">
+              <span class="tooltip-label">Total CLP:</span>
+              <span class="tooltip-value"
+                >${{ "{:,.0f}".format(monto_pendiente_global or 0) }} CLP</span
+              >
+            </div>
+            <div class="tooltip-metric">
+              <span class="tooltip-label">Proyectos activos:</span>
+              <span class="tooltip-value"
+                >{{ proyectos|length }} proyectos</span
+              >
+            </div>
+            <div class="tooltip-impact">
+              <span class="tooltip-impact-label">Gestión:</span>
+              <span class="tooltip-impact-value">Seguimiento continuo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-header-metric" data-tooltip="dso-tooltip">
+        <div
+          class="analytics-metric-value {{ 'critical' if dso_encargado and dso_encargado > 60 else 'warning' if dso_encargado and dso_encargado > 45 else 'positive' if dso_encargado and dso_encargado > 0 else 'neutral' }}">
+          {% if dso_encargado and dso_encargado > 0 %} {{ dso_encargado|round(1)
+          }} {% else %} -- {% endif %}
+        </div>
+        <div class="analytics-metric-label">DSO DÍAS</div>
+        <!-- DSO Tooltip -->
+        <div class="metric-tooltip" id="dso-tooltip">
+          <div class="tooltip-header">
+            <span class="tooltip-title">Days Sales Outstanding</span>
+            <span class="tooltip-formula"
+              >Promedio días entre facturación y cobro</span
+            >
+          </div>
+          <div class="tooltip-content">
+            <div class="tooltip-metric">
+              <span class="tooltip-label">Target objetivo:</span>
+              <span class="tooltip-value">≤ 45 días</span>
+            </div>
+            <div class="tooltip-metric">
+              <span class="tooltip-label">DSO Global:</span>
+              <span class="tooltip-value"
+                >{{ (dso_global or 0)|round(1) }} días</span
+              >
+            </div>
+            <div class="tooltip-metric">
+              <span class="tooltip-label">Estado actual:</span>
+              <span class="tooltip-value">
+                {% if dso_encargado < 45 %}Excelente{% elif dso_encargado < 60
+                %}Atención{% else %}Crítico{% endif %}
+              </span>
+            </div>
+            <div class="tooltip-impact">
+              <span class="tooltip-impact-label">Impacto:</span>
+              <span class="tooltip-impact-value"
+                >Flujo de caja operacional</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-header-metric" data-tooltip="sla-tooltip">
+        <div
+          class="analytics-metric-value {{ 'positive' if control_metrics.cumplimiento_sla and control_metrics.cumplimiento_sla >= 90 else 'warning' if control_metrics.cumplimiento_sla and control_metrics.cumplimiento_sla >= 75 else 'critical' if control_metrics.cumplimiento_sla and control_metrics.cumplimiento_sla > 0 else 'neutral' }}">
+          {% if control_metrics.cumplimiento_sla and
+          control_metrics.cumplimiento_sla > 0 %} {{
+          control_metrics.cumplimiento_sla|round(1) }}% {% else %} -- {% endif
+          %}
+        </div>
+        <div class="analytics-metric-label">SLA</div>
+        <!-- SLA Tooltip -->
+        <div class="metric-tooltip" id="sla-tooltip">
+          <div class="tooltip-header">
+            <span class="tooltip-title">Service Level Agreement</span>
+            <span class="tooltip-formula"
+              >Cumplimiento de acuerdos de nivel de servicio</span
+            >
+          </div>
+          <div class="tooltip-content">
+            <div class="tooltip-metric">
+              <span class="tooltip-label">Meta objetivo:</span>
+              <span class="tooltip-value">≥ 90%</span>
+            </div>
+            <div class="tooltip-metric">
+              <span class="tooltip-label">Estado actual:</span>
+              <span class="tooltip-value">
+                {% if control_metrics.cumplimiento_sla >= 90 %}Excelente{% elif
+                control_metrics.cumplimiento_sla >= 75 %}Aceptable{% else
+                %}Requiere mejora{% endif %}
+              </span>
+            </div>
+            <div class="tooltip-impact">
+              <span class="tooltip-impact-label">Objetivo:</span>
+              <span class="tooltip-impact-value"
+                >Maximizar cumplimiento SLA</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-header-metric" data-tooltip="proyectos-tooltip">
+        <div
+          class="analytics-metric-value {{ 'positive' if proyectos and proyectos|length > 0 else 'neutral' }}">
+          {% if proyectos and proyectos|length > 0 %} {{ proyectos|length }} {%
+          else %} -- {% endif %}
+        </div>
+        <div class="analytics-metric-label">PROYECTOS</div>
+        <!-- Proyectos Tooltip -->
+        <div class="metric-tooltip" id="proyectos-tooltip">
+          <div class="tooltip-header">
+            <span class="tooltip-title">Proyectos Activos</span>
+            <span class="tooltip-formula">Total de proyectos bajo gestión</span>
+          </div>
+          <div class="tooltip-content">
+            <div class="tooltip-metric">
+              <span class="tooltip-label">Total proyectos:</span>
+              <span class="tooltip-value"
+                >{{ proyectos|length }} proyectos</span
+              >
+            </div>
+            <div class="tooltip-metric">
+              <span class="tooltip-label">Con EDPs críticos:</span>
+              <span class="tooltip-value"
+                >{{ proyectos|selectattr('Críticos', 'gt', 0)|list|length }}
+                proyectos</span
+              >
+            </div>
+            <div class="tooltip-impact">
+              <span class="tooltip-impact-label">Gestión:</span>
+              <span class="tooltip-impact-value">Seguimiento activo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-header-metric" data-tooltip="aprobado-tooltip">
+        <div
+          class="analytics-metric-value {{ 'positive' if monto_aprobado_global and monto_aprobado_global > 0 else 'neutral' }}">
+          {% if monto_aprobado_global and monto_aprobado_global > 0 %} {{
+          "{:,.0f}".format(monto_aprobado_global/1000000).replace(",",".") }}M
+          {% else %} -- {% endif %}
+        </div>
+        <div class="analytics-metric-label">APROBADO</div>
+        <!-- Aprobado Tooltip -->
+        <div class="metric-tooltip" id="aprobado-tooltip">
+          <div class="tooltip-header">
+            <span class="tooltip-title">Monto Aprobado Total</span>
+            <span class="tooltip-formula"
+              >Suma de todos los montos aprobados</span
+            >
+          </div>
+          <div class="tooltip-content">
+            <div class="tooltip-metric">
+              <span class="tooltip-label">Total CLP:</span>
+              <span class="tooltip-value"
+                >${{ "{:,.0f}".format(monto_aprobado_global or 0) }} CLP</span
+              >
+            </div>
+            <div class="tooltip-metric">
+              <span class="tooltip-label">Proyectos activos:</span>
+              <span class="tooltip-value"
+                >{{ proyectos|length }} proyectos</span
+              >
+            </div>
+            <div class="tooltip-impact">
+              <span class="tooltip-impact-label">Estado:</span>
+              <span class="tooltip-impact-value">Cartera aprobada</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Full Width Container -->
+<div class="w-full px-6 py-8 space-y-8">
+  <!-- 4 KPIs Operacionales Principales - Full Width -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 w-full">
+    <!-- 1. Pendiente - Monto y Cantidad con Gráfico -->
+    <div class="kpi-card kpi-animate warning">
+      <div class="kpi-header">
+        <div class="flex items-center">
+          <div class="kpi-icon-container warning">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="kpi-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 9.586V6z"
+                clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <div class="kpi-label">PENDIENTE</div>
+            <div class="kpi-subtitle">
+              {{ proyectos|selectattr("Monto_Pendiente", "gt", 0)|list|length }}
+              proyectos
+            </div>
+          </div>
+        </div>
+        <div class="kpi-status-indicator warning"></div>
+      </div>
+
+      <div class="kpi-content">
+        <div class="kpi-value-container">
+          <div class="kpi-value warning">
+            ${{ "{:,.0f}".format((monto_pendiente_global or
+            0)/1000000).replace(",",".") }}M
+          </div>
+          <div class="kpi-unit">Total pendiente de cobro</div>
+        </div>
+
+        <!-- Mini gráfico de progreso -->
+        <div class="kpi-chart">
+          <div class="chart-label">Distribución por criticidad</div>
+          <div class="progress-bar">
+            {% set total_pendiente = pendiente_reciente + pendiente_medio +
+            pendiente_critico %} {% if total_pendiente > 0 %}
+            <div
+              class="progress-segment success"
+              style="width: {{ (pendiente_reciente/total_pendiente*100) }}%"></div>
+            <div
+              class="progress-segment warning"
+              style="width: {{ (pendiente_medio/total_pendiente*100) }}%"></div>
+            <div
+              class="progress-segment danger"
+              style="width: {{ (pendiente_critico/total_pendiente*100) }}%"></div>
+            {% endif %}
+          </div>
+          <div class="chart-legend">
+            <span class="legend-item success">0-30d</span>
+            <span class="legend-item warning">31-60d</span>
+            <span class="legend-item danger">+60d</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. DSO con Indicador Visual -->
+    <div
+      class="kpi-card kpi-animate {% if (dso_encargado or 0) > 60 %}danger{% elif (dso_encargado or 0) > 45 %}warning{% else %}success{% endif %}">
+      <div class="kpi-header">
+        <div class="flex items-center">
+          <div
+            class="kpi-icon-container {% if (dso_encargado or 0) > 60 %}danger{% elif (dso_encargado or 0) > 45 %}warning{% else %}success{% endif %}">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="kpi-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <div class="kpi-label">DSO</div>
+            <div class="kpi-subtitle">
+              vs Global: {{ (dso_global or 0)|round(1) }}d
+            </div>
+          </div>
+        </div>
+        <div
+          class="kpi-status-indicator {% if (dso_encargado or 0) > 60 %}danger{% elif (dso_encargado or 0) > 45 %}warning{% else %}success{% endif %}"></div>
+      </div>
+
+      <div class="kpi-content">
+        <div class="kpi-value-container">
+          <div
+            class="kpi-value {% if (dso_encargado or 0) > 60 %}danger{% elif (dso_encargado or 0) > 45 %}warning{% else %}success{% endif %}">
+            {{ (dso_encargado or 0)|round(1) }}d
+          </div>
+          <div class="kpi-unit">Days Sales Outstanding</div>
+        </div>
+
+        <!-- Medidor circular -->
+        <div class="kpi-gauge">
+          <div class="gauge-container">
+            <svg class="gauge-svg" viewBox="0 0 36 36">
+              <path
+                class="gauge-background"
+                stroke="currentColor"
+                stroke-width="3"
+                fill="none"
+                d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path
+                class="gauge-progress {% if (dso_encargado or 0) <= 45 %}success{% elif (dso_encargado or 0) <= 60 %}warning{% else %}danger{% endif %}"
+                stroke="currentColor"
+                stroke-width="3"
+                fill="none"
+                stroke-linecap="round"
+                stroke-dasharray="{{ 100 - ((dso_encargado or 0)/90*100)|round(1) }}, 100"
+                d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <div class="gauge-center">
+              <span class="gauge-label">Meta: 45d</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Distribución por Antigüedad con Gráfico de Barras -->
+    <div class="kpi-card kpi-animate info">
+      <div class="kpi-header">
+        <div class="flex items-center">
+          <div class="kpi-icon-container info">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="kpi-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+              <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <div class="kpi-label">DISTRIBUCIÓN</div>
+            <div class="kpi-subtitle">Por antigüedad</div>
+          </div>
+        </div>
+        <div class="kpi-status-indicator info"></div>
+      </div>
+
+      <div class="kpi-content">
+        <div class="kpi-value-container">
+          <div class="kpi-value info">{{ proyectos|length }}</div>
+          <div class="kpi-unit">Proyectos totales</div>
+        </div>
+
+        <!-- Gráfico de barras -->
+        <div class="kpi-chart">
+          <div class="chart-label">Distribución temporal</div>
+          <div class="bar-chart">
+            <div class="bar-item">
+              <div class="bar-label">0-30d</div>
+              <div class="bar-container">
+                <div
+                  class="bar-fill success"
+                  style="width: {{ (pendiente_reciente / (monto_pendiente_global or 1) * 100)|round(1) }}%"></div>
+              </div>
+              <div class="bar-value">
+                {{ "{:,.0f}".format(pendiente_reciente/1000000).replace(",",".")
+                }}M
+              </div>
+            </div>
+            <div class="bar-item">
+              <div class="bar-label">31-60d</div>
+              <div class="bar-container">
+                <div
+                  class="bar-fill warning"
+                  style="width: {{ (pendiente_medio / (monto_pendiente_global or 1) * 100)|round(1) }}%"></div>
+              </div>
+              <div class="bar-value">
+                {{ "{:,.0f}".format(pendiente_medio/1000000).replace(",",".")
+                }}M
+              </div>
+            </div>
+            <div class="bar-item">
+              <div class="bar-label">+60d</div>
+              <div class="bar-container">
+                <div
+                  class="bar-fill danger"
+                  style="width: {{ (pendiente_critico / (monto_pendiente_global or 1) * 100)|round(1) }}%"></div>
+              </div>
+              <div class="bar-value">
+                {{ "{:,.0f}".format(pendiente_critico/1000000).replace(",",".")
+                }}M
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. SLA con Indicador de Rendimiento -->
+    <div
+      class="kpi-card kpi-animate {% if control_metrics.cumplimiento_sla >= 90 %}success{% elif control_metrics.cumplimiento_sla >= 75 %}warning{% else %}danger{% endif %}">
+      <div class="kpi-header">
+        <div class="flex items-center">
+          <div
+            class="kpi-icon-container {% if control_metrics.cumplimiento_sla >= 90 %}success{% elif control_metrics.cumplimiento_sla >= 75 %}warning{% else %}danger{% endif %}">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="kpi-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <div class="kpi-label">SLA</div>
+            <div class="kpi-subtitle">Service Level Agreement</div>
+          </div>
+        </div>
+        <div
+          class="kpi-status-indicator {% if control_metrics.cumplimiento_sla >= 90 %}success{% elif control_metrics.cumplimiento_sla >= 75 %}warning{% else %}danger{% endif %}"></div>
+      </div>
+
+      <div class="kpi-content">
+        <div class="kpi-value-container">
+          <div
+            class="kpi-value {% if control_metrics.cumplimiento_sla >= 90 %}success{% elif control_metrics.cumplimiento_sla >= 75 %}warning{% else %}danger{% endif %}">
+            {{ control_metrics.cumplimiento_sla|round(1) }}%
+          </div>
+          <div class="kpi-unit">Cumplimiento objetivo</div>
+        </div>
+
+        <!-- Barra de progreso SLA -->
+        <div class="kpi-progress">
+          <div class="progress-header">
+            <span class="progress-label">Meta: 90%</span>
+            <span class="progress-value"
+              >{{ control_metrics.cumplimiento_sla|round(1) }}%</span
+            >
+          </div>
+          <div class="progress-bar">
+            <div
+              class="progress-fill {% if control_metrics.cumplimiento_sla >= 90 %}success{% elif control_metrics.cumplimiento_sla >= 75 %}warning{% else %}danger{% endif %}"
+              style="width: {{ control_metrics.cumplimiento_sla }}%"></div>
+          </div>
+          <div class="progress-status">
+            {% if control_metrics.cumplimiento_sla >= 90 %}
+            <span class="status-badge success">Excelente</span>
+            {% elif control_metrics.cumplimiento_sla >= 75 %}
+            <span class="status-badge warning">Aceptable</span>
+            {% else %}
+            <span class="status-badge danger">Requiere mejora</span>
             {% endif %}
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Bloque derecho con estadísticas y acciones -->
-    <div class="flex flex-col gap-3">
-      <!-- Métricas clave en tarjetas pequeñas -->
-      <div class="flex items-center gap-3">
-        <!-- Métrica 1: Pendiente -->
-        <div class="px-3 py-2 bg-[color:var(--bg-card)] rounded-lg border border-[color:var(--border-color-subtle)] shadow-sm">
-          <div class="flex items-center gap-2">
-            <div class="p-1.5 bg-[color:var(--accent-amber)] bg-opacity-15 rounded-md">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-white)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <div class="text-xs text-[color:var(--text-secondary)]">Pendiente</div>
-              <div class="text-sm font-bold">${{ "{:,.1f}".format((monto_pendiente_global or 0)/1000000).replace(",",".") }}M</div>
+  <!-- 2 Gráficas de Apoyo -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Tendencia Semanal de Cobranza -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title-container">
+          <div class="chart-icon-container info">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="chart-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path
+                d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="chart-title">Tendencia Semanal de Cobranza</h3>
+            <p class="chart-subtitle">Últimas 12 semanas</p>
+          </div>
+        </div>
+        <div class="chart-status">
+          <div class="status-indicator success"></div>
+          <span class="status-text">Activo</span>
+        </div>
+      </div>
+
+      <div class="chart-content">
+        <canvas id="tendenciaCobranzaChart"></canvas>
+      </div>
+
+      <div class="chart-footer">
+        <div class="chart-metric">
+          <div class="metric-indicator success"></div>
+          <div class="metric-content">
+            <div class="metric-label">Promedio semanal</div>
+            <div class="metric-value">
+              ${{
+              "{:,.0f}".format(monto_cobrado_ultimo_mes/4/1000).replace(',','.')
+              }}K
             </div>
           </div>
         </div>
-        
-        <!-- Métrica 2: Aprobado -->
-        <div class="px-3 py-2 bg-[color:var(--bg-card)] rounded-lg border border-[color:var(--border-color-subtle)] shadow-sm">
-          <div class="flex items-center gap-2">
-            <div class="p-1.5 bg-[color:var(--accent-blue)] bg-opacity-15 rounded-md">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-white)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <div class="text-xs text-[color:var(--text-secondary)]">Aprobado</div>
-              <div class="text-sm font-bold">${{ "{:,.1f}".format((monto_aprobado_global or 0)/1000000).replace(",",".") }}M</div>
-            </div>
+        <div class="chart-trend">
+          <div
+            class="trend-indicator {% if variacion_mensual_cobro > 0 %}positive{% else %}negative{% endif %}">
+            {% if variacion_mensual_cobro > 0 %}
+            <svg class="trend-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fill-rule="evenodd"
+                d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L10 4.414 6.707 7.707a1 1 0 01-1.414 0z"
+                clip-rule="evenodd" />
+            </svg>
+            {% else %}
+            <svg class="trend-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fill-rule="evenodd"
+                d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L10 15.586l3.293-3.293a1 1 0 011.414 0z"
+                clip-rule="evenodd" />
+            </svg>
+            {% endif %}
           </div>
-        </div>
-        
-        <!-- Métrica 3: SLA -->
-        <div class="px-3 py-2 bg-[color:var(--bg-card)] rounded-lg border border-[color:var(--border-color-subtle)] shadow-sm">
-          <div class="flex items-center gap-2">
-            <div class="p-1.5 bg-[color:var(--accent-green)] bg-opacity-15 rounded-md">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[color:var(--accent-white)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <div>
-              <div class="text-xs text-[color:var(--text-secondary)]">SLA</div>
-              <div class="text-sm font-bold">{{ control_metrics.cumplimiento_sla|round(1) }}%</div>
+          <div class="trend-content">
+            <div class="trend-label">Variación mensual</div>
+            <div
+              class="trend-value {% if variacion_mensual_cobro > 0 %}positive{% else %}negative{% endif %}">
+              {{ variacion_mensual_cobro|abs|round(1) }}%
             </div>
           </div>
         </div>
       </div>
-      
-      <!-- Botones de acción -->
-      <div class="flex justify-end items-center gap-2">
-        <a href="{{ url_for('dashboard.dashboard_controller') }}" 
-           class="inline-flex items-center px-3 py-1.5 text-sm border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-highlight)] transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Dashboard
-        </a>
-        <button id="exportarDatos" class="inline-flex items-center px-3 py-1.5 text-sm border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-highlight)] transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-          </svg>
-          Exportar
-        </button>
-      </div>
     </div>
-  </div>
 
-  <!-- Barra inferior con controles y fecha de actualización -->
-  <div class="flex flex-wrap items-center justify-between mt-4 pt-4 border-t border-[color:var(--border-color-subtle)]">
-    <div class="flex flex-wrap items-center gap-3">
-      <!-- Selector de Período con estilo mejorado -->
-      <div class="flex items-center space-x-2">
-        <span class="text-xs font-medium text-[color:var(--text-tertiary)]">PERÍODO:</span>
-        <div class="flex bg-[color:var(--bg-highlight)] rounded-lg p-1 shadow-sm">
-          <button class="px-3 py-1 rounded-md text-xs font-semibold bg-[color:var(--accent-blue)] text-white shadow-sm">Mes</button>
-          <button class="px-3 py-1 rounded-md text-xs font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]">Semana</button>
+    <!-- Top 10 EDPs Pendientes -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title-container">
+          <div class="chart-icon-container warning">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="chart-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z"
+                clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="chart-title">Top 10 EDPs Pendientes</h3>
+            <p class="chart-subtitle">Por monto</p>
+          </div>
+        </div>
+        <div class="chart-status">
+          <div class="status-indicator warning"></div>
+          <span class="status-text">Pendiente</span>
         </div>
       </div>
-      
-      <!-- Switch de Vista con estilo mejorado -->
-      <div class="flex items-center space-x-2">
-        <span class="text-xs font-medium text-[color:var(--text-tertiary)]">VISTA:</span>
-        <div class="flex bg-[color:var(--bg-highlight)] rounded-lg p-1 shadow-sm">
-          <button class="px-3 py-1 rounded-md text-xs font-semibold bg-[color:var(--accent-blue)] text-white shadow-sm">Todo</button>
-          <button class="px-3 py-1 rounded-md text-xs font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]">Mi Portfolio</button>
-        </div>
-      </div>
-      
-      <!-- Alertas (versión compacta) -->
-      {% if alertas and alertas|length > 0 %}
-      <div class="flex items-center">
-        <span class="inline-flex items-center px-2 py-1 rounded-md bg-[color:var(--bg-card)] border border-[color:var(--border-color-subtle)] text-xs">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1 text-[color:var(--accent-amber)]" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-          </svg>
-          <span>{{ alertas|length }} {{ 'alerta' if alertas|length == 1 else 'alertas' }}</span>
-        </span>
-      </div>
-      {% endif %}
-    </div>
-    
-    <!-- Indicador de actualización con animación -->
-    <div class="flex items-center gap-1.5">
-      <div class="animate-pulse w-1.5 h-1.5 rounded-full bg-[color:var(--accent-green)]"></div>
-      <span class="text-xs text-[color:var(--text-secondary)]">Actualizado: {{ now.strftime('%d/%m/%Y %H:%M') }}</span>
-    </div>
-  </div>
-</div>
 
-<!-- 4 KPIs Operacionales Principales -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-  <!-- 1. Pendiente - Monto y Cantidad con Gráfico -->
-  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center">
-                  <div class="p-3 bg-gradient-to-br from-[color:var(--accent-amber)] to-[color:var(--accent-orange)] rounded-xl shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black dark:text-white" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 9.586V6z" clip-rule="evenodd" />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <span class="text-xs font-bold text-[color:var(--accent-amber)] tracking-wider">PENDIENTE</span>
-        </div>
+      <div class="chart-content">
+        <canvas id="topEdpsPendientesChart"></canvas>
       </div>
-      <div class="text-right">
-        {% set pendiente_count = proyectos|selectattr("Monto_Pendiente", "gt", 0)|list|length %}
-        <div class="text-xs text-[color:var(--text-secondary)]">{{ pendiente_count }} proyectos</div>
-      </div>
-    </div>
-    
-    <div class="space-y-3">
-      <div class="flex items-end justify-between">
-        <div>
-          <p class="text-3xl font-bold text-[color:var(--text-primary)] tracking-tight">
-            ${{ "{:,.0f}".format((monto_pendiente_global or 0)/1000000).replace(",",".") }}M
-          </p>
-          <p class="text-sm text-[color:var(--text-secondary)] mt-1">
-            Total pendiente de cobro
-          </p>
-        </div>
-        <div class="text-right">
-          {% set variacion_pendiente = ((monto_pendiente_global - (monto_pendiente_global * 0.9)) / (monto_pendiente_global * 0.9) * 100) if monto_pendiente_global > 0 else 0 %}
-          <span class="text-xs px-2 py-1 rounded-full {% if variacion_pendiente < 0 %}bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)]{% else %}bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)]{% endif %}">
-            {{ "+" if variacion_pendiente > 0 else "" }}{{ variacion_pendiente|round(1) }}%
-          </span>
-        </div>
-      </div>
-      
-      <!-- Mini gráfico de progreso -->
-      <div class="mt-3">
-        <div class="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
-          <span>Distribución por criticidad</span>
-        </div>
-        <div class="flex h-2 bg-[color:var(--bg-input)] rounded-full overflow-hidden progress-bar-animated">
-          {% set total_pendiente = pendiente_reciente + pendiente_medio + pendiente_critico %}
-          {% if total_pendiente > 0 %}
-            <div class="bg-[color:var(--accent-green)] transition-all duration-1000" style="width: {{ (pendiente_reciente/total_pendiente*100) }}%"></div>
-            <div class="bg-[color:var(--accent-amber)] transition-all duration-1000" style="width: {{ (pendiente_medio/total_pendiente*100) }}%"></div>
-            <div class="bg-[color:var(--accent-red)] transition-all duration-1000" style="width: {{ (pendiente_critico/total_pendiente*100) }}%"></div>
-          {% endif %}
-        </div>
-        <div class="flex justify-between text-xs mt-1">
-          <span class="text-[color:var(--accent-green)]">0-30d</span>
-          <span class="text-[color:var(--accent-amber)]">31-60d</span>
-          <span class="text-[color:var(--accent-red)]">+60d</span>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- 2. DSO con Indicador Visual -->
-  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--background)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center">
-          <div class="p-3 bg-gradient-to-br from-[color:var(--accent-blue)] to-[color:var(--accent-blue-dark)] rounded-xl shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black dark:text-white" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-          </svg>
+      <div class="chart-footer">
+        <div class="chart-metric">
+          <div class="metric-indicator warning"></div>
+          <div class="metric-content">
+            <div class="metric-label">Total top 10</div>
+            <div class="metric-value">
+              ${{ "{:,.1f}".format((proyectos|selectattr("estado", "eq",
+              "pendiente")|map(attribute="monto_propuesto")|list|sort(reverse=true))[:10]|sum/1000000).replace(',','.')
+              }}M
+            </div>
+          </div>
         </div>
-        <div class="ml-3">
-          <span class="text-xs font-bold text-[color:var(--accent-blue)] tracking-wider">DSO</span>
-        </div>
-      </div>        <div class="text-right">
-          <div class="text-xs text-[color:var(--text-secondary)]">vs Global: {{ (dso_global or 0)|round(1) }}d</div>
-        </div>
-    </div>
-    
-    <div class="space-y-3">
-      <div class="flex items-end justify-between">
-        <div>
-          <p class="text-3xl font-bold tracking-tight
-            {% if (dso_encargado or 0) > 60 %}text-[color:var(--accent-red)]
-            {% elif (dso_encargado or 0) > 45 %}text-[color:var(--accent-amber)]
-            {% else %}text-[color:var(--accent-green)]
-            {% endif %}">{{ (dso_encargado or 0)|round(1) }}d</p>
-          <p class="text-sm text-[color:var(--text-secondary)] mt-1">Days Sales Outstanding</p>
-        </div>
-        <div class="text-right">
-          {% set dso_performance = ((45 - (dso_encargado or 0)) / 45 * 100) %}
-          <span class="confidence-indicator {% if (dso_encargado or 0) <= 45 %}confidence-high{% elif (dso_encargado or 0) <= 60 %}confidence-medium{% else %}confidence-low{% endif %}">
-            {% if (dso_encargado or 0) <= 45 %}Excelente{% elif (dso_encargado or 0) <= 60 %}Moderado{% else %}Crítico{% endif %}
-          </span>
-        </div>
-      </div>
-      
-      <!-- Medidor circular -->
-      <div class="flex items-center justify-center mt-4">
-        <div class="relative w-16 h-16">
-          <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
-            <path class="text-[color:var(--bg-input)]" stroke="currentColor" stroke-width="3" fill="none"
-                  d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
-            <path class="{% if (dso_encargado or 0) <= 45 %}text-[color:var(--accent-green)]{% elif (dso_encargado or 0) <= 60 %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-red)]{% endif %}" 
-                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"
-                  stroke-dasharray="{{ 100 - ((dso_encargado or 0)/90*100)|round(1) }}, 100"
-                  d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
-          </svg>
-          <div class="absolute inset-0 flex items-center justify-center">
-            <span class="text-xs font-bold">Meta: 45d</span>
+        <div class="chart-summary">
+          <div class="summary-icon">
+            <svg
+              class="summary-icon-svg"
+              fill="currentColor"
+              viewBox="0 0 20 20">
+              <path
+                fill-rule="evenodd"
+                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="summary-content">
+            <div class="summary-label">EDPs pendientes</div>
+            <div class="summary-value">
+              {{ (proyectos|selectattr("estado", "eq", "pendiente")|list|length)
+              }}
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- 3. Distribución por Antigüedad con Gráfico de Barras -->
-  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--background)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center">
-                  <div class="p-3 bg-gradient-to-br from-[color:var(--accent-purple)] to-[color:var(--accent-purple-dark)] rounded-xl shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black dark:text-white" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
-            <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <span class="text-xs font-bold text-[color:var(--accent-purple)] tracking-wider">DISTRIBUCIÓN</span>
-        </div>
-      </div>
-    </div>
-    
-    <div class="space-y-4">
-      {% set total_aging = pendiente_reciente + pendiente_medio + pendiente_critico %}
-      
-      <!-- 0-30 días -->
-      <div class="space-y-2">
-        <div class="flex justify-between items-center">
-          <span class="text-sm font-medium text-[color:var(--accent-green)]">0-30 días</span>
-          <span class="text-sm font-bold text-[color:var(--accent-green)]">${{ (pendiente_reciente/1000000)|round(1) }}M</span>
-        </div>
-        <div class="w-full bg-[color:var(--bg-input)] rounded-full h-2">
-          <div class="bg-[color:var(--accent-green)] h-2 rounded-full transition-all duration-500" 
-               style="width: {% if total_aging > 0 %}{{ (pendiente_reciente/total_aging*100)|round(1) }}%{% else %}0%{% endif %}"></div>
-        </div>
-      </div>
-      
-      <!-- 31-60 días -->
-      <div class="space-y-2">
-        <div class="flex justify-between items-center">
-          <span class="text-sm font-medium text-[color:var(--accent-amber)]">31-60 días</span>
-          <span class="text-sm font-bold text-[color:var(--accent-amber)]">${{ (pendiente_medio/1000000)|round(1) }}M</span>
-        </div>
-        <div class="w-full bg-[color:var(--bg-input)] rounded-full h-2">
-          <div class="bg-[color:var(--accent-amber)] h-2 rounded-full transition-all duration-500" 
-               style="width: {% if total_aging > 0 %}{{ (pendiente_medio/total_aging*100)|round(1) }}%{% else %}0%{% endif %}"></div>
-        </div>
-      </div>
-      
-      <!-- +60 días -->
-      <div class="space-y-2">
-        <div class="flex justify-between items-center">
-          <span class="text-sm font-medium text-[color:var(--accent-red)]">+60 días</span>
-          <span class="text-sm font-bold text-[color:var(--accent-red)]">${{ (pendiente_critico/1000000)|round(1) }}M</span>
-        </div>
-        <div class="w-full bg-[color:var(--bg-input)] rounded-full h-2">
-          <div class="bg-[color:var(--accent-red)] h-2 rounded-full transition-all duration-500" 
-               style="width: {% if total_aging > 0 %}{{ (pendiente_critico/total_aging*100)|round(1) }}%{% else %}0%{% endif %}"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 4. SLA Compliance con Indicador Avanzado -->
-  <div class="kpi-card kpi-animate bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-xl p-6 hover:shadow-lg transition-all duration-300">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center">
-                  <div class="p-3 bg-gradient-to-br from-[color:var(--accent-green)] to-[color:var(--accent-green-dark)] rounded-xl shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black dark:text-white" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <span class="text-xs font-bold text-[color:var(--accent-green)] tracking-wider">SLA COMPLIANCE</span>
-        </div>
-      </div>
-      <div class="text-right">
-        {% set sla_status = "Excelente" if control_metrics.cumplimiento_sla >= 90 else "Bueno" if control_metrics.cumplimiento_sla >= 75 else "Crítico" %}
-        <span class="confidence-indicator {% if control_metrics.cumplimiento_sla >= 90 %}confidence-high{% elif control_metrics.cumplimiento_sla >= 75 %}confidence-medium{% else %}confidence-low{% endif %}">
-          {{ sla_status }}
-        </span>
-      </div>
-    </div>
-    
-    <div class="space-y-3">
-      <div class="flex items-end justify-between">
-        <div>
-          <p class="text-3xl font-bold tracking-tight
-            {% if control_metrics.cumplimiento_sla >= 90 %}text-[color:var(--accent-green)]
-            {% elif control_metrics.cumplimiento_sla >= 75 %}text-[color:var(--accent-amber)]
-            {% else %}text-[color:var(--accent-red)]
-            {% endif %}">{{ control_metrics.cumplimiento_sla|round(1) }}%</p>
-          <p class="text-sm text-[color:var(--text-secondary)] mt-1">Cumplimiento de SLA</p>
-        </div>
-      </div>
-      
-      <!-- Indicador de progreso hacia meta -->
-      <div class="mt-4">
-        <div class="flex justify-between text-xs text-[color:var(--text-secondary)] mb-1">
-          <span>Progreso hacia meta</span>
-          <span>Meta: 90%</span>
-        </div>
-        <div class="w-full bg-[color:var(--bg-input)] rounded-full h-3 overflow-hidden progress-bar-animated">
-          <div class="h-3 rounded-full transition-all duration-1000 {% if control_metrics.cumplimiento_sla >= 90 %}bg-gradient-to-r from-[color:var(--accent-green)] to-[color:var(--accent-green-dark)]{% elif control_metrics.cumplimiento_sla >= 75 %}bg-gradient-to-r from-[color:var(--accent-amber)] to-[color:var(--accent-orange)]{% else %}bg-gradient-to-r from-[color:var(--accent-red)] to-[color:var(--accent-red-dark)]{% endif %}" 
-               style="width: {{ (control_metrics.cumplimiento_sla)|round(1) }}%"></div>
-        </div>
-        <div class="flex justify-between text-xs mt-1">
-          <span class="text-[color:var(--accent-red)]">0%</span>
-          <span class="text-[color:var(--accent-amber)]">75%</span>
-          <span class="text-[color:var(--accent-green)]">90%</span>
-          <span class="text-[color:var(--text-secondary)]">100%</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- 2 Gráficas de Apoyo -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-  <!-- Tendencia Semanal de Cobranza -->
-  <div class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6 chart-container">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-lg font-semibold flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-        </svg>
-        Tendencia Semanal de Cobranza
-      </h3>
-      <div class="text-xs text-[color:var(--text-secondary)] flex items-center">
-        <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full mr-1 animate-pulse"></div>
-        Últimas 12 semanas
-      </div>
-    </div>
-    <div class="h-64 relative">
-      <canvas id="tendenciaCobranzaChart"></canvas>
-    </div>
-    <div class="mt-3 flex items-center justify-between text-sm border-t border-[color:var(--border-color-subtle)] pt-3">
-      <div class="flex items-center">
-        <div class="w-3 h-3 bg-[color:var(--accent-green)] rounded-full mr-2"></div>
-        <span>Promedio semanal: ${{ "{:,.0f}".format(monto_cobrado_ultimo_mes/4/1000).replace(',','.') }}K</span>
-      </div>
-      <div class="text-[color:var(--text-secondary)] flex items-center">
-        {% if variacion_mensual_cobro > 0 %}
-          <svg class="w-3 h-3 text-[color:var(--accent-green)] mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L10 4.414 6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-          </svg>
-        {% else %}
-          <svg class="w-3 h-3 text-[color:var(--accent-red)] mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L10 15.586l3.293-3.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-          </svg>
-        {% endif %}
-        {{ variacion_mensual_cobro|abs|round(1) }}%
-      </div>
-    </div>
-  </div>
-
-  <!-- Top 10 EDPs Pendientes -->
-  <div class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6 chart-container">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-lg font-semibold flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-amber)]" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" clip-rule="evenodd" />
-        </svg>
-        Top 10 EDPs Pendientes
-      </h3>
-      <div class="text-xs text-[color:var(--text-secondary)] flex items-center">
-        <div class="w-2 h-2 bg-[color:var(--accent-amber)] rounded-full mr-1 animate-pulse"></div>
-        Por monto
-      </div>
-    </div>
-    <div class="h-64 relative">
-      <canvas id="topEdpsPendientesChart"></canvas>
-    </div>
-    <div class="mt-3 flex items-center justify-between text-sm border-t border-[color:var(--border-color-subtle)] pt-3">
-      <div class="flex items-center">
-        <div class="w-3 h-3 bg-[color:var(--accent-amber)] rounded-full mr-2"></div>
-        <span>Total top 10: ${{ "{:,.1f}".format((proyectos|selectattr("estado", "eq", "pendiente")|map(attribute="monto_propuesto")|list|sort(reverse=true))[:10]|sum/1000000).replace(',','.') }}M</span>
-      </div>
-      <div class="text-[color:var(--text-secondary)] flex items-center">
-        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-        </svg>
-        {{ (proyectos|selectattr("estado", "eq", "pendiente")|list|length) }} EDPs pendientes
-      </div>
-    </div>
-  </div>
-</div>
-
-
 
   <!-- Tabla de proyectos mejorada -->
-  <div class="section-title-modern mb-5 flex items-center justify-between">
-    <h2 class="text-xl font-semibold flex items-center">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]"
-        viewBox="0 0 20 20"
-        fill="currentColor">
-        <path
-          d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 002-2h12a2 2 0 002 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
-      </svg>
-      Proyectos
-      <span class="text-sm text-[color:var(--text-secondary)] ml-2 font-normal"
-        >({{ proyectos|length }})</span
-      >
-    </h2>
-    <!-- Controles de búsqueda y filtrado -->
-    <div class="flex items-center space-x-3">
-      <!-- Input de búsqueda -->
-      <div class="relative">
-        <input
-          type="text"
-          id="buscarProyecto"
-          placeholder="Buscar proyecto..."
-          class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5 pl-8 w-64">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-2.5 top-2 text-[color:var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  <div class="section-header">
+    <div class="section-title-container">
+      <div class="section-icon-container info">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="section-icon"
+          viewBox="0 0 20 20"
+          fill="currentColor">
+          <path
+            d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 002-2h12a2 2 0 002 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
         </svg>
       </div>
-      
-      <!-- Selector de filtro -->
-      <select
-        id="filtroProyectos"
-        class="text-sm rounded-lg border border-[color:var(--border-color)] bg-[color:var(--bg-card)] px-3 py-1.5">
-        <option value="todos">Todos</option>
-        <option value="criticos">Con críticos</option>
-        <option value="validados">Con validados</option>
-        <option value="pendientes">Pendientes</option>
-        <option value="pagados">Pagados</option>
-      </select>
+      <div>
+        <h2 class="section-title">Proyectos</h2>
+        <p class="section-subtitle">
+          {{ proyectos|length }} proyectos en gestión
+        </p>
+      </div>
+    </div>
+    <div class="section-actions">
+      <button class="action-button primary" onclick="exportProjects()">
+        <svg class="action-icon" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+            clip-rule="evenodd" />
+        </svg>
+        Exportar
+      </button>
+      <button class="action-button secondary" onclick="filterProjects()">
+        <svg class="action-icon" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
+            clip-rule="evenodd" />
+        </svg>
+        Filtrar
+      </button>
     </div>
   </div>
 
@@ -702,1166 +898,4 @@ Control{% endblock %} {% block content %}
   {% endif %}
 </div>
 
-<!-- Script para ordenamiento y filtrado -->
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Función para ordenar tabla
-    const sortableHeaders = document.querySelectorAll(".sortable");
-
-    sortableHeaders.forEach((header) => {
-      header.addEventListener("click", function () {
-        const sortBy = this.getAttribute("data-sort");
-        const isAsc = this.classList.contains("sort-asc");
-
-        // Limpiar todas las clases de ordenamiento
-        sortableHeaders.forEach((h) => {
-          h.classList.remove("sort-asc", "sort-desc");
-        });
-
-        // Establecer nueva clase de ordenamiento
-        this.classList.add(isAsc ? "sort-desc" : "sort-asc");
-
-        sortTable(sortBy, !isAsc);
-      });
-    });
-
-    // Filtro de búsqueda
-    const buscarInput = document.getElementById("buscarProyecto");
-    buscarInput.addEventListener("input", filterTable);
-
-    // Filtro por tipo
-    const filtroSelect = document.getElementById("filtroProyectos");
-    filtroSelect.addEventListener("change", filterTable);
-
-    // Reemplazar la función filterTable existente
-    function filterTable() {
-      const searchTerm = buscarInput.value.toLowerCase();
-      const filterType = filtroSelect.value;
-
-      let visibleCount = 0;
-
-      const rows = document.querySelectorAll("#tablaProyectos tbody tr");
-
-      rows.forEach((row) => {
-        const proyecto = row.getAttribute("data-proyecto").toLowerCase();
-        const criticos = row
-          .querySelector("td:nth-child(3)")
-          .textContent.trim();
-        const validados = row
-          .querySelector("td:nth-child(4)")
-          .textContent.trim();
-        const montoPendiente = parseFloat(
-          row
-            .querySelector("td:nth-child(9)")
-            .textContent.replace(/[$,\.]/g, "")
-        );
-        const montoPagado = parseFloat(
-          row
-            .querySelector("td:nth-child(8)")
-            .textContent.replace(/[$,\.]/g, "")
-        );
-
-        let shouldShow = proyecto.includes(searchTerm);
-
-        if (filterType === "criticos") {
-          shouldShow = shouldShow && criticos !== "-";
-        } else if (filterType === "validados") {
-          shouldShow = shouldShow && validados !== "-";
-        } else if (filterType === "pendientes") {
-          shouldShow = shouldShow && montoPendiente > 0;
-        } else if (filterType === "pagados") {
-          shouldShow = shouldShow && montoPagado > 0;
-        }
-
-        if (shouldShow) {
-          row.style.display = "";
-          visibleCount++;
-        } else {
-          row.style.display = "none";
-        }
-      });
-
-      // Actualizar contador de resultados
-      if (document.getElementById("countResults")) {
-        document.getElementById("countResults").textContent = visibleCount;
-      }
-
-      // Reiniciar paginación si existe
-      updatePagination();
-    }
-
-    function sortTable(sortBy, ascending) {
-      const tbody = document.querySelector("#tablaProyectos tbody");
-      const rows = Array.from(tbody.querySelectorAll("tr"));
-
-      rows.sort((a, b) => {
-        let valueA, valueB;
-
-        // Obtener valores según la columna a ordenar
-        switch (sortBy) {
-          case "monto-prop":
-            valueA = parseFloat(
-              a
-                .querySelector("td:nth-child(6)")
-                .textContent.replace(/[$,\.]/g, "")
-            );
-            valueB = parseFloat(
-              b
-                .querySelector("td:nth-child(6)")
-                .textContent.replace(/[$,\.]/g, "")
-            );
-            break;
-          case "monto":
-            valueA = parseFloat(
-              a
-                .querySelector("td:nth-child(7)")
-                .textContent.replace(/[$,\.]/g, "")
-            );
-            valueB = parseFloat(
-              b
-                .querySelector("td:nth-child(7)")
-                .textContent.replace(/[$,\.]/g, "")
-            );
-            break;
-          case "total":
-            valueA = parseInt(a.querySelector("td:nth-child(2)").textContent);
-            valueB = parseInt(b.querySelector("td:nth-child(2)").textContent);
-            break;
-          case "criticos":
-            valueA =
-              a.querySelector("td:nth-child(3)").textContent.trim() === "-"
-                ? 0
-                : parseInt(a.querySelector("td:nth-child(3)").textContent);
-            valueB =
-              b.querySelector("td:nth-child(3)").textContent.trim() === "-"
-                ? 0
-                : parseInt(b.querySelector("td:nth-child(3)").textContent);
-            break;
-          case "validados":
-            valueA =
-              a.querySelector("td:nth-child(4)").textContent.trim() === "-"
-                ? 0
-                : parseInt(a.querySelector("td:nth-child(4)").textContent);
-            valueB =
-              b.querySelector("td:nth-child(4)").textContent.trim() === "-"
-                ? 0
-                : parseInt(b.querySelector("td:nth-child(4)").textContent);
-            break;
-          case "dias":
-            valueA = parseInt(a.querySelector("td:nth-child(5)").textContent);
-            valueB = parseInt(b.querySelector("td:nth-child(5)").textContent);
-            break;
-          case "monto":
-            valueA = parseFloat(
-              a
-                .querySelector("td:nth-child(6)")
-                .textContent.replace(/[$,\.]/g, "")
-            );
-            valueB = parseFloat(
-              b
-                .querySelector("td:nth-child(6)")
-                .textContent.replace(/[$,\.]/g, "")
-            );
-            break;
-          case "pagado":
-            valueA = parseFloat(
-              a
-                .querySelector("td:nth-child(7)")
-                .textContent.replace(/[$,\.]/g, "")
-            );
-            valueB = parseFloat(
-              b
-                .querySelector("td:nth-child(7)")
-                .textContent.replace(/[$,\.]/g, "")
-            );
-            break;
-          case "pendiente":
-            valueA = parseFloat(
-              a
-                .querySelector("td:nth-child(8)")
-                .textContent.replace(/[$,\.]/g, "")
-            );
-            valueB = parseFloat(
-              b
-                .querySelector("td:nth-child(8)")
-                .textContent.replace(/[$,\.]/g, "")
-            );
-            break;
-          case "avance":
-            valueA = parseInt(a.querySelector("td:nth-child(9)").textContent);
-            valueB = parseInt(b.querySelector("td:nth-child(9)").textContent);
-            break;
-          default:
-            valueA = a
-              .querySelector("td:first-child")
-              .textContent.toLowerCase();
-            valueB = b
-              .querySelector("td:first-child")
-              .textContent.toLowerCase();
-        }
-
-        if (valueA < valueB) {
-          return ascending ? -1 : 1;
-        }
-        if (valueA > valueB) {
-          return ascending ? 1 : -1;
-        }
-        return 0;
-      });
-
-      // Reordenar filas
-      rows.forEach((row) => {
-        tbody.appendChild(row);
-      });
-    }
-
-    // Implementar paginación básica si hay muchas filas
-    function updatePagination() {
-      // Implementación de la paginación si se necesita
-      if (document.getElementById("prevPage")) {
-        // Código de paginación aquí
-      }
-    }
-
-    // Exportar a CSV
-    document
-      .getElementById("exportarDatos")
-      .addEventListener("click", function () {
-        let csvContent = "data:text/csv;charset=utf-8,";
-
-        // Cabeceras
-        const headers = Array.from(
-          document.querySelectorAll("#tablaProyectos thead th")
-        )
-          .map((th) => th.textContent.trim())
-          .join(",");
-        csvContent += headers + "\r\n";
-
-        // Datos
-        const rows = document.querySelectorAll("#tablaProyectos tbody tr");
-        rows.forEach((row) => {
-          if (row.style.display !== "none") {
-            const rowData = Array.from(row.querySelectorAll("td"))
-              .map((td) => {
-                return `"${td.textContent.trim().replace(/"/g, '""')}"`;
-              })
-              .join(",");
-            csvContent += rowData + "\r\n";
-          }
-        });
-
-        // Crear enlace de descarga
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute(
-          "download",
-          `proyectos_${encodeURIComponent("{{ nombre }}")}_${new Date()
-            .toISOString()
-            .slice(0, 10)}.csv`
-        );
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      });
-  });
-
-  // Inicializar gráficos dinámicos con Chart.js
-  document.addEventListener("DOMContentLoaded", function() {
-    initializeCharts();
-    setupThemeChangeListener();
-  });
-
-  // Setup theme change listener
-  function setupThemeChangeListener() {
-    const themeObserver = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && 
-            (mutation.attributeName === 'data-theme' || mutation.attributeName === 'class')) {
-          console.log('Theme changed, reinitializing charts...');
-          setTimeout(() => {
-            initializeCharts();
-          }, 100); // Small delay to ensure theme transition completes
-        }
-      });
-    });
-
-    // Observe theme changes on html element
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-theme', 'class']
-    });
-
-    // Also observe body for class changes
-    themeObserver.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-
-    // Listen for system theme changes
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-      console.log('System theme changed, reinitializing charts...');
-      setTimeout(() => {
-        initializeCharts();
-      }, 100);
-    });
-  }
-  let chartInstances = {};
-
-  function initializeCharts() {
-    // Gráfico 1: Tendencia Semanal de Cobranza
-    Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-  
-  // Function to get CSS custom property values
-  function getCSSProperty(property) {
-    try {
-      const value = getComputedStyle(document.documentElement).getPropertyValue(property).trim();
-      return value.replace(/['"]/g, '') || getDefaultColor(property);
-    } catch (error) {
-      console.warn(`Failed to get CSS property ${property}:`, error);
-      return getDefaultColor(property);
-    }
-  }
-  
-  // Improved fallback colors with better contrast for both themes
-  function getDefaultColor(property) {
-    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark' || 
-                      document.body.classList.contains('dark') ||
-                      window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    const lightColors = {
-      '--text-primary': '#111827',
-      '--text-secondary': '#4b5563',
-      '--text-tertiary': '#6b7280',
-      '--bg-card': '#f9f9f7',
-      '--bg-secondary': '#ff0f4f8',
-      '--border-color': '#d1d5db',
-      '--border-color-subtle': '#f3f4f6',
-      '--accent-green': '#059669',
-      '--accent-blue': '#2563eb',
-      '--accent-amber': '#d97706',
-      '--accent-purple': '#7c3aed',
-      '--accent-red': '#dc2626'
-    };
-
-    const darkColors = {
-      '--text-primary': '#f9fafb',
-      '--text-secondary': '#d1d5db',
-      '--text-tertiary': '#9ca3af',
-      '--bg-card': '#1f2937',
-      '--bg-secondary': '#111827',
-      '--border-color': '#374151',
-      '--border-color-subtle': '#4b5563',
-      '--accent-green': '#10b981',
-      '--accent-blue': '#3b82f6',
-      '--accent-amber': '#f59e0b',
-      '--accent-purple': '#8b5cf6',
-      '--accent-red': '#ef4444'
-    };
-
-    const colors = isDarkMode ? darkColors : lightColors;
-    return colors[property] || (isDarkMode ? '#9ca3af' : '#6b7280');
-  }
- // Get theme colors
-    const colors = {
-      textPrimary: getCSSProperty('--text-primary'),
-      textSecondary: getCSSProperty('--text-secondary'),
-      textTertiary: getCSSProperty('--text-tertiary'),
-      bgCard: getCSSProperty('--bg-card'),
-      bgSecondary: getCSSProperty('--bg-secondary'),
-      borderColor: getCSSProperty('--border-color'),
-      borderColorSubtle: getCSSProperty('--border-color-subtle'),
-      accentGreen: getCSSProperty('--accent-green'),
-      accentBlue: getCSSProperty('--accent-blue'),
-      accentAmber: getCSSProperty('--accent-amber')
-    };
-    console.log('Theme colors loaded:', colors);
-  // Destroy existing charts before creating new ones
-    Object.values(chartInstances).forEach(chart => {
-      if (chart && typeof chart.destroy === 'function') {
-        chart.destroy();
-      }
-    });
-    chartInstances = {};
-
-  const tendenciaCtx = document.getElementById('tendenciaCobranzaChart');
-
-    if (tendenciaCtx) {
-      // Usar datos reales de tendencia semanal desde el backend
-     const tendenciaSemanal = {{ tendencia_semanal|tojson|safe }};
-      const weeklyData = processWeeklyTrendData(tendenciaSemanal);
-      
-      if (weeklyData.hasData) {
-        chartInstances.tendencia = new Chart(tendenciaCtx, {
-          type: 'line',
-          data: {
-            labels: weeklyData.labels,
-            datasets: [{
-              label: 'Cobranza Semanal',
-              data: weeklyData.values,
-              borderColor: colors.accentGreen,
-              backgroundColor: colors.accentGreen + '40',
-              borderWidth: 3,
-              fill: true,
-              tension: 0.4,
-              pointBackgroundColor: colors.accentGreen,
-              pointBorderColor: colors.bgCard,
-              pointBorderWidth: 3,
-              pointRadius: 6,
-              pointHoverRadius: 10,
-              pointHoverBackgroundColor: colors.accentGreen,
-              pointHoverBorderColor: colors.bgCard,
-              pointHoverBorderWidth: 4
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-              mode: 'index',
-              intersect: false,
-            },
-          plugins: {
-              legend: { display: false },
-              tooltip: {
-                backgroundColor: colors.bgCard,
-                titleColor: colors.textPrimary,
-                bodyColor: colors.textPrimary,
-                borderColor: colors.accentGreen,
-                borderWidth: 2,
-                cornerRadius: 12,
-                displayColors: false,
-                padding: 12,
-                titleFont: {
-                  size: 14,
-                  weight: '600',
-                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                },
-                bodyFont: {
-                  size: 13,
-                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                },
-                callbacks: {
-                  title: function(context) {
-                    return `📊 ${context[0].label}`;
-                  },
-                  label: function(context) {
-                    const value = context.parsed.y;
-                    return `💰 Cobranza: $${(value/1000000).toFixed(2)}M`;
-                  },
-                  afterLabel: function(context) {
-                    const dataIndex = context.dataIndex;
-                    const isSimulated = weeklyData.isSimulated && weeklyData.isSimulated[dataIndex];
-                    return isSimulated ? '⚠️ Datos simulados' : '✅ Datos reales';
-                  }
-                }
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                grid: {
-                  color: colors.borderColorSubtle + '80', // Add transparency for softer lines
-                  lineWidth: 0.5,
-                  drawBorder: false
-                },
-                border: { display: false },
-                ticks: {
-                  callback: function(value) {
-                    return '$' + (value / 1000000).toFixed(1) + 'M';
-                  },
-                  color: colors.textSecondary,
-                  font: {
-                    size: 12,
-                    family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                    weight: '500'
-                  },
-                  padding: 8
-                }
-              },
-              x: {
-                grid: { display: false },
-                border: { color: colors.borderColorSubtle + '40' }, // Even more transparent for x-axis
-                ticks: {
-                  color: colors.textSecondary,
-                  font: {
-                    size: 11,
-                    family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                    weight: '500'
-                  },
-                  maxTicksLimit: 8,
-                  padding: 8
-                }
-              }
-            },
-            elements: {
-              point: { hoverRadius: 10 },
-              line: {
-                borderJoinStyle: 'round',
-                borderCapStyle: 'round'
-              }
-            },
-            animation: {
-              duration: 1000,
-              easing: 'easeInOutQuart'
-            }
-          }
-        });
-      } else {
-        // Mostrar mensaje profesional cuando no hay datos de tendencia semanal
-        tendenciaCtx.style.display = 'none';
-        const noDataMessage = document.createElement('div');
-        noDataMessage.className = 'flex flex-col items-center justify-center h-64 text-center bg-gradient-to-br from-transparent to-[color:var(--bg-subtle)] rounded-lg border-2 border-dashed border-[color:var(--border-color-subtle)]';
-        noDataMessage.innerHTML = `
-          <div class="text-[color:var(--text-secondary)] space-y-3">
-            <div class="relative">
-              <svg class="mx-auto h-16 w-16 text-[color:var(--accent-green)] opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-              </svg>
-              <div class="absolute -top-1 -right-1 w-6 h-6 bg-[color:var(--accent-green)] rounded-full flex items-center justify-center">
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            </div>
-            <div>
-              <p class="text-base font-semibold text-[color:var(--text-primary)] mb-1">Sin datos de tendencia semanal</p>
-              <p class="text-sm text-[color:var(--text-secondary)]">Los gráficos aparecerán cuando se registre información de cobranza</p>
-            </div>
-            <div class="flex items-center justify-center space-x-2 text-xs text-[color:var(--text-secondary)]">
-              <div class="w-2 h-2 bg-[color:var(--accent-green)] rounded-full animate-pulse"></div>
-              <span>Esperando datos reales</span>
-            </div>
-          </div>
-        `;
-        tendenciaCtx.parentNode.appendChild(noDataMessage);
-      }
-    }
-
-    // Gráfico 2: Top 10 EDPs Pendientes (Horizontal Bar)
-    const topEdpsCtx = document.getElementById('topEdpsPendientesChart');
-    if (topEdpsCtx) {
-      const topEdpsData = generateTopEdpsData();
-      
-      if (topEdpsData.hasData) {
-           const amberColors = [];
-        for (let i = 0; i < 10; i++) {
-          const opacity = 1 - (i * 0.075); // Decrease opacity gradually
-          amberColors.push(colors.accentAmber + Math.floor(opacity * 255).toString(16).padStart(2, '0'));
-        }
-
-         chartInstances.topEdps = new Chart(topEdpsCtx, {
-        type: 'bar',
-          data: {
-            labels: topEdpsData.labels,
-            datasets: [{
-              label: 'Monto Pendiente',
-              data: topEdpsData.values,
-              backgroundColor: amberColors,
-              borderColor: colors.accentAmber,
-              borderWidth: 1,
-              borderRadius: 6,
-              borderSkipped: false
-            }]
-        },
-       options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                backgroundColor: colors.bgCard,
-                titleColor: colors.textPrimary,
-                bodyColor: colors.textPrimary,
-                borderColor: colors.accentAmber,
-                borderWidth: 1,
-                cornerRadius: 8,
-                displayColors: false,
-                titleFont: {
-                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                  size: 14,
-                  weight: '600'
-                },
-                bodyFont: {
-                  family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                  size: 13
-                },
-                callbacks: {
-                  title: function(context) {
-                    const dataIndex = context[0].dataIndex;
-                    const edpData = topEdpsData.edpsInfo[dataIndex];
-                    return `📊 EDP: ${edpData.n_edp}`;
-                  },
-                  beforeBody: function(context) {
-                    const dataIndex = context[0].dataIndex;
-                    const edpData = topEdpsData.edpsInfo[dataIndex];
-                    return [
-                      `🏗️ Proyecto: ${edpData.proyecto}`,
-                      `👥 Cliente: ${edpData.cliente}`,
-                      `🔄 Estado: ${edpData.estado}`,
-                      edpData.es_critico ? '⚠️ CRÍTICO' : '✅ Normal'
-                    ];
-                  },
-                  label: function(context) {
-                    return '💰 Pendiente: $' + (context.parsed.x/1000000).toFixed(1) + 'M';
-                  }
-                }
-              }
-            },
-            scales: {
-              x: {
-                beginAtZero: true,
-                ticks: {
-                  callback: function(value) {
-                    return '$' + (value / 1000000).toFixed(1) + 'M';
-                  },
-                  color: colors.textSecondary,
-                  font: {
-                    size: 11,
-                    weight: '500',
-                    family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                  },
-                  padding: 8
-                },
-                grid: {
-                  color: colors.borderColorSubtle + '40', // Softer grid lines
-                  lineWidth: 0.5,
-                  drawBorder: false
-                },
-                border: { color: colors.borderColorSubtle + '30' } // More transparent border
-              },
-              y: {
-                ticks: {
-                  color: colors.textSecondary,
-                  font: {
-                    size: 10,
-                    weight: '500',
-                    family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                  },
-                  padding: 8
-                },
-                grid: { display: false },
-                border: { color: colors.borderColorSubtle + '30' } // More transparent border
-              }
-                          },
-            elements: {
-              bar: { 
-                borderRadius: 6,
-                borderSkipped: false
-              }
-            },
-            animation: {
-              delay: function(context) {
-                return context.dataIndex * 100;
-              },
-              duration: 1000,
-              easing: 'easeOutQuart'
-            }
-          }
-        });
-      } else {
-        // Mostrar mensaje cuando no hay EDPs pendientes
-        topEdpsCtx.style.display = 'none';
-        const noDataMessage = document.createElement('div');
-        noDataMessage.className = 'flex items-center justify-center h-64 text-center';
-        noDataMessage.innerHTML = `
-          <div class="text-[color:var(--text-secondary)]">
-            <svg class="mx-auto h-12 w-12 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <p class="text-sm font-medium">¡Excelente! No hay EDPs pendientes</p>
-            <p class="text-xs mt-1">Todos los EDPs están al día con sus pagos</p>
-          </div>
-        `;
-        topEdpsCtx.parentNode.appendChild(noDataMessage);
-      }
-    }
-
-    // Gráfico de distribución de aging (mantener el existente si está presente)
-    const agingCtx = document.getElementById('agingChart');
-    if (agingCtx && {{ distribucion_aging|safe }}) {
-      const agingData = {{ distribucion_aging|safe }};
-      new Chart(agingCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['≤15 días', '16-30 días', '+30 días'],
-          datasets: [{
-            data: [agingData.reciente || 0, agingData.medio || 0, agingData.critico || 0],
-            backgroundColor: [
-              'rgba(34, 197, 94, 0.8)',   // Verde para reciente
-              'rgba(245, 158, 11, 0.8)',  // Ámbar para medio
-              'rgba(239, 68, 68, 0.8)'    // Rojo para crítico
-            ],
-            borderColor: [
-              'rgb(34, 197, 94)',
-              'rgb(245, 158, 11)',
-              'rgb(239, 68, 68)'
-            ],
-            borderWidth: 2,
-            hoverOffset: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                padding: 15,
-                font: {
-                  size: 11
-                },
-                color: 'rgba(107, 114, 128, 1)'
-              }
-            },
-            tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              titleColor: '#fff',
-              bodyColor: '#fff',
-              borderColor: 'rgba(59, 130, 246, 0.5)',
-              borderWidth: 1,
-              cornerRadius: 8,
-              callbacks: {
-                label: function(context) {
-                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                  const percentage = ((context.parsed / total) * 100).toFixed(1);
-                  return context.label + ': ' + context.parsed + ' EDPs (' + percentage + '%)';
-                }
-              }
-            }
-          },
-          cutout: '60%'
-        }
-      });
-    };
-  }
-
-  // Helper function para procesar datos de tendencia semanal real
-  function processWeeklyTrendData(tendenciaSemanal) {
-    console.log('🔍 Tendencia semanal recibida:', tendenciaSemanal);
-    
-    const labels = [];
-    const values = [];
-    const isSimulated = [];
-    
-    if (tendenciaSemanal && Array.isArray(tendenciaSemanal) && tendenciaSemanal.length > 0) {
-      // Usar solo datos reales del backend, filtrar datos simulados
-      tendenciaSemanal.forEach(semana => {
-        // Solo incluir datos que no sean simulados
-        if (!semana.es_simulado) {
-          labels.push(semana.semana);
-          values.push(semana.monto); // Usar datos tal como vienen del backend
-          isSimulated.push(false);
-        }
-      });
-    }
-    
-    return { 
-      labels: labels, 
-      values: values, 
-      isSimulated: isSimulated,
-      hasData: labels.length > 0
-    };
-  }
-
-  // Helper function para generar datos de Top 10 EDPs
-  function generateTopEdpsData() {
-    // Obtener datos de EDPs individuales desde el backend
-    const topEdpsPendientes = {{ top_edps_pendientes|tojson|safe }};
-    
-    // Debug: Mostrar estructura de datos
-    console.log('🔍 Top EDPs pendientes recibidos:', topEdpsPendientes);
-    
-    const edpsData = [];
-    
-    if (topEdpsPendientes && Array.isArray(topEdpsPendientes) && topEdpsPendientes.length > 0) {
-      // Usar datos reales de EDPs individuales
-      topEdpsPendientes.forEach(edp => {
-        const montoPendiente = edp.monto_pendiente || 0;
-        
-        console.log(`📊 EDP: ${edp.n_edp}, Monto Pendiente: ${montoPendiente}`);
-        
-        if (montoPendiente > 0) {
-          edpsData.push({
-            nombre: `EDP-${edp.n_edp}`,
-            monto: montoPendiente, // Usar datos tal como vienen del backend
-            proyecto: edp.proyecto || 'Sin Proyecto',
-            cliente: edp.cliente || 'Sin Cliente',
-            estado: edp.estado || 'pendiente',
-            esCritico: edp.es_critico || false
-          });
-        }
-      });
-    }
-    
-    console.log('✅ EDPs procesados:', edpsData);
-    
-    // Ordenar por monto descendente y tomar top 10
-    edpsData.sort((a, b) => b.monto - a.monto);
-    const top10Edps = edpsData.slice(0, 10);
-    
-    console.log('✅ Top 10 EDPs finales:', top10Edps);
-    
-    return {
-      labels: top10Edps.map(edp => {
-        // Truncar nombres largos para mejor visualización
-        const nombreCorto = edp.nombre.length > 18 ? edp.nombre.substring(0, 15) + '...' : edp.nombre;
-        return nombreCorto;
-      }),
-      values: top10Edps.map(edp => edp.monto),
-      edpsInfo: top10Edps.map(edp => ({
-        n_edp: edp.nombre,
-        proyecto: edp.proyecto,
-        cliente: edp.cliente || 'Cliente Confidencial',
-        estado: edp.estado,
-        es_critico: edp.esCritico
-      })),
-      hasData: top10Edps.length > 0
-    };
-  }
-
-
-
-  // NUEVO: Función para inicializar indicadores circulares de riesgo
-  function initializeRiskIndicators() {
-    // Riesgo Global
-    const globalRisk = parseFloat('{{ risk_metrics.global_risk|default(0) }}') || 0;
-    updateCircularProgress('globalRiskIndicator', globalRisk, getRiskColor(globalRisk));
-
-    // Riesgo de Aging
-    const agingRisk = parseFloat('{{ risk_metrics.aging_risk|default(0) }}') || 0;
-    updateCircularProgress('agingRiskIndicator', agingRisk, getRiskColor(agingRisk));
-
-    // Riesgo de Volumen
-    const volumeRisk = parseFloat('{{ risk_metrics.volume_risk|default(0) }}') || 0;
-    updateCircularProgress('volumeRiskIndicator', volumeRisk, getRiskColor(volumeRisk));
-  }
-
-  // NUEVO: Función para actualizar indicadores circulares
-  function updateCircularProgress(elementId, percentage, color) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-
-    const circle = element.querySelector('.progress-ring__circle');
-    const text = element.querySelector('.progress-text');
-    
-    if (circle && text) {
-      const radius = circle.r.baseVal.value;
-      const circumference = radius * 2 * Math.PI;
-      
-      circle.style.strokeDasharray = `${circumference} ${circumference}`;
-      circle.style.strokeDashoffset = circumference;
-      
-      const offset = circumference - (percentage / 100) * circumference;
-      circle.style.strokeDashoffset = offset;
-      circle.style.stroke = color;
-      
-      text.textContent = `${Math.round(percentage)}%`;
-    }
-  }
-
-  // NUEVO: Función para obtener color basado en el nivel de riesgo
-  function getRiskColor(risk) {
-    if (risk >= 70) return '#ef4444'; // Rojo para alto riesgo
-    if (risk >= 40) return '#f59e0b'; // Ámbar para riesgo moderado
-    return '#22c55e'; // Verde para bajo riesgo
-  }
-
-  // NUEVO: Animaciones mejoradas para las tarjetas de métricas
-  function initializeAnimations() {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '50px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate__animated', 'animate__fadeInUp');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, observerOptions);
-
-    // Observar todas las tarjetas de métricas
-    document.querySelectorAll('.metric-card').forEach((card) => {
-      observer.observe(card);
-    });
-  }
-
-  // Inicializar animaciones cuando el DOM esté listo
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeAnimations);
-  } else {
-    initializeAnimations();
-  }
-
-  // NUEVO: Actualización en tiempo real de indicadores
-  function updateHealthIndicators() {
-    const avanceGlobal = parseFloat('{{ avance_global }}') || 0;
-    const riesgoScore = parseFloat('{{ riesgo_score }}') || 0;
-    
-    // Actualizar indicadores de salud
-    const healthIndicators = document.querySelectorAll('[data-health-indicator]');
-    healthIndicators.forEach(indicator => {
-      const currentHealth = indicator.getAttribute('data-health-indicator');
-      let newClass = '';
-      
-      if (avanceGlobal >= 80) {
-        newClass = 'bg-green-500';
-      } else if (avanceGlobal >= 60) {
-        newClass = 'bg-yellow-500';
-      } else {
-        newClass = 'bg-red-500';
-      }
-      
-      indicator.className = indicator.className.replace(/bg-\w+-\d+/, newClass);
-    });
-  }
-
-  // Llamar a la función de actualización
-  updateHealthIndicators();
-</script>
-
-<style>
-  /* Estilos para ordenamiento */
-  .sortable {
-    cursor: pointer;
-    position: relative;
-  }
-
-  .sortable:hover {
-    background-color: var(--bg-card-hover);
-  }
-
-  .sortable::after {
-    content: "↕";
-    opacity: 0.3;
-    margin-left: 5px;
-    font-size: 0.75rem;
-  }
-
-  .sortable.sort-asc::after {
-    content: "↑";
-    opacity: 1;
-  }
-
-  .sortable.sort-desc::after {
-    content: "↓";
-    opacity: 1;
-  }
-
-  /* Estilos para métricas */
-  .metric-value {
-    letter-spacing: -0.02em;
-  }
-
-  /* Mejora para carga progresiva */
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .metric-card {
-    animation: fadeInUp 0.4s ease-out forwards;
-    animation-delay: calc(var(--index) * 0.1s);
-    opacity: 0;
-  }
-
-  .metric-card:nth-child(1) {
-    --index: 0;
-  }
-  .metric-card:nth-child(2) {
-    --index: 1;
-  }
-  .metric-card:nth-child(3) {
-    --index: 2;
-  }
-  .metric-card:nth-child(4) {
-    --index: 3;
-  }
-
-  .progress-ring {
-    transform: rotate(-90deg);
-    width: 60px;
-    height: 60px;
-  }
-
-  .progress-ring__circle {
-    transition: stroke-dashoffset 0.35s;
-    transform: rotate(-90deg);
-    transform-origin: 50% 50%;
-    stroke-width: 4;
-    fill: transparent;
-    stroke-linecap: round;
-  }
-
-  .progress-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .progress-text {
-    position: absolute;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: rgba(107, 114, 128, 1);
-  }
-
-  /* Estilos mejorados para mini sparklines y elementos visuales */
-  .mini-chart {
-    height: 40px;
-    width: 100%;
-  }
-
-  /* Animaciones mejoradas para métricas */
-  .animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.8;
-    }
-  }
-
-  /* Efectos hover mejorados para tarjetas */
-  .analysis-card:hover, 
-  .bg-gradient-to-br:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Efectos de glassmorphism para las tarjetas KPI */
-  .kpi-card {
-    backdrop-filter: blur(10px);
-    /* Removidos los estilos de background hardcodeados para usar variables CSS */
-  }
-
-  /* Indicadores de confianza mejorados */
-  .confidence-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    backdrop-filter: blur(8px);
-  }
-
-  .confidence-high {
-    background: rgba(34, 197, 94, 0.15);
-    color: rgb(34, 197, 94);
-    border: 1px solid rgba(34, 197, 94, 0.2);
-  }
-
-  .confidence-medium {
-    background: rgba(245, 158, 11, 0.15);
-    color: rgb(245, 158, 11);
-    border: 1px solid rgba(245, 158, 11, 0.2);
-  }
-
-  .confidence-low {
-    background: rgba(239, 68, 68, 0.15);
-    color: rgb(239, 68, 68);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-  }
-
-  /* Animaciones de entrada para KPIs */
-  @keyframes slideInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .kpi-animate {
-    animation: slideInUp 0.6s ease-out forwards;
-    opacity: 0;
-  }
-
-  .kpi-animate:nth-child(1) { animation-delay: 0.1s; }
-  .kpi-animate:nth-child(2) { animation-delay: 0.2s; }
-  .kpi-animate:nth-child(3) { animation-delay: 0.3s; }
-  .kpi-animate:nth-child(4) { animation-delay: 0.4s; }
-
-  /* Mejoras para gráficos */
-  .chart-container {
-    position: relative;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 12px;
-    padding: 4px;
-  }
-
-  .chart-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    border-radius: 12px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  .chart-container:hover::before {
-    opacity: 1;
-  }
-
-  /* Efectos de progreso animados */
-  .progress-bar-animated {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .progress-bar-animated::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    animation: shimmer 2s infinite;
-  }
-
-  @keyframes shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
-  }
-
-  /* Responsive improvements */
-  @media (max-width: 768px) {
-    .kpi-card {
-      padding: 1rem;
-    }
-    
-    .analysis-card:hover {
-      transform: none;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-  }
-</style>
 {% endblock %}
-

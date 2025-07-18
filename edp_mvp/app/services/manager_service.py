@@ -131,6 +131,7 @@ class ManagerService(BaseService):
             # If not in cache or force refresh, calculate complete data synchronously
             # Load base data as DataFrame for analytics
             edps_response = self.edp_repo.find_all_dataframe()
+     
 
             # Check if the response has a success key (dictionary)
             if isinstance(edps_response, dict) and not edps_response.get(
@@ -144,6 +145,7 @@ class ManagerService(BaseService):
 
             # Extract the DataFrame
             df_edp = edps_response.get("data", pd.DataFrame())
+            print(f'DEBUG: {df_edp}')   
             if df_edp.empty:
                 return ServiceResponse(
                     success=False, message="No EDP data available", data=None
@@ -407,14 +409,16 @@ class ManagerService(BaseService):
     ) -> Dict[str, Any]:
         """Calculate essential KPIs for immediate response using centralized KPI service."""
         try:
+            # Use the KPI service for essential calculations
             kpi_response = self.kpi_service.calculate_essential_kpis(df_full, df_filtered)
             if kpi_response.success:
+                logger.info(f"✅ Essential KPIs calculated: {len(kpi_response.data)} metrics")
                 return kpi_response.data
             else:
-                logger.error(f"KPI service error: {kpi_response.message}")
+                logger.error(f"Essential KPI service error: {kpi_response.message}")
                 return self.get_empty_kpis()
         except Exception as e:
-            logger.error(f"Error delegating to KPI service: {e}")
+            logger.error(f"Error calculating essential KPIs: {e}")
             return self.get_empty_kpis()
 
     def get_performance_analysis(self, period: str = "monthly") -> ServiceResponse:
@@ -508,14 +512,31 @@ class ManagerService(BaseService):
     ) -> Dict[str, Any]:
         """Calculate executive-level KPIs using centralized KPI service."""
         try:
+            # Use the complete manager dashboard KPIs calculation
             kpi_response = self.kpi_service.calculate_manager_dashboard_kpis(df_full, df_filtered)
             if kpi_response.success:
+                logger.info(f"✅ KPI Service returned {len(kpi_response.data)} metrics")
                 return kpi_response.data
             else:
                 logger.error(f"KPI service error: {kpi_response.message}")
-                return self.get_empty_kpis()
+                # Fallback to essential KPIs if complete calculation fails
+                essential_response = self.kpi_service.calculate_essential_kpis(df_full, df_filtered)
+                if essential_response.success:
+                    logger.info(f"✅ Fallback to essential KPIs: {len(essential_response.data)} metrics")
+                    return essential_response.data
+                else:
+                    logger.error(f"Essential KPIs also failed: {essential_response.message}")
+                    return self.get_empty_kpis()
         except Exception as e:
             logger.error(f"Error delegating to KPI service: {e}")
+            # Try essential KPIs as fallback
+            try:
+                essential_response = self.kpi_service.calculate_essential_kpis(df_full, df_filtered)
+                if essential_response.success:
+                    logger.info(f"✅ Fallback essential KPIs after exception: {len(essential_response.data)} metrics")
+                    return essential_response.data
+            except Exception as e2:
+                logger.error(f"Fallback essential KPIs also failed: {e2}")
             return self.get_empty_kpis()
 
     def _calculate_financial_metrics(
@@ -2801,14 +2822,15 @@ class ManagerService(BaseService):
             df_pending = df[~df["estado"] == "pagado"].copy()
             total_pending = len(df_pending)
             
-            if total_pending > 0 and "dias_espera" in df.columns:
-                # Calculate REAL aging distribution based on dias_espera
+            if total_pending > 0 and "dso_actual" in df.columns:
+                # Calculate REAL aging distribution based on dso_actual
                 df_pending_copy = df_pending.copy()
-                df_pending_copy["dias_espera_num"] = pd.to_numeric(df_pending_copy["dias_espera"], errors="coerce").fillna(0)
+                df_pending_copy["dias_espera_num"] = pd.to_numeric(df_pending_copy["dso_actual"], errors="coerce").fillna(0)
                 
                 # Real aging buckets
                 aging_0_30 = len(df_pending_copy[df_pending_copy["dias_espera_num"] <= 30])
                 aging_31_60 = len(df_pending_copy[(df_pending_copy["dias_espera_num"] > 30) & (df_pending_copy["dias_espera_num"] <= 60)])
+                print(f'DEBUG: {aging_31_60}')
                 aging_61_90 = len(df_pending_copy[(df_pending_copy["dias_espera_num"] > 60) & (df_pending_copy["dias_espera_num"] <= 90)])
                 aging_90_plus = len(df_pending_copy[df_pending_copy["dias_espera_num"] > 90])
                 

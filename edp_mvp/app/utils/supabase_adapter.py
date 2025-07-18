@@ -462,22 +462,11 @@ def _apply_transformations(df: pd.DataFrame, table_name: str) -> pd.DataFrame:
                 if col in df.columns:
                     df[col] = pd.to_datetime(df[col], errors="coerce")
 
-            # Calculate waiting days
-            if "fecha_envio_cliente" in df.columns and len(df) > 0:
-                fecha_envio = pd.to_datetime(df["fecha_envio_cliente"], errors="coerce")
-                if "fecha_conformidad" in df.columns:
-                    fecha_conformidad = pd.to_datetime(
-                        df["fecha_conformidad"], errors="coerce"
-                    )
-                    df["dias_espera"] = (
-                        fecha_conformidad.fillna(hoy) - fecha_envio
-                    ).dt.days.fillna(0)
-                else:
-                    df["dias_espera"] = ((hoy - fecha_envio).dt.days).fillna(0)
-            else:
-                # Si no hay fecha_envio_cliente, poner 0 días de espera
-                df["dias_espera"] = 0
+            # Calculate waiting days se calcula automatico en bd dso_actual
 
+            # Inicializar dias_habiles para todos los casos
+            df["dias_habiles"] = 0
+            
             if "fecha_envio_cliente" in df.columns and len(df) > 0:
                 df["fecha_envio_cliente"] = pd.to_datetime(
                     df["fecha_envio_cliente"], errors="coerce"
@@ -494,26 +483,26 @@ def _apply_transformations(df: pd.DataFrame, table_name: str) -> pd.DataFrame:
                     ~df["fecha_final"].isna()
                 )
 
+                # Calcular días hábiles solo para filas válidas
+                def calcular_dias_habiles_seguro(row):
+                    try:
+                        fecha_inicio = row["fecha_envio_cliente"].date()
+                        fecha_fin = row["fecha_final"].date()
+                        dias = np.busday_count(fecha_inicio, fecha_fin)
+                        return max(0, int(dias))  # Asegurar que sea entero positivo
+                    except Exception:
+                        return 0  # Retornar 0 en caso de error
+                
                 df.loc[mask_validas, "dias_habiles"] = df.loc[mask_validas].apply(
-                    lambda row: np.busday_count(
-                        row["fecha_envio_cliente"].date(), row["fecha_final"].date()
-                    ),
-                    axis=1,
+                    calcular_dias_habiles_seguro, axis=1
                 )
                 
-                # Asegurar que dias_habiles no sea None
-                if "dias_habiles" not in df.columns:
-                    df["dias_habiles"] = 0
-                else:
-                    df["dias_habiles"] = df["dias_habiles"].fillna(0)
+                # Asegurar que todos los valores sean numéricos
+                df["dias_habiles"] = pd.to_numeric(df["dias_habiles"], errors="coerce").fillna(0).astype(int)
 
-            # Calculate critical status (comentado - campo no existe en BD Supabase)
-            # if "dias_espera" in df.columns and len(df) > 0:
-            #     dias_espera_numeric = pd.to_numeric(df["dias_espera"], errors="coerce").fillna(0)
-            #     estado_not_final = ~df["estado"].isin(["validado", "pagado"])
-            #     df["critico"] = (dias_espera_numeric > 30) & estado_not_final
-            # else:
-            #     df["critico"] = False
+            # Calculate DSO_Actual no es NONE
+            if "dso_actual" in df.columns:
+                df["dso_actual"] = df["dso_actual"].fillna(0)
 
             # Calculate validation status
             if (
@@ -521,7 +510,7 @@ def _apply_transformations(df: pd.DataFrame, table_name: str) -> pd.DataFrame:
                 and "conformidad_enviada" in df.columns
                 and len(df) > 0
             ):
-                df["validado"] = (df["estado"].isin(["validado", "pagado"])) & (
+                df["validado"] = (df["estado"] == 'pagado') & (
                     df["conformidad_enviada"] == "Sí"
                 )
             else:

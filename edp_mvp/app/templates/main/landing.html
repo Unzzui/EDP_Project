@@ -1,783 +1,1158 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
+<html lang="es" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pagora - Plataforma SaaS Empresarial</title>
+    <title>PAGORA - Plataforma de Control Ejecutivo</title>
     <meta
       name="description"
-      content="Centraliza, automatiza y optimiza la gestión completa de EDPs con seguimiento inteligente y dashboards ejecutivos en tiempo real." />
+      content="Plataforma ejecutiva de control empresarial con dashboards en tiempo real, automatización de procesos y análisis predictivo para la toma de decisiones estratégicas a nivel C-Suite." />
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Theme Detection Script -->
     <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: [
-                "-apple-system",
-                "BlinkMacSystemFont",
-                "Segoe UI",
-                "Roboto",
-                "sans-serif",
-              ],
-            },
-            animation: {
-              "fade-in-up": "fadeInUp 0.8s ease-out forwards",
-            },
-            keyframes: {
-              fadeInUp: {
-                "0%": {
-                  opacity: "0",
-                  transform: "translateY(30px)",
-                },
-                "100%": {
-                  opacity: "1",
-                  transform: "translateY(0)",
-                },
-              },
-            },
-          },
-        },
-      };
+      (function () {
+        const saved = localStorage.getItem("managerTheme");
+        if (saved) {
+          document.documentElement.setAttribute("data-theme", saved);
+        } else {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
     </script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet" />
+
+    <!-- Design System CSS -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/common/styles.css') }}" />
+
+    <!-- Landing Page Specific CSS -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/landing/landing.css') }}" />
 
     <!-- Favicon -->
     <link
       rel="icon"
       type="image/x-icon"
       href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkgMTl2LTZhMiAyIDAgMDAtMi0ySDVhMiAyIDAgMDAtMiAydjZhMiAyIDAgMDAyIDJoMmEyIDIgMCAwMDItMnptMCAwVjlhMiAyIDAgMDEyLTJoMmEyIDIgMCAwMTIgMnYxMG0tNiAwYTIgMiAwIDAwMiAyaDJhMiAyIDAgMDAyLTJtMCAwVjVhMiAyIDAgMDEyLTJoMmEyIDIgMCAwMTIgMnYxNGEyIDIgMCAwMS0yIDJoLTJhMiAyIDAgMDEtMi0yeiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K" />
-
-    <style>
-      html {
-        scroll-behavior: smooth;
-      }
-
-      @keyframes fadeInUp {
-        from {
-          opacity: 0;
-          transform: translateY(30px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .animate-fade-in-up {
-        animation: fadeInUp 0.8s ease-out forwards;
-      }
-
-      .delay-100 {
-        animation-delay: 100ms;
-      }
-      .delay-200 {
-        animation-delay: 200ms;
-      }
-      .delay-300 {
-        animation-delay: 300ms;
-      }
-      .delay-400 {
-        animation-delay: 400ms;
-      }
-
-      /* Custom scrollbar */
-      ::-webkit-scrollbar {
-        width: 6px;
-      }
-
-      ::-webkit-scrollbar-track {
-        background: #000;
-      }
-
-      ::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 3px;
-      }
-
-      ::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.5);
-      }
-
-      /* Floating elements animation */
-      @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        33% { transform: translateY(-20px) rotate(2deg); }
-        66% { transform: translateY(-10px) rotate(-2deg); }
-      }
-
-      .floating-element {
-        animation: float 8s ease-in-out infinite;
-      }
-
-      /* Gradient text animation */
-      @keyframes gradientShift {
-        0%, 100% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-      }
-
-      .animate-gradient {
-        background-size: 200% 200%;
-        animation: gradientShift 4s ease infinite;
-      }
-    </style>
   </head>
-  <body class="bg-black text-white overflow-x-hidden">
-    <!-- Apple-style Minimalist Navigation -->
-    <nav
-      class="fixed top-0 w-full px-6 lg:px-12 py-5 bg-black/80 backdrop-blur-xl z-50 border-b border-white/10">
-      <div class="max-w-7xl mx-auto flex justify-between items-center">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8">
-            <svg viewBox="0 0 24 24" class="w-full h-full" fill="none">
-              <path
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                stroke="white"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-          </div>
-          <div class="text-2xl font-bold text-white">Pagora</div>
+
+  <body class="command-center">
+    <!-- Grid Overlay Background -->
+    <div class="grid-overlay"></div>
+
+    <!-- Executive Navigation -->
+    <nav class="header">
+      <div class="header-content">
+        <!-- Logo Section -->
+        <div class="logo-section">
+          <div class="logo"></div>
+          <div class="title">PAGORA</div>
+          <div class="timestamp mono-font" id="current-time"></div>
         </div>
 
-        <!-- Desktop Menu -->
-        <ul class="hidden lg:flex gap-10 text-white/80">
-          <li>
-            <a
-              href="#soluciones"
-              class="hover:text-white transition-colors duration-300"
-              >Soluciones</a
-            >
-          </li>
-          <li>
-            <a
-              href="#funcionalidades"
-              class="hover:text-white transition-colors duration-300"
-              >Funcionalidades</a
-            >
-          </li>
-          <li>
-            <a
-              href="#precios"
-              class="hover:text-white transition-colors duration-300"
-              >Precios</a
-            >
-          </li>
-          <li>
-            <a
-              href="#empresa"
-              class="hover:text-white transition-colors duration-300"
-              >Empresa</a
-            >
-          </li>
-        </ul>
-
-        <!-- CTA Button -->
-        {% if user and user.is_authenticated %}
-        <a
-          href="{{ url_for('control_panel.vista_kanban') }}"
-          class="bg-white text-black px-6 py-3 rounded-full font-semibold hover:bg-white/90 hover:-translate-y-0.5 transition-all duration-300">
-          Panel de Control
-        </a>
-        {% else %}
-        <a
-          href="{{ url_for('auth.login') }}"
-          class="bg-white text-black px-6 py-3 rounded-full font-semibold hover:bg-white/90 hover:-translate-y-0.5 transition-all duration-300">
-          Comenzar
-        </a>
-        {% endif %}
-      </div>
-    </nav>
-    <!-- Hero Section -->
-    <section
-      class="min-h-screen flex items-center justify-center text-center px-5 bg-gradient-to-br from-gray-900/50 via-black to-gray-900/30 relative overflow-hidden">
-      
-      <!-- Animated Background Elements -->
-      <div class="absolute inset-0 overflow-hidden">
-        <div class="floating-element absolute top-20 left-20 w-64 h-64 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div class="floating-element absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
-        <div class="floating-element absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-full blur-3xl animate-pulse" style="animation-delay: 4s;"></div>
-      </div>
-
-      <div class="max-w-5xl mx-auto space-y-10 animate-fade-in-up relative z-10">
-
-
-        <!-- Título Principal -->
-        <h1 class="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent pb-6 leading-tight animate-fade-in-up delay-200">
-          Automatiza tu Gestión de EDPs
-          <span class="block text-4xl sm:text-5xl lg:text-6xl xl:text-7xl mt-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            en Tiempo Real
-          </span>
-        </h1>
-
-        <!-- Subtítulo con beneficios -->
-        <p class="text-xl lg:text-2xl text-white/80 max-w-4xl mx-auto leading-relaxed animate-fade-in-up delay-300">
-          <span class="text-green-400 font-semibold">Reduce el tiempo de procesamiento en 80%</span>, 
-          elimina errores manuales y obtén insights ejecutivos instantáneos
-        </p>
-
-        <!-- Propuesta de valor específica -->
-        <div class="flex flex-wrap justify-center gap-6 text-sm lg:text-base text-white/70 animate-fade-in-up delay-400">
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span>Seguimiento 24/7</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
-            <span>Dashboards Ejecutivos</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
-            <span>Alertas Inteligentes</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
-            <span>ROI Garantizado</span>
-          </div>
+        <!-- Navigation Menu -->
+        <div style="display: flex; align-items: center; gap: var(--space-xl)">
+          <a href="#soluciones" class="nav-link">SOLUCIONES</a>
+          <a href="#funcionalidades" class="nav-link">FUNCIONALIDADES</a>
+          <a href="#dashboard" class="nav-link">DASHBOARD</a>
+          <a href="#contacto" class="nav-link">CONTACTO</a>
         </div>
 
-        <!-- Botones mejorados -->
-        <div class="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8 animate-fade-in-up delay-500">
+        <!-- Theme Toggle & CTA -->
+        <div style="display: flex; align-items: center; gap: var(--space-md)">
+          <button
+            onclick="toggleTheme()"
+            class="theme-toggle"
+            title="Cambiar Tema">
+            <span class="theme-icon">◐</span>
+          </button>
+
           {% if user and user.is_authenticated %}
           <a
             href="{{ url_for('control_panel.vista_kanban') }}"
-            class="group bg-gradient-to-r from-blue-500 to-purple-600 text-white px-10 py-5 rounded-full font-semibold text-lg hover:from-blue-600 hover:to-purple-700 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 flex items-center gap-3">
-            <span>Panel de Control EDP</span>
-            <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-            </svg>
-          </a>
-          <a
-            href="{{ url_for('control_panel.vista_kanban') }}"
-            class="group bg-transparent text-white px-10 py-5 rounded-full font-semibold text-lg border-2 border-white/30 hover:border-white hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 flex items-center gap-3">
-            <span>Ver Kanban</span>
-            <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
+            class="btn btn-primary">
+            CENTRO DE CONTROL
           </a>
           {% else %}
-          <a
-            href="{{ url_for('auth.login') }}"
-            class="group bg-gradient-to-r from-blue-500 to-purple-600 text-white px-10 py-5 rounded-full font-semibold text-lg hover:from-blue-600 hover:to-purple-700 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 flex items-center gap-3">
-            <span>Ver Demo en Vivo</span>
-            <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-7 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
-            </svg>
-          </a>
-          <a
-            href="#casos-uso"
-            class="group bg-transparent text-white px-10 py-5 rounded-full font-semibold text-lg border-2 border-white/30 hover:border-white hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 flex items-center gap-3">
-            <span>Casos de Uso</span>
-            <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-            </svg>
+          <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+            ACCEDER AL SISTEMA
           </a>
           {% endif %}
         </div>
+      </div>
+    </nav>
+    <!-- Hero Section - Centro de Comando Ejecutivo -->
+    <section class="hero-section" id="inicio">
+      <div
+        class="hero-grid"
+        style="
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        ">
+        <!-- Main Content Grid -->
+        <div class="main-grid" style="position: relative; z-index: 10">
+          <div class="primary-section">
+            <!-- Hero Content -->
+            <div class="card animate-in">
+              <div class="card-header">
+                <div class="card-label">CENTRO DE COMANDO EJECUTIVO</div>
+                <div class="status-indicator">
+                  <div class="status-dot pulse-dot"></div>
+                  <span>OPERACIONAL</span>
+                </div>
+              </div>
 
-        <!-- Indicador de confianza sin mostrar números específicos -->
-        <div class="pt-8 animate-fade-in-up delay-600">
-          <p class="text-white/50 text-sm mb-4">Confiado por empresas líderes del sector</p>
-          <div class="flex justify-center items-center gap-8 opacity-60">
-            <div class="w-20 h-8 bg-gradient-to-r from-white/10 to-white/20 rounded animate-pulse"></div>
-            <div class="w-24 h-8 bg-gradient-to-r from-white/10 to-white/20 rounded animate-pulse" style="animation-delay: 0.5s;"></div>
-            <div class="w-16 h-8 bg-gradient-to-r from-white/10 to-white/20 rounded animate-pulse" style="animation-delay: 1s;"></div>
-            <div class="w-22 h-8 bg-gradient-to-r from-white/10 to-white/20 rounded animate-pulse" style="animation-delay: 1.5s;"></div>
+              <div style="margin-bottom: var(--space-2xl)">
+                <h1
+                  class="title-large gradient-text"
+                  style="font-size: 3.5rem; margin-bottom: var(--space-lg)">
+                  PLATAFORMA DE DECISIÓN EMPRESARIAL
+                </h1>
+                <p
+                  style="
+                    font-size: 1.25rem;
+                    color: var(--text-secondary);
+                    line-height: 1.6;
+                    margin-bottom: var(--space-xl);
+                  ">
+                  Sistema centralizado de comando y control para la gestión
+                  empresarial de procesos EDP. Monitoreo en tiempo real,
+                  análisis predictivo e inteligencia ejecutiva para la toma de
+                  decisiones estratégicas.
+                </p>
+              </div>
+
+              <!-- Métricas Clave -->
+              <div class="metrics-row">
+                <div class="executive-metric terminal-glow">
+                  <div class="card-label">VELOCIDAD DE PROCESAMIENTO</div>
+                  <div class="metric-value-large" id="processing-speed">
+                    80%
+                  </div>
+                  <div class="metric-change change-positive">↑ MÁS RÁPIDO</div>
+                </div>
+
+                <div class="executive-metric terminal-glow">
+                  <div class="card-label">TIEMPO ACTIVO DEL SISTEMA</div>
+                  <div class="metric-value-large" id="uptime-value">99.9%</div>
+                  <div class="metric-change change-positive">↑ CONFIABLE</div>
+                </div>
+
+                <div class="executive-metric terminal-glow">
+                  <div class="card-label">REDUCCIÓN DE ERRORES</div>
+                  <div class="metric-value-large" id="error-reduction">95%</div>
+                  <div class="metric-change change-positive">↑ PRECISO</div>
+                </div>
+              </div>
+
+              <!-- Botones de Acción -->
+              <div
+                style="
+                  display: flex;
+                  gap: var(--space-lg);
+                  margin-top: var(--space-2xl);
+                  flex-wrap: wrap;
+                ">
+                {% if user and user.is_authenticated %}
+                <a
+                  href="{{ url_for('control_panel.vista_kanban') }}"
+                  class="cta-button-enhanced">
+                  ACCEDER AL CENTRO DE COMANDO
+                </a>
+                <a
+                  href="{{ url_for('dashboard.dashboard_controller') }}"
+                  class="btn btn-secondary">
+                  VER DASHBOARD EJECUTIVO
+                </a>
+                {% else %}
+                <a
+                  href="{{ url_for('auth.login') }}"
+                  class="cta-button-enhanced">
+                  SOLICITAR ACCESO AL SISTEMA
+                </a>
+                <a href="#dashboard" class="btn btn-secondary"
+                  >VER DEMOSTRACIÓN</a
+                >
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar - Información del Sistema -->
+          <div class="sidebar">
+            <!-- Estado del Sistema -->
+            <div class="terminal-section">
+              <div class="terminal-header">ESTADO DEL SISTEMA</div>
+              <div class="terminal-line">
+                <span class="terminal-value">SISTEMAS CENTRALES</span>: EN LÍNEA
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-value">SINCRONIZACIÓN</span>: ACTIVA
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-value">ANALÍTICA</span>: PROCESANDO
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-value">SEGURIDAD</span>: ASEGURADA
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-value">IA PREDICTIVA</span>: HABILITADA
+              </div>
+            </div>
+            <!-- Métricas en Vivo -->
+            <div class="terminal-section">
+              <div class="terminal-header">MÉTRICAS EN TIEMPO REAL</div>
+              <div class="terminal-line">
+                <span class="terminal-value">USUARIOS ACTIVOS</span>:
+                <span id="systems-count"
+                  >{{ stats.active_users if stats else '847' }}</span
+                >
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-value">PROCESOS</span>:
+                <span id="processing-count"
+                  >{{ stats.total_edps if stats else '2847' }}</span
+                >
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-value">RENDIMIENTO</span>: {{
+                stats.throughput if stats else '1.2K' }}/h
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-value">EFICIENCIA</span>:
+                <span id="efficiency-value"
+                  >{{ stats.tasa_aprobacion if stats else '94.3' }}</span
+                >%
+              </div>
+            </div>
+
+            <!-- Alertas Operacionales -->
+            <div class="terminal-section">
+              <div class="terminal-header">ALERTAS OPERACIONALES</div>
+              <div class="terminal-line">
+                <span class="terminal-value">CRÍTICAS</span>: 0
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-warning">ADVERTENCIAS</span>: 2
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-value">INFORMACIÓN</span>: 5
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-value">RESUELTAS</span>: 47
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Stats Section - Solo mostrar si hay datos reales -->
-    {% if stats and (stats.total_edps > 0 or stats.monto_total_formatted != '$0') %}
-    <section class="py-20 lg:py-32 px-5">
-      <div class="max-w-4xl mx-auto">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
-          <!-- Stat Item -->
-          <div
-            class="text-center space-y-2 opacity-0 animate-fade-in-up delay-100">
-            <div class="text-4xl lg:text-5xl font-bold text-white">
-              {{ stats.total_edps }}
+    <!-- Vista Previa del Dashboard Empresarial -->
+    <section
+      id="dashboard"
+      style="
+        padding: var(--space-2xl) var(--space-xl);
+        background: var(--bg-secondary);
+      ">
+      <div class="main-grid">
+        <div class="primary-section">
+          <!-- Encabezado del Dashboard -->
+          <div class="dashboard-preview-enhanced">
+            <div class="dashboard-header-enhanced">
+              <div class="dashboard-title-enhanced">
+                CENTRO DE INTELIGENCIA EMPRESARIAL
+              </div>
+              <div class="data-pill-enhanced">TIEMPO REAL</div>
             </div>
-            <div class="text-sm text-white/60 uppercase tracking-wider">
-              Empresas
+
+            <h2
+              class="title-large gradient-text"
+              style="margin-bottom: var(--space-lg)">
+              Interfaz de Comando Ejecutivo
+            </h2>
+
+            <!-- Métricas del Dashboard en Vivo -->
+            <div class="metrics-row">
+              <div class="feature-card-executive">
+                <div class="card-header">
+                  <div class="card-label">PROCESAMIENTO DE INGRESOS</div>
+                  <div class="status-indicator-enhanced status-success">
+                    ÓPTIMO
+                  </div>
+                </div>
+                <div class="revenue-value-large">
+                  ${{ stats.monto_total_formatted if stats else '2.4M' }}
+                </div>
+                <div class="metric-change change-positive">
+                  ↑ +12.5% EN EL MES
+                </div>
+              </div>
+
+              <div class="feature-card-executive">
+                <div class="card-header">
+                  <div class="card-label">PROCESOS ACTIVOS</div>
+                  <div class="data-pill-enhanced">SEGUIMIENTO</div>
+                </div>
+                <div class="metric-value-large">
+                  {{ stats.total_edps if stats else '847' }}
+                </div>
+                <div class="metric-change change-positive">↑ +23 HOY</div>
+              </div>
+
+              <div class="feature-card-executive">
+                <div class="card-header">
+                  <div class="card-label">EFICIENCIA DEL SISTEMA</div>
+                  <div class="status-indicator-enhanced status-success">
+                    ÓPTIMO
+                  </div>
+                </div>
+                <div class="metric-value-large">
+                  {{ stats.tasa_aprobacion if stats else '94.2' }}%
+                </div>
+                <div class="metric-change change-positive">↑ +2.1% SEMANAL</div>
+              </div>
+
+              <div class="feature-card-executive">
+                <div class="card-header">
+                  <div class="card-label">TIEMPO DE PROCESAMIENTO</div>
+                  <div class="status-indicator-enhanced status-success">
+                    MEJORADO
+                  </div>
+                </div>
+                <div class="metric-value-large">2.4</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem">
+                  HRS PROMEDIO
+                </div>
+                <div class="metric-change change-positive">
+                  ↓ -80% vs MANUAL
+                </div>
+              </div>
+            </div>
+
+            <!-- Dashboard Simulado -->
+            <div class="dashboard-mock" style="margin-top: var(--space-xl)">
+              <div class="dashboard-header-enhanced">
+                <div class="dashboard-title-enhanced">
+                  PANEL DE CONTROL EJECUTIVO
+                </div>
+                <div class="data-pill-enhanced">EN VIVO</div>
+              </div>
+              <div class="dashboard-grid">
+                <div class="dashboard-cell">Ventas</div>
+                <div class="dashboard-cell">Operaciones</div>
+                <div class="dashboard-cell">Finanzas</div>
+                <div class="dashboard-cell">RRHH</div>
+                <div class="dashboard-cell">Proyectos</div>
+                <div class="dashboard-cell">KPIs</div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div
-            class="text-center space-y-2 opacity-0 animate-fade-in-up delay-200">
-            <div class="text-4xl lg:text-5xl font-bold text-white">
-              {{ stats.monto_total_formatted }}
+        <!-- Panel Lateral -->
+        <div class="sidebar">
+          <!-- Análisis de Antigüedad de Procesos -->
+          <div class="aging-section">
+            <div class="aging-header">
+              <div class="aging-title">ANÁLISIS DE ANTIGÜEDAD</div>
+              <div class="aging-total">
+                Total: {{ stats.total_edps if stats else '847' }} procesos
+              </div>
             </div>
-            <div class="text-sm text-white/60 uppercase tracking-wider">
-              Procesado
-            </div>
-          </div>
 
-          <div
-            class="text-center space-y-2 opacity-0 animate-fade-in-up delay-300">
-            <div class="text-4xl lg:text-5xl font-bold text-white">
-              {{ stats.edps_pendientes }}
-            </div>
-            <div class="text-sm text-white/60 uppercase tracking-wider">
-              Procesos
-            </div>
-          </div>
+            <div class="aging-bars">
+              <div class="aging-bar">
+                <div class="aging-label">0-30 DÍAS</div>
+                <div class="aging-progress">
+                  <div class="aging-fill fill-healthy" style="width: 65%"></div>
+                </div>
+                <div class="aging-percentage">65%</div>
+              </div>
 
-          <div
-            class="text-center space-y-2 opacity-0 animate-fade-in-up delay-400">
-            <div class="text-4xl lg:text-5xl font-bold text-white">
-              {{ stats.tasa_aprobacion }}%
-            </div>
-            <div class="text-sm text-white/60 uppercase tracking-wider">
-              Eficiencia
+              <div class="aging-bar">
+                <div class="aging-label">31-60 DÍAS</div>
+                <div class="aging-progress">
+                  <div class="aging-fill fill-caution" style="width: 25%"></div>
+                </div>
+                <div class="aging-percentage">25%</div>
+              </div>
+
+              <div class="aging-bar">
+                <div class="aging-label">61+ DÍAS</div>
+                <div class="aging-progress">
+                  <div
+                    class="aging-fill fill-critical"
+                    style="width: 10%"></div>
+                </div>
+                <div class="aging-percentage">10%</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
-    {% endif %}
 
-    <!-- Features Section -->
-    <section id="funcionalidades" class="py-20 lg:py-32 px-5 bg-gray-950/50">
-      <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <div class="text-center mb-16 lg:mb-20">
+    <!-- Sección de Funcionalidades Centrales -->
+    <section
+      id="funcionalidades"
+      style="padding: var(--space-2xl) var(--space-xl)">
+      <div style="max-width: 1600px; margin: 0 auto">
+        <!-- Encabezado de Sección -->
+        <div
+          class="card animate-in"
+          style="margin-bottom: var(--space-2xl); text-align: center">
+          <div class="card-header" style="justify-content: center">
+            <div class="card-label">CAPACIDADES EMPRESARIALES</div>
+          </div>
           <h2
-            class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
-            Tecnología de Vanguardia
+            class="title-large gradient-text"
+            style="margin-bottom: var(--space-lg)">
+            Funcionalidades de Nivel Ejecutivo
           </h2>
-          <p class="text-lg lg:text-xl text-white/60 max-w-2xl mx-auto">
-            Transforma tu operación financiera con las mejores herramientas para
-            garantizar escalabilidad, seguridad y rendimiento excepcional.
+          <p
+            style="
+              color: var(--text-secondary);
+              font-size: 1.125rem;
+              max-width: 700px;
+              margin: 0 auto;
+              line-height: 1.6;
+            ">
+            Herramientas de misión crítica diseñadas para operaciones a escala
+            empresarial y toma de decisiones ejecutivas estratégicas.
           </p>
         </div>
 
-        <!-- Features Grid -->
-        <div class="grid lg:grid-cols-3 gap-8 lg:gap-10">
-          <!-- Feature Card 1 -->
+        <!-- Grid de Funcionalidades -->
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: var(--space-xl);
+          ">
+          <!-- Funcionalidad 1: Comando Centralizado -->
           <div
-            class="bg-gray-900/80 backdrop-blur-sm border border-white/10 rounded-2xl p-8 lg:p-10 hover:-translate-y-2 hover:border-white/20 transition-all duration-300 group">
-            <div
-              class="w-12 h-12 mb-6 text-white/80 group-hover:text-white transition-colors duration-300">
-              <svg
-                viewBox="0 0 24 24"
-                class="w-full h-full"
-                fill="none"
-                stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
+            class="feature-card-executive feature-hover animate-in animate-delayed-1">
+            <div class="feature-icon-executive"></div>
+            <div class="card-header">
+              <div class="card-label">COMANDO CENTRALIZADO</div>
+              <div class="status-indicator-enhanced status-success">ACTIVO</div>
             </div>
-            <h3 class="text-2xl font-semibold text-white mb-4">
-              Centralización Inteligente
+            <h3
+              style="
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: var(--space-md);
+                color: var(--text-primary);
+              ">
+              Centro de Control Unificado
             </h3>
-            <p class="text-white/70 leading-relaxed">
-              Gestión centralizada de todos los EDPs con seguimiento desde
-              emisión hasta archivo digital y seguimiento de trámites críticos.
+            <p
+              style="
+                color: var(--text-secondary);
+                line-height: 1.6;
+                margin-bottom: var(--space-lg);
+              ">
+              Panel único para todos los procesos empresariales EDP. Monitoreo
+              centralizado, control y gestión con visibilidad en tiempo real de
+              todas las operaciones críticas de la organización.
             </p>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm)">
+              <span class="data-pill-enhanced">Monitoreo en Tiempo Real</span>
+              <span class="data-pill-enhanced">Orquestación de Procesos</span>
+              <span class="data-pill-enhanced">Reportes Ejecutivos</span>
+            </div>
           </div>
 
-          <!-- Feature Card 2 -->
+          <!-- Funcionalidad 2: Analítica Predictiva -->
           <div
-            class="bg-gray-900/80 backdrop-blur-sm border border-white/10 rounded-2xl p-8 lg:p-10 hover:-translate-y-2 hover:border-white/20 transition-all duration-300 group">
-            <div
-              class="w-12 h-12 mb-6 text-white/80 group-hover:text-white transition-colors duration-300">
-              <svg
-                viewBox="0 0 24 24"
-                class="w-full h-full"
-                fill="none"
-                stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-              </svg>
+            class="feature-card-executive feature-hover animate-in animate-delayed-2">
+            <div class="feature-icon-executive"></div>
+            <div class="card-header">
+              <div class="card-label">ANALÍTICA PREDICTIVA</div>
+              <div class="status-indicator-enhanced status-success">
+                IA AVANZADA
+              </div>
             </div>
-            <h3 class="text-2xl font-semibold text-white mb-4">
-              Dashboards Gerenciales
+            <h3
+              style="
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: var(--space-md);
+                color: var(--text-primary);
+              ">
+              Motor de Inteligencia Empresarial
             </h3>
-            <p class="text-white/70 leading-relaxed">
-              Tableros ejecutivos con KPIs esenciales, análisis predictivo de
-              flujo de caja y reportes personalizables.
+            <p
+              style="
+                color: var(--text-secondary);
+                line-height: 1.6;
+                margin-bottom: var(--space-lg);
+              ">
+              Analítica avanzada e inteligencia artificial para insights
+              predictivos, evaluación de riesgos y sistemas de soporte
+              automatizado para la toma de decisiones estratégicas de alto
+              nivel.
             </p>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm)">
+              <span class="data-pill-enhanced">Análisis de Riesgo</span>
+              <span class="data-pill-enhanced">Predicción de Tendencias</span>
+              <span class="data-pill-enhanced">Detección de Anomalías</span>
+            </div>
           </div>
 
-          <!-- Feature Card 3 -->
+          <!-- Funcionalidad 3: Seguridad Empresarial -->
           <div
-            class="bg-gray-900/80 backdrop-blur-sm border border-white/10 rounded-2xl p-8 lg:p-10 hover:-translate-y-2 hover:border-white/20 transition-all duration-300 group">
-            <div
-              class="w-12 h-12 mb-6 text-white/80 group-hover:text-white transition-colors duration-300">
-              <svg
-                viewBox="0 0 24 24"
-                class="w-full h-full"
-                fill="none"
-                stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
+            class="feature-card-executive feature-hover animate-in animate-delayed-3">
+            <div class="feature-icon-executive"></div>
+            <div class="card-header">
+              <div class="card-label">SEGURIDAD EMPRESARIAL</div>
+              <div class="status-indicator-enhanced status-success">
+                ASEGURADO
+              </div>
             </div>
-            <h3 class="text-2xl font-semibold text-white mb-4">
-              Trazabilidad Total
+            <h3
+              style="
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: var(--space-md);
+                color: var(--text-primary);
+              ">
+              Marco de Seguridad Ejecutivo
             </h3>
+            <p
+              style="
+                color: var(--text-secondary);
+                line-height: 1.6;
+                margin-bottom: var(--space-lg);
+              ">
+              Seguridad de grado empresarial con cifrado end-to-end, pistas de
+              auditoría, monitoreo de cumplimiento y control de acceso basado en
+              roles para proteger información crítica del negocio.
             </p>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm)">
+              <span class="data-pill-enhanced">Cifrado Extremo a Extremo</span>
+              <span class="data-pill-enhanced">Pistas de Auditoría</span>
+              <span class="data-pill-enhanced">Cumplimiento Normativo</span>
+            </div>
+          </div>
+
+          <!-- Funcionalidad 4: Automatización Inteligente -->
+          <div
+            class="feature-card-executive feature-hover animate-in animate-delayed-4">
+            <div class="feature-icon-executive"></div>
+            <div class="card-header">
+              <div class="card-label">AUTOMATIZACIÓN INTELIGENTE</div>
+              <div class="status-indicator-enhanced status-success">
+                HABILITADO
+              </div>
+            </div>
+            <h3
+              style="
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: var(--space-md);
+                color: var(--text-primary);
+              ">
+              Orquestación de Procesos
+            </h3>
+            <p
+              style="
+                color: var(--text-secondary);
+                line-height: 1.6;
+                margin-bottom: var(--space-lg);
+              ">
+              Automatización avanzada de flujos de trabajo empresariales con
+              orquestación inteligente, reducción de intervención manual y
+              optimización continua de procesos críticos.
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm)">
+              <span class="data-pill-enhanced">Flujos Inteligentes</span>
+              <span class="data-pill-enhanced">Reducción Manual</span>
+              <span class="data-pill-enhanced">Optimización Continua</span>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Casos de Uso por Industria -->
-    <section id="casos-uso" class="py-20 lg:py-32 px-5 bg-gradient-to-b from-gray-950/50 to-black">
-      <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="text-center mb-16 lg:mb-20">
-          <h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
-            Casos de Uso por <span class="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Industria</span>
+    <!-- Soluciones por Industria -->
+    <section
+      id="soluciones"
+      style="
+        padding: var(--space-2xl) var(--space-xl);
+        background: var(--bg-secondary);
+      ">
+      <div style="max-width: 1600px; margin: 0 auto">
+        <!-- Encabezado de Sección -->
+        <div
+          class="card animate-in"
+          style="margin-bottom: var(--space-2xl); text-align: center">
+          <div class="card-header" style="justify-content: center">
+            <div class="card-label">SOLUCIONES EMPRESARIALES</div>
+          </div>
+          <h2
+            class="title-large gradient-text"
+            style="margin-bottom: var(--space-lg)">
+            Inteligencia Sectorial Especializada
           </h2>
-          <p class="text-lg lg:text-xl text-white/60 max-w-3xl mx-auto">
-            Soluciones especializadas para cada sector, adaptadas a los desafíos específicos de tu industria
+          <p
+            style="
+              color: var(--text-secondary);
+              font-size: 1.125rem;
+              max-width: 800px;
+              margin: 0 auto;
+              line-height: 1.6;
+            ">
+            Módulos de comando especializados adaptados para requerimientos
+            operacionales específicos de la industria y estándares de
+            cumplimiento normativo.
           </p>
         </div>
 
-        <!-- Industries Grid -->
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+        <!-- Grid de Industrias -->
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: var(--space-lg);
+          ">
           <!-- Construcción -->
-          <div class="group bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-white/10 rounded-3xl p-8 lg:p-10 hover:-translate-y-3 hover:border-orange-500/50 hover:shadow-2xl hover:shadow-orange-500/10 transition-all duration-500">
-            <div class="w-16 h-16 mb-6 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <svg class="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-              </svg>
+          <div
+            class="feature-card-executive feature-hover animate-in animate-delayed-1">
+            <div class="feature-icon-executive"></div>
+            <div class="client-header">
+              <div class="client-name">OPERACIONES DE CONSTRUCCIÓN</div>
+              <div class="tier-vip">ENTERPRISE</div>
             </div>
-            <h3 class="text-2xl font-bold text-white mb-4 group-hover:text-orange-400 transition-colors duration-300">
-              Construcción
-            </h3>
-            <p class="text-white/70 leading-relaxed mb-6">
-              Gestión de contratos, subcontratistas y proveedores con seguimiento de hitos y pagos programados para proyectos de construcción.
+            <div class="client-amount">Comando de Proyectos</div>
+            <p
+              style="
+                color: var(--text-secondary);
+                font-size: 0.875rem;
+                margin-bottom: var(--space-md);
+                line-height: 1.5;
+              ">
+              Gestión de subcontratistas, seguimiento de hitos, control de
+              retenciones, y monitoreo de cumplimiento normativo para proyectos
+              de construcción.
             </p>
-            <div class="space-y-2 text-sm text-white/50">
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
-                <span>Seguimiento de subcontratos</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
-                <span>Control de hitos y entregas</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
-                <span>Gestión de retenciones</span>
-              </div>
+            <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap">
+              <span class="data-pill-enhanced">Control Subcontratos</span>
+              <span class="data-pill-enhanced">Seguimiento Hitos</span>
+              <span class="data-pill-enhanced">Gestión Retenciones</span>
             </div>
           </div>
 
           <!-- Manufactura -->
-          <div class="group bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-white/10 rounded-3xl p-8 lg:p-10 hover:-translate-y-3 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
-            <div class="w-16 h-16 mb-6 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
+          <div
+            class="feature-card-executive feature-hover animate-in animate-delayed-2">
+            <div class="feature-icon-executive"></div>
+            <div class="client-header">
+              <div class="client-name">CONTROL MANUFACTURERO</div>
+              <div class="tier-vip">ENTERPRISE</div>
             </div>
-            <h3 class="text-2xl font-bold text-white mb-4 group-hover:text-blue-400 transition-colors duration-300">
-              Manufactura
-            </h3>
-            <p class="text-white/70 leading-relaxed mb-6">
-              Control de proveedores, materias primas y componentes con automatización de órdenes de compra y gestión de inventarios.
+            <div class="client-amount">Comando Cadena Suministro</div>
+            <p
+              style="
+                color: var(--text-secondary);
+                font-size: 0.875rem;
+                margin-bottom: var(--space-md);
+                line-height: 1.5;
+              ">
+              Gestión de proveedores, control de calidad, optimización de
+              inventarios, y planificación de producción para operaciones
+              manufactureras.
             </p>
-            <div class="space-y-2 text-sm text-white/50">
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                <span>Gestión de proveedores críticos</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                <span>Control de calidad de materiales</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                <span>Optimización de inventarios</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Servicios Profesionales -->
-          <div class="group bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-white/10 rounded-3xl p-8 lg:p-10 hover:-translate-y-3 hover:border-green-500/50 hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-500">
-            <div class="w-16 h-16 mb-6 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v6l-3-3-3 3V6"/>
-              </svg>
-            </div>
-            <h3 class="text-2xl font-bold text-white mb-4 group-hover:text-green-400 transition-colors duration-300">
-              Servicios Profesionales
-            </h3>
-            <p class="text-white/70 leading-relaxed mb-6">
-              Administración de contratos de servicios, consultorías y outsourcing con control de SLAs y facturación automatizada.
-            </p>
-            <div class="space-y-2 text-sm text-white/50">
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                <span>Control de SLAs</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                <span>Facturación automática</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                <span>Gestión de consultores</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Retail -->
-          <div class="group bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-white/10 rounded-3xl p-8 lg:p-10 hover:-translate-y-3 hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-500">
-            <div class="w-16 h-16 mb-6 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-              </svg>
-            </div>
-            <h3 class="text-2xl font-bold text-white mb-4 group-hover:text-purple-400 transition-colors duration-300">
-              Retail & E-commerce
-            </h3>
-            <p class="text-white/70 leading-relaxed mb-6">
-              Manejo de múltiples proveedores, negociación de términos comerciales y gestión de temporadas con análisis predictivo.
-            </p>
-            <div class="space-y-2 text-sm text-white/50">
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                <span>Gestión de temporadas</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                <span>Términos comerciales</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                <span>Análisis de demanda</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Energía -->
-          <div class="group bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-white/10 rounded-3xl p-8 lg:p-10 hover:-translate-y-3 hover:border-yellow-500/50 hover:shadow-2xl hover:shadow-yellow-500/10 transition-all duration-500">
-            <div class="w-16 h-16 mb-6 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-              </svg>
-            </div>
-            <h3 class="text-2xl font-bold text-white mb-4 group-hover:text-yellow-400 transition-colors duration-300">
-              Energía & Utilities
-            </h3>
-            <p class="text-white/70 leading-relaxed mb-6">
-              Gestión de contratos de suministro, mantenimiento de infraestructura y proveedores especializados con compliance regulatorio.
-            </p>
-            <div class="space-y-2 text-sm text-white/50">
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                <span>Compliance regulatorio</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                <span>Mantenimiento preventivo</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
-                <span>Contratos de suministro</span>
-              </div>
+            <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap">
+              <span class="data-pill-enhanced">Control Proveedores</span>
+              <span class="data-pill-enhanced">Gestión Calidad</span>
+              <span class="data-pill-enhanced">Optimización Inventarios</span>
             </div>
           </div>
 
           <!-- Tecnología -->
-          <div class="group bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-white/10 rounded-3xl p-8 lg:p-10 hover:-translate-y-3 hover:border-cyan-500/50 hover:shadow-2xl hover:shadow-cyan-500/10 transition-all duration-500">
-            <div class="w-16 h-16 mb-6 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
-              </svg>
+          <div
+            class="feature-card-executive feature-hover animate-in animate-delayed-3">
+            <div class="feature-icon-executive"></div>
+            <div class="client-header">
+              <div class="client-name">SERVICIOS TECNOLÓGICOS</div>
+              <div class="tier-vip">ENTERPRISE</div>
             </div>
-            <h3 class="text-2xl font-bold text-white mb-4 group-hover:text-cyan-400 transition-colors duration-300">
-              Tecnología & Software
-            </h3>
-            <p class="text-white/70 leading-relaxed mb-6">
-              Control de licencias, servicios cloud, partners tecnológicos y contratos de desarrollo con métricas de performance.
+            <div class="client-amount">Comando Digital</div>
+            <p
+              style="
+                color: var(--text-secondary);
+                font-size: 0.875rem;
+                margin-bottom: var(--space-md);
+                line-height: 1.5;
+              ">
+              Gestión de proyectos de desarrollo, control de recursos técnicos,
+              seguimiento de entregas y optimización de equipos de desarrollo.
             </p>
-            <div class="space-y-2 text-sm text-white/50">
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full"></div>
-                <span>Gestión de licencias</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full"></div>
-                <span>Servicios cloud</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full"></div>
-                <span>Partners tecnológicos</span>
-              </div>
+            <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap">
+              <span class="data-pill-enhanced">Gestión Proyectos</span>
+              <span class="data-pill-enhanced">Control Recursos</span>
+              <span class="data-pill-enhanced">Seguimiento Entregas</span>
             </div>
           </div>
-        </div>
 
-        <!-- CTA al final de casos de uso -->
-        <div class="text-center mt-16 lg:mt-20">
-          <div class="bg-gradient-to-r from-gray-900/80 to-gray-800/60 backdrop-blur-sm border border-white/10 rounded-3xl p-8 lg:p-12 max-w-4xl mx-auto">
-            <h3 class="text-2xl lg:text-3xl font-bold text-white mb-4">
-              ¿No encuentras tu industria?
-            </h3>
-            <p class="text-white/70 mb-8 text-lg">
-              Pagora se adapta a cualquier sector. Agenda una consultoría personalizada y descubre cómo optimizar tus procesos específicos.
+          <!-- Servicios Financieros -->
+          <div
+            class="feature-card-executive feature-hover animate-in animate-delayed-4">
+            <div class="feature-icon-executive"></div>
+            <div class="client-header">
+              <div class="client-name">SERVICIOS FINANCIEROS</div>
+              <div class="tier-vip">ENTERPRISE</div>
+            </div>
+            <div class="client-amount">Comando Financiero</div>
+            <p
+              style="
+                color: var(--text-secondary);
+                font-size: 0.875rem;
+                margin-bottom: var(--space-md);
+                line-height: 1.5;
+              ">
+              Control de riesgos, cumplimiento regulatorio, gestión de carteras
+              y monitoreo de operaciones financieras en tiempo real.
             </p>
-            <a href="{{ url_for('auth.login') }}" class="inline-flex items-center gap-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:from-blue-600 hover:to-purple-700 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
-              <span>Consultoría Personalizada</span>
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-              </svg>
-            </a>
+            <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap">
+              <span class="data-pill-enhanced">Control Riesgos</span>
+              <span class="data-pill-enhanced">Cumplimiento</span>
+              <span class="data-pill-enhanced">Gestión Carteras</span>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Enhanced Footer -->
-    <footer class="py-16 lg:py-20 px-5 bg-gradient-to-t from-gray-950 to-black border-t border-white/10">
-      <div class="max-w-6xl mx-auto">
-        <!-- Footer Content -->
-        <div class="text-center space-y-8">
-          <!-- Logo y Tagline -->
-          <div class="space-y-4">
-            <div class="flex items-center justify-center gap-3">
-              <div class="w-10 h-10">
-                <svg viewBox="0 0 24 24" class="w-full h-full" fill="none">
-                  <path
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    stroke="white"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round" />
-                </svg>
+    <!-- Sección de Contacto Empresarial -->
+    <section
+      id="contacto"
+      style="
+        padding: var(--space-2xl) var(--space-xl);
+        background: var(--bg-primary);
+      ">
+      <div style="max-width: 1200px; margin: 0 auto">
+        <div
+          class="main-grid"
+          style="grid-template-columns: 1fr 1fr; gap: var(--space-2xl)">
+          <!-- Información de Contacto -->
+          <div class="feature-card-executive animate-in">
+            <div class="card-header">
+              <div class="card-label">CONTACTO EMPRESARIAL</div>
+              <div class="status-indicator-enhanced status-success">
+                DISPONIBLE 24/7
               </div>
-              <div class="text-3xl font-bold text-white">Pagora</div>
             </div>
-            <p class="text-white/60 text-lg max-w-2xl mx-auto">
-              La plataforma líder en automatización de gestión de EDPs empresariales. 
-              Transforma tu operación con inteligencia artificial y análisis predictivo.
+
+            <h2
+              class="title-large gradient-text"
+              style="margin-bottom: var(--space-lg); font-size: 2.5rem">
+              Solicite una Demostración Ejecutiva
+            </h2>
+
+            <p
+              style="
+                color: var(--text-secondary);
+                font-size: 1.125rem;
+                line-height: 1.6;
+                margin-bottom: var(--space-xl);
+              ">
+              Converse con nuestro equipo ejecutivo sobre cómo PAGORA puede
+              transformar las operaciones de su empresa. Demostraciones
+              personalizadas para C-Suite.
             </p>
+
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-lg);
+              ">
+              <div class="terminal-section">
+                <div class="terminal-header">INFORMACIÓN DE CONTACTO</div>
+                <div class="terminal-line">
+                  <span class="terminal-value">EMAIL EJECUTIVO</span>:
+                  executives@pagora.com
+                </div>
+                <div class="terminal-line">
+                  <span class="terminal-value">LÍNEA DIRECTA</span>: +1 (555)
+                  000-EXEC
+                </div>
+                <div class="terminal-line">
+                  <span class="terminal-value">SOPORTE 24/7</span>:
+                  support@pagora.com
+                </div>
+                <div class="terminal-line">
+                  <span class="terminal-value">SEDE CENTRAL</span>: Silicon
+                  Valley, CA
+                </div>
+              </div>
+
+              <div style="display: flex; gap: var(--space-md); flex-wrap: wrap">
+                <a
+                  href="mailto:executives@pagora.com"
+                  class="cta-button-enhanced">
+                  SOLICITAR DEMOSTRACIÓN
+                </a>
+                <a href="tel:+15550000EXEC" class="btn btn-secondary">
+                  CONTACTAR AHORA
+                </a>
+              </div>
+            </div>
           </div>
 
-          <!-- Quick Links -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
-            <div class="space-y-3">
-              <h4 class="text-white font-semibold">Producto</h4>
-              <ul class="space-y-2 text-white/60">
-                <li><a href="#funcionalidades" class="hover:text-white transition-colors duration-300">Funcionalidades</a></li>
-                <li><a href="#casos-uso" class="hover:text-white transition-colors duration-300">Casos de Uso</a></li>
-                <li><a href="{{ url_for('auth.login') }}" class="hover:text-white transition-colors duration-300">Demo</a></li>
-              </ul>
+          <!-- Formulario de Contacto -->
+          <div class="feature-card-executive animate-in animate-delayed-1">
+            <div class="card-header">
+              <div class="card-label">FORMULARIO EJECUTIVO</div>
+              <div class="data-pill-enhanced">CONFIDENCIAL</div>
             </div>
-            <div class="space-y-3">
-              <h4 class="text-white font-semibold">Industrias</h4>
-              <ul class="space-y-2 text-white/60">
-                <li><a href="#casos-uso" class="hover:text-white transition-colors duration-300">Construcción</a></li>
-                <li><a href="#casos-uso" class="hover:text-white transition-colors duration-300">Manufactura</a></li>
-                <li><a href="#casos-uso" class="hover:text-white transition-colors duration-300">Tecnología</a></li>
-              </ul>
-            </div>
-            <div class="space-y-3">
-              <h4 class="text-white font-semibold">Empresa</h4>
-              <ul class="space-y-2 text-white/60">
-                <li><a href="#" class="hover:text-white transition-colors duration-300">Nosotros</a></li>
-                <li><a href="#" class="hover:text-white transition-colors duration-300">Casos de Éxito</a></li>
-                <li><a href="#" class="hover:text-white transition-colors duration-300">Blog</a></li>
-              </ul>
-            </div>
-            <div class="space-y-3">
-              <h4 class="text-white font-semibold">Soporte</h4>
-              <ul class="space-y-2 text-white/60">
-                <li><a href="#" class="hover:text-white transition-colors duration-300">Documentación</a></li>
-                <li><a href="#" class="hover:text-white transition-colors duration-300">Centro de Ayuda</a></li>
-                <li><a href="#" class="hover:text-white transition-colors duration-300">Contacto</a></li>
-              </ul>
-            </div>
-          </div>
 
-          <!-- CTA Final -->
-          <div class="bg-gradient-to-r from-gray-900/50 to-gray-800/30 backdrop-blur-sm border border-white/10 rounded-2xl p-8 max-w-3xl mx-auto">
-            <h3 class="text-xl font-bold text-white mb-3">¿Listo para automatizar tu gestión de EDPs?</h3>
-            <p class="text-white/70 mb-6">Únete a las empresas que ya optimizaron sus procesos con Pagora</p>
-            <a href="{{ url_for('auth.login') }}" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:from-blue-600 hover:to-purple-700 hover:-translate-y-0.5 transition-all duration-300">
-              <span>Comenzar Ahora</span>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-              </svg>
-            </a>
-          </div>
+            <h3
+              style="
+                color: var(--text-primary);
+                margin-bottom: var(--space-lg);
+                font-size: 1.5rem;
+              ">
+              Acceso Prioritario al Sistema
+            </h3>
 
-          <!-- Copyright -->
-          <div class="pt-8 border-t border-white/10">
-            <p class="text-white/40 text-sm">
-              © 2025 Pagora. Todos los derechos reservados. | Plataforma SaaS empresarial para gestión inteligente de EDPs.
+            <form
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-md);
+              ">
+              <div>
+                <label
+                  style="
+                    color: var(--text-secondary);
+                    font-size: 0.875rem;
+                    margin-bottom: var(--space-xs);
+                    display: block;
+                  ">
+                  NOMBRE COMPLETO *
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Ej: John Smith, CEO"
+                  required />
+              </div>
+
+              <div>
+                <label
+                  style="
+                    color: var(--text-secondary);
+                    font-size: 0.875rem;
+                    margin-bottom: var(--space-xs);
+                    display: block;
+                  ">
+                  EMAIL CORPORATIVO *
+                </label>
+                <input
+                  type="email"
+                  class="form-control"
+                  placeholder="ceo@empresa.com"
+                  required />
+              </div>
+
+              <div>
+                <label
+                  style="
+                    color: var(--text-secondary);
+                    font-size: 0.875rem;
+                    margin-bottom: var(--space-xs);
+                    display: block;
+                  ">
+                  EMPRESA / ORGANIZACIÓN *
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Nombre de la empresa"
+                  required />
+              </div>
+
+              <div>
+                <label
+                  style="
+                    color: var(--text-secondary);
+                    font-size: 0.875rem;
+                    margin-bottom: var(--space-xs);
+                    display: block;
+                  ">
+                  CARGO / POSICIÓN *
+                </label>
+                <select class="form-control" required>
+                  <option value="">Seleccione su cargo</option>
+                  <option value="ceo">CEO / Director General</option>
+                  <option value="cto">CTO / Director Tecnológico</option>
+                  <option value="coo">COO / Director Operaciones</option>
+                  <option value="cfo">CFO / Director Financiero</option>
+                  <option value="vp">VP / Vicepresidente</option>
+                  <option value="director">Director / Gerente General</option>
+                  <option value="other">Otro Ejecutivo</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  style="
+                    color: var(--text-secondary);
+                    font-size: 0.875rem;
+                    margin-bottom: var(--space-xs);
+                    display: block;
+                  ">
+                  TAMAÑO DE EMPRESA
+                </label>
+                <select class="form-control">
+                  <option value="">Seleccione tamaño</option>
+                  <option value="startup">Startup (1-50 empleados)</option>
+                  <option value="small">Pequeña (51-200 empleados)</option>
+                  <option value="medium">Mediana (201-1000 empleados)</option>
+                  <option value="large">Grande (1001-5000 empleados)</option>
+                  <option value="enterprise">
+                    Enterprise (5000+ empleados)
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  style="
+                    color: var(--text-secondary);
+                    font-size: 0.875rem;
+                    margin-bottom: var(--space-xs);
+                    display: block;
+                  ">
+                  REQUERIMIENTOS ESPECÍFICOS
+                </label>
+                <textarea
+                  class="form-control"
+                  rows="3"
+                  placeholder="Describa sus necesidades empresariales específicas..."></textarea>
+              </div>
+
+              <button
+                type="submit"
+                class="cta-button-enhanced"
+                style="margin-top: var(--space-md)">
+                ENVIAR SOLICITUD EJECUTIVA
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer Ejecutivo -->
+    <footer
+      style="
+        background: var(--bg-tertiary);
+        padding: var(--space-2xl) var(--space-xl);
+        border-top: 1px solid var(--border-primary);
+      ">
+      <div style="max-width: 1600px; margin: 0 auto">
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-xl);
+          ">
+          <!-- Información de la Empresa -->
+          <div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: var(--space-md);
+                margin-bottom: var(--space-lg);
+              ">
+              <div class="logo"></div>
+              <div class="title">PAGORA</div>
+            </div>
+            <p
+              style="
+                color: var(--text-secondary);
+                line-height: 1.6;
+                margin-bottom: var(--space-lg);
+              ">
+              Plataforma líder en comando y control empresarial. Transformando
+              la toma de decisiones ejecutivas a través de inteligencia de datos
+              en tiempo real.
             </p>
+            <div class="terminal-section">
+              <div class="terminal-header">ESTADO DEL SISTEMA GLOBAL</div>
+              <div class="terminal-line">
+                <span class="terminal-value">DISPONIBILIDAD</span>: 99.97%
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-value">ÚLTIMA ACTUALIZACIÓN</span>: 2 MIN
+              </div>
+            </div>
+          </div>
+
+          <!-- Enlaces Ejecutivos -->
+          <div>
+            <h4
+              style="
+                color: var(--text-primary);
+                margin-bottom: var(--space-lg);
+                font-size: 0.875rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+              ">
+              RECURSOS EJECUTIVOS
+            </h4>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-sm);
+              ">
+              <a
+                href="#dashboard"
+                class="nav-link"
+                style="padding: var(--space-xs) 0"
+                >Centro de Comando</a
+              >
+              <a
+                href="#funcionalidades"
+                class="nav-link"
+                style="padding: var(--space-xs) 0"
+                >Funcionalidades</a
+              >
+              <a
+                href="#soluciones"
+                class="nav-link"
+                style="padding: var(--space-xs) 0"
+                >Soluciones</a
+              >
+              <a
+                href="#contacto"
+                class="nav-link"
+                style="padding: var(--space-xs) 0"
+                >Contacto Ejecutivo</a
+              >
+            </div>
+          </div>
+
+          <!-- Soporte -->
+          <div>
+            <h4
+              style="
+                color: var(--text-primary);
+                margin-bottom: var(--space-lg);
+                font-size: 0.875rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+              ">
+              SOPORTE EMPRESARIAL
+            </h4>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-sm);
+              ">
+              <a
+                href="mailto:support@pagora.com"
+                class="nav-link"
+                style="padding: var(--space-xs) 0"
+                >Soporte Técnico 24/7</a
+              >
+              <a
+                href="mailto:executives@pagora.com"
+                class="nav-link"
+                style="padding: var(--space-xs) 0"
+                >Línea Ejecutiva</a
+              >
+              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
+                >Documentación</a
+              >
+              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
+                >Centro de Ayuda</a
+              >
+            </div>
+          </div>
+
+          <!-- Información Legal -->
+          <div>
+            <h4
+              style="
+                color: var(--text-primary);
+                margin-bottom: var(--space-lg);
+                font-size: 0.875rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+              ">
+              INFORMACIÓN LEGAL
+            </h4>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-sm);
+              ">
+              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
+                >Términos de Servicio</a
+              >
+              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
+                >Política de Privacidad</a
+              >
+              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
+                >Cumplimiento GDPR</a
+              >
+              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
+                >Certificaciones</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Copyright y Status -->
+        <div
+          style="
+            margin-top: var(--space-2xl);
+            padding-top: var(--space-lg);
+            border-top: 1px solid var(--border-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+          ">
+          <p
+            style="color: var(--text-tertiary); font-size: 0.875rem; margin: 0">
+            © 2025 PAGORA Enterprise Solutions. Todos los derechos reservados.
+          </p>
+          <div style="display: flex; align-items: center; gap: var(--space-md)">
+            <div class="status-indicator">
+              <div class="status-dot pulse-dot"></div>
+              <span style="font-size: 0.75rem">SISTEMA OPERACIONAL</span>
+            </div>
+            <div class="timestamp mono-font" style="font-size: 0.75rem">
+              V2.4.1 BUILD 2025.06.21
+            </div>
           </div>
         </div>
       </div>
     </footer>
 
-    <!-- JavaScript for smooth interactions -->
-    <script>
-      // Intersection Observer para animaciones
-      const observerOptions = {
-        threshold: 0.1,
-        rootMargin: "0px 0px -50px 0px",
-      };
-
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.remove("opacity-0");
-            entry.target.classList.add("animate-fade-in-up");
-          }
-        });
-      }, observerOptions);
-
-      // Aplicar a elementos con animación
-      document.querySelectorAll(".animate-on-scroll").forEach((el) => {
-        el.classList.add("opacity-0");
-        observer.observe(el);
-      });
-
-      // Cambiar navbar al hacer scroll
-      window.addEventListener("scroll", () => {
-        const navbar = document.querySelector("nav");
-        if (window.scrollY > 100) {
-          navbar.classList.remove("bg-black/80");
-          navbar.classList.add("bg-black/95");
-        } else {
-          navbar.classList.remove("bg-black/95");
-          navbar.classList.add("bg-black/80");
-        }
-      });
-
-      // Scroll suave para enlaces ancla
-      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-        anchor.addEventListener("click", function (e) {
-          e.preventDefault();
-          const target = document.querySelector(this.getAttribute("href"));
-          if (target) {
-            target.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          }
-        });
-      });
-    </script>
+    <!-- Landing Page JavaScript -->
+    <script src="{{ url_for('static', filename='js/landing/landing.js') }}"></script>
   </body>
 </html>

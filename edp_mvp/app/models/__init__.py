@@ -58,7 +58,7 @@ class EDP(BaseModel):
     # Calculated fields
     validado: Optional[bool] = None
     critico: Optional[bool] = None
-    dias_espera: Optional[int] = None
+    dso_actual: Optional[float] = None
     dias_habiles: Optional[int] = None
     
     @classmethod
@@ -138,8 +138,8 @@ class EDP(BaseModel):
     
     @property
     def is_critical(self) -> bool:
-        """Check if EDP is critical (over 30 days waiting)."""
-        return self.dias_espera is not None and self.dias_espera > 30
+        """Check if EDP is critical (over 30 days waiting using DSO)."""
+        return self.dso_actual is not None and self.dso_actual > 30
     
     @property
     def is_paid(self) -> bool:

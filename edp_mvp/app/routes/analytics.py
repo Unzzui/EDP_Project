@@ -99,10 +99,10 @@ async def get_quick_dashboard_data_async(df_edp_raw: pd.DataFrame, df_log_raw: p
             df = df_edp_raw.copy()
             
             # Asegurar que las columnas críticas existan
-            required_columns = ["estado", "monto_aprobado", "dias_espera"]
+            required_columns = ["estado", "monto_aprobado", "dso_actual"]
             for col in required_columns:
                 if col not in df.columns:
-                    df[col] = 0 if col in ["monto_aprobado", "dias_espera"] else "pendiente"
+                    df[col] = 0 if col in ["monto_aprobado", "dso_actual"] else "pendiente"
             
             # Aplicar filtros si las columnas existen
             if "mes" in df.columns and filters.get("mes"):
@@ -126,9 +126,9 @@ async def get_quick_dashboard_data_async(df_edp_raw: pd.DataFrame, df_log_raw: p
             monto_total = float(df["monto_aprobado"].sum())
             monto_pagado = float(df[df["estado"] == "pagado"]["monto_aprobado"].sum())
             
-            # Días promedio
-            df["dias_espera"] = pd.to_numeric(df["dias_espera"], errors="coerce").fillna(0)
-            dias_promedio = float(df["dias_espera"].mean()) if not df["dias_espera"].isna().all() else 0
+            # DSO promedio
+            df["dso_actual"] = pd.to_numeric(df["dso_actual"], errors="coerce").fillna(0)
+            dso_promedio = float(df["dso_actual"].mean()) if not df["dso_actual"].isna().all() else 0
             
             # Críticos
             criticos = len(df[df.get("critico", False) == True])
@@ -155,10 +155,10 @@ async def get_quick_dashboard_data_async(df_edp_raw: pd.DataFrame, df_log_raw: p
                 "total_pendientes": total_pendientes,
                 "monto_total": monto_total,
                 "monto_pagado": monto_pagado,
-                "dias_promedio": round(dias_promedio, 1),
+                "dso_promedio": round(dso_promedio, 1),
                 "criticos": criticos,
                 "registros": registros_limpios,  # Registros limpios para la tabla
-                "dso_global": round(dias_promedio, 1),  # DSO simplificado
+                "dso_global": round(dso_promedio, 1),  # DSO usando dso_actual
                 "calculation_time": 0,
                 "data_source": "quick_calculation"
             }

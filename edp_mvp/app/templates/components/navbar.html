@@ -126,23 +126,6 @@
             </a>
 
             <a
-              href="{{ url_for('dashboard.vista_global_encargados') }}"
-              class="dropdown-item">
-              <svg
-                class="dropdown-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              Gestión de Encargados
-            </a>
-
-            <a
               href="{{ url_for('dashboard.analisis_retrabajos') }}"
               class="dropdown-item">
               <svg
@@ -195,9 +178,7 @@
         <!-- Dropdown de Gestión de Proyectos -->
         <div id="project-manager-menu" class="dropdown-menu hidden">
           <div class="dropdown-content">
-            <a
-              href="{{ url_for('project_management.dashboard') }}"
-              class="dropdown-item">
+            <a href="{{ url_for('projects.dashboard') }}" class="dropdown-item">
               <svg
                 class="dropdown-icon"
                 viewBox="0 0 24 24"
@@ -213,7 +194,7 @@
             </a>
 
             <a
-              href="{{ url_for('project_management.team_dashboard') }}"
+              href="{{ url_for('projects.team_dashboard') }}"
               class="dropdown-item">
               <svg
                 class="dropdown-icon"
@@ -229,9 +210,7 @@
               Gestión de Equipo
             </a>
 
-            <a
-              href="{{ url_for('project_management.reports') }}"
-              class="dropdown-item">
+            <a href="{{ url_for('projects.reports') }}" class="dropdown-item">
               <svg
                 class="dropdown-icon"
                 viewBox="0 0 24 24"
@@ -679,11 +658,7 @@
             class="block px-3 py-2 rounded-md text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
             Panel de Control EDP
           </a>
-          <a
-            href="{{ url_for('dashboard.vista_global_encargados') }}"
-            class="block px-3 py-2 rounded-md text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
-            Gestión de Encargados
-          </a>
+
           <a
             href="{{ url_for('dashboard.analisis_retrabajos') }}"
             class="block px-3 py-2 rounded-md text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
@@ -783,17 +758,17 @@
 
         <div id="mobile-project-manager-menu" class="hidden pl-6 space-y-1">
           <a
-            href="{{ url_for('project_management.dashboard') }}"
+            href="{{ url_for('projects.dashboard') }}"
             class="block px-3 py-2 rounded-md text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
             Dashboard JP
           </a>
           <a
-            href="{{ url_for('project_management.team_dashboard') }}"
+            href="{{ url_for('projects.team_dashboard') }}"
             class="block px-3 py-2 rounded-md text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
             Gestión de Equipo
           </a>
           <a
-            href="{{ url_for('project_management.reports') }}"
+            href="{{ url_for('projects.reports') }}"
             class="block px-3 py-2 rounded-md text-sm hover:bg-[color:var(--bg-highlight)] transition-colors">
             Reportes y Analytics
           </a>

@@ -780,6 +780,7 @@ class EDPRepository(BaseRepository):
                 "dias_espera": row.get("dias_espera"),
                 "dias_habiles": row.get("dias_habiles"),
                 "observaciones": row.get("observaciones"),
+                "dso_actual": row.get("dso_actual"),
             }
 
             # Clean None values and convert types properly

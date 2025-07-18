@@ -247,7 +247,7 @@ Pagora{% endblock %} {% block extra_head %}
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <!-- Project Dashboard -->
         <a
-          href="{{ url_for('project_management.dashboard') }}"
+          href="{{ url_for('projects.dashboard') }}"
           class="project-card rounded-3xl p-8 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden">
           <div
             class="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -293,7 +293,7 @@ Pagora{% endblock %} {% block extra_head %}
 
         <!-- Team Management -->
         <a
-          href="{{ url_for('project_management.team_dashboard') }}"
+          href="{{ url_for('projects.team_dashboard') }}"
           class="project-card rounded-3xl p-8 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden">
           <div
             class="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -391,7 +391,7 @@ Pagora{% endblock %} {% block extra_head %}
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Reports -->
         <a
-          href="{{ url_for('project_management.reports') }}"
+          href="{{ url_for('projects.reports') }}"
           class="feature-card rounded-2xl p-6 group hover:shadow-lg transition-all duration-300">
           <div class="flex items-center justify-between mb-4">
             <div

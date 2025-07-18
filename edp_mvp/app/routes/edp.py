@@ -27,7 +27,7 @@ from ..models import EDP
 
 
 # Create Blueprint
-edp_management_bp = Blueprint("edp_management", __name__, url_prefix="/edp-management")
+edp_management_bp = Blueprint("edp_management", __name__, url_prefix="/edp")
 
 # Initialize services
 edp_service = EDPService()
@@ -911,7 +911,7 @@ def manual_upload():
             'conformidad_enviada': False,  # Booleano, no string
             'n_conformidad': '',
             'fecha_conformidad': None,
-            'estado': form_data.get('estado', 'pendiente'),  # Estado por defecto
+            'estado': form_data.get('estado', 'revisión'),  # Estado por defecto
             'observaciones': observaciones_final,  # None si está vacío
             'estado_detallado': '',
             'registrado_por': current_user.username if current_user.is_authenticated else 'admin',
@@ -966,7 +966,63 @@ def manual_upload():
             flash(error_msg, 'error')
             return redirect(url_for('edp_management.manual_upload'))
 
-
+@edp_management_bp.route('/upload/bulk', methods=['POST'])
+@login_required
+def bulk_upload():
+    """Carga masiva de EDPs desde archivo Excel/CSV."""
+    try:
+        # Verificar que se envió un archivo
+        if 'file' not in request.files:
+            return jsonify({
+                'success': False,
+                'message': 'No se seleccionó ningún archivo'
+            }), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'message': 'No se seleccionó ningún archivo'
+            }), 400
+        
+        # Verificar extensión y tamaño
+        if not allowed_file(file.filename):
+            return jsonify({
+                'success': False,
+                'message': 'Tipo de archivo no permitido. Use .xlsx, .xls o .csv'
+            }), 400
+        
+        # Leer archivo
+        try:
+            if file.filename.endswith('.csv'):
+                df = pd.read_csv(file)
+            else:
+                df = pd.read_excel(file)
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Error leyendo archivo: {str(e)}'
+            }), 400
+        
+        # Validar estructura del archivo
+        validation_result = validate_bulk_data(df)
+        if not validation_result['valid']:
+            return jsonify({
+                'success': False,
+                'message': 'Estructura de archivo inválida',
+                'errors': validation_result['errors']
+            }), 400
+        
+        # Procesar datos en lotes para mejor rendimiento
+        results = process_bulk_upload(df, session.get('user', 'admin'))
+        
+        return jsonify(results)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error procesando archivo: {str(e)}'
+        }), 500
 @edp_management_bp.route('/upload/template')
 @login_required
 def download_template():
@@ -1205,3 +1261,746 @@ def validate_duplicate():
             'success': False,
             'message': f'Error: {str(e)}'
         }), 500
+
+
+def validate_bulk_data(df: pd.DataFrame, preview_mode: bool = False) -> Dict[str, Any]:
+    """Validar estructura y contenido del archivo para carga masiva."""
+    try:
+        print("🔍 Iniciando validate_bulk_data...")
+        errors = []
+        warnings = []
+        
+        # Caché temporal para duplicados durante esta validación
+        duplicate_cache = {}
+        
+        # Pre-cargar caché global para máximo rendimiento
+        print("🚀 Pre-cargando caché de EDPs para validación rápida...")
+        cache_start = time.time()
+        load_edps_cache()  # Esto carga el caché global si es necesario
+        cache_time = time.time() - cache_start
+        print(f"⚡ Caché listo en {cache_time:.2f}s")
+        
+        # Verificar que el DataFrame no esté vacío
+        if df.empty:
+            print("❌ DataFrame está vacío")
+            errors.append('El archivo está vacío')
+            return {'valid': False, 'errors': errors, 'warnings': warnings}
+        
+        print(f"📊 DataFrame shape: {df.shape}")
+        print(f"📋 Columnas originales: {list(df.columns)}")
+        
+        # Limpiar nombres de columnas
+        df_work = df.copy()  # Crear una copia para trabajar
+        df_work.columns = df_work.columns.str.strip().str.lower()
+        print(f"📋 Columnas después de limpiar: {list(df_work.columns)}")
+        
+        # Columnas obligatorias
+        required_columns = ['n_edp', 'proyecto', 'cliente', 'jefe_proyecto', 'fecha_emision', 'monto_propuesto']
+        
+        # Verificar columnas obligatorias
+        missing_columns = [col for col in required_columns if col not in df_work.columns]
+        if missing_columns:
+            print(f"❌ Faltan columnas: {missing_columns}")
+            errors.append(f'Faltan las siguientes columnas obligatorias: {", ".join(missing_columns)}')
+            return {'valid': False, 'errors': errors, 'warnings': warnings}
+        
+        print("✅ Todas las columnas obligatorias están presentes")
+        
+        # Validar que no hay filas completamente vacías
+        df_clean = df_work.dropna(how='all').copy()
+        if df_clean.empty:
+            print("❌ No hay datos válidos después de limpiar")
+            errors.append('No hay datos válidos en el archivo')
+            return {'valid': False, 'errors': errors, 'warnings': warnings}
+        
+        print(f"📊 Filas válidas después de limpiar: {len(df_clean)}")
+        
+        # Limpiar y normalizar datos
+        try:
+            print("🧹 Limpiando y normalizando datos...")
+            
+            # Reemplazar NaN con valores apropiados antes de procesar
+            df_clean = df_clean.fillna({
+                'fecha_envio_cliente': '',
+                'monto_aprobado': '',
+                'observaciones': '',
+                'gestor': ''
+            })
+            
+            # Asegurar que los montos sean enteros sin decimales
+            for idx in df_clean.index:
+                try:
+                    if pd.notna(df_clean.at[idx, 'monto_propuesto']) and str(df_clean.at[idx, 'monto_propuesto']).strip() != '':
+                        monto_str = str(df_clean.at[idx, 'monto_propuesto']).replace(',', '').replace(' ', '')
+                        monto = float(monto_str)
+                        df_clean.at[idx, 'monto_propuesto'] = int(monto)
+                except Exception as e:
+                    print(f"⚠️ Error procesando monto_propuesto en fila {idx}: {e}")
+                
+                if 'monto_aprobado' in df_clean.columns:
+                    try:
+                        monto_aprobado = df_clean.at[idx, 'monto_aprobado']
+                        if pd.notna(monto_aprobado) and str(monto_aprobado).strip() != '':
+                            monto_str = str(monto_aprobado).replace(',', '').replace(' ', '')
+                            if monto_str:  # Solo si no está vacío
+                                monto = float(monto_str)
+                                df_clean.at[idx, 'monto_aprobado'] = int(monto)
+                            else:
+                                df_clean.at[idx, 'monto_aprobado'] = ''
+                        else:
+                            df_clean.at[idx, 'monto_aprobado'] = ''
+                    except Exception as e:
+                        print(f"⚠️ Error procesando monto_aprobado en fila {idx}: {e}")
+                        df_clean.at[idx, 'monto_aprobado'] = ''
+            
+            print("✅ Datos limpiados y normalizados")
+            
+        except Exception as clean_error:
+            print(f"❌ Error limpiando datos: {str(clean_error)}")
+            # Continuar con validación sin la limpieza
+        
+        # Validaciones por fila
+        print("🔍 Iniciando validaciones por fila...")
+        print(f"🔍 Validando duplicados en BD para {len(df_clean)} filas...")
+        row_errors = []
+        duplicate_checks = []  # Para verificar duplicados
+        
+        for idx, row in df_clean.iterrows():
+            row_error = []
+            
+            # Validar campos obligatorios
+            for field in required_columns:
+                if pd.isna(row[field]) or str(row[field]).strip() == '':
+                    row_error.append(f'Fila {idx + 2}: El campo {field} es obligatorio')
+            
+            # Validar número EDP
+            try:
+                n_edp = int(row['n_edp'])
+                if n_edp <= 0:
+                    row_error.append(f'Fila {idx + 2}: El número EDP debe ser positivo')
+                else:
+                    # Verificar duplicados dentro del mismo archivo
+                    proyecto = str(row['proyecto']).strip()
+                    edp_key = f"{n_edp}_{proyecto}"
+                    if edp_key in duplicate_checks:
+                        row_error.append(f'Fila {idx + 2}: EDP #{n_edp} duplicado para proyecto {proyecto}')
+                    else:
+                        duplicate_checks.append(edp_key)
+                        # SIEMPRE verificar duplicados en BD, incluso en preview (súper rápido)
+                        if check_duplicate_fast(n_edp, proyecto):
+                            row_error.append(f'Fila {idx + 2}: Ya existe EDP #{n_edp} para proyecto {proyecto}')
+            except (ValueError, TypeError):
+                row_error.append(f'Fila {idx + 2}: El número EDP debe ser un número válido')
+            
+            # Validar montos
+            try:
+                monto_str = str(row['monto_propuesto']).replace(',', '').replace(' ', '')
+                monto = float(monto_str)
+                if monto <= 0:
+                    row_error.append(f'Fila {idx + 2}: El monto propuesto debe ser mayor a 0')
+            except (ValueError, TypeError):
+                row_error.append(f'Fila {idx + 2}: El monto propuesto debe ser un número válido')
+            
+            # Validar fecha de emisión
+            try:
+                fecha_str = str(row['fecha_emision']).strip()
+                # Intentar varios formatos de fecha
+                date_formats = ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d-%m-%Y']
+                fecha_parsed = None
+                for fmt in date_formats:
+                    try:
+                        fecha_parsed = datetime.strptime(fecha_str, fmt)
+                        break
+                    except ValueError:
+                        continue
+                
+                if fecha_parsed is None:
+                    row_error.append(f'Fila {idx + 2}: La fecha de emisión debe tener formato YYYY-MM-DD, DD/MM/YYYY o MM/DD/YYYY')
+            except (ValueError, TypeError):
+                row_error.append(f'Fila {idx + 2}: La fecha de emisión no es válida')
+            
+            row_errors.extend(row_error)
+        
+        print(f"📊 Total errores encontrados: {len(row_errors)}")
+        errors.extend(row_errors)
+        
+        # En modo preview, limitar errores mostrados
+        if preview_mode and len(errors) > 10:
+            errors = errors[:10]
+            warnings.append('Se muestran solo los primeros 10 errores. Corrija estos para ver más.')
+        
+        # Si hay errores de duplicados, generar sugerencias
+        suggestions = None
+        if len(errors) > 0 and any('Ya existe EDP' in str(error) for error in errors):
+            print("🔍 Generando sugerencias para EDPs duplicados...")
+            suggestions = get_duplicate_suggestions(df_clean)
+        
+        result = {
+            'valid': len(errors) == 0,
+            'errors': errors,
+            'warnings': warnings,
+            'total_rows': len(df_clean),
+            'suggestions': suggestions
+        }
+        
+        print(f"✅ Validación completada: valid={result['valid']}, errores={len(errors)}")
+        if suggestions and suggestions['has_duplicates']:
+            print(f"💡 Generadas sugerencias para {suggestions['total_duplicates']} duplicados")
+        
+        return result
+        
+    except Exception as e:
+        print(f"💥 Error en validate_bulk_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'valid': False,
+            'errors': [f'Error interno validando datos: {str(e)}'],
+            'warnings': [],
+            'total_rows': 0
+        }
+
+def prepare_edp_data(form_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Preparar datos del EDP para creación, agregando campos automáticos."""
+    import pandas as pd
+    
+    print(f"🔧 Iniciando preparación de datos EDP...")
+    print(f"📋 Form data recibido: {form_data}")
+    
+    # Procesar n_edp - convertir a string (como espera Supabase)
+    n_edp_value = form_data.get('n_edp')
+    if pd.isna(n_edp_value) if hasattr(pd, 'isna') else n_edp_value is None:
+        raise ValueError("El número EDP no puede estar vacío")
+    
+    try:
+        # Convertir a entero primero para validar, luego a string para Supabase
+        n_edp_int = int(float(str(n_edp_value)))
+        if n_edp_int <= 0:
+            raise ValueError("El número EDP debe ser positivo")
+        n_edp_final = str(n_edp_int)
+        print(f"✅ n_edp procesado: {n_edp_value} → {n_edp_final}")
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"El número EDP debe ser un número válido: {e}")
+    
+    # Limpiar y convertir montos a float
+    monto_propuesto = form_data.get('monto_propuesto', 0)
+    if isinstance(monto_propuesto, str):
+        monto_propuesto = monto_propuesto.replace(',', '').replace(' ', '')
+    try:
+        monto_propuesto = float(monto_propuesto) if monto_propuesto else 0.0
+        if monto_propuesto <= 0:
+            raise ValueError("El monto propuesto debe ser mayor a 0")
+        print(f"✅ monto_propuesto procesado: {monto_propuesto}")
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"Monto propuesto inválido: {e}")
+    
+    monto_aprobado = form_data.get('monto_aprobado')
+    if monto_aprobado and str(monto_aprobado).strip() and str(monto_aprobado).strip().lower() != 'nan':
+        if isinstance(monto_aprobado, str):
+            monto_aprobado = monto_aprobado.replace(',', '').replace(' ', '')
+        try:
+            monto_aprobado = float(monto_aprobado)
+            print(f"✅ monto_aprobado procesado: {monto_aprobado}")
+        except (ValueError, TypeError):
+            print("⚠️ monto_aprobado inválido, estableciendo como None")
+            monto_aprobado = None
+    else:
+        monto_aprobado = None
+        print("✅ monto_aprobado establecido como None (vacío)")
+    
+    # Procesar fecha de emisión y generar mes
+    try:
+        fecha_emision_str = str(form_data['fecha_emision'])
+        fecha_emision_dt = datetime.strptime(fecha_emision_str, '%Y-%m-%d')
+        mes = fecha_emision_dt.strftime('%Y-%m')
+        print(f"✅ fecha_emision y mes procesados: {fecha_emision_str}, mes: {mes}")
+    except (ValueError, TypeError) as e:
+        print(f"⚠️ Error procesando fecha_emision, usando fecha actual: {e}")
+        fecha_emision_dt = datetime.now()
+        fecha_emision_str = fecha_emision_dt.strftime('%Y-%m-%d')
+        mes = fecha_emision_dt.strftime('%Y-%m')
+    
+    # Procesar fecha estimada de pago
+    fecha_estimada_pago = form_data.get('fecha_estimada_pago')
+    if fecha_estimada_pago and str(fecha_estimada_pago).strip() and str(fecha_estimada_pago).strip().lower() != 'nan':
+        try:
+            # Validar formato de fecha
+            datetime.strptime(str(fecha_estimada_pago), '%Y-%m-%d')
+            fecha_estimada_pago_final = str(fecha_estimada_pago)
+            print(f"✅ fecha_estimada_pago procesada: {fecha_estimada_pago_final}")
+        except ValueError:
+            print("⚠️ fecha_estimada_pago inválida, calculando 30 días desde emisión")
+            fecha_estimada_pago_final = (fecha_emision_dt + timedelta(days=30)).strftime('%Y-%m-%d')
+    else:
+        # Calcular 30 días desde emisión si no se proporciona
+        fecha_estimada_pago_final = (fecha_emision_dt + timedelta(days=30)).strftime('%Y-%m-%d')
+        print(f"✅ fecha_estimada_pago calculada (30 días): {fecha_estimada_pago_final}")
+    
+    # Procesar fecha de envío cliente
+    fecha_envio_cliente = form_data.get('fecha_envio_cliente')
+    if fecha_envio_cliente and str(fecha_envio_cliente).strip() and str(fecha_envio_cliente).strip().lower() != 'nan':
+        try:
+            # Validar formato de fecha
+            datetime.strptime(str(fecha_envio_cliente), '%Y-%m-%d')
+            fecha_envio_cliente_final = str(fecha_envio_cliente)
+            print(f"✅ fecha_envio_cliente procesada: {fecha_envio_cliente_final}")
+        except ValueError:
+            print("⚠️ fecha_envio_cliente inválida, estableciendo como None")
+            fecha_envio_cliente_final = None
+    else:
+        fecha_envio_cliente_final = None
+        print("✅ fecha_envio_cliente establecida como None (vacía)")
+    
+    # Procesar campos de texto opcionales
+    gestor = form_data.get('gestor')
+    gestor_final = str(gestor).strip() if gestor and str(gestor).strip() != '' and str(gestor).strip().lower() != 'nan' else None
+    
+    observaciones = form_data.get('observaciones')
+    observaciones_final = str(observaciones).strip() if observaciones and str(observaciones).strip() != '' and str(observaciones).strip().lower() != 'nan' else None
+    
+    # Procesar campo booleano conformidad_enviada
+    conformidad_enviada = form_data.get('conformidad_enviada', False)
+    if isinstance(conformidad_enviada, str):
+        # Convertir string a booleano
+        conformidad_enviada_final = conformidad_enviada.lower() in ['true', 'yes', 'si', 'sí', '1', 'on']
+    elif isinstance(conformidad_enviada, (int, float)):
+        conformidad_enviada_final = bool(conformidad_enviada)
+    else:
+        conformidad_enviada_final = bool(conformidad_enviada) if conformidad_enviada is not None else False
+    
+    print(f"✅ Campos opcionales procesados - gestor: {gestor_final}, observaciones: {observaciones_final}")
+    print(f"✅ Campo booleano procesado - conformidad_enviada: {conformidad_enviada_final}")
+    
+    # Preparar datos finales
+    edp_data = {
+        # Campos obligatorios
+        'n_edp': n_edp_final,
+        'proyecto': str(form_data['proyecto']).strip(),
+        'cliente': str(form_data['cliente']).strip(),
+        'jefe_proyecto': str(form_data['jefe_proyecto']).strip(),
+        'fecha_emision': fecha_emision_str,
+        'monto_propuesto': monto_propuesto,
+        
+        # Campos automáticos
+        'estado': 'revisión',  # Estado inicial más apropiado
+        'mes': mes,
+        'conformidad_enviada': conformidad_enviada_final,  # Booleano procesado
+        
+        # Campos opcionales
+        'gestor': gestor_final,
+        'fecha_envio_cliente': fecha_envio_cliente_final,
+        'monto_aprobado': monto_aprobado,
+        'fecha_estimada_pago': fecha_estimada_pago_final,
+        'observaciones': observaciones_final,
+        
+        # Campos de seguimiento
+        'registrado_por': form_data.get('registrado_por', 'admin'),
+        'fecha_registro': datetime.now().isoformat(),
+        
+        # Campos adicionales para compatibilidad con Supabase
+        'n_conformidad': '',
+        'fecha_conformidad': None,
+        'estado_detallado': '',
+        'motivo_no_aprobado': '',
+        'tipo_falla': ''
+    }
+    
+    print(f"🎯 Datos finales preparados: {edp_data}")
+    return edp_data
+
+
+
+
+def validate_edp_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Validar datos de un EDP individual."""
+    errors = []
+    
+    print(f"🔍 Iniciando validación de datos EDP...")
+    print(f"📋 Datos a validar: {data}")
+    
+    # Validaciones obligatorias
+    required_fields = ['n_edp', 'proyecto', 'cliente', 'jefe_proyecto', 'fecha_emision', 'monto_propuesto']
+    
+    for field in required_fields:
+        if field not in data or not data[field] or str(data[field]).strip() == '':
+            errors.append(f'El campo {field} es obligatorio')
+            print(f"❌ Campo obligatorio faltante: {field}")
+    
+    # Validar número EDP
+    if 'n_edp' in data and data['n_edp']:
+        try:
+            n_edp = int(float(str(data['n_edp'])))
+            if n_edp <= 0:
+                errors.append('El número EDP debe ser positivo')
+                print(f"❌ n_edp debe ser positivo: {n_edp}")
+            else:
+                # Validar que no exista EDP con mismo número para el mismo proyecto
+                if 'proyecto' in data and data['proyecto']:
+                    print(f"🔍 Validando duplicado: EDP #{n_edp} para proyecto '{data['proyecto']}'")
+                    try:
+                        is_duplicate = check_duplicate_fast(n_edp, data['proyecto'])
+                        if is_duplicate:
+                            errors.append(f'Ya existe EDP #{n_edp} para el proyecto {data["proyecto"]}')
+                            print(f"🚫 Duplicado encontrado: EDP #{n_edp} para proyecto {data['proyecto']}")
+                        else:
+                            print(f"✅ EDP #{n_edp} es único para proyecto {data['proyecto']}")
+                    except Exception as dup_error:
+                        print(f"⚠️ Error verificando duplicados: {str(dup_error)}")
+                        # No bloquear si hay error en verificación
+        except (ValueError, TypeError):
+            errors.append('El número EDP debe ser un número válido')
+            print(f"❌ n_edp formato inválido: {data.get('n_edp')}")
+    
+    # Validar fecha de emisión
+    if 'fecha_emision' in data and data['fecha_emision']:
+        try:
+            fecha_str = str(data['fecha_emision']).strip()
+            datetime.strptime(fecha_str, '%Y-%m-%d')
+            print(f"✅ fecha_emision válida: {fecha_str}")
+        except (ValueError, TypeError):
+            errors.append('La fecha de emisión debe tener formato YYYY-MM-DD')
+            print(f"❌ fecha_emision formato inválido: {data.get('fecha_emision')}")
+    
+    # Validar monto propuesto
+    if 'monto_propuesto' in data and data['monto_propuesto']:
+        try:
+            monto_str = str(data['monto_propuesto']).replace(',', '').replace(' ', '')
+            monto = float(monto_str)
+            if monto <= 0:
+                errors.append('El monto propuesto debe ser mayor a 0')
+                print(f"❌ monto_propuesto debe ser positivo: {monto}")
+            else:
+                print(f"✅ monto_propuesto válido: {monto}")
+        except (ValueError, TypeError):
+            errors.append('El monto propuesto debe ser un número válido')
+            print(f"❌ monto_propuesto formato inválido: {data.get('monto_propuesto')}")
+    
+    # Validar monto aprobado si está presente
+    if 'monto_aprobado' in data and data['monto_aprobado'] and str(data['monto_aprobado']).strip() != '' and str(data['monto_aprobado']).strip().lower() != 'nan':
+        try:
+            monto_str = str(data['monto_aprobado']).replace(',', '').replace(' ', '')
+            monto_aprobado = float(monto_str)
+            if monto_aprobado <= 0:
+                errors.append('El monto aprobado debe ser mayor a 0')
+                print(f"❌ monto_aprobado debe ser positivo: {monto_aprobado}")
+            else:
+                print(f"✅ monto_aprobado válido: {monto_aprobado}")
+        except (ValueError, TypeError):
+            errors.append('El monto aprobado debe ser un número válido')
+            print(f"❌ monto_aprobado formato inválido: {data.get('monto_aprobado')}")
+    
+    # Validar fechas opcionales (solo si tienen valor)
+    date_fields = ['fecha_envio_cliente', 'fecha_estimada_pago']
+    for field in date_fields:
+        if field in data and data[field] and str(data[field]).strip() != '' and str(data[field]).strip().lower() != 'nan':
+            try:
+                fecha_str = str(data[field]).strip()
+                # Intentar varios formatos de fecha
+                date_formats = ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d-%m-%Y']
+                fecha_parsed = None
+                for fmt in date_formats:
+                    try:
+                        fecha_parsed = datetime.strptime(fecha_str, fmt)
+                        break
+                    except ValueError:
+                        continue
+                
+                if fecha_parsed is None:
+                    errors.append(f'El campo {field} debe tener formato YYYY-MM-DD, DD/MM/YYYY o MM/DD/YYYY')
+                    print(f"❌ {field} formato inválido: {fecha_str}")
+                else:
+                    print(f"✅ {field} válido: {fecha_str}")
+            except (ValueError, TypeError):
+                errors.append(f'El campo {field} no es una fecha válida')
+                print(f"❌ {field} no es fecha válida: {data.get(field)}")
+    
+    # Validar campos de texto obligatorios
+    text_fields = ['proyecto', 'cliente', 'jefe_proyecto']
+    for field in text_fields:
+        if field in data and data[field]:
+            value = str(data[field]).strip()
+            if len(value) < 2:
+                errors.append(f'El campo {field} debe tener al menos 2 caracteres')
+                print(f"❌ {field} muy corto: {value}")
+            elif len(value) > 100:
+                errors.append(f'El campo {field} no puede exceder 100 caracteres')
+                print(f"❌ {field} muy largo: {len(value)} caracteres")
+            else:
+                print(f"✅ {field} válido: {value}")
+    
+    validation_result = {
+        'valid': len(errors) == 0,
+        'errors': errors
+    }
+    
+    print(f"🎯 Resultado validación: valid={validation_result['valid']}, errores={len(errors)}")
+    if errors:
+        print(f"❌ Errores encontrados: {errors}")
+    
+    return validation_result
+
+
+@edp_management_bp.route('/upload/apply-suggestions-and-process', methods=['POST'])
+@login_required
+def apply_suggestions_and_process():
+    """Aplicar sugerencias automáticamente y procesar el archivo sin descarga."""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'message': 'No se encontró archivo'}), 400
+        
+        file = request.files['file']
+        suggestions_data = request.form.get('suggestions')
+        
+        if not suggestions_data:
+            return jsonify({'success': False, 'message': 'No se encontraron sugerencias'}), 400
+        
+        import json
+        suggestions = json.loads(suggestions_data)
+        
+        print(f"🔧 Aplicando sugerencias automáticamente para {len(suggestions.get('duplicates', []))} duplicados")
+        
+        # Leer archivo original
+        if file.filename.endswith('.xlsx'):
+            df = pd.read_excel(file)
+        elif file.filename.endswith('.csv'):
+            df = pd.read_csv(file)
+        else:
+            return jsonify({'success': False, 'message': 'Formato de archivo no soportado'}), 400
+        
+        # Aplicar correcciones automáticamente
+        corrections_applied = 0
+        correction_details = []
+        
+        for suggestion in suggestions.get('duplicates', []):
+            row_idx = suggestion['row'] - 2  # Convertir a índice 0-based
+            if row_idx < len(df) and suggestion['suggested_numbers']:
+                # Usar el primer número sugerido
+                old_edp = suggestion['current_edp']
+                new_edp = suggestion['suggested_numbers'][0]
+                
+                df.iloc[row_idx, df.columns.get_loc('n_edp')] = new_edp
+                corrections_applied += 1
+                
+                correction_details.append({
+                    'row': suggestion['row'],
+                    'proyecto': suggestion['proyecto'],
+                    'old_edp': old_edp,
+                    'new_edp': new_edp
+                })
+                
+                print(f"✅ Fila {suggestion['row']}: EDP #{old_edp} → #{new_edp} (Proyecto: {suggestion['proyecto']})")
+        
+        print(f"🔧 Total correcciones aplicadas: {corrections_applied}")
+        
+        # Procesar el archivo corregido directamente
+        from flask_login import current_user
+        user_email = current_user.email if current_user and hasattr(current_user, 'email') else 'sistema'
+        
+        print("🚀 Procesando archivo corregido automáticamente...")
+        result = process_bulk_upload(df, user_email)
+        
+        # Agregar información de correcciones al resultado
+        result['corrections_applied'] = corrections_applied
+        result['correction_details'] = correction_details
+        
+        # Limpiar caché después del procesamiento exitoso
+        if result.get('success') and result.get('stats', {}).get('success_count', 0) > 0:
+            print("🧹 Limpiando caché de EDPs después del procesamiento exitoso...")
+            global _GLOBAL_EDP_CACHE
+            _GLOBAL_EDP_CACHE['data'] = {}
+            _GLOBAL_EDP_CACHE['last_update'] = 0
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"❌ Error aplicando sugerencias y procesando: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Error aplicando sugerencias: {str(e)}'
+        }), 500
+        
+@edp_management_bp.route('/upload/validate', methods=['POST'])
+@login_required
+def validate_file():
+    """Validar archivo antes de la carga masiva."""
+    try:
+        print("🔍 Iniciando validación de archivo...")
+        
+        if 'file' not in request.files:
+            print("❌ No se encontró archivo en la request")
+            return jsonify({
+                'success': False,
+                'message': 'No se seleccionó ningún archivo'
+            }), 400
+        
+        file = request.files['file']
+        print(f"📁 Archivo recibido: {file.filename}")
+        
+        if not allowed_file(file.filename):
+            print(f"❌ Tipo de archivo no permitido: {file.filename}")
+            return jsonify({
+                'success': False,
+                'message': 'Tipo de archivo no permitido. Use .xlsx, .xls o .csv'
+            }), 400
+        
+        print(f"✅ Tipo de archivo válido: {file.filename}")
+        
+        # Leer archivo
+        try:
+            print("📖 Leyendo archivo...")
+            if file.filename.endswith('.csv'):
+                df = pd.read_csv(file)
+                print(f"📊 CSV leído exitosamente: {df.shape}")
+            else:
+                df = pd.read_excel(file)
+                print(f"📊 Excel leído exitosamente: {df.shape}")
+            
+            print(f"📋 Columnas encontradas: {list(df.columns)}")
+            
+        except Exception as read_error:
+            print(f"❌ Error leyendo archivo: {str(read_error)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'message': f'Error leyendo archivo: {str(read_error)}. Verifique que el archivo no esté corrupto y tenga el formato correcto.'
+            }), 400
+        
+        # Validar estructura y datos
+        try:
+            print("🔍 Validando estructura y datos...")
+            validation_result = validate_bulk_data(df, preview_mode=True)
+            print(f"✅ Validación completada: {validation_result.get('valid', False)}")
+            
+        except Exception as validation_error:
+            print(f"❌ Error en validación: {str(validation_error)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'message': f'Error validando datos: {str(validation_error)}'
+            }), 400
+        
+        # Generar preview de los primeros 5 registros
+        try:
+            print("👀 Generando preview...")
+            # Reemplazar NaN con None para JSON válido
+            df_preview = df.head(5).fillna('')  # Reemplazar NaN con string vacío
+            preview_data = df_preview.to_dict('records')
+            print(f"📋 Preview generado con {len(preview_data)} registros")
+            
+        except Exception as preview_error:
+            print(f"❌ Error generando preview: {str(preview_error)}")
+            preview_data = []
+        
+        response_data = {
+            'success': validation_result['valid'],
+            'validation': validation_result,
+            'preview': preview_data,
+            'total_rows': len(df),
+            'columns': list(df.columns),
+            'errors': validation_result.get('errors', []),
+            'warnings': validation_result.get('warnings', []),
+            'suggestions': validation_result.get('suggestions')
+        }
+        
+        print(f"✅ Respuesta preparada: success={response_data['success']}")
+        if validation_result.get('suggestions'):
+            print(f"💡 Sugerencias incluidas: {validation_result['suggestions']['total_duplicates']} duplicados")
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        print(f"💥 Error general en validate_file: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Error inesperado validando archivo: {str(e)}'
+        }), 500
+
+
+def get_duplicate_suggestions(df: pd.DataFrame) -> Dict[str, Any]:
+    """Analizar duplicados y generar sugerencias para números EDP disponibles."""
+    duplicates_info = []
+    cache_data = load_edps_cache()
+    all_suggested_numbers = set()  # Evitar duplicados globales
+    
+    # Crear un conjunto de todos los números EDP que están en el archivo actual por proyecto
+    current_file_edps = {}  # {proyecto: set(edps)}
+    for idx, row in df.iterrows():
+        try:
+            n_edp = int(row['n_edp'])
+            proyecto = str(row['proyecto']).strip().upper()
+            
+            if proyecto not in current_file_edps:
+                current_file_edps[proyecto] = set()
+            current_file_edps[proyecto].add(n_edp)
+        except (ValueError, TypeError):
+            continue
+    
+    print(f"🔍 EDPs en archivo actual por proyecto: {current_file_edps}")
+    
+    for idx, row in df.iterrows():
+        try:
+            n_edp = int(row['n_edp'])
+            proyecto = str(row['proyecto']).strip()
+            proyecto_upper = proyecto.upper()
+            
+            if check_duplicate_fast(n_edp, proyecto):
+                print(f"🚫 Duplicado encontrado: EDP #{n_edp} para proyecto {proyecto}")
+                
+                # Encontrar números disponibles para este proyecto
+                # Empezar desde el número actual + 1
+                available_numbers = []
+                current_num = n_edp + 1
+                
+                # Buscar 3 números únicos disponibles
+                while len(available_numbers) < 3 and current_num < n_edp + 1000:
+                    cache_key = f"{current_num}_{proyecto_upper}"
+                    
+                    # Verificar que el número no esté:
+                    # 1. En la base de datos
+                    # 2. Ya sugerido globalmente
+                    # 3. En el archivo actual para el mismo proyecto
+                    is_in_db = cache_data.get(cache_key, False)
+                    is_already_suggested = current_num in all_suggested_numbers
+                    is_in_current_file = current_num in current_file_edps.get(proyecto_upper, set())
+                    
+                    if not is_in_db and not is_already_suggested and not is_in_current_file:
+                        available_numbers.append(current_num)
+                        all_suggested_numbers.add(current_num)
+                        print(f"✅ Número disponible encontrado: #{current_num} para {proyecto}")
+                    else:
+                        reasons = []
+                        if is_in_db: reasons.append("en BD")
+                        if is_already_suggested: reasons.append("ya sugerido")
+                        if is_in_current_file: reasons.append("en archivo actual")
+                        print(f"❌ Número #{current_num} no disponible ({', '.join(reasons)})")
+                    
+                    current_num += 1
+                
+                duplicates_info.append({
+                    'row': idx + 2,
+                    'current_edp': n_edp,
+                    'proyecto': proyecto,
+                    'suggested_numbers': available_numbers,
+                    'cliente': str(row.get('cliente', '')),
+                    'monto': row.get('monto_propuesto', 0)
+                })
+                
+                print(f"🔧 Sugerencias para EDP #{n_edp}: {available_numbers}")
+                
+        except (ValueError, TypeError):
+            continue
+    
+    print(f"📊 Total duplicados encontrados: {len(duplicates_info)}")
+    print(f"📊 Números sugeridos globalmente: {sorted(all_suggested_numbers)}")
+    
+    return {
+        'has_duplicates': len(duplicates_info) > 0,
+        'duplicates': duplicates_info,
+        'total_duplicates': len(duplicates_info)
+    }

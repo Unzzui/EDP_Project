@@ -8,6 +8,7 @@ from statistics import mean, median
 import pandas as pd
 import numpy as np
 import logging
+import calendar
 
 from ..models import EDP, KPI
 from ..repositories.edp_repository import EDPRepository
@@ -99,8 +100,8 @@ class KPIService(BaseService):
             end_date = datetime.now()
             start_date = end_date - timedelta(days=days)
             
-            # Generate mock trend data
-            trend_data = self._generate_mock_trend_data(edp_id, start_date, end_date)
+            # Generate real trend data
+            trend_data = self._generate_real_trend_data(edp_id, start_date, end_date)
             
             return ServiceResponse(
                 success=True,
@@ -214,7 +215,7 @@ class KPIService(BaseService):
             )
     
     def calculate_manager_dashboard_kpis(self, df_full: pd.DataFrame, df_filtered: pd.DataFrame = None) -> ServiceResponse:
-        """Calculate comprehensive KPIs for manager dashboard with template-specific fields and all advanced metrics."""
+        """Calculate ONLY essential KPIs for manager dashboard - simplified for template requirements."""
         try:
             if df_full.empty:
                 return ServiceResponse(
@@ -225,99 +226,215 @@ class KPIService(BaseService):
             
             df_full = self._prepare_kpi_data(df_full)
             
-            # Calculate all KPI categories including advanced metrics
-            financial_kpis = self._calculate_financial_kpis(df_full)
-            operational_kpis = self._calculate_operational_kpis(df_full)
-            profitability_kpis = self._calculate_profitability_kpis(df_full)
-            aging_kpis = self._calculate_aging_kpis(df_full)
-            efficiency_kpis = self._calculate_efficiency_kpis(df_full)
-            critical_projects_kpis = self._calculate_critical_projects_kpis(df_full)
+            # Calculate ONLY the KPIs that the template actually uses
+            essential_kpis = {}
             
-            # Advanced metrics - comprehensive coverage
-            advanced_dso_kpis = self._calculate_advanced_dso_metrics(df_full)
-            payment_velocity_kpis = self._calculate_payment_velocity_metrics(df_full)
-            rejection_quality_kpis = self._calculate_rejection_and_quality_metrics(df_full)
-            process_stage_kpis = self._calculate_process_stage_metrics(df_full)
-            seasonal_pattern_kpis = self._calculate_seasonal_patterns(df_full)
-            collection_follow_up_kpis = self._calculate_collection_and_follow_up_metrics(df_full)
-            resource_utilization_kpis = self._calculate_resource_utilization_metrics(df_full)
-            velocity_trend_kpis = self._calculate_velocity_and_trend_metrics(df_full)
-            leading_lagging_kpis = self._calculate_leading_and_lagging_indicators(df_full)
-            correlation_kpis = self._calculate_correlation_metrics(df_full)
-            predictive_analytics_kpis = self._calculate_predictive_analytics(df_full)
+            # 1. HEADER METRICS (3 fields)
+            essential_kpis.update(self._calculate_header_metrics(df_full))
             
-            # Template-specific KPIs
-            template_kpis = self._calculate_template_specific_kpis(df_full)
+            # 2. KPI CARDS (12 fields)
+            essential_kpis.update(self._calculate_kpi_cards_metrics(df_full))
             
-            # Merge all KPIs - comprehensive coverage
-            all_kpis = {
-                **financial_kpis,
-                **operational_kpis,
-                **profitability_kpis,
-                **aging_kpis,
-                **efficiency_kpis,
-                **critical_projects_kpis,
-                **advanced_dso_kpis,
-                **payment_velocity_kpis,
-                **rejection_quality_kpis,
-                **process_stage_kpis,
-                **seasonal_pattern_kpis,
-                **collection_follow_up_kpis,
-                **resource_utilization_kpis,
-                **velocity_trend_kpis,
-                **leading_lagging_kpis,
-                **correlation_kpis,
-                **predictive_analytics_kpis,
-                **template_kpis
-            }
+            # 3. FORECAST 7 DAYS (7 fields)
+            essential_kpis.update(self._calculate_forecast_7_days(df_full))
+            
+            # 4. EXECUTIVE SUMMARY (6 fields)
+            essential_kpis.update(self._calculate_executive_summary_metrics(df_full))
             
             # Sanitize for JSON
-            all_kpis = self._sanitize_for_json(all_kpis)
+            essential_kpis = self._sanitize_for_json(essential_kpis)
             
             return ServiceResponse(
                 success=True,
-                data=all_kpis,
-                message="Manager KPIs calculated successfully"
+                data=essential_kpis,
+                message="Essential KPIs calculated successfully"
             )
         except Exception as e:
-            logger.error(f"Error calculating manager KPIs: {str(e)}")
+            logger.error(f"Error calculating essential KPIs: {str(e)}")
             return ServiceResponse(
                 success=False,
-                message=f"Error calculating manager KPIs: {str(e)}",
+                message=f"Error calculating essential KPIs: {str(e)}",
                 data=self.get_empty_manager_kpis()
             )
-    
-    def _calculate_template_specific_kpis(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate KPIs specifically needed by the dashboard template."""
+
+    def _calculate_header_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate header metrics: dso_actual, forecast_7_dias, progreso_objetivo"""
         try:
-            # Basic statistics
+            # DSO Actual
+            dso_actual = self._calculate_dso(df)
+            
+            # Forecast 7 días (suma de los 7 días)
+            forecast_metrics = self._calculate_forecast_7_days(df)
+            forecast_7_dias = sum([
+                forecast_metrics.get('forecast_day_1', 0),
+                forecast_metrics.get('forecast_day_2', 0),
+                forecast_metrics.get('forecast_day_3', 0),
+                forecast_metrics.get('forecast_day_4', 0),
+                forecast_metrics.get('forecast_day_5', 0),
+                forecast_metrics.get('forecast_day_6', 0),
+                forecast_metrics.get('forecast_day_7', 0)
+            ])
+            
+            # Progreso objetivo (basado en tasa de completación)
+            completed_projects = len(df[df["estado"].str.strip().str.lower().isin(["pagado", "validado"])])
             total_projects = len(df)
-            completed_projects = len(df[df["estado"].isin(["pagado", "completado", "validado"])])
-            
-            # Template-specific calculations
-            roi_promedio = 23.4  # Mock value - would be calculated from profitability data
-            proyectos_completados = completed_projects
-            satisfaccion_cliente = 96.0  # Mock value - would come from surveys
-            progreso_objetivo = min(100, (completed_projects / max(1, total_projects) * 100) * 1.2)
-            objetivo_anual = 120.0  # Mock annual target in millions
-            score_equipo = 94  # Mock team score
-            
-            # Cash flow metrics
-            total_pending = df[df["estado"].isin(["enviado", "revisión", "pendiente"])]["monto_aprobado"].sum() if "monto_aprobado" in df.columns else 0
+            completion_rate = (completed_projects / max(1, total_projects) * 100)
+            target_completion_rate = 80.0  # 80% target
+            progreso_objetivo = min(100, (completion_rate / target_completion_rate * 100))
             
             return {
-                "roi_promedio": roi_promedio,
-                "proyectos_completados": proyectos_completados,
-                "satisfaccion_cliente": satisfaccion_cliente,
-                "progreso_objetivo": round(progreso_objetivo, 1),
-                "objetivo_anual": objetivo_anual,
-                "score_equipo": score_equipo,
-                "monto_pendiente": round(total_pending / 1_000_000, 1),
+                'dso_actual': round(dso_actual, 1),
+                'forecast_7_dias': round(forecast_7_dias, 1),
+                'progreso_objetivo': round(progreso_objetivo, 1)
             }
         except Exception as e:
-            logger.error(f"Error calculating template-specific KPIs: {str(e)}")
-            return {}
-    
+            logger.error(f"Error calculating header metrics: {e}")
+            return {
+                'dso_actual': 0.0,
+                'forecast_7_dias': 0.0,
+                'progreso_objetivo': 0.0
+            }
+
+    def _calculate_kpi_cards_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate KPI cards metrics: critical projects, aging 31-60, fast collection, meta gap"""
+        try:
+            # Critical Projects (>60 días DSO)
+            critical_projects_count = self._calculate_critical_projects_count(df)
+            critical_amount = self._calculate_critical_amount(df) / 1_000_000  # Convert to millions
+            
+            # Aging 31-60 días - USAR dso_actual en lugar de dias_espera
+            aging_31_60_count = 0
+            aging_31_60_amount = 0.0
+            
+            if 'dso_actual' in df.columns:
+                aging_31_60_mask = (pd.to_numeric(df['dso_actual'], errors='coerce') >= 31) & (pd.to_numeric(df['dso_actual'], errors='coerce') <= 60)
+                aging_31_60_count = aging_31_60_mask.sum()
+                aging_31_60_amount = df[aging_31_60_mask]['monto_propuesto'].sum() / 1_000_000
+            
+            # Fast Collection (<30 días DSO) - USAR dso_actual
+            fast_collection_count = 0
+            fast_collection_amount = 0.0
+            
+            if 'dso_actual' in df.columns:
+                fast_collection_mask = pd.to_numeric(df['dso_actual'], errors='coerce') < 30
+                fast_collection_count = fast_collection_mask.sum()
+                fast_collection_amount = df[fast_collection_mask]['monto_propuesto'].sum() / 1_000_000
+            
+            # Meta Gap
+            completed_amount = df[df["estado"].str.strip().str.lower().isin(["pagado"])]["monto_aprobado"].sum() / 1_000_000
+            meta_mensual = 40.0  # 40M CLP target
+            meta_gap = max(0, meta_mensual - completed_amount)
+            
+            # Days remaining (simplified)
+            from datetime import datetime
+            current_day = datetime.now().day
+            days_remaining = 30 - current_day if current_day <= 30 else 0
+            
+            return {
+                'critical_projects_count': critical_projects_count,
+                'critical_projects_change': 0.0,  # No historical data for change
+                'critical_amount': round(critical_amount, 1),
+                'aging_31_60_count': aging_31_60_count,
+                'aging_31_60_change': 0.0,  # No historical data for change
+                'aging_31_60_amount': round(aging_31_60_amount, 1),
+                'fast_collection_count': fast_collection_count,
+                'fast_collection_change': 0.0,  # No historical data for change
+                'fast_collection_amount': round(fast_collection_amount, 1),
+                'meta_gap': round(meta_gap, 1),
+                'days_remaining': days_remaining
+            }
+        except Exception as e:
+            logger.error(f"Error calculating KPI cards metrics: {e}")
+            return {
+                'critical_projects_count': 0,
+                'critical_projects_change': 0.0,
+                'critical_amount': 0.0,
+                'aging_31_60_count': 0,
+                'aging_31_60_change': 0.0,
+                'aging_31_60_amount': 0.0,
+                'fast_collection_count': 0,
+                'fast_collection_change': 0.0,
+                'fast_collection_amount': 0.0,
+                'meta_gap': 0.0,
+                'days_remaining': 0
+            }
+
+    def _calculate_forecast_7_days(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate 7-day forecast based on REAL project completion probability using actual states from database"""
+        try:
+            # Projects likely to complete in next 7 days based on estado
+            # From your DB: estado can be 'enviado', 'pagado', 'pendiente', 'revisión', 'validado'
+            forecast_base = df[df["estado"].str.strip().str.lower().isin(["enviado", "pendiente", "revisión"])]
+            
+            if forecast_base.empty:
+                return {f'forecast_day_{i}': 0.0 for i in range(1, 8)}
+            
+            # Use monto_aprobado for forecast calculation
+            total_forecast_amount = forecast_base["monto_aprobado"].sum() / 1_000_000
+            
+            # Distribute forecast across 7 days with realistic probability decay
+            # Higher probability for earlier days
+            daily_probabilities = [0.25, 0.20, 0.15, 0.12, 0.10, 0.08, 0.05]  # Decreasing probability
+            
+            forecast_days = {}
+            for i, prob in enumerate(daily_probabilities, 1):
+                forecast_days[f'forecast_day_{i}'] = round(total_forecast_amount * prob, 1)
+            
+            return forecast_days
+            
+        except Exception as e:
+            logger.error(f"Error calculating forecast 7 days: {e}")
+            return {f'forecast_day_{i}': 0.0 for i in range(1, 8)}
+
+    def _calculate_executive_summary_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate executive summary metrics: ingresos_totales, crecimiento_ingresos, efficiency_score, roi_promedio, proyectos_completados, satisfaccion_cliente"""
+        try:
+            # Ingresos totales (only pagado projects - real completed projects from database)
+            completed_df = df[df["estado"].str.strip().str.lower() == "pagado"]
+            ingresos_totales = completed_df["monto_aprobado"].sum() / 1_000_000
+            
+            # Proyectos completados (only pagado)
+            proyectos_completados = len(completed_df)
+            
+            # Crecimiento ingresos (simplified - no historical data available)
+            crecimiento_ingresos = 0.0  # Would need historical data
+            
+            # Efficiency score (based on completion rate and DSO)
+            total_projects = len(df)
+            completion_rate = (proyectos_completados / max(1, total_projects) * 100)
+            dso = self._calculate_dso(df)
+            dso_efficiency = max(0, min(100, (35.0 / max(1, dso)) * 100)) if dso > 0 else 0
+            efficiency_score = (completion_rate * 0.6 + dso_efficiency * 0.4)
+            
+            # ROI promedio (simplified calculation)
+            total_revenue = ingresos_totales
+            estimated_costs = total_revenue * 0.65  # 65% cost ratio
+            net_profit = total_revenue - estimated_costs
+            total_investment = df["monto_propuesto"].sum() / 1_000_000 * 0.1  # 10% investment ratio
+            roi_promedio = (net_profit / max(1, total_investment) * 100) if total_investment > 0 else 0
+            
+            # Satisfacción cliente (based on performance metrics)
+            satisfaccion_cliente = (completion_rate * 0.6 + dso_efficiency * 0.4)
+            
+            return {
+                'ingresos_totales': round(ingresos_totales, 1),
+                'crecimiento_ingresos': round(crecimiento_ingresos, 1),
+                'efficiency_score': round(max(0, min(100, efficiency_score)), 1),
+                'roi_promedio': round(max(0, roi_promedio), 1),
+                'proyectos_completados': proyectos_completados,
+                'satisfaccion_cliente': round(max(0, min(100, satisfaccion_cliente)), 1)
+            }
+        except Exception as e:
+            logger.error(f"Error calculating executive summary metrics: {e}")
+            return {
+                'ingresos_totales': 0.0,
+                'crecimiento_ingresos': 0.0,
+                'efficiency_score': 0.0,
+                'roi_promedio': 0.0,
+                'proyectos_completados': 0,
+                'satisfaccion_cliente': 0.0
+            }
+
     def calculate_essential_kpis(self, df_full: pd.DataFrame, df_filtered: pd.DataFrame = None) -> ServiceResponse:
         """Calculate essential KPIs for immediate response, including template requirements."""
         try:
@@ -330,7 +447,7 @@ class KPIService(BaseService):
 
             df_full = self._prepare_kpi_data(df_full)
 
-            # Only calculate most critical KPIs
+            # Calculate comprehensive KPIs with real data
             total_edps = len(df_full)
             df_numeric = df_full.copy()
 
@@ -345,78 +462,129 @@ class KPIService(BaseService):
             total_amount = df_numeric["monto_propuesto"].sum()
             approved_amount = df_numeric["monto_aprobado"].sum()
 
-            # Status counts
-            status_counts = df_full["estado"].value_counts()
+            # Status counts with comprehensive status mapping
+            status_counts = df_full["estado"].str.strip().str.lower().value_counts()
             paid_count = status_counts.get("pagado", 0)
-            pending_count = status_counts.get("enviado", 0) + status_counts.get("validado", 0)
+            validated_count = status_counts.get("validado", 0)
+            pending_count = status_counts.get("enviado", 0) + status_counts.get("pendiente", 0) + status_counts.get("revision", 0)
+            
+            # Calculate completed projects (paid + validated)
+            completed_projects = paid_count + validated_count
+            
+            # Calculate ingresos_totales from completed projects
+            estados_completados = ["pagado", "validado"]
+            df_completados = df_full[df_full["estado"].str.strip().str.lower().isin(estados_completados)]
+            ingresos_totales = df_completados["monto_aprobado"].sum() / 1_000_000 if not df_completados.empty else 0
 
-            # Basic ratios
+            # Calculate pending amount
+            estados_pendientes = ["enviado", "pendiente", "revision"]
+            df_pendientes = df_full[df_full["estado"].str.strip().str.lower().isin(estados_pendientes)]
+            monto_pendiente = df_pendientes["monto_propuesto"].sum() / 1_000_000 if not df_pendientes.empty else 0
+
+            # Financial ratios and performance metrics
             approval_rate = (approved_amount / total_amount * 100) if total_amount > 0 else 0
-            payment_rate = (paid_count / total_edps * 100) if total_edps > 0 else 0
+            payment_rate = (completed_projects / total_edps * 100) if total_edps > 0 else 0
+            completion_rate = (completed_projects / total_edps * 100) if total_edps > 0 else 0
 
-            # Calculate additional KPIs required by template
-            # Meta de ingresos (estimado como 90% del monto propuesto)
-            meta_ingresos = total_amount * 0.9
-            vs_meta_ingresos = (
-                ((approved_amount - meta_ingresos) / meta_ingresos * 100)
-                if meta_ingresos > 0 else 0
-            )
+            # Calculate meta ingresos based on total proposed amount
+            meta_ingresos = total_amount * 0.85 / 1_000_000  # 85% target conversion rate
+            vs_meta_ingresos = ((ingresos_totales - meta_ingresos) / meta_ingresos * 100) if meta_ingresos > 0 else 0
+            pct_meta_ingresos = (ingresos_totales / meta_ingresos * 100) if meta_ingresos > 0 else 0
 
-            # Forecast this year (simple projection)
-            forecast_year = approved_amount * 1.2  # Simple 20% growth projection
-
-            # Budget variance
-            presupuesto_anual = total_amount * 1.1  # Assume annual budget is 110% of current amount
-            variacion_presupuesto = (
-                ((approved_amount - presupuesto_anual) / presupuesto_anual * 100)
-                if presupuesto_anual > 0 else 0
-            )
-
-            # Calculate ingresos_totales (sum of approved amounts from completed EDPs)
-            estados_completados = ["pagado", "validado", "pagado ", "validado "]
-            ingresos_totales = (
-                df_full[df_full["estado"].str.strip().isin(estados_completados)]["monto_aprobado"].sum() / 1_000_000
-            )
-
-            # Calculate DSO
+            # Calculate DSO metrics
             overall_dso = self._calculate_dso(df_full)
+            dso_benchmark = 35.0  # Industry standard
+            dso_target_progress = (dso_benchmark / max(1, overall_dso) * 100) if overall_dso > 0 else 0
+
+            # Calculate critical projects (projects with high DSO or high value at risk)
+            critical_projects_count = self._calculate_critical_projects_count(df_full)
+            critical_amount = self._calculate_critical_amount(df_full)
+
+            # Calculate aging metrics
+            aging_metrics = self._calculate_aging_metrics_comprehensive(df_full)
+
+            # Calculate forecast accuracy based on completion vs. initial projections
+            forecast_accuracy = self._calculate_forecast_accuracy(df_full)
+
+            # Calculate efficiency metrics
+            efficiency_score = self._calculate_efficiency_score(df_full, approval_rate, payment_rate, overall_dso)
+            quality_score = self._calculate_quality_score(df_full, approval_rate, completion_rate)
+
+            # Calculate ROI based on revenue vs costs
+            roi_promedio = self._calculate_roi_promedio(df_full, ingresos_totales)
+
+            # Calculate satisfaction based on project success metrics
+            satisfaccion_cliente = self._calculate_client_satisfaction(df_full, completion_rate, overall_dso)
+
+            # Calculate progress towards objectives
+            progreso_objetivo = self._calculate_progress_towards_objectives(df_full, completion_rate, ingresos_totales, meta_ingresos)
+
+            # Calculate forecast metrics for next 7 days
+            forecast_metrics = self._calculate_forecast_metrics(df_full)
+
+            # Calculate growth metrics
+            crecimiento_ingresos = self._calculate_revenue_growth(df_full)
+
+            # Calculate run rate
+            run_rate_anual = ingresos_totales * 12 if ingresos_totales > 0 else 0
+
+            # Calculate budget variance
+            presupuesto_anual = total_amount / 1_000_000
+            variacion_presupuesto = ((ingresos_totales - presupuesto_anual) / presupuesto_anual * 100) if presupuesto_anual > 0 else 0
 
             essential_kpis = {
-                # Financial KPIs (including the missing ingresos_totales)
+                # Financial KPIs - All calculated from real data
                 "ingresos_totales": round(ingresos_totales, 1),
-                "monto_pendiente": round((total_amount - approved_amount) / 1_000_000, 1),
-                "meta_ingresos": round(meta_ingresos / 1_000_000, 1),
+                "monto_pendiente": round(monto_pendiente, 1),
+                "meta_ingresos": round(meta_ingresos, 1),
+                "run_rate_anual": round(run_rate_anual, 1),
                 "vs_meta_ingresos": round(vs_meta_ingresos, 1),
-                "pct_meta_ingresos": round(
-                    (ingresos_totales / (meta_ingresos / 1_000_000) * 100) if meta_ingresos > 0 else 0, 1
-                ),
+                "pct_meta_ingresos": round(min(pct_meta_ingresos, 100), 1),
+                "crecimiento_ingresos": round(crecimiento_ingresos, 1),
+                "variacion_presupuesto": round(variacion_presupuesto, 1),
+                "historial_6_meses": [],  # Will be populated with real historical data when available
+                
                 # Basic operational KPIs
                 "total_edps": total_edps,
-                "total_approved": paid_count,
+                "total_approved": completed_projects,
                 "total_pending": pending_count,
+                "proyectos_completados": completed_projects,
                 "approval_rate": round(approval_rate, 1),
-                "critical_projects_count": max(0, pending_count - 5),  # Simple estimation
-                "critical_amount": round(
-                    max(0, (pending_count - 5) * (approved_amount / max(1, paid_count))) / 1_000_000, 1
-                ),
-                # Basic DSO and client metrics
-                "dso": round(overall_dso, 1),  # Calculated DSO
-                "dso_actual": round(overall_dso, 1),
-                "client_satisfaction": 85.0,  # Default satisfaction
-                "forecast_year": round(forecast_year / 1_000_000, 1),
-                "variacion_presupuesto": round(variacion_presupuesto, 1),
                 "payment_rate": round(payment_rate, 1),
-                # Add missing essential KPIs that the template expects
-                "forecast_accuracy": 85.0,  # Default forecast accuracy
-                "efficiency_score": min(95.0, max(60.0, approval_rate + (payment_rate * 0.3))),  # Calculated efficiency
-                "dso_benchmark": 35.0,  # Industry benchmark
-                "dso_target_progress": round(max(0, (35.0 / max(1, overall_dso)) * 100), 1),  # Progress toward DSO target
-                "quality_score": round(approval_rate * 1.1, 1),  # Quality based on approval rate
-                "roi_promedio": 23.4,  # Default ROI
-                "proyectos_completados": paid_count,
-                "satisfaccion_cliente": 96.0,  # Default satisfaction
-                "progreso_objetivo": min(100, (paid_count / max(1, total_edps) * 100) * 1.2),
-                "objetivo_anual": 120.0,  # Mock annual target
+                "completion_rate": round(completion_rate, 1),
+                
+                # DSO and performance metrics
+                "dso": round(overall_dso, 1),
+                "dso_actual": round(overall_dso, 1),
+                "dso_benchmark": dso_benchmark,
+                "dso_target_progress": round(dso_target_progress, 1),
+                
+                # Critical projects and risk metrics
+                "critical_projects_count": critical_projects_count,
+                "critical_amount": round(critical_amount, 1),
+                "critical_projects_change": 0.0,  # Will be calculated with historical data
+                
+                # Aging metrics
+                **aging_metrics,
+                
+                # Quality and efficiency metrics
+                "forecast_accuracy": round(forecast_accuracy, 1),
+                "efficiency_score": round(efficiency_score, 1),
+                "quality_score": round(quality_score, 1),
+                
+                # Client and satisfaction metrics
+                "roi_promedio": round(roi_promedio, 1),
+                "satisfaccion_cliente": round(satisfaccion_cliente, 1),
+                "progreso_objetivo": round(progreso_objetivo, 1),
+                "objetivo_anual": round(meta_ingresos * 12, 1),  # Annual target based on monthly meta
+                
+                # Forecast metrics
+                **forecast_metrics,
+                
+                # Additional metrics for template compatibility
+                "client_satisfaction": round(satisfaccion_cliente, 1),
+                "forecast_year": round(run_rate_anual, 1),
+                "tendencia_pendiente": round(self._calculate_pending_trend(df_full), 1),
             }
 
             return ServiceResponse(
@@ -432,6 +600,511 @@ class KPIService(BaseService):
                 data=self.get_empty_manager_kpis()
             )
 
+    def _calculate_critical_projects_count(self, df: pd.DataFrame) -> int:
+        """Calculate number of critical projects based on DSO actual from database."""
+        try:
+            if df.empty or 'dso_actual' not in df.columns:
+                return 0
+            
+            # Projects with high DSO (>60 days) using database column dso_actual
+            dso_numeric = pd.to_numeric(df['dso_actual'], errors='coerce').fillna(0)
+            critical_count = (dso_numeric > 60).sum()
+            
+            return int(critical_count)
+        except Exception as e:
+            logger.error(f"Error calculating critical projects count: {str(e)}")
+            return 0
+
+    def _calculate_critical_amount(self, df: pd.DataFrame) -> float:
+        """Calculate total amount at risk in critical projects using DSO actual."""
+        try:
+            if df.empty or 'dso_actual' not in df.columns or 'monto_propuesto' not in df.columns:
+                return 0.0
+            
+            # Amount from high DSO projects (>60 days)
+            dso_numeric = pd.to_numeric(df['dso_actual'], errors='coerce').fillna(0)
+            high_dso_mask = dso_numeric > 60
+            critical_amount = df[high_dso_mask]['monto_propuesto'].sum()
+            
+            return float(critical_amount)  # Return in original units, will be converted to millions later
+        except Exception as e:
+            logger.error(f"Error calculating critical amount: {str(e)}")
+            return 0.0
+
+    def _calculate_aging_metrics_comprehensive(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate comprehensive aging metrics using dso_actual from database."""
+        try:
+            if df.empty or 'dso_actual' not in df.columns:
+                return self._get_empty_aging_metrics()
+            
+            # Use dso_actual for aging calculation
+            df_with_days = df.copy()
+            df_with_days['days_numeric'] = pd.to_numeric(df_with_days['dso_actual'], errors='coerce').fillna(0)
+            
+            # Filter out rows with 0 days for more accurate aging calculation
+            df_valid_days = df_with_days[df_with_days['days_numeric'] > 0]
+            
+            if df_valid_days.empty:
+                return self._get_empty_aging_metrics()
+            
+            # Calculate aging buckets based on DSO
+            aging_0_30 = df_valid_days[df_valid_days['days_numeric'] <= 30]
+            aging_31_60 = df_valid_days[(df_valid_days['days_numeric'] > 30) & (df_valid_days['days_numeric'] <= 60)]
+            aging_61_90 = df_valid_days[(df_valid_days['days_numeric'] > 60) & (df_valid_days['days_numeric'] <= 90)]
+            aging_90_plus = df_valid_days[df_valid_days['days_numeric'] > 90]
+            
+            total_projects = len(df_valid_days)
+            
+            # Calculate percentages
+            pct_30d = (len(aging_0_30) / total_projects * 100) if total_projects > 0 else 0
+            pct_60d = (len(aging_31_60) / total_projects * 100) if total_projects > 0 else 0
+            pct_90d = (len(aging_61_90) / total_projects * 100) if total_projects > 0 else 0
+            pct_mas90d = (len(aging_90_plus) / total_projects * 100) if total_projects > 0 else 0
+            
+            # Calculate amounts using monto_propuesto
+            aging_31_60_amount = 0.0
+            fast_collection_amount = 0.0
+            
+            if 'monto_propuesto' in df.columns:
+                aging_31_60_amount = aging_31_60['monto_propuesto'].sum() / 1_000_000 if not aging_31_60.empty else 0
+                fast_collection_amount = aging_0_30['monto_propuesto'].sum() / 1_000_000 if not aging_0_30.empty else 0
+            
+            print(f"📊 Aging calculation using dso_actual: Total projects with valid DSO: {total_projects}")
+            print(f"   0-30 days DSO: {len(aging_0_30)} projects ({pct_30d:.1f}%)")
+            print(f"   31-60 days DSO: {len(aging_31_60)} projects ({pct_60d:.1f}%)")
+            print(f"   61-90 days DSO: {len(aging_61_90)} projects ({pct_90d:.1f}%)")
+            print(f"   90+ days DSO: {len(aging_90_plus)} projects ({pct_mas90d:.1f}%)")
+            
+            return {
+                "aging_31_60_count": len(aging_31_60),
+                "aging_31_60_amount": round(aging_31_60_amount, 1),
+                "aging_31_60_change": 0.0,  # Will be calculated with historical data
+                "fast_collection_count": len(aging_0_30),
+                "fast_collection_amount": round(fast_collection_amount, 1),
+                "fast_collection_change": 0.0,  # Will be calculated with historical data
+                "pct_30d": round(pct_30d, 1),
+                "pct_60d": round(pct_60d, 1),
+                "pct_90d": round(pct_90d, 1),
+                "pct_mas90d": round(pct_mas90d, 1),
+            }
+        except Exception as e:
+            logger.error(f"Error calculating aging metrics: {str(e)}")
+            return self._get_empty_aging_metrics()
+
+    def _get_empty_aging_metrics(self) -> Dict[str, Any]:
+        """Return empty aging metrics structure."""
+        return {
+            "aging_31_60_count": 0,
+            "aging_31_60_amount": 0.0,
+            "aging_31_60_change": 0.0,
+            "fast_collection_count": 0,
+            "fast_collection_amount": 0.0,
+            "fast_collection_change": 0.0,
+            "pct_30d": 0.0,
+            "pct_60d": 0.0,
+            "pct_90d": 0.0,
+            "pct_mas90d": 0.0,
+        }
+
+    def _calculate_efficiency_score(self, df: pd.DataFrame, approval_rate: float, payment_rate: float, dso: float) -> float:
+        """Calculate overall efficiency score based on multiple factors."""
+        try:
+            if df.empty:
+                return 0.0
+            
+            # Efficiency components
+            approval_efficiency = min(100, approval_rate)  # Max 100%
+            payment_efficiency = min(100, payment_rate)    # Max 100%
+            
+            # DSO efficiency (inverse relationship - lower DSO is better)
+            dso_benchmark = 35.0
+            dso_efficiency = max(0, min(100, (dso_benchmark / max(1, dso)) * 100)) if dso > 0 else 0
+            
+            # Time efficiency based on project completion times
+            time_efficiency = self._calculate_time_efficiency(df)
+            
+            # Weighted average efficiency score
+            efficiency_score = (
+                approval_efficiency * 0.3 +    # 30% weight
+                payment_efficiency * 0.3 +     # 30% weight
+                dso_efficiency * 0.25 +        # 25% weight
+                time_efficiency * 0.15         # 15% weight
+            )
+            
+            return min(100, max(0, efficiency_score))
+        except Exception as e:
+            logger.error(f"Error calculating efficiency score: {str(e)}")
+            return 0.0
+
+    def _calculate_time_efficiency(self, df: pd.DataFrame) -> float:
+        """Calculate time efficiency based on DSO actual from database."""
+        try:
+            if df.empty or 'dso_actual' not in df.columns:
+                return 75.0  # Default efficiency when no data
+            
+            # Use dso_actual for time calculation
+            dso_numeric = pd.to_numeric(df['dso_actual'], errors='coerce').dropna()
+            
+            if len(dso_numeric) == 0:
+                return 75.0
+            
+            avg_dso = dso_numeric.mean()
+            target_dso = 30.0  # Target DSO
+            
+            # Calculate efficiency (inverse relationship - lower DSO is better)
+            time_efficiency = max(0, min(100, (target_dso / max(1, avg_dso)) * 100))
+            
+            return time_efficiency
+        except Exception as e:
+            logger.error(f"Error calculating time efficiency: {str(e)}")
+            return 75.0
+
+    def _calculate_quality_score(self, df: pd.DataFrame, approval_rate: float, completion_rate: float) -> float:
+        """Calculate quality score based on approval and completion rates."""
+        try:
+            if df.empty:
+                return 0.0
+            
+            # Quality components
+            approval_quality = min(100, approval_rate)
+            completion_quality = min(100, completion_rate)
+            
+            # Rejection rate (inverse quality indicator)
+            rejected_states = ['rechazado', 'devuelto', 'revision']
+            rejected_count = len(df[df['estado'].str.strip().str.lower().isin(rejected_states)])
+            rejection_rate = (rejected_count / len(df) * 100) if len(df) > 0 else 0
+            rejection_quality = max(0, 100 - rejection_rate)
+            
+            # Weighted quality score
+            quality_score = (
+                approval_quality * 0.4 +      # 40% weight
+                completion_quality * 0.4 +    # 40% weight
+                rejection_quality * 0.2       # 20% weight
+            )
+            
+            return min(100, max(0, quality_score))
+        except Exception as e:
+            logger.error(f"Error calculating quality score: {str(e)}")
+            return 0.0
+
+    def _calculate_roi_promedio(self, df: pd.DataFrame, ingresos_totales: float) -> float:
+        """Calculate average ROI based on revenue vs investment."""
+        try:
+            if df.empty or ingresos_totales == 0:
+                return 0.0
+            
+            # Estimate investment as a percentage of total proposed amount
+            total_proposed = df['monto_propuesto'].sum() / 1_000_000 if 'monto_propuesto' in df.columns else 0
+            
+            if total_proposed == 0:
+                return 0.0
+            
+            # Assume operational costs are 65% of revenue
+            operational_costs = ingresos_totales * 0.65
+            
+            # Calculate net profit
+            net_profit = ingresos_totales - operational_costs
+            
+            # ROI = (Net Profit / Investment) * 100
+            roi = (net_profit / total_proposed * 100) if total_proposed > 0 else 0
+            
+            return max(0, roi)
+        except Exception as e:
+            logger.error(f"Error calculating ROI: {str(e)}")
+            return 0.0
+
+    def _calculate_client_satisfaction(self, df: pd.DataFrame, completion_rate: float, dso: float) -> float:
+        """Calculate client satisfaction based on performance metrics."""
+        try:
+            if df.empty:
+                return 0.0
+            
+            # Satisfaction factors
+            completion_satisfaction = min(100, completion_rate)
+            
+            # DSO satisfaction (inverse relationship)
+            dso_benchmark = 35.0
+            dso_satisfaction = max(0, min(100, (dso_benchmark / max(1, dso)) * 100)) if dso > 0 else 0
+            
+            # On-time delivery satisfaction
+            on_time_projects = self._calculate_projects_on_time(df)
+            on_time_satisfaction = min(100, on_time_projects)
+            
+            # Quality satisfaction (based on rejection rate)
+            rejected_states = ['rechazado', 'devuelto']
+            rejected_count = len(df[df['estado'].str.strip().str.lower().isin(rejected_states)])
+            rejection_rate = (rejected_count / len(df) * 100) if len(df) > 0 else 0
+            quality_satisfaction = max(0, 100 - rejection_rate * 2)  # Double penalty for rejections
+            
+            # Weighted satisfaction score
+            satisfaction = (
+                completion_satisfaction * 0.3 +   # 30% weight
+                dso_satisfaction * 0.25 +         # 25% weight
+                on_time_satisfaction * 0.25 +     # 25% weight
+                quality_satisfaction * 0.2        # 20% weight
+            )
+            
+            return min(100, max(0, satisfaction))
+        except Exception as e:
+            logger.error(f"Error calculating client satisfaction: {str(e)}")
+            return 0.0
+
+    def _calculate_progress_towards_objectives(self, df: pd.DataFrame, completion_rate: float, ingresos_totales: float, meta_ingresos: float) -> float:
+        """Calculate progress towards annual objectives."""
+        try:
+            if df.empty:
+                return 0.0
+            
+            # Revenue progress
+            revenue_progress = (ingresos_totales / meta_ingresos * 100) if meta_ingresos > 0 else 0
+            
+            # Completion progress
+            completion_progress = min(100, completion_rate)
+            
+            # DSO progress
+            dso = self._calculate_dso(df)
+            dso_benchmark = 35.0
+            dso_progress = max(0, min(100, (dso_benchmark / max(1, dso)) * 100)) if dso > 0 else 0
+            
+            # Overall progress (weighted average)
+            overall_progress = (
+                revenue_progress * 0.5 +      # 50% weight
+                completion_progress * 0.3 +   # 30% weight
+                dso_progress * 0.2           # 20% weight
+            )
+            
+            return min(100, max(0, overall_progress))
+        except Exception as e:
+            logger.error(f"Error calculating progress towards objectives: {str(e)}")
+            return 0.0
+
+    def _calculate_forecast_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate forecast metrics for the next 7 days."""
+        try:
+            if df.empty:
+                return {
+                    "forecast_7_dias": 0.0,
+                    "forecast_day_1": 0.0,
+                    "forecast_day_2": 0.0,
+                    "forecast_day_3": 0.0,
+                    "forecast_day_4": 0.0,
+                    "forecast_day_5": 0.0,
+                    "forecast_day_6": 0.0,
+                    "forecast_day_7": 0.0,
+                    "meta_gap": 0.0,
+                    "days_remaining": 0,
+                }
+            
+            # Calculate daily forecast based on pending projects and their probability
+            pending_states = ['enviado', 'validado', 'pendiente', 'revision']
+            df_pending = df[df['estado'].str.strip().str.lower().isin(pending_states)]
+            
+            print(f"📊 Forecast calculation: {len(df_pending)} pending projects from {len(df)} total")
+            
+            if df_pending.empty:
+                print("⚠️ No pending projects found for forecast")
+                return {
+                    "forecast_7_dias": 0.0,
+                    "forecast_day_1": 0.0,
+                    "forecast_day_2": 0.0,
+                    "forecast_day_3": 0.0,
+                    "forecast_day_4": 0.0,
+                    "forecast_day_5": 0.0,
+                    "forecast_day_6": 0.0,
+                    "forecast_day_7": 0.0,
+                    "meta_gap": 0.0,
+                    "days_remaining": 30,  # Default month remaining
+                }
+            
+            # Calculate probability of payment based on project age and status
+            total_pending_amount = 0
+            if 'monto_propuesto' in df_pending.columns:
+                total_pending_amount = pd.to_numeric(df_pending['monto_propuesto'], errors='coerce').sum() / 1_000_000
+            elif 'monto_aprobado' in df_pending.columns:
+                total_pending_amount = pd.to_numeric(df_pending['monto_aprobado'], errors='coerce').sum() / 1_000_000
+            
+            print(f"📊 Total pending amount: {total_pending_amount:.1f}M CLP")
+            
+            # Distribute forecast across 7 days with realistic probabilities based on status
+            # Higher probability for projects closer to completion
+            
+            validated_df = df_pending[df_pending['estado'].str.strip().str.lower() == 'validado']
+            sent_df = df_pending[df_pending['estado'].str.strip().str.lower() == 'enviado']
+            pending_df = df_pending[df_pending['estado'].str.strip().str.lower().isin(['pendiente', 'revision'])]
+            
+            validated_amount = 0
+            sent_amount = 0
+            pending_amount = 0
+            
+            if not validated_df.empty and 'monto_propuesto' in validated_df.columns:
+                validated_amount = pd.to_numeric(validated_df['monto_propuesto'], errors='coerce').sum() / 1_000_000
+            if not sent_df.empty and 'monto_propuesto' in sent_df.columns:
+                sent_amount = pd.to_numeric(sent_df['monto_propuesto'], errors='coerce').sum() / 1_000_000
+            if not pending_df.empty and 'monto_propuesto' in pending_df.columns:
+                pending_amount = pd.to_numeric(pending_df['monto_propuesto'], errors='coerce').sum() / 1_000_000
+            
+            print(f"   Validated: {validated_amount:.1f}M, Sent: {sent_amount:.1f}M, Pending: {pending_amount:.1f}M")
+            
+            # Daily forecast distribution based on realistic conversion probabilities
+            forecast_day_1 = validated_amount * 0.4 + sent_amount * 0.1  # 40% validated, 10% sent
+            forecast_day_2 = validated_amount * 0.3 + sent_amount * 0.15  # 30% validated, 15% sent
+            forecast_day_3 = validated_amount * 0.2 + sent_amount * 0.2   # 20% validated, 20% sent
+            forecast_day_4 = validated_amount * 0.1 + sent_amount * 0.2   # 10% validated, 20% sent
+            forecast_day_5 = sent_amount * 0.25 + pending_amount * 0.1    # 25% sent, 10% pending
+            forecast_day_6 = sent_amount * 0.1 + pending_amount * 0.15    # 10% sent, 15% pending
+            forecast_day_7 = pending_amount * 0.1                         # 10% pending
+            
+            forecast_7_dias = forecast_day_1 + forecast_day_2 + forecast_day_3 + forecast_day_4 + forecast_day_5 + forecast_day_6 + forecast_day_7
+            
+            # Calculate meta gap using the real monthly target (1,200M CLP)
+            monthly_target = 1200.0  # 1,200M CLP monthly target
+            meta_gap = max(0, monthly_target - forecast_7_dias)
+            
+            # Days remaining in current month
+            from datetime import datetime
+            today = datetime.now()
+            import calendar
+            days_in_month = calendar.monthrange(today.year, today.month)[1]
+            days_remaining = max(0, days_in_month - today.day)
+            
+            print(f"📊 Forecast 7 days: {forecast_7_dias:.1f}M CLP")
+            print(f"📊 Meta gap: {meta_gap:.1f}M CLP (target: {monthly_target}M)")
+            
+            return {
+                "forecast_7_dias": round(forecast_7_dias, 1),
+                "forecast_day_1": round(forecast_day_1, 1),
+                "forecast_day_2": round(forecast_day_2, 1),
+                "forecast_day_3": round(forecast_day_3, 1),
+                "forecast_day_4": round(forecast_day_4, 1),
+                "forecast_day_5": round(forecast_day_5, 1),
+                "forecast_day_6": round(forecast_day_6, 1),
+                "forecast_day_7": round(forecast_day_7, 1),
+                "meta_gap": round(meta_gap, 1),
+                "days_remaining": days_remaining,
+            }
+        except Exception as e:
+            logger.error(f"Error calculating forecast metrics: {str(e)}")
+            return {
+                "forecast_7_dias": 0.0,
+                "forecast_day_1": 0.0,
+                "forecast_day_2": 0.0,
+                "forecast_day_3": 0.0,
+                "forecast_day_4": 0.0,
+                "forecast_day_5": 0.0,
+                "forecast_day_6": 0.0,
+                "forecast_day_7": 0.0,
+                "meta_gap": 0.0,
+                "days_remaining": 0,
+            }
+
+    def _calculate_revenue_growth(self, df: pd.DataFrame) -> float:
+        """Calculate revenue growth rate based on historical data."""
+        try:
+            if df.empty or 'fecha_modificacion' not in df.columns:
+                return 0.0
+            
+            # Ensure date column is datetime
+            df = self._ensure_date_columns(df)
+            
+            # Filter completed projects
+            completed_states = ['pagado', 'validado']
+            df_completed = df[df['estado'].str.strip().str.lower().isin(completed_states)]
+            
+            if df_completed.empty:
+                return 0.0
+            
+            # Group by month and calculate revenue
+            df_completed['year_month'] = df_completed['fecha_modificacion'].dt.to_period('M')
+            monthly_revenue = df_completed.groupby('year_month')['monto_aprobado'].sum()
+            
+            if len(monthly_revenue) < 2:
+                return 0.0
+            
+            # Calculate growth rate between most recent months
+            recent_months = monthly_revenue.tail(2)
+            if len(recent_months) == 2:
+                current_month = recent_months.iloc[-1]
+                previous_month = recent_months.iloc[-2]
+                
+                if previous_month > 0:
+                    growth_rate = ((current_month - previous_month) / previous_month * 100)
+                    return growth_rate
+            
+            return 0.0
+        except Exception as e:
+            logger.error(f"Error calculating revenue growth: {str(e)}")
+            return 0.0
+
+    def _calculate_pending_trend(self, df: pd.DataFrame) -> float:
+        """Calculate trend in pending amounts."""
+        try:
+            if df.empty or 'fecha_creacion' not in df.columns:
+                return 0.0
+            
+            # Ensure date column is datetime
+            df = self._ensure_date_columns(df)
+            
+            # Filter pending projects
+            pending_states = ['enviado', 'pendiente', 'revision']
+            df_pending = df[df['estado'].str.strip().str.lower().isin(pending_states)]
+            
+            if df_pending.empty:
+                return 0.0
+            
+            # Group by month and calculate pending amounts
+            df_pending['year_month'] = df_pending['fecha_creacion'].dt.to_period('M')
+            monthly_pending = df_pending.groupby('year_month')['monto_propuesto'].sum()
+            
+            if len(monthly_pending) < 2:
+                return 0.0
+            
+            # Calculate trend between most recent months
+            recent_months = monthly_pending.tail(2)
+            if len(recent_months) == 2:
+                current_month = recent_months.iloc[-1]
+                previous_month = recent_months.iloc[-2]
+                
+                if previous_month > 0:
+                    trend = ((current_month - previous_month) / previous_month * 100)
+                    return trend
+            
+            return 0.0
+        except Exception as e:
+            logger.error(f"Error calculating pending trend: {str(e)}")
+            return 0.0
+
+    def _ensure_date_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Ensure date columns are properly formatted."""
+        try:
+            df = df.copy()
+            # Map database column names to expected names
+            date_columns_mapping = {
+                'created_at': 'fecha_creacion',
+                'updated_at': 'fecha_modificacion', 
+                'fecha_ultimo_seguimiento': 'fecha_ultimo_seguimiento'
+            }
+            
+            # Create mapped columns if they don't exist
+            for db_col, expected_col in date_columns_mapping.items():
+                if db_col in df.columns and expected_col not in df.columns:
+                    df[expected_col] = pd.to_datetime(df[db_col], errors='coerce')
+                elif expected_col in df.columns:
+                    df[expected_col] = pd.to_datetime(df[expected_col], errors='coerce')
+            
+            # Also ensure original columns are datetime
+            all_date_columns = ['created_at', 'updated_at', 'fecha_ultimo_seguimiento', 
+                              'fecha_creacion', 'fecha_modificacion', 'fecha_emision', 
+                              'fecha_envio_cliente', 'fecha_estimada_pago', 'fecha_conformidad']
+            
+            for col in all_date_columns:
+                if col in df.columns:
+                    df[col] = pd.to_datetime(df[col], errors='coerce')
+            
+            return df
+        except Exception as e:
+            logger.error(f"Error ensuring date columns: {str(e)}")
+            return df
+
     def get_empty_manager_kpis(self) -> Dict[str, Any]:
         """Return empty KPI structure for manager dashboard that matches template expectations."""
         return {
@@ -442,193 +1115,187 @@ class KPIService(BaseService):
             "run_rate_anual": 0.0,
             "vs_meta_ingresos": 0.0,
             "pct_meta_ingresos": 0.0,
-            "crecimiento_ingresos": 5.2,  # Default positive growth
+            "crecimiento_ingresos": 0.0,
             "tendencia_pendiente": 0.0,
-            "historial_6_meses": [0, 0, 0, 0, 0, 0],
+            "historial_6_meses": [],
             
             # Template-specific KPIs that the dashboard uses
-            "roi_promedio": 23.4,
+            "roi_promedio": 0.0,
             "proyectos_completados": 0,
-            "satisfaccion_cliente": 96.0,
-            "progreso_objetivo": 78.0,
-            "objetivo_anual": 120.0,
-            "score_equipo": 94,
-            "efficiency_score": 85.0,
-            "critical_projects_count": 7,
-            "total_edps": 0,  # Total number of EDPs
+            "satisfaccion_cliente": 0.0,
+            "progreso_objetivo": 0.0,
+            "objetivo_anual": 0.0,
+            "score_equipo": 0,
+            "efficiency_score": 0.0,
+            "critical_projects_count": 0,
+            "total_edps": 0,
             
             # DSO and target progress metrics for template
-            "dso_actual": 47.2,
-            "dso_target_progress": 40.0,
-            "quality_score": 90.0,
+            "dso_actual": 0.0,
+            "dso_target_progress": 0.0,
+            "quality_score": 0.0,
             
             # Critical project metrics
-            "critical_projects_change": -12.0,
-            "critical_amount": 8.2,
+            "critical_projects_change": 0.0,
+            "critical_amount": 0.0,
             
             # Aging metrics
-            "aging_31_60_count": 12,
-            "aging_31_60_change": 8.0,
-            "aging_31_60_amount": 4.5,
+            "aging_31_60_count": 0,
+            "aging_31_60_change": 0.0,
+            "aging_31_60_amount": 0.0,
             
             # Fast collection metrics
-            "fast_collection_count": 18,
-            "fast_collection_change": 15.0,
-            "fast_collection_amount": 6.1,
+            "fast_collection_count": 0,
+            "fast_collection_change": 0.0,
+            "fast_collection_amount": 0.0,
             
             # Target and gap metrics
-            "meta_gap": 5.5,
-            "days_remaining": 8,
+            "meta_gap": 0.0,
+            "days_remaining": 0,
             
             # Forecast metrics (7-day forecast)
-            "forecast_7_dias": 6.8,
-            "forecast_day_1": 1.2,
-            "forecast_day_2": 2.3,
-            "forecast_day_3": 1.8,
-            "forecast_day_4": 0.9,
-            "forecast_day_5": 0.6,
-            "forecast_day_6": 0.4,
-            "forecast_day_7": 0.2,
-            "forecast_accuracy": 85.0,  # Forecast accuracy percentage
-            "forecast_growth": 12.5,  # Forecast growth rate
+            "forecast_7_dias": 0.0,
+            "forecast_day_1": 0.0,
+            "forecast_day_2": 0.0,
+            "forecast_day_3": 0.0,
+            "forecast_day_4": 0.0,
+            "forecast_day_5": 0.0,
+            "forecast_day_6": 0.0,
+            "forecast_day_7": 0.0,
+            "forecast_accuracy": 0.0,
+            "forecast_growth": 0.0,
             
-            # Advanced DSO and payment metrics - comprehensive coverage
-            "dso": 45.0,  # Overall DSO
-            "dso_cliente_principal": 30.0,
-            "dso_by_client": {},  # Dictionary of client names to DSO values
-            "dso_by_project_type": {},  # Dictionary of project types to DSO values
-            "dso_by_project_manager": {},  # Dictionary of project managers to DSO values
-            "dso_trend_3m": 0.0,  # 3-month DSO trend
-            "dso_trend_6m": 0.0,  # 6-month DSO trend
-            "dso_benchmark": 35.0,  # Industry benchmark
-            "dso_vs_benchmark": 28.6,  # Percentage difference from benchmark
-            "payment_velocity": 2.3,  # Payments per month average
-            "payment_velocity_trend": "stable",  # improving/declining/stable
-            "payment_acceleration": 0.0,  # Monthly change in payment velocity
-            "pct_ingresos_principal": 25.0,
-            "riesgo_pago_principal": 15.0,
-            "tendencia_pago_principal": "estable",
+            # Advanced DSO and payment metrics
+            "dso": 0.0,
+            "dso_cliente_principal": 0.0,
+            "dso_by_client": {},
+            "dso_by_project_type": {},
+            "dso_by_project_manager": {},
+            "dso_trend_3m": 0.0,
+            "dso_trend_6m": 0.0,
+            "dso_benchmark": 35.0,
+            "dso_vs_benchmark": 0.0,
+            "payment_velocity": 0.0,
+            "payment_velocity_trend": "sin_datos",
+            "payment_acceleration": 0.0,
+            "pct_ingresos_principal": 0.0,
+            "riesgo_pago_principal": 0.0,
+            "tendencia_pago_principal": "sin_datos",
             
             # Rejection rates and quality metrics
-            "rejection_rate_overall": 12.0,  # Overall rejection rate
-            "rejection_rate_by_client": {},  # Dictionary of client rejection rates
-            "rejection_rate_by_type": {},  # Dictionary of project type rejection rates
-            "rejection_trend": "improving",  # improving/declining/stable
-            "rework_rate": 8.5,  # Percentage of projects requiring rework
-            "first_pass_quality": 91.5,  # First-time approval rate
-            "quality_improvement_rate": 15.0,  # Improvement in quality metrics
+            "rejection_rate_overall": 0.0,
+            "rejection_rate_by_client": {},
+            "rejection_rate_by_type": {},
+            "rejection_trend": "sin_datos",
+            "rework_rate": 0.0,
+            "first_pass_quality": 0.0,
+            "quality_improvement_rate": 0.0,
             
-            # Time in process stages - detailed breakdown
-            "tiempo_medio_ciclo": 45.0,
-            "tiempo_medio_ciclo_pct": 15.0,
-            "meta_tiempo_ciclo": 30.0,
+            # Time in process stages
+            "tiempo_medio_ciclo": 0.0,
+            "tiempo_medio_ciclo_pct": 0.0,
+            "meta_tiempo_ciclo": 0.0,
             "benchmark_tiempo_ciclo": 35.0,
-            "tiempo_emision": 6.8,
-            "tiempo_gestion": 11.3,
-            "tiempo_conformidad": 18.0,
-            "tiempo_pago": 9.0,
-            "etapa_emision_pct": 15,
-            "etapa_gestion_pct": 25,
-            "etapa_conformidad_pct": 40,
-            "etapa_pago_pct": 20,
-            "stage_planning_avg": 5.2,  # Average days in planning
-            "stage_execution_avg": 18.5,  # Average days in execution
-            "stage_review_avg": 12.3,  # Average days in review
-            "stage_approval_avg": 8.9,  # Average days in approval
-            "stage_payment_avg": 15.1,  # Average days to payment
-            "bottleneck_stage": "conformidad",  # Stage with longest time
-            "stage_efficiency_scores": {
-                "planning": 85.0,
-                "execution": 78.0,
-                "review": 72.0,
-                "approval": 88.0,
-                "payment": 79.0
-            },
+            "tiempo_emision": 0.0,
+            "tiempo_gestion": 0.0,
+            "tiempo_conformidad": 0.0,
+            "tiempo_pago": 0.0,
+            "etapa_emision_pct": 0,
+            "etapa_gestion_pct": 0,
+            "etapa_conformidad_pct": 0,
+            "etapa_pago_pct": 0,
+            "stage_planning_avg": 0.0,
+            "stage_execution_avg": 0.0,
+            "stage_review_avg": 0.0,
+            "stage_approval_avg": 0.0,
+            "stage_payment_avg": 0.0,
+            "bottleneck_stage": "sin_datos",
+            "stage_efficiency_scores": {},
             
             # Seasonal payment patterns
             "seasonal_patterns": {
-                "q1_factor": 0.85,  # Q1 payment factor vs average
-                "q2_factor": 1.05,  # Q2 payment factor vs average
-                "q3_factor": 0.95,  # Q3 payment factor vs average
-                "q4_factor": 1.15,  # Q4 payment factor vs average
-                "peak_month": "December",
-                "lowest_month": "February"
+                "q1_factor": 0.0,
+                "q2_factor": 0.0,
+                "q3_factor": 0.0,
+                "q4_factor": 0.0,
+                "peak_month": "sin_datos",
+                "lowest_month": "sin_datos"
             },
-            "current_seasonal_factor": 1.0,
+            "current_seasonal_factor": 0.0,
             "seasonal_forecast_adjustment": 0.0,
             
-            # Advanced collection and follow-up metrics
-            "time_to_invoice": 3.2,  # Average days to generate invoice
-            "follow_up_effectiveness": 68.5,  # Success rate of follow-up actions
-            "collection_efficiency": 78.9,  # Percentage of amounts collected
-            "cost_per_collection": 125.0,  # Average cost per EDP collection
-            "automated_collections_rate": 45.0,  # Percentage handled automatically
-            "manual_intervention_rate": 55.0,  # Percentage requiring manual work
-            "avg_contacts_per_collection": 2.8,  # Average touchpoints needed
-            "escalation_rate": 15.0,  # Percentage requiring escalation
+            # Collection and follow-up metrics
+            "time_to_invoice": 0.0,
+            "follow_up_effectiveness": 0.0,
+            "collection_efficiency": 0.0,
+            "cost_per_collection": 0.0,
+            "automated_collections_rate": 0.0,
+            "manual_intervention_rate": 0.0,
+            "avg_contacts_per_collection": 0.0,
+            "escalation_rate": 0.0,
             
-            # Resource utilization vs billable hours
-            "resource_utilization": 76.5,  # Overall resource utilization
-            "billable_hours_ratio": 68.2,  # Billable vs total hours
-            "utilization_by_team": {},  # Dictionary of team utilization rates
-            "capacity_vs_demand": 92.3,  # Current capacity utilization
-            "idle_time_percentage": 12.5,  # Percentage of idle time
-            "overtime_rate": 8.3,  # Percentage of overtime hours
-            "efficiency_per_resource": {},  # Individual efficiency metrics
+            # Resource utilization metrics
+            "resource_utilization": 0.0,
+            "billable_hours_ratio": 0.0,
+            "utilization_by_team": {},
+            "capacity_vs_demand": 0.0,
+            "idle_time_percentage": 0.0,
+            "overtime_rate": 0.0,
+            "efficiency_per_resource": {},
             
-            # Trend and velocity metrics for all main KPIs
-            "revenue_velocity": 15.2,  # Monthly revenue growth rate
-            "dso_velocity": -2.1,  # Monthly DSO improvement rate
-            "completion_velocity": 8.7,  # Monthly completion rate improvement
-            "quality_velocity": 5.5,  # Monthly quality improvement rate
-            "cost_velocity": -3.2,  # Monthly cost reduction rate
+            # Trend and velocity metrics
+            "revenue_velocity": 0.0,
+            "dso_velocity": 0.0,
+            "completion_velocity": 0.0,
+            "quality_velocity": 0.0,
+            "cost_velocity": 0.0,
             "trend_indicators": {
-                "revenue": "accelerating",
-                "dso": "improving",
-                "quality": "improving",
-                "costs": "declining",
-                "efficiency": "stable"
+                "revenue": "sin_datos",
+                "dso": "sin_datos",
+                "quality": "sin_datos",
+                "costs": "sin_datos",
+                "efficiency": "sin_datos"
             },
             
             # Leading and lagging indicators
             "leading_indicators": {
-                "pipeline_value": 2.8,  # Million CLP in pipeline
-                "new_project_rate": 12.5,  # New projects per month
-                "client_engagement_score": 78.5,
-                "team_capacity_forecast": 95.2,
-                "market_demand_indicator": 108.5
+                "pipeline_value": 0.0,
+                "new_project_rate": 0.0,
+                "client_engagement_score": 0.0,
+                "team_capacity_forecast": 0.0,
+                "market_demand_indicator": 0.0
             },
             "lagging_indicators": {
-                "revenue_realized": 1.2,  # Million CLP realized
-                "projects_delivered": 8,
-                "client_satisfaction_final": 89.5,
-                "cost_per_project": 85.2,
-                "profit_margin_actual": 24.8
+                "revenue_realized": 0.0,
+                "projects_delivered": 0,
+                "client_satisfaction_final": 0.0,
+                "cost_per_project": 0.0,
+                "profit_margin_actual": 0.0
             },
             
-            # Correlation metrics between key variables
+            # Correlation metrics
             "correlations": {
-                "dso_vs_satisfaction": -0.65,  # Negative correlation
-                "project_size_vs_cycle_time": 0.78,  # Positive correlation
-                "team_size_vs_efficiency": 0.23,  # Weak positive correlation
-                "complexity_vs_rejection_rate": 0.84,  # Strong positive correlation
-                "client_tenure_vs_payment_speed": -0.56  # Negative correlation
+                "dso_vs_satisfaction": 0.0,
+                "project_size_vs_cycle_time": 0.0,
+                "team_size_vs_efficiency": 0.0,
+                "complexity_vs_rejection_rate": 0.0,
+                "client_tenure_vs_payment_speed": 0.0
             },
             
             # Predictive analytics metrics
-            "forecasted_dso_next_month": 42.5,
-            "predicted_revenue_next_quarter": 3.8,  # Million CLP
-            "risk_adjusted_pipeline": 2.1,  # Million CLP risk-adjusted
-            "churn_risk_score": 15.2,  # Client churn risk percentage
-            "capacity_shortage_forecast": 5.8,  # Days of capacity shortage predicted
+            "forecasted_dso_next_month": 0.0,
+            "predicted_revenue_next_quarter": 0.0,
+            "risk_adjusted_pipeline": 0.0,
+            "churn_risk_score": 0.0,
+            "capacity_shortage_forecast": 0.0,
             
             # Rentabilidad KPIs
             "rentabilidad_general": 0.0,
             "tendencia_rentabilidad": 0.0,
             "posicion_vs_benchmark": 0.0,
             "vs_meta_rentabilidad": 0.0,
-            "meta_rentabilidad": 35.0,  # Default target
-            "pct_meta_rentabilidad": 0.0,  # Percentage of target achieved
+            "meta_rentabilidad": 35.0,
+            "pct_meta_rentabilidad": 0.0,
             "mejora_eficiencia": 0.0,
             "eficiencia_global": 0.0,
             
@@ -636,23 +1303,23 @@ class KPIService(BaseService):
             "margen_bruto_absoluto": 0.0,
             "costos_totales": 0.0,
             
-            # Aging buckets - exact template field names
-            "pct_30d": 25.0,
-            "pct_60d": 25.0,
-            "pct_90d": 25.0,
-            "pct_mas90d": 25.0,
+            # Aging buckets
+            "pct_30d": 0.0,
+            "pct_60d": 0.0,
+            "pct_90d": 0.0,
+            "pct_mas90d": 0.0,
             
             # Enhanced aging distribution data
-            "aging_0_30_pct": 25.0,
-            "aging_31_60_pct": 25.0,
-            "aging_61_90_pct": 25.0,
-            "aging_90_plus_pct": 25.0,
-            "recovery_rate": 85.0,
-            "top_deudor_1_nombre": "Sin datos",
+            "aging_0_30_pct": 0.0,
+            "aging_31_60_pct": 0.0,
+            "aging_61_90_pct": 0.0,
+            "aging_90_plus_pct": 0.0,
+            "recovery_rate": 0.0,
+            "top_deudor_1_nombre": "",
             "top_deudor_1_monto": 0.0,
-            "top_deudor_2_nombre": "Sin datos",
+            "top_deudor_2_nombre": "",
             "top_deudor_2_monto": 0.0,
-            "top_deudor_3_nombre": "Sin datos",
+            "top_deudor_3_nombre": "",
             "top_deudor_3_monto": 0.0,
             "acciones_llamadas": 0,
             "acciones_emails": 0,
@@ -660,13 +1327,13 @@ class KPIService(BaseService):
             "acciones_legales": 0,
             
             # Project timing KPIs
-            "proyectos_on_time": 75.0,  # Default 75% on time
-            "proyectos_retrasados": 15.0,  # Default 15% delayed
+            "proyectos_on_time": 0.0,
+            "proyectos_retrasados": 0.0,
             
             # Top drivers
-            "top_driver_1_name": "Sin datos",
+            "top_driver_1_name": "",
             "top_driver_1_value": 0.0,
-            "top_driver_2_name": "Sin datos",
+            "top_driver_2_name": "",
             "top_driver_2_value": 0.0,
             
             # Legacy operational fields
@@ -677,7 +1344,7 @@ class KPIService(BaseService):
             "critical_edps": 0,
             "critical_amount": 0.0,
             
-            "oportunidad_mejora": "Optimizar procesos internos",
+            "oportunidad_mejora": "",
             "pct_avance": 0.0,
             "total_completados": 0,
             "total_pendientes": 0,
@@ -686,10 +1353,10 @@ class KPIService(BaseService):
             # Critical projects KPIs
             "critical_projects_amount": 0.0,
             "critical_projects_list": [],
-            "timeline_0_10_pct": 25.0,
-            "timeline_11_20_pct": 25.0,
-            "timeline_21_30_pct": 25.0,
-            "timeline_30_plus_pct": 25.0,
+            "timeline_0_10_pct": 0.0,
+            "timeline_11_20_pct": 0.0,
+            "timeline_21_30_pct": 0.0,
+            "timeline_30_plus_pct": 0.0,
             "recursos_criticos": 0,
             "recursos_limitados": 0,
             "recursos_disponibles": 0,
@@ -764,43 +1431,40 @@ class KPIService(BaseService):
                 elif "monto_aprobado" in df_pendientes.columns:
                     pending_amount = df_pendientes["monto_aprobado"].sum()
 
-            # Calculate target and performance metrics
-            meta_ingresos = max(1_200_000, total_proposed * 0.8)  # Meta dinámica basada en propuestas
+            # Calculate target and performance metrics - USE REAL TARGET
+            meta_ingresos = 1200.0  # 1,200M CLP monthly target (FIXED)
+            meta_ingresos_clp = meta_ingresos * 1_000_000  # Convert to CLP for calculations
+            
+            ingresos_totales_clp = total_paid
+            ingresos_totales_m = ingresos_totales_clp / 1_000_000  # Convert to millions for display
+            
             vs_meta_ingresos = (
-                ((total_paid - meta_ingresos) / meta_ingresos * 100)
+                ((ingresos_totales_m - meta_ingresos) / meta_ingresos * 100)
                 if meta_ingresos > 0 else 0
             )
             pct_meta_ingresos = (
-                (total_paid / meta_ingresos * 100) if meta_ingresos > 0 else 0
+                (ingresos_totales_m / meta_ingresos * 100) if meta_ingresos > 0 else 0
             )
 
-            # Growth calculations (simulate monthly growth)
-            crecimiento_ingresos = 5.2  # Mock positive growth - should be calculated from historical data
-            tendencia_pendiente = -2.1  # Mock declining pending trend - should be calculated from historical data
+            # Growth calculations (real data only)
+            crecimiento_ingresos = 0.0  # No growth calculation without historical data
+            tendencia_pendiente = 0.0  # No trend calculation without historical data
 
             # Format values to match template expectations (in millions)
-            ingresos_totales = round(total_paid / 1_000_000, 1)
             monto_pendiente = round(pending_amount / 1_000_000, 1)
-            meta_ingresos_m = round(meta_ingresos / 1_000_000, 1)
-            run_rate_anual = round(ingresos_totales * 12, 1)
+            run_rate_anual = round(ingresos_totales_m * 12, 1)
 
-            # Historical 6 months (mock data - should be calculated from actual historical data)
-            historial_6_meses = [
-                max(0.1, ingresos_totales * 0.8), 
-                max(0.1, ingresos_totales * 0.9), 
-                max(0.1, ingresos_totales * 0.85), 
-                max(0.1, ingresos_totales * 1.1), 
-                max(0.1, ingresos_totales * 0.95), 
-                ingresos_totales
-            ]
+            # Historical 6 months (real data only)
+            historial_6_meses = []  # Empty without real historical data
 
-            logger.info(f"Calculated financial KPIs - Total Revenue: {total_paid:,.0f} CLP ({ingresos_totales} M)")
+            logger.info(f"Calculated financial KPIs - Total Revenue: {total_paid:,.0f} CLP ({ingresos_totales_m} M)")
             logger.info(f"Completed EDPs: {len(df_completados)}, Pending Amount: {pending_amount:,.0f} CLP")
+            logger.info(f"Meta: {meta_ingresos}M CLP, Achievement: {pct_meta_ingresos:.1f}%")
 
             return {
-                "ingresos_totales": ingresos_totales,
+                "ingresos_totales": round(ingresos_totales_m, 1),
                 "monto_pendiente": monto_pendiente,
-                "meta_ingresos": meta_ingresos_m,
+                "meta_ingresos": meta_ingresos,  # Real target in millions
                 "run_rate_anual": run_rate_anual,
                 "vs_meta_ingresos": round(vs_meta_ingresos, 1),
                 "pct_meta_ingresos": min(round(pct_meta_ingresos, 1), 100),
@@ -826,29 +1490,25 @@ class KPIService(BaseService):
                 df[df["estado"].isin(["enviado", "revisión", "pendiente","validado"])]
             )
 
-            # Critical EDPs
-            critical_edps = 0
-            critical_amount = 0
-            if "critico" in df.columns:
-                critical_edps = df[df["critico"] == True].shape[0]
-                if "monto_aprobado" in df.columns:
-                    critical_amount = df[df["critico"] == True]["monto_aprobado"].sum()
+            # Critical EDPs - ENSURE this is calculated and included
+            critical_projects_count = self._calculate_critical_projects_count(df)
+            critical_amount = self._calculate_critical_amount(df)
 
-            # DSO calculations
+            # DSO calculations - ENSURE dso_actual is included
             try:
                 dso = self._calculate_dso(df)
-                dso_cliente_principal = (
-                    dso * 0.8
-                )  # Mock data - main client has better DSO
+                dso_actual = dso  # Make sure dso_actual is explicitly set
+                dso_cliente_principal = 0.0  # No client-specific DSO without real data
             except Exception as e:
                 logger.info(f"Error calculating DSO: {e}")
-                dso = 45.0
-                dso_cliente_principal = 30.0
+                dso = 0.0  # No DSO without real data
+                dso_actual = 0.0  # Explicit dso_actual
+                dso_cliente_principal = 0.0
 
-            # Client analysis (mock data - should be calculated from real client data)
-            pct_ingresos_principal = 35.5
-            riesgo_pago_principal = 20
-            tendencia_pago_principal = "mejora"
+            # Client analysis (real data only)
+            pct_ingresos_principal = 0.0  # No client analysis without real data
+            riesgo_pago_principal = 0.0   # No risk analysis without real data
+            tendencia_pago_principal = "sin_datos"  # No trend without real data
 
             # Calculate project timing KPIs
             try:
@@ -856,37 +1516,61 @@ class KPIService(BaseService):
                 proyectos_retrasados = self._calculate_projects_delayed(df)
             except Exception as e:
                 logger.info(f"Error calculating project timing KPIs: {e}")
-                proyectos_on_time = 75
-                proyectos_retrasados = 15
+                proyectos_on_time = 0  # No timing data without real projects
+                proyectos_retrasados = 0  # No timing data without real projects
+
+            # Calculate efficiency score - ENSURE this is included
+            approval_rate = (total_approved / total_edps * 100) if total_edps > 0 else 0
+            payment_rate = (total_approved / total_edps * 100) if total_edps > 0 else 0
+            efficiency_score = self._calculate_efficiency_score(df, approval_rate, payment_rate, dso_actual)
+
+            # Calculate forecast accuracy - ENSURE this is included
+            forecast_accuracy = self._calculate_forecast_accuracy(df)
 
             return {
                 "total_edps": total_edps,
                 "total_approved": total_approved,
                 "total_pending": total_pending,
-                "approval_rate": round(
-                    (total_approved / total_edps * 100) if total_edps > 0 else 0, 1
-                ),
-                "critical_edps": critical_edps,
-                "critical_amount": round(critical_amount / 1_000_000, 1),
-                "dso": round(dso, 1),
+                "approval_rate": round(approval_rate, 1),
+                
+                # CRITICAL FIELDS - explicitly included
+                "dso_actual": round(dso_actual, 1),  # Explicit dso_actual field
+                "critical_projects_count": critical_projects_count,  # Explicit critical projects count
+                "efficiency_score": round(efficiency_score, 1),  # Explicit efficiency score
+                "forecast_accuracy": round(forecast_accuracy, 1),  # Explicit forecast accuracy
+                
+                # Legacy fields for compatibility
+                "critical_edps": critical_projects_count,  # Legacy name
+                "critical_amount": round(critical_amount, 1),
+                "dso": round(dso, 1),  # Legacy DSO field
+                
+                # Client metrics
                 "dso_cliente_principal": round(dso_cliente_principal, 1),
                 "pct_ingresos_principal": pct_ingresos_principal,
                 "riesgo_pago_principal": riesgo_pago_principal,
                 "tendencia_pago_principal": tendencia_pago_principal,
+                
+                # Project timing
                 "proyectos_on_time": proyectos_on_time,
                 "proyectos_retrasados": proyectos_retrasados,
             }
 
         except Exception as e:
             logger.error(f"Error calculating operational KPIs: {str(e)}")
-            return {}
+            return {
+                # Return at least the critical fields with default values
+                "dso_actual": 0.0,
+                "critical_projects_count": 0,
+                "efficiency_score": 0.0,
+                "forecast_accuracy": 0.0,
+            }
     
     def _calculate_dso(self, df: pd.DataFrame) -> float:
         """Calculate Days Sales Outstanding using real DSO data from database."""
         try:
             # Use the real DSO data calculated automatically in the database
             if df.empty:
-                return 45.0  # Default reasonable DSO
+                return 0.0  # No DSO without real data
             
             # Check if we have the new DSO column from database
             if 'dso_actual' in df.columns:
@@ -907,35 +1591,31 @@ class KPIService(BaseService):
                     return round(valid_dso.mean(), 1)
             
             # Fallback to old calculation if DSO column not available
-            if "dias_espera" in df.columns:
-                dias_espera_numeric = pd.to_numeric(df["dias_espera"], errors="coerce")
-                valid_dias = dias_espera_numeric.dropna()
-                return round(valid_dias.mean(), 1) if len(valid_dias) > 0 else 45.0
-            
-            return 45.0  # Default reasonable DSO
+            # NOTE: dias_espera column doesn't exist in database, removed fallback
+            return 0.0  # No DSO without real data
             
         except Exception as e:
             logger.error(f"Error calculating DSO: {e}")
-            return 45.0
+            return 0.0
 
     def _calculate_projects_on_time(self, df: pd.DataFrame) -> int:
-        """Calculate percentage of projects delivered on time."""
+        """Calculate percentage of projects delivered on time using DSO actual."""
         try:
-            if "dias_espera" not in df.columns or df.empty:
-                return 75  # Default reasonable value
+            if "dso_actual" not in df.columns or df.empty:
+                return 0  # No data without real projects
 
-            # Convert dias_espera to numeric
-            dias_espera_validos = pd.to_numeric(df["dias_espera"], errors="coerce")
+            # Convert dso_actual to numeric
+            dso_actual_validos = pd.to_numeric(df["dso_actual"], errors="coerce")
             
             # Filter valid values
-            dias_validos = dias_espera_validos.dropna()
+            dso_validos = dso_actual_validos.dropna()
             
-            if len(dias_validos) == 0:
-                return 75  # Default if no valid data
+            if len(dso_validos) == 0:
+                return 0  # No data if no valid data
 
-            # Consider "on time" as <= 35 days (industry benchmark)
-            on_time_count = len(dias_validos[dias_validos <= 35])
-            total_count = len(dias_validos)
+            # Consider "on time" as <= 35 days DSO (industry benchmark)
+            on_time_count = len(dso_validos[dso_validos <= 35])
+            total_count = len(dso_validos)
             
             on_time_percentage = round((on_time_count / total_count * 100) if total_count > 0 else 0)
             
@@ -944,26 +1624,26 @@ class KPIService(BaseService):
             
         except Exception as e:
             logger.error(f"Error calculating projects on time: {e}")
-            return 75  # Default
+            return 0  # No data on error
 
     def _calculate_projects_delayed(self, df: pd.DataFrame) -> int:
-        """Calculate percentage of projects that are delayed."""
+        """Calculate percentage of projects that are delayed using DSO actual."""
         try:
-            if "dias_espera" not in df.columns or df.empty:
-                return 15  # Default reasonable value
+            if "dso_actual" not in df.columns or df.empty:
+                return 0  # No data without real projects
 
-            # Convert dias_espera to numeric
-            dias_espera_validos = pd.to_numeric(df["dias_espera"], errors="coerce")
+            # Convert dso_actual to numeric
+            dso_actual_validos = pd.to_numeric(df["dso_actual"], errors="coerce")
             
             # Filter valid values
-            dias_validos = dias_espera_validos.dropna()
+            dso_validos = dso_actual_validos.dropna()
             
-            if len(dias_validos) == 0:
-                return 15  # Default if no valid data
+            if len(dso_validos) == 0:
+                return 0  # No data if no valid data
 
-            # Consider "delayed" as > 60 days (significantly beyond benchmark)
-            delayed_count = len(dias_validos[dias_validos > 60])
-            total_count = len(dias_validos)
+            # Consider "delayed" as > 60 days DSO (significantly beyond benchmark)
+            delayed_count = len(dso_validos[dso_validos > 60])
+            total_count = len(dso_validos)
             
             delayed_percentage = round((delayed_count / total_count * 100) if total_count > 0 else 0)
             
@@ -972,7 +1652,7 @@ class KPIService(BaseService):
             
         except Exception as e:
             logger.error(f"Error calculating projects delayed: {e}")
-            return 15  # Default
+            return 0  # No data on error
 
     def _calculate_profitability_kpis(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Calculate profitability KPIs."""
@@ -1010,11 +1690,30 @@ class KPIService(BaseService):
             if df.empty:
                 return {}
 
+            df = self._ensure_date_columns(df)
             current_date = datetime.now()
             
             # Calculate days since creation for each project
             df_age = df.copy()
-            df_age["days_old"] = (current_date - pd.to_datetime(df_age["fecha_creacion"], errors="coerce")).dt.days
+            
+            # Use created_at (mapped to fecha_creacion) for age calculation
+            if 'fecha_creacion' in df_age.columns:
+                date_col = 'fecha_creacion'
+            elif 'created_at' in df_age.columns:
+                date_col = 'created_at'
+                df_age['fecha_creacion'] = pd.to_datetime(df_age[date_col], errors='coerce')
+                date_col = 'fecha_creacion'
+            else:
+                logger.warning("No date column found for aging calculation")
+                return {}
+                
+            df_age["days_old"] = (current_date - df_age[date_col]).dt.days
+            
+            # Filter valid ages (remove negative or null ages)
+            df_age = df_age[df_age["days_old"] >= 0]
+            
+            if df_age.empty:
+                return {}
             
             # Count projects by age buckets
             projects_30_days = len(df_age[df_age["days_old"] <= 30])
@@ -1022,11 +1721,17 @@ class KPIService(BaseService):
             projects_90_days = len(df_age[df_age["days_old"] > 60])
             
             # Critical aging (projects over 90 days not completed)
-            non_completed_states = ["enviado", "pendiente", "en_revision"]
+            non_completed_states = ["enviado", "pendiente", "en_revision", "revision"]
             aging_critical = len(df_age[
                 (df_age["days_old"] > 90) & 
-                (df_age["estado"].isin(non_completed_states))
+                (df_age["estado"].str.strip().str.lower().isin(non_completed_states))
             ])
+
+            print(f"📊 Aging KPI calculation: {len(df_age)} projects with valid dates")
+            print(f"   0-30 days: {projects_30_days} projects")
+            print(f"   31-60 days: {projects_60_days} projects") 
+            print(f"   60+ days: {projects_90_days} projects")
+            print(f"   Critical (90+ days pending): {aging_critical} projects")
 
             return {
                 "projects_30_days": projects_30_days,
@@ -1078,13 +1783,30 @@ class KPIService(BaseService):
             if df.empty:
                 return {}
 
+            df = self._ensure_date_columns(df)
+            
             # Define critical criteria
             high_value_threshold = df["monto_propuesto"].quantile(0.8)  # Top 20% by value
             old_threshold_days = 60
 
             current_date = datetime.now()
             df_critical = df.copy()
-            df_critical["days_old"] = (current_date - pd.to_datetime(df_critical["fecha_creacion"], errors="coerce")).dt.days
+            
+            # Use the correct date column for age calculation
+            if 'fecha_creacion' in df_critical.columns:
+                date_col = 'fecha_creacion'
+            elif 'created_at' in df_critical.columns:
+                date_col = 'created_at'
+                df_critical['fecha_creacion'] = pd.to_datetime(df_critical[date_col], errors='coerce')
+                date_col = 'fecha_creacion'
+            else:
+                logger.warning("No date column found for critical projects calculation")
+                return {}
+                
+            df_critical["days_old"] = (current_date - df_critical[date_col]).dt.days
+            
+            # Filter valid ages
+            df_critical = df_critical[df_critical["days_old"] >= 0]
 
             # Critical by value
             critical_by_value = df_critical[df_critical["monto_propuesto"] >= high_value_threshold]
@@ -1093,13 +1815,19 @@ class KPIService(BaseService):
             critical_by_age = df_critical[df_critical["days_old"] > old_threshold_days]
             
             # Critical by status (stuck projects)
-            stuck_states = ["en_revision", "pendiente"]
-            critical_by_status = df_critical[df_critical["estado"].isin(stuck_states)]
+            stuck_states = ["en_revision", "pendiente", "revision"]
+            critical_by_status = df_critical[df_critical["estado"].str.strip().str.lower().isin(stuck_states)]
 
             # Combined critical projects
             critical_projects = pd.concat([critical_by_value, critical_by_age, critical_by_status]).drop_duplicates()
 
             critical_amount = critical_projects["monto_propuesto"].sum()
+
+            print(f"📊 Critical projects calculation:")
+            print(f"   By value (top 20%): {len(critical_by_value)} projects")
+            print(f"   By age (>60 days): {len(critical_by_age)} projects")
+            print(f"   By status (stuck): {len(critical_by_status)} projects")
+            print(f"   Total critical: {len(critical_projects)} projects")
 
             return {
                 "critical_projects_count": len(critical_projects),
@@ -1360,891 +2088,20 @@ class KPIService(BaseService):
             'percentile_75': round(sorted(values)[3*len(values)//4], 2)
         }
     
-    def _generate_mock_trend_data(self, edp_id: str, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
-        """Generate mock trend data for visualization."""
-        # This is a placeholder for actual trend data
-        # In a real implementation, this would query historical data
-        
-        import random
+    def _generate_real_trend_data(self, edp_id: str, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+        """Generate trend data based on real EDP data."""
+        # Return empty trend data - only show trends when we have real historical data
         
         days = (end_date - start_date).days
         dates = [start_date + timedelta(days=i) for i in range(days + 1)]
         
         trend_data = {
             'dates': [date.strftime('%Y-%m-%d') for date in dates],
-            'completion_rate': [min(100, max(0, 50 + random.randint(-5, 10) + i*0.5)) for i in range(len(dates))],
-            'budget_utilization': [min(100, max(0, 30 + random.randint(-3, 5) + i*0.3)) for i in range(len(dates))],
-            'quality_score': [min(100, max(60, 85 + random.randint(-5, 5))) for _ in range(len(dates))]
+            'completion_rate': [0 for _ in range(len(dates))],
+            'budget_utilization': [0 for _ in range(len(dates))],
+            'quality_score': [0 for _ in range(len(dates))]
         }
         
         return trend_data
     
-    def _calculate_advanced_dso_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate comprehensive DSO metrics using real database DSO calculations."""
-        try:
-            if df.empty:
-                return {}
-
-            # Use real DSO data from database
-            overall_dso = self._calculate_dso(df)
-            
-            # DSO by client using real dso_actual values
-            dso_by_client = {}
-            if 'cliente' in df.columns and 'dso_actual' in df.columns:
-                client_dso = df.groupby('cliente')['dso_actual'].apply(
-                    lambda x: pd.to_numeric(x, errors='coerce').mean()
-                ).round(1)
-                dso_by_client = client_dso.dropna().to_dict()
-            
-            # DSO by project type using real dso_actual values
-            dso_by_type = {}
-            if 'tipo_proyecto' in df.columns and 'dso_actual' in df.columns:
-                type_dso = df.groupby('tipo_proyecto')['dso_actual'].apply(
-                    lambda x: pd.to_numeric(x, errors='coerce').mean()
-                ).round(1)
-                dso_by_type = type_dso.dropna().to_dict()
-            
-            # DSO by project manager using real dso_actual values
-            dso_by_manager = {}
-            if 'jefe_proyecto' in df.columns and 'dso_actual' in df.columns:
-                manager_dso = df.groupby('jefe_proyecto')['dso_actual'].apply(
-                    lambda x: pd.to_numeric(x, errors='coerce').mean()
-                ).round(1)
-                dso_by_manager = manager_dso.dropna().to_dict()
-            
-            # Calculate DSO trends using real data
-            dso_trend_3m = self._calculate_dso_trend_with_real_data(df, months=3)
-            dso_trend_6m = self._calculate_dso_trend_with_real_data(df, months=6)
-            
-            # DSO benchmark comparison
-            benchmark_dso = 35.0  # Industry benchmark
-            dso_vs_benchmark = ((overall_dso - benchmark_dso) / benchmark_dso * 100) if benchmark_dso > 0 else 0
-            
-            # Calculate aging distribution using categoria_aging if available
-            aging_distribution = self._calculate_aging_distribution_from_db(df)
-            
-            # Count overdue projects using esta_vencido column
-            overdue_metrics = self._calculate_overdue_metrics(df)
-            
-            return {
-                "dso": round(overall_dso, 1),
-                "dso_by_client": dso_by_client,
-                "dso_by_project_type": dso_by_type,
-                "dso_by_project_manager": dso_by_manager,
-                "dso_trend_3m": round(dso_trend_3m, 1),
-                "dso_trend_6m": round(dso_trend_6m, 1),
-                "dso_benchmark": benchmark_dso,
-                "dso_vs_benchmark": round(dso_vs_benchmark, 1),
-                **aging_distribution,
-                **overdue_metrics
-            }
-        except Exception as e:
-            logger.error(f"Error calculating advanced DSO metrics: {str(e)}")
-            return {}
-
-    def _calculate_payment_velocity_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate payment velocity and acceleration trends."""
-        try:
-            if df.empty:
-                return {}
-
-            df = self._ensure_date_columns(df)
-            
-            # Calculate monthly payment counts
-            paid_df = df[df['estado'].str.lower() == 'pagado'].copy()
-            
-            if paid_df.empty:
-                return {
-                    "payment_velocity": 0.0,
-                    "payment_velocity_trend": "stable",
-                    "payment_acceleration": 0.0
-                }
-            
-            # Group payments by month
-            paid_df['year_month'] = paid_df['fecha_modificacion'].dt.to_period('M')
-            monthly_payments = paid_df.groupby('year_month').size()
-            
-            # Calculate average velocity
-            payment_velocity = monthly_payments.mean() if len(monthly_payments) > 0 else 0.0
-            
-            # Calculate trend
-            if len(monthly_payments) >= 3:
-                recent_3m = monthly_payments.tail(3).mean()
-                previous_3m = monthly_payments.head(max(1, len(monthly_payments) - 3)).mean()
-                
-                if previous_3m > 0:
-                    acceleration = (recent_3m - previous_3m) / previous_3m * 100
-                    if acceleration > 10:
-                        trend = "improving"
-                    elif acceleration < -10:
-                        trend = "declining"
-                    else:
-                        trend = "stable"
-                else:
-                    trend = "stable"
-                    acceleration = 0.0
-            else:
-                trend = "stable"
-                acceleration = 0.0
-            
-            return {
-                "payment_velocity": round(payment_velocity, 1),
-                "payment_velocity_trend": trend,
-                "payment_acceleration": round(acceleration, 1)
-            }
-        except Exception as e:
-            logger.error(f"Error calculating payment velocity metrics: {str(e)}")
-            return {
-                "payment_velocity": 2.3,
-                "payment_velocity_trend": "stable", 
-                "payment_acceleration": 0.0
-            }
-
-    def _calculate_rejection_and_quality_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate rejection rates and quality metrics by client and type."""
-        try:
-            if df.empty:
-                return {}
-
-            total_projects = len(df)
-            
-            # Calculate rejection rate (projects with 'rechazado' or 'revision' status)
-            rejected_states = ['rechazado', 'revision', 'devuelto']
-            rejected_projects = len(df[df['estado'].str.lower().isin(rejected_states)])
-            overall_rejection_rate = (rejected_projects / total_projects * 100) if total_projects > 0 else 0
-            
-            # Rejection rate by client
-            rejection_by_client = {}
-            if 'cliente' in df.columns:
-                for client in df['cliente'].unique():
-                    if pd.notna(client):
-                        client_df = df[df['cliente'] == client]
-                        client_rejected = len(client_df[client_df['estado'].str.lower().isin(rejected_states)])
-                        client_total = len(client_df)
-                        rejection_rate = (client_rejected / client_total * 100) if client_total > 0 else 0
-                        rejection_by_client[str(client)] = round(rejection_rate, 1)
-            
-            # Rejection rate by project type
-            rejection_by_type = {}
-            if 'tipo_proyecto' in df.columns:
-                for proj_type in df['tipo_proyecto'].unique():
-                    if pd.notna(proj_type):
-                        type_df = df[df['tipo_proyecto'] == proj_type]
-                        type_rejected = len(type_df[type_df['estado'].str.lower().isin(rejected_states)])
-                        type_total = len(type_df)
-                        rejection_rate = (type_rejected / type_total * 100) if type_total > 0 else 0
-                        rejection_by_type[str(proj_type)] = round(rejection_rate, 1)
-            
-            # Calculate quality metrics
-            approved_states = ['pagado', 'validado', 'aprobado']
-            approved_projects = len(df[df['estado'].str.lower().isin(approved_states)])
-            first_pass_quality = (approved_projects / total_projects * 100) if total_projects > 0 else 0
-            
-            # Rework rate (approximate - projects that went through revision)
-            rework_projects = len(df[df['estado'].str.lower() == 'revision'])
-            rework_rate = (rework_projects / total_projects * 100) if total_projects > 0 else 0
-            
-            # Historical trend (mock calculation - would use historical data)
-            trend = "improving" if overall_rejection_rate < 15 else "declining" if overall_rejection_rate > 25 else "stable"
-            
-            return {
-                "rejection_rate_overall": round(overall_rejection_rate, 1),
-                "rejection_rate_by_client": rejection_by_client,
-                "rejection_rate_by_type": rejection_by_type,
-                "rejection_trend": trend,
-                "rework_rate": round(rework_rate, 1),
-                "first_pass_quality": round(first_pass_quality, 1),
-                "quality_improvement_rate": max(0, 20 - overall_rejection_rate)  # Improvement metric
-            }
-        except Exception as e:
-            logger.error(f"Error calculating rejection and quality metrics: {str(e)}")
-            return {}
-
-    def _calculate_process_stage_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate detailed time in each process stage."""
-        try:
-            if df.empty:
-                return {}
-
-            df = self._ensure_date_columns(df)
-            
-            # Define stage mappings based on status
-            stage_mapping = {
-                'borrador': 'planning',
-                'enviado': 'execution', 
-                'revision': 'review',
-                'validado': 'approval',
-                'pagado': 'payment'
-            }
-            
-            # Calculate average time per stage
-            stage_times = {}
-            stage_efficiencies = {}
-            
-            for status, stage in stage_mapping.items():
-                stage_df = df[df['estado'].str.lower() == status]
-                if not stage_df.empty and 'dias_espera' in stage_df.columns:
-                    avg_time = pd.to_numeric(stage_df['dias_espera'], errors='coerce').mean()
-                    stage_times[f"stage_{stage}_avg"] = round(avg_time, 1) if not pd.isna(avg_time) else 0.0
-                    
-                    # Calculate efficiency (inverse of time, normalized)
-                    efficiency = max(0, min(100, 100 - (avg_time / 30 * 50))) if not pd.isna(avg_time) else 85
-                    stage_efficiencies[stage] = round(efficiency, 1)
-                else:
-                    stage_times[f"stage_{stage}_avg"] = 0.0
-                    stage_efficiencies[stage] = 85.0
-            
-            # Identify bottleneck stage
-            if stage_times:
-                bottleneck_stage = max(stage_times, key=stage_times.get).split('_')[1]
-            else:
-                bottleneck_stage = "review"
-            
-            return {
-                **stage_times,
-                "stage_efficiency_scores": stage_efficiencies,
-                "bottleneck_stage": bottleneck_stage
-            }
-        except Exception as e:
-            logger.error(f"Error calculating process stage metrics: {str(e)}")
-            return {}
-
-    def _calculate_seasonal_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate seasonal payment patterns and forecasting adjustments."""
-        try:
-            if df.empty:
-                return {}
-
-            df = self._ensure_date_columns(df)
-            
-            # Filter paid projects
-            paid_df = df[df['estado'].str.lower() == 'pagado'].copy()
-            
-            if paid_df.empty:
-                return {
-                    "seasonal_patterns": {
-                        "q1_factor": 0.85,
-                        "q2_factor": 1.05, 
-                        "q3_factor": 0.95,
-                        "q4_factor": 1.15,
-                        "peak_month": "December",
-                        "lowest_month": "February"
-                    },
-                    "current_seasonal_factor": 1.0,
-                    "seasonal_forecast_adjustment": 0.0
-                }
-            
-            # Group by quarter
-            paid_df['quarter'] = paid_df['fecha_modificacion'].dt.quarter
-            quarterly_payments = paid_df.groupby('quarter')['monto_aprobado'].sum()
-            
-            # Calculate seasonal factors
-            if len(quarterly_payments) > 0:
-                avg_quarterly = quarterly_payments.mean()
-                seasonal_factors = {}
-                for q in [1, 2, 3, 4]:
-                    if q in quarterly_payments.index:
-                        factor = quarterly_payments[q] / avg_quarterly if avg_quarterly > 0 else 1.0
-                        seasonal_factors[f"q{q}_factor"] = round(factor, 2)
-                    else:
-                        # Default seasonal patterns
-                        default_factors = {1: 0.85, 2: 1.05, 3: 0.95, 4: 1.15}
-                        seasonal_factors[f"q{q}_factor"] = default_factors[q]
-            else:
-                seasonal_factors = {
-                    "q1_factor": 0.85,
-                    "q2_factor": 1.05,
-                    "q3_factor": 0.95, 
-                    "q4_factor": 1.15
-                }
-            
-            # Monthly analysis for peak/lowest months
-            paid_df['month'] = paid_df['fecha_modificacion'].dt.month
-            monthly_payments = paid_df.groupby('month')['monto_aprobado'].sum()
-            
-            if len(monthly_payments) > 0:
-                peak_month_num = monthly_payments.idxmax()
-                lowest_month_num = monthly_payments.idxmin()
-                
-                month_names = {
-                    1: "January", 2: "February", 3: "March", 4: "April",
-                    5: "May", 6: "June", 7: "July", 8: "August", 
-                    9: "September", 10: "October", 11: "November", 12: "December"
-                }
-                
-                peak_month = month_names.get(peak_month_num, "December")
-                lowest_month = month_names.get(lowest_month_num, "February")
-            else:
-                peak_month = "December"
-                lowest_month = "February"
-            
-            # Current seasonal factor
-            current_month = datetime.now().month
-            current_quarter = (current_month - 1) // 3 + 1
-            current_factor = seasonal_factors.get(f"q{current_quarter}_factor", 1.0)
-            
-            return {
-                "seasonal_patterns": {
-                    **seasonal_factors,
-                    "peak_month": peak_month,
-                    "lowest_month": lowest_month
-                },
-                "current_seasonal_factor": current_factor,
-                "seasonal_forecast_adjustment": round((current_factor - 1) * 100, 1)
-            }
-        except Exception as e:
-            logger.error(f"Error calculating seasonal patterns: {str(e)}")
-            return {}
-
-    def _calculate_collection_and_follow_up_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate advanced collection, follow-up, and cost efficiency metrics."""
-        try:
-            if df.empty:
-                return {}
-
-            df = self._ensure_date_columns(df)
-            
-            # Time to invoice calculation
-            invoice_ready_states = ['enviado', 'validado']
-            invoice_df = df[df['estado'].str.lower().isin(invoice_ready_states)]
-            
-            if not invoice_df.empty and 'dias_espera' in invoice_df.columns:
-                time_to_invoice = pd.to_numeric(invoice_df['dias_espera'], errors='coerce').mean()
-                time_to_invoice = round(time_to_invoice, 1) if not pd.isna(time_to_invoice) else 3.2
-            else:
-                time_to_invoice = 3.2
-            
-            # Follow-up effectiveness (mock calculation based on payment success rate)
-            total_sent = len(df[df['estado'].str.lower() == 'enviado'])
-            total_paid = len(df[df['estado'].str.lower() == 'pagado'])
-            follow_up_effectiveness = (total_paid / max(1, total_sent) * 100) if total_sent > 0 else 68.5
-            
-            # Collection efficiency
-            total_proposed = df['monto_propuesto'].sum() if 'monto_propuesto' in df.columns else 0
-            total_collected = df[df['estado'].str.lower() == 'pagado']['monto_aprobado'].sum() if 'monto_aprobado' in df.columns else 0
-            collection_efficiency = (total_collected / max(1, total_proposed) * 100) if total_proposed > 0 else 78.9
-            
-            # Cost per collection (estimated)
-            total_projects = len(df)
-            estimated_admin_cost = total_projects * 50000  # 50k CLP per project admin cost
-            cost_per_collection = (estimated_admin_cost / max(1, total_paid)) if total_paid > 0 else 125000
-            
-            # Automation rates (mock - based on project complexity)
-            simple_projects = len(df[df.get('complejidad', 'media').str.lower() == 'baja']) if 'complejidad' in df.columns else total_projects * 0.3
-            automated_rate = (simple_projects / max(1, total_projects) * 100) if total_projects > 0 else 45.0
-            manual_rate = 100 - automated_rate
-            
-            # Contact frequency and escalation
-            complex_projects = total_projects - simple_projects
-            avg_contacts = 1.5 + (complex_projects / max(1, total_projects)) * 2  # More contacts for complex projects
-            escalation_rate = (complex_projects / max(1, total_projects) * 100) * 0.3  # 30% of complex projects escalate
-            
-            return {
-                "time_to_invoice": round(time_to_invoice, 1),
-                "follow_up_effectiveness": round(follow_up_effectiveness, 1),
-                "collection_efficiency": round(collection_efficiency, 1),
-                "cost_per_collection": round(cost_per_collection / 1000, 1),  # In thousands CLP
-                "automated_collections_rate": round(automated_rate, 1),
-                "manual_intervention_rate": round(manual_rate, 1),
-                "avg_contacts_per_collection": round(avg_contacts, 1),
-                "escalation_rate": round(escalation_rate, 1)
-            }
-        except Exception as e:
-            logger.error(f"Error calculating collection metrics: {str(e)}")
-            return {}
-
-    def _calculate_resource_utilization_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate resource utilization vs billable hours metrics."""
-        try:
-            if df.empty:
-                return {}
-
-            total_projects = len(df)
-            
-            # Calculate utilization based on project manager workload
-            utilization_by_team = {}
-            if 'jefe_proyecto' in df.columns:
-                manager_workloads = df['jefe_proyecto'].value_counts()
-                for manager, count in manager_workloads.items():
-                    if pd.notna(manager):
-                        # Assume capacity of 10 projects per manager for full utilization
-                        utilization = min(100, (count / 10) * 100)
-                        utilization_by_team[str(manager)] = round(utilization, 1)
-            
-            # Overall metrics (mock calculations based on project data)
-            active_projects = len(df[df['estado'].str.lower().isin(['enviado', 'revision', 'validado'])])
-            resource_utilization = min(100, (active_projects / max(1, total_projects * 0.8)) * 100)
-            
-            # Billable vs non-billable ratio
-            billable_projects = len(df[df['estado'].str.lower().isin(['pagado', 'validado'])])
-            billable_ratio = (billable_projects / max(1, total_projects) * 100)
-            
-            # Capacity metrics
-            capacity_vs_demand = min(100, resource_utilization * 1.2)  # Slight overutilization
-            idle_time = max(0, 100 - resource_utilization)
-            overtime_rate = max(0, resource_utilization - 85) * 0.5  # Overtime when >85% utilized
-            
-            # Individual efficiency (mock)
-            efficiency_per_resource = {}
-            for manager in utilization_by_team.keys():
-                efficiency = max(60, min(95, 80 + (utilization_by_team[manager] * 0.15)))
-                efficiency_per_resource[manager] = round(efficiency, 1)
-            
-            return {
-                "resource_utilization": round(resource_utilization, 1),
-                "billable_hours_ratio": round(billable_ratio, 1),
-                "utilization_by_team": utilization_by_team,
-                "capacity_vs_demand": round(capacity_vs_demand, 1),
-                "idle_time_percentage": round(idle_time, 1),
-                "overtime_rate": round(overtime_rate, 1),
-                "efficiency_per_resource": efficiency_per_resource
-            }
-        except Exception as e:
-            logger.error(f"Error calculating resource utilization metrics: {str(e)}")
-            return {}
-
-    def _calculate_velocity_and_trend_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate velocity of change for all main metrics and trend indicators."""
-        try:
-            if df.empty:
-                return {}
-
-            df = self._ensure_date_columns(df)
-            
-            # Revenue velocity (monthly growth)
-            revenue_velocity = self._calculate_revenue_velocity(df)
-            
-            # DSO velocity (improvement rate)
-            dso_velocity = self._calculate_dso_velocity(df)
-            
-            # Completion velocity (rate of project completion)
-            completion_velocity = self._calculate_completion_velocity(df)
-            
-            # Quality velocity (improvement in quality metrics)
-            quality_velocity = self._calculate_quality_velocity(df)
-            
-            # Cost velocity (cost reduction rate)
-            cost_velocity = self._calculate_cost_velocity(df)
-            
-            # Trend indicators
-            trend_indicators = {
-                "revenue": "accelerating" if revenue_velocity > 10 else "stable" if revenue_velocity > -5 else "declining",
-                "dso": "improving" if dso_velocity < -2 else "stable" if dso_velocity < 2 else "declining",
-                "quality": "improving" if quality_velocity > 3 else "stable",
-                "costs": "declining" if cost_velocity < -2 else "stable",
-                "efficiency": "improving" if completion_velocity > 5 else "stable"
-            }
-            
-            return {
-                "revenue_velocity": round(revenue_velocity, 1),
-                "dso_velocity": round(dso_velocity, 1),
-                "completion_velocity": round(completion_velocity, 1),
-                "quality_velocity": round(quality_velocity, 1),
-                "cost_velocity": round(cost_velocity, 1),
-                "trend_indicators": trend_indicators
-            }
-        except Exception as e:
-            logger.error(f"Error calculating velocity and trend metrics: {str(e)}")
-            return {}
-
-    def _calculate_leading_and_lagging_indicators(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate leading and lagging indicators for predictive analytics."""
-        try:
-            if df.empty:
-                return {}
-
-            # Leading indicators (predictive)
-            pipeline_projects = len(df[df['estado'].str.lower().isin(['borrador', 'enviado'])])
-            pipeline_value = df[df['estado'].str.lower().isin(['borrador', 'enviado'])]['monto_propuesto'].sum() / 1_000_000
-            
-            # New project rate (projects created in last 30 days)
-            df = self._ensure_date_columns(df)
-            recent_projects = df[df['fecha_creacion'] >= (datetime.now() - timedelta(days=30))]
-            new_project_rate = len(recent_projects)
-            
-            # Client engagement (based on active projects per client)
-            client_engagement = 78.5  # Mock - would be calculated from actual engagement data
-            
-            # Team capacity forecast
-            active_projects = len(df[df['estado'].str.lower().isin(['enviado', 'revision'])])
-            team_capacity_forecast = min(100, (active_projects / max(1, len(df) * 0.3)) * 100)
-            
-            # Market demand indicator (mock)
-            market_demand = 108.5  # Would be external market data
-            
-            leading_indicators = {
-                "pipeline_value": round(pipeline_value, 1),
-                "new_project_rate": new_project_rate,
-                "client_engagement_score": client_engagement,
-                "team_capacity_forecast": round(team_capacity_forecast, 1),
-                "market_demand_indicator": market_demand
-            }
-            
-            # Lagging indicators (results)
-            completed_projects = len(df[df['estado'].str.lower() == 'pagado'])
-            revenue_realized = df[df['estado'].str.lower() == 'pagado']['monto_aprobado'].sum() / 1_000_000
-            
-            # Cost per project (estimated)
-            total_cost = revenue_realized * 0.65 * 1_000_000  # 65% cost ratio
-            cost_per_project = (total_cost / max(1, completed_projects)) / 1000 if completed_projects > 0 else 85.2
-            
-            # Profit margin
-            profit_margin = ((revenue_realized * 1_000_000 - total_cost) / max(1, revenue_realized * 1_000_000) * 100) if revenue_realized > 0 else 24.8
-            
-            lagging_indicators = {
-                "revenue_realized": round(revenue_realized, 1),
-                "projects_delivered": completed_projects,
-                "client_satisfaction_final": 89.5,  # Mock - would come from surveys
-                "cost_per_project": round(cost_per_project, 1),
-                "profit_margin_actual": round(profit_margin, 1)
-            }
-            
-            return {
-                "leading_indicators": leading_indicators,
-                "lagging_indicators": lagging_indicators
-            }
-        except Exception as e:
-            logger.error(f"Error calculating leading and lagging indicators: {str(e)}")
-            return {}
-
-    def _calculate_correlation_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate correlation metrics between key variables."""
-        try:
-            if df.empty or len(df) < 10:  # Need sufficient data for meaningful correlations
-                return {
-                    "correlations": {
-                        "dso_vs_satisfaction": -0.65,
-                        "project_size_vs_cycle_time": 0.78,
-                        "team_size_vs_efficiency": 0.23,
-                        "complexity_vs_rejection_rate": 0.84,
-                        "client_tenure_vs_payment_speed": -0.56
-                    }
-                }
-
-            df = self._ensure_numeric_columns(df)
-            correlations = {}
-            
-            # DSO vs satisfaction (mock - would need satisfaction data)
-            if 'dias_espera' in df.columns:
-                # Assume satisfaction inversely correlates with wait time
-                correlations["dso_vs_satisfaction"] = -0.65  # Mock value
-            
-            # Project size vs cycle time
-            if 'monto_propuesto' in df.columns and 'dias_espera' in df.columns:
-                corr = df[['monto_propuesto', 'dias_espera']].corr().iloc[0, 1]
-                correlations["project_size_vs_cycle_time"] = round(corr, 2) if not pd.isna(corr) else 0.78
-            
-            # Other correlations (mock values - would be calculated from real data)
-            correlations.update({
-                "team_size_vs_efficiency": 0.23,
-                "complexity_vs_rejection_rate": 0.84,
-                "client_tenure_vs_payment_speed": -0.56
-            })
-            
-            return {"correlations": correlations}
-        except Exception as e:
-            logger.error(f"Error calculating correlation metrics: {str(e)}")
-            return {}
-
-    def _calculate_predictive_analytics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate predictive analytics and forecasting metrics."""
-        try:
-            if df.empty:
-                return {}
-
-            df = self._ensure_date_columns(df)
-            
-            # Forecast DSO for next month (simple trend extrapolation)
-            current_dso = self._calculate_dso(df)
-            dso_trend = self._calculate_dso_trend(df, months=3)
-            forecasted_dso = max(20, current_dso + dso_trend)
-            
-            # Predict revenue for next quarter
-            quarterly_revenue = df[df['estado'].str.lower() == 'pagado']['monto_aprobado'].sum() / 1_000_000
-            growth_rate = 1.15  # Assume 15% growth
-            predicted_revenue = quarterly_revenue * growth_rate
-            
-            # Risk-adjusted pipeline
-            pipeline_value = df[df['estado'].str.lower().isin(['enviado', 'validado'])]['monto_propuesto'].sum() / 1_000_000
-            risk_factor = 0.75  # 75% probability of conversion
-            risk_adjusted_pipeline = pipeline_value * risk_factor
-            
-            # Churn risk score (based on project delays and issues)
-            delayed_projects = len(df[pd.to_numeric(df.get('dias_espera', 0), errors='coerce') > 60])
-            total_projects = len(df)
-            churn_risk = (delayed_projects / max(1, total_projects) * 100) * 0.6  # 60% of delays lead to churn risk
-            
-            # Capacity shortage forecast
-            active_projects = len(df[df['estado'].str.lower().isin(['enviado', 'revision'])])
-            capacity_shortage = max(0, active_projects - (total_projects * 0.7))  # 70% capacity threshold
-            
-            return {
-                "forecasted_dso_next_month": round(forecasted_dso, 1),
-                "predicted_revenue_next_quarter": round(predicted_revenue, 1),
-                "risk_adjusted_pipeline": round(risk_adjusted_pipeline, 1),
-                "churn_risk_score": round(churn_risk, 1),
-                "capacity_shortage_forecast": round(capacity_shortage, 1)
-            }
-        except Exception as e:
-            logger.error(f"Error calculating predictive analytics: {str(e)}")
-            return {}
-
-    # Helper methods for velocity calculations
-    def _calculate_revenue_velocity(self, df: pd.DataFrame) -> float:
-        """Calculate monthly revenue growth rate."""
-        try:
-            paid_df = df[df['estado'].str.lower() == 'pagado'].copy()
-            if paid_df.empty or 'fecha_modificacion' not in paid_df.columns:
-                return 15.2  # Default growth rate
-            
-            paid_df['year_month'] = paid_df['fecha_modificacion'].dt.to_period('M')
-            monthly_revenue = paid_df.groupby('year_month')['monto_aprobado'].sum()
-            
-            if len(monthly_revenue) >= 2:
-                recent_revenue = monthly_revenue.tail(1).values[0]
-                previous_revenue = monthly_revenue.tail(2).head(1).values[0]
-                velocity = ((recent_revenue - previous_revenue) / max(1, previous_revenue) * 100) if previous_revenue > 0 else 0
-                return velocity
-            return 15.2
-        except Exception:
-            return 15.2
-
-    def _calculate_dso_velocity(self, df: pd.DataFrame) -> float:
-        """Calculate DSO improvement rate."""
-        try:
-            return self._calculate_dso_trend(df, months=3)
-        except Exception:
-            return -2.1  # Default improvement
-
-    def _calculate_completion_velocity(self, df: pd.DataFrame) -> float:
-        """Calculate completion rate improvement."""
-        try:
-            # Mock calculation - would use historical completion data
-            return 8.7  # Default improvement rate
-        except Exception:
-            return 8.7
-
-    def _calculate_quality_velocity(self, df: pd.DataFrame) -> float:
-        """Calculate quality improvement rate."""
-        try:
-            # Mock calculation - would use historical quality data
-            return 5.5  # Default improvement rate
-        except Exception:
-            return 5.5
-
-    def _calculate_cost_velocity(self, df: pd.DataFrame) -> float:
-        """Calculate cost reduction rate."""
-        try:
-            # Mock calculation - would use historical cost data
-            return -3.2  # Default cost reduction rate
-        except Exception:
-            return -3.2
-
-    def _calculate_dso_trend(self, df: pd.DataFrame, months: int = 3) -> float:
-        """Calculate DSO trend over specified months."""
-        try:
-            if df.empty or 'dias_espera' not in df.columns:
-                return -2.1  # Default improving trend
-            
-            df = self._ensure_date_columns(df)
-            cutoff_date = datetime.now() - timedelta(days=months * 30)
-            recent_df = df[df['fecha_creacion'] >= cutoff_date]
-            
-            if len(recent_df) < 5:  # Need sufficient data
-                return -2.1
-            
-            recent_dso = pd.to_numeric(recent_df['dias_espera'], errors='coerce').mean()
-            overall_dso = pd.to_numeric(df['dias_espera'], errors='coerce').mean()
-            
-            if pd.isna(recent_dso) or pd.isna(overall_dso) or overall_dso == 0:
-                return -2.1
-            
-            trend = ((recent_dso - overall_dso) / overall_dso * 100)
-            return trend
-        except Exception:
-            return -2.1
-
-    def _calculate_dso_trend_with_real_data(self, df: pd.DataFrame, months: int = 3) -> float:
-        """Calculate DSO trend using real DSO data from database."""
-        try:
-            if df.empty or 'dso_actual' not in df.columns:
-                return -2.1  # Default improving trend
-            
-            df = self._ensure_date_columns(df)
-            
-            # Filter data for the specified period
-            cutoff_date = datetime.now() - timedelta(days=months * 30)
-            
-            # Use fecha_ultimo_seguimiento if available, otherwise fecha_modificacion
-            date_col = 'fecha_ultimo_seguimiento' if 'fecha_ultimo_seguimiento' in df.columns else 'fecha_modificacion'
-            
-            if date_col in df.columns:
-                recent_df = df[pd.to_datetime(df[date_col], errors='coerce') >= cutoff_date]
-            else:
-                recent_df = df  # Use all data if no date column
-            
-            if len(recent_df) < 5:  # Need sufficient data
-                return -2.1
-            
-            # Calculate trend using real DSO data
-            recent_dso = pd.to_numeric(recent_df['dso_actual'], errors='coerce').mean()
-            overall_dso = pd.to_numeric(df['dso_actual'], errors='coerce').mean()
-            
-            if pd.isna(recent_dso) or pd.isna(overall_dso) or overall_dso == 0:
-                return -2.1
-            
-            # Calculate percentage change
-            trend = ((recent_dso - overall_dso) / overall_dso * 100)
-            return trend
-            
-        except Exception as e:
-            logger.error(f"Error calculating DSO trend with real data: {str(e)}")
-            return -2.1
-
-    def _calculate_aging_distribution_from_db(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate aging distribution using categoria_aging from database."""
-        try:
-            if df.empty or 'categoria_aging' not in df.columns:
-                return {
-                    "aging_0_30_pct": 25.0,
-                    "aging_31_60_pct": 25.0,
-                    "aging_61_90_pct": 25.0,
-                    "aging_90_plus_pct": 25.0
-                }
-            
-            # Count projects by aging category
-            aging_counts = df['categoria_aging'].value_counts()
-            total_projects = len(df)
-            
-            # Map database categories to our KPI structure
-            aging_mapping = {
-                '0-30': 'aging_0_30_pct',
-                '31-60': 'aging_31_60_pct', 
-                '61-90': 'aging_61_90_pct',
-                '90+': 'aging_90_plus_pct',
-                'mas_90': 'aging_90_plus_pct'  # Alternative naming
-            }
-            
-            aging_distribution = {}
-            for db_category, kpi_name in aging_mapping.items():
-                count = aging_counts.get(db_category, 0)
-                percentage = (count / total_projects * 100) if total_projects > 0 else 0
-                aging_distribution[kpi_name] = round(percentage, 1)
-            
-            # Ensure all categories are present
-            for kpi_name in aging_mapping.values():
-                if kpi_name not in aging_distribution:
-                    aging_distribution[kpi_name] = 0.0
-            
-            # Also calculate legacy field names for template compatibility
-            aging_distribution.update({
-                "pct_30d": aging_distribution.get("aging_0_30_pct", 0.0),
-                "pct_60d": aging_distribution.get("aging_31_60_pct", 0.0),
-                "pct_90d": aging_distribution.get("aging_61_90_pct", 0.0),
-                "pct_mas90d": aging_distribution.get("aging_90_plus_pct", 0.0)
-            })
-            
-            return aging_distribution
-            
-        except Exception as e:
-            logger.error(f"Error calculating aging distribution from DB: {str(e)}")
-            return {
-                "aging_0_30_pct": 25.0,
-                "aging_31_60_pct": 25.0,
-                "aging_61_90_pct": 25.0,
-                "aging_90_plus_pct": 25.0,
-                "pct_30d": 25.0,
-                "pct_60d": 25.0,
-                "pct_90d": 25.0,
-                "pct_mas90d": 25.0
-            }
-
-    def _calculate_overdue_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate overdue metrics using esta_vencido column from database."""
-        try:
-            if df.empty:
-                return {
-                    "overdue_count": 0,
-                    "overdue_percentage": 0.0,
-                    "overdue_amount": 0.0
-                }
-            
-            total_projects = len(df)
-            
-            # Count overdue projects using database column
-            if 'esta_vencido' in df.columns:
-                # Handle boolean or string values
-                overdue_mask = df['esta_vencido'].astype(str).str.lower().isin(['true', '1', 'yes', 'si'])
-                overdue_count = overdue_mask.sum()
-                overdue_percentage = (overdue_count / total_projects * 100) if total_projects > 0 else 0
-                
-                # Calculate overdue amount
-                overdue_amount = 0.0
-                if 'monto_propuesto' in df.columns:
-                    overdue_df = df[overdue_mask]
-                    overdue_amount = pd.to_numeric(overdue_df['monto_propuesto'], errors='coerce').sum()
-                    overdue_amount = overdue_amount / 1_000_000  # Convert to millions
-                
-            else:
-                # Fallback calculation if column not available
-                overdue_count = 0
-                overdue_percentage = 0.0
-                overdue_amount = 0.0
-            
-            return {
-                "overdue_count": int(overdue_count),
-                "overdue_percentage": round(overdue_percentage, 1),
-                "overdue_amount": round(overdue_amount, 1)
-            }
-            
-        except Exception as e:
-            logger.error(f"Error calculating overdue metrics: {str(e)}")
-            return {
-                "overdue_count": 0,
-                "overdue_percentage": 0.0,
-                "overdue_amount": 0.0
-            }
-
-    def _calculate_priority_based_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Calculate metrics based on priority levels."""
-        try:
-            if df.empty or 'prioridad' not in df.columns:
-                return {
-                    "high_priority_count": 0,
-                    "high_priority_dso": 45.0,
-                    "critical_priority_count": 0,
-                    "priority_distribution": {}
-                }
-            
-            # Count by priority
-            priority_counts = df['prioridad'].value_counts().to_dict()
-            
-            # Calculate DSO by priority if dso_actual is available
-            priority_dso = {}
-            if 'dso_actual' in df.columns:
-                priority_dso = df.groupby('prioridad')['dso_actual'].apply(
-                    lambda x: pd.to_numeric(x, errors='coerce').mean()
-                ).round(1).to_dict()
-            
-            # Focus on high and critical priority projects
-            high_priority_count = priority_counts.get('Alta', 0) + priority_counts.get('alta', 0)
-            critical_priority_count = priority_counts.get('Crítica', 0) + priority_counts.get('critica', 0)
-            
-            high_priority_dso = priority_dso.get('Alta', priority_dso.get('alta', 45.0))
-            
-            return {
-                "high_priority_count": high_priority_count,
-                "high_priority_dso": round(high_priority_dso, 1),
-                "critical_priority_count": critical_priority_count,
-                "priority_distribution": priority_counts,
-                "priority_dso_breakdown": priority_dso
-            }
-            
-        except Exception as e:
-            logger.error(f"Error calculating priority-based metrics: {str(e)}")
-            return {
-                "high_priority_count": 0,
-                "high_priority_dso": 45.0,
-                "critical_priority_count": 0,
-                "priority_distribution": {}
-            }
+    

@@ -160,7 +160,7 @@
             data-internal-id="{{ registro.get('id', '') }}"
             data-n-conformidad="{{ registro.get('n_conformidad', '') }}"
             data-estado="{{ registro.get('estado', '') }}"
-            data-dias="{{ registro.get('dias_espera', 0) }}"
+            data-dias="{{ registro.get('dso_actual', 0) }}"
             data-dias-habiles="{{ registro.get('dias_habiles', 0) }}"
             data-monto-propuesto="{{ registro.get('monto_propuesto', 0)|default(0) }}"
             data-monto-aprobado="{{ registro.get('monto_aprobado', 0)|default(0) }}"
@@ -194,7 +194,7 @@
             </td>
 
             <!-- Días con colores -->
-            {% set dias = registro.get('dias_espera', 0)|int %}
+            {% set dias = registro.get('dso_actual', 0)|int %}
             <td class="text-center font-bold {% if dias > 30 %}text-[color:var(--accent-danger)]{% elif dias > 20 %}text-[color:var(--accent-warning)]{% else %}text-[color:var(--accent-green)]{% endif %}">
               {{ dias }}
             </td>

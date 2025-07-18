@@ -185,25 +185,6 @@ class ControllerService(BaseService):
                 result[key] = value
         return result
 
-    def _calcular_dias_espera(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Calcula correctamente los días de espera según las reglas de negocio"""
-        now = datetime.now()
-        df_calculado = df.copy()
-        df_calculado["dias_espera"] = None  # Initialize with a default
-
-        for idx, row in df_calculado.iterrows():
-            if pd.notna(row.get("fecha_envio_cliente")):
-                fecha_envio = row["fecha_envio_cliente"]
-                if row.get("conformidad_enviada") == "Sí" and pd.notna(
-                    row.get("fecha_conformidad")
-                ):
-                    df_calculado.at[idx, "dias_espera"] = (
-                        row["fecha_conformidad"] - fecha_envio
-                    ).days
-                else:
-                    df_calculado.at[idx, "dias_espera"] = (now - fecha_envio).days
-        return df_calculado
-
     def _calcular_dias_habiles(
         self, fecha_inicio: Any, fecha_fin: Any
     ) -> float:  # Changed return type hint
@@ -236,13 +217,13 @@ class ControllerService(BaseService):
 
     def _calcular_dso_para_dataset(self, df_datos: pd.DataFrame) -> float:
         """
-        Calcula el DSO (Days Sales Outstanding) usando la columna precalculada 'dias_espera',
+        Calcula el DSO (Days Sales Outstanding) usando la columna precalculada 'dso_actual',
         ponderado por el 'monto_aprobado'.
         """
         if df_datos.empty:
             return 0
 
-        required_cols = ["dias_espera", "monto_aprobado"]
+        required_cols = ["dso_actual", "monto_aprobado"]
         for col in required_cols:
             if col not in df_datos.columns:
                 logger.info(f"WARNING: Columna '{col}' no encontrada.")
@@ -252,22 +233,22 @@ class ControllerService(BaseService):
         df_datos["monto_aprobado"] = pd.to_numeric(
             df_datos["monto_aprobado"], errors="coerce"
         ).fillna(0)
-        df_datos["dias_espera"] = pd.to_numeric(
-            df_datos["dias_espera"], errors="coerce"
+        df_datos["dso_actual"] = pd.to_numeric(
+            df_datos["dso_actual"], errors="coerce"
         )
 
         # Filtrado de valores válidos
         df_valid = df_datos[
-            (~df_datos["dias_espera"].isna())
-            & (df_datos["dias_espera"] >= 0)
+            (~df_datos["dso_actual"].isna())
+            & (df_datos["dso_actual"] >= 0)
             & (df_datos["monto_aprobado"] > 0)
         ]
 
         if df_valid.empty:
             return 0
 
-        # Cálculo del DSO
-        dso = np.average(df_valid["dias_espera"], weights=df_valid["monto_aprobado"])
+        # Cálculo del DSO usando dso_actual ya calculado
+        dso = np.average(df_valid["dso_actual"], weights=df_valid["monto_aprobado"])
         return round(dso, 1)
 
     def _calcular_dso(
@@ -1249,10 +1230,10 @@ class ControllerService(BaseService):
             return self._create_mock_monthly_trend()
 
     def _build_aging_buckets_chart(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Build aging buckets chart."""
+        """Build aging buckets chart using dso_actual."""
         try:
-            # Ensure 'dias_espera' column exists and is numeric
-            if "dias_espera" not in df.columns or df.empty:
+            # Ensure 'dso_actual' column exists and is numeric
+            if "dso_actual" not in df.columns or df.empty:
                 return {
                     "labels": ["0-30 días", "31-60 días", "61-90 días", "90+ días"],
                     "datasets": [],
@@ -1260,10 +1241,10 @@ class ControllerService(BaseService):
 
             # Make a copy to avoid SettingWithCopyWarning if df is a slice
             df_copy = df.copy()
-            df_copy["dias_espera"] = pd.to_numeric(
-                df_copy["dias_espera"], errors="coerce"
+            df_copy["dso_actual"] = pd.to_numeric(
+                df_copy["dso_actual"], errors="coerce"
             ).fillna(0)
-            dias = df_copy["dias_espera"]
+            dias = df_copy["dso_actual"]
 
             bucket_0_30 = int((dias <= 30).sum())
             bucket_31_60 = int(((dias > 30) & (dias <= 60)).sum())
@@ -1694,14 +1675,14 @@ class ControllerService(BaseService):
             )
 
         # Old pending EDPs
-        if "dias_espera" in df.columns and "estado" in df.columns:
-            # Ensure 'dias_espera' is numeric
-            df["dias_espera"] = pd.to_numeric(
-                df["dias_espera"], errors="coerce"
+        if "dso_actual" in df.columns and "estado" in df.columns:
+            # Ensure 'dso_actual' is numeric
+            df["dso_actual"] = pd.to_numeric(
+                df["dso_actual"], errors="coerce"
             ).fillna(0)
             old_pending_df = df[
                 (df["estado"].isin(["enviado", "revisión", "pendiente"]))
-                & (df["dias_espera"] > 30)
+                & (df["dso_actual"] > 30)
             ]
             old_pending_count = len(old_pending_df)
             if old_pending_count > 0:
@@ -1720,11 +1701,11 @@ class ControllerService(BaseService):
         return {
             "total_edp_global": 0,
             "total_validados_global": 0,
-            "dias_espera_promedio_global": 0,
+            "dso_promedio_global": 0,
             "porcentaje_validacion_rapida_global": 0,
             "total_filtrados": 0,
             "total_criticos_filtrados": 0,
-            "dias_espera_promedio_filtrado": 0,
+            "dso_promedio_filtrado": 0,
             "dias_habiles_promedio_filtrado": 0,
             "total_pagado_global": 0,
             "total_propuesto_global": 0,
@@ -1781,7 +1762,7 @@ class ControllerService(BaseService):
                 "Validado",
                 "critico",
                 "conformidad_enviada",
-                "dias_espera",
+                "dso_actual",
                 "Días Hábiles",
                 "estado",
                 "mes",
@@ -1820,6 +1801,29 @@ class ControllerService(BaseService):
                 ).fillna(0.0)
             else:
                 df_prepared[col] = 0.0
+
+        # Ensure dso_actual is numeric
+        if "dso_actual" in df_prepared.columns:
+            df_prepared["dso_actual"] = pd.to_numeric(
+                df_prepared["dso_actual"], errors="coerce"
+            ).fillna(0.0)
+        else:
+            df_prepared["dso_actual"] = 0.0
+
+        # Normalizar campo de días hábiles (puede venir como "Días Hábiles" o "dias_habiles")
+        if "Días Hábiles" in df_prepared.columns and "dias_habiles" not in df_prepared.columns:
+            # Copiar de "Días Hábiles" a "dias_habiles" y convertir a numérico
+            df_prepared["dias_habiles"] = pd.to_numeric(
+                df_prepared["Días Hábiles"], errors="coerce"
+            ).fillna(0.0)
+        elif "dias_habiles" in df_prepared.columns:
+            # Asegurar que es numérico
+            df_prepared["dias_habiles"] = pd.to_numeric(
+                df_prepared["dias_habiles"], errors="coerce"
+            ).fillna(0.0)
+        else:
+            # Si no existe ninguno, crear campo vacío que se calculará después
+            df_prepared["dias_habiles"] = 0.0
 
         bool_cols_map = {"Validado": False, "critico": False}
         for col, default_val in bool_cols_map.items():
@@ -1881,6 +1885,44 @@ class ControllerService(BaseService):
                     df_prepared[col] = df_prepared[col].fillna(default_value)
 
         return df_prepared
+
+    def _calcular_dias_habiles_promedio_fallback(self, df: pd.DataFrame) -> float:
+        """
+        Método fallback para calcular días hábiles promedio cuando el campo no existe.
+        Usa fecha_envio_cliente y fecha_conformidad para el cálculo.
+        """
+        try:
+            if df.empty:
+                return 0.0
+            
+            # Verificar que tenemos las fechas necesarias
+            if "fecha_envio_cliente" not in df.columns:
+                return 0.0
+            
+            dias_habiles_calculados = []
+            
+            for _, row in df.iterrows():
+                fecha_inicio = row.get("fecha_envio_cliente")
+                fecha_fin = row.get("fecha_conformidad")
+                
+                # Si no hay fecha de conformidad, usar la fecha actual
+                if pd.isna(fecha_fin):
+                    fecha_fin = pd.Timestamp.now()
+                
+                dias_habiles = self._calcular_dias_habiles(fecha_inicio, fecha_fin)
+                
+                # Solo agregar valores válidos (no NaN)
+                if pd.notna(dias_habiles):
+                    dias_habiles_calculados.append(dias_habiles)
+            
+            if len(dias_habiles_calculados) > 0:
+                return round(sum(dias_habiles_calculados) / len(dias_habiles_calculados), 1)
+            else:
+                return 0.0
+                
+        except Exception as e:
+            logger.error(f"Error en _calcular_dias_habiles_promedio_fallback: {e}")
+            return 0.0
 
     # Placeholder for _calculate_financial_kpis, _calculate_operational_kpis etc.
     # These will be replaced by the new get_controller_dashboard_context logic or integrated.
@@ -2005,6 +2047,7 @@ class ControllerService(BaseService):
             print(filters)
 
             df = df_full.copy()
+       
             if filters["mes"]:
                 df = df[df["mes"] == filters["mes"]]
             if filters["jefe_proyecto"] and filters["jefe_proyecto"] != "todos":
@@ -2024,7 +2067,7 @@ class ControllerService(BaseService):
                 df = df[df["estado"] == filters["estado"]]
 
             df_filtered = df.copy()  # Keep filtered DataFrame for later use
-
+    
             mes_filter = filters["mes"] if filters["mes"] else None
             jefes_filter = (
                 filters["jefe_proyecto"]
@@ -2049,11 +2092,11 @@ class ControllerService(BaseService):
                 df_full["estado"].isin(["validado", "pagado"])
             ].shape[0]
             # Use pd.Series.mean() which handles empty series by returning NaN
-            dias_espera_promedio_global_raw = df_full["dias_espera"].mean()
-            dias_espera_promedio_global = round(
+            dso_promedio_global_raw = df_full["dso_actual"].mean()
+            dso_promedio_global = round(
                 (
-                    dias_espera_promedio_global_raw
-                    if pd.notna(dias_espera_promedio_global_raw)
+                    dso_promedio_global_raw
+                    if pd.notna(dso_promedio_global_raw)
                     else 0
                 ),
                 1,
@@ -2061,7 +2104,7 @@ class ControllerService(BaseService):
 
             validados_rapidos_global = df_full[
                 df_full["estado"].isin(["validado", "pagado"])
-                & (df_full["dias_espera"] <= 30)
+                & (df_full["dso_actual"] <= 30)
             ].shape[0]
             porcentaje_validacion_rapida_global = (
                 round(validados_rapidos_global / total_validados_global * 100, 1)
@@ -2071,7 +2114,7 @@ class ControllerService(BaseService):
             kpis_globales = {
                 "total_edp_global": total_edp_global,
                 "total_validados_global": total_validados_global,
-                "dias_espera_promedio_global": dias_espera_promedio_global,
+                "dso_promedio_global": dso_promedio_global,
                 "porcentaje_validacion_rapida_global": porcentaje_validacion_rapida_global,
             }
 
@@ -2081,19 +2124,18 @@ class ControllerService(BaseService):
                 df_filtered["critico"] == True
             ].shape[0]
 
-            dias_espera_promedio_filtrado_raw = df_filtered["dias_espera"].mean()
-            dias_espera_promedio_filtrado = round(
+            dso_promedio_filtrado_raw = df_filtered["dso_actual"].mean()
+            dso_promedio_filtrado = round(
                 (
-                    dias_espera_promedio_filtrado_raw
-                    if pd.notna(dias_espera_promedio_filtrado_raw)
+                    dso_promedio_filtrado_raw
+                    if pd.notna(dso_promedio_filtrado_raw)
                     else 0
                 ),
                 1,
             )
 
-            dias_habiles_promedio_filtrado_raw = df_filtered[
-                "dias_habiles"
-            ].mean()  # Días Hábiles is float/np.nan
+            # El campo dias_habiles ya está normalizado en _prepare_kpi_data
+            dias_habiles_promedio_filtrado_raw = df_filtered["dias_habiles"].mean()
             dias_habiles_promedio_filtrado = round(
                 (
                     dias_habiles_promedio_filtrado_raw
@@ -2105,7 +2147,7 @@ class ControllerService(BaseService):
             kpis_filtrados = {
                 "total_filtrados": total_filtrados,
                 "total_criticos_filtrados": total_criticos_filtrados,
-                "dias_espera_promedio_filtrado": dias_espera_promedio_filtrado,
+                "dso_promedio_filtrado": dso_promedio_filtrado,
                 "dias_habiles_promedio_filtrado": dias_habiles_promedio_filtrado,
             }
 
@@ -2271,14 +2313,14 @@ class ControllerService(BaseService):
                     "monto_aprobado"
                 ].sum(),
                 "pagado_reciente": edps_pagados_conformados_df[
-                    edps_pagados_conformados_df["dias_espera"] <= 30
+                    edps_pagados_conformados_df["dso_actual"] <= 30
                 ]["monto_aprobado"].sum(),
                 "pagado_medio": edps_pagados_conformados_df[
-                    (edps_pagados_conformados_df["dias_espera"] > 30)
-                    & (edps_pagados_conformados_df["dias_espera"] <= 60)
+                    (edps_pagados_conformados_df["dso_actual"] > 30)
+                    & (edps_pagados_conformados_df["dso_actual"] <= 60)
                 ]["monto_aprobado"].sum(),
                 "pagado_critico": edps_pagados_conformados_df[
-                    edps_pagados_conformados_df["dias_espera"] > 60
+                    edps_pagados_conformados_df["dso_actual"] > 60
                 ]["monto_aprobado"].sum(),
             }
 
@@ -2292,14 +2334,14 @@ class ControllerService(BaseService):
                     "monto_propuesto"
                 ].sum(),  # Original uses monto_propuesto here
                 "pendiente_reciente": edps_por_cobrar_df[
-                    edps_por_cobrar_df["dias_espera"] <= 30
+                    edps_por_cobrar_df["dso_actual"] <= 30
                 ]["monto_propuesto"].sum(),
                 "pendiente_medio": edps_por_cobrar_df[
-                    (edps_por_cobrar_df["dias_espera"] > 30)
-                    & (edps_por_cobrar_df["dias_espera"] <= 60)
+                    (edps_por_cobrar_df["dso_actual"] > 30)
+                    & (edps_por_cobrar_df["dso_actual"] <= 60)
                 ]["monto_propuesto"].sum(),
                 "pendiente_critico": edps_por_cobrar_df[
-                    edps_por_cobrar_df["dias_espera"] > 60
+                    edps_por_cobrar_df["dso_actual"] > 60
                 ]["monto_propuesto"].sum(),
             }
 
@@ -2348,7 +2390,7 @@ class ControllerService(BaseService):
        
             total_edps_criticos_global = df_full[
                 df_full["estado"].isin(["enviado", "pendiente", "revisión"])
-                & (df_full["dias_espera"] >= 30)
+                & (df_full["dso_actual"] >= 30)
             ].shape[0]
 
             # 6. Construct Final Context Dictionary

@@ -220,75 +220,7 @@ def upload_page():
     """Página principal de carga de EDPs."""
     return render_template('edp/upload.html')
 
-@edp_upload_bp.route('/options')
-@login_required
-def get_form_options():
-    """Obtener opciones para los campos del formulario desde la BD."""
-    try:
-        # Obtener datos de proyectos desde el servicio
-        projects_response = manager_service.get_all_projects()
-        
-        if not projects_response.success:
-            return jsonify({
-                'success': False,
-                'message': 'Error obteniendo datos de proyectos'
-            }), 500
-        
-        projects_data = projects_response.data
-        
-        # Crear diccionario de proyectos con información completa
-        projects_info = {}
-        proyectos = []
-        clientes = set()
-        jefes_proyecto = set()
-        
-        for project in projects_data:
-            proyecto_id = project.get('proyecto', '')
-            if proyecto_id:
-                proyectos.append(proyecto_id)
-                projects_info[proyecto_id] = {
-                    'cliente': project.get('cliente', ''),
-                    'jefe_proyecto': project.get('jefe_proyecto', ''),
-                    'gestor': project.get('gestor', ''),
-                    'fecha_inicio': project.get('fecha_inicio', ''),
-                    'fecha_fin_prevista': project.get('fecha_fin_prevista', ''),
-                    'monto_contrato': project.get('monto_contrato', ''),
-                    'moneda': project.get('moneda', '')
-                }
-                
-                # Agregar a listas únicas
-                if project.get('cliente'):
-                    clientes.add(project.get('cliente'))
-                if project.get('jefe_proyecto'):
-                    jefes_proyecto.add(project.get('jefe_proyecto'))
-        
-        # Obtener gestores desde EDPs existentes (ya que una OT puede tener múltiples gestores)
-        edps_response = edp_service.get_all_edps()
-        gestores = set()
-        
-        if edps_response.success:
-            edps_data = edps_response.data
-            for edp in edps_data:
-                if edp.get('gestor'):
-                    gestores.add(edp.get('gestor'))
-        
-        return jsonify({
-            'success': True,
-            'options': {
-                'proyectos': sorted(proyectos),
-                'clientes': sorted(list(clientes)),
-                'gestores': sorted(list(gestores)),
-                'jefes_proyecto': sorted(list(jefes_proyecto))
-            },
-            'projects_info': projects_info  # Información completa para autocompletado
-        })
-        
-    except Exception as e:
-        print(f"Error obteniendo opciones: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': f'Error: {str(e)}'
-        }), 500
+
 
 @edp_upload_bp.route('/template')
 @login_required
@@ -660,50 +592,6 @@ def validate_file():
             'message': f'Error inesperado validando archivo: {str(e)}'
         }), 500
 
-@edp_upload_bp.route('/validate-duplicate', methods=['POST'])
-@login_required
-def validate_duplicate():
-    """Validar si un EDP es duplicado para un proyecto específico."""
-    try:
-        data = request.get_json()
-        
-        if not data or 'n_edp' not in data or 'proyecto' not in data:
-            return jsonify({
-                'success': False,
-                'message': 'Datos incompletos'
-            }), 400
-        
-        n_edp = data['n_edp']
-        proyecto = data['proyecto']
-        
-        # Validar formato
-        try:
-            n_edp_int = int(n_edp)
-            if n_edp_int <= 0:
-                return jsonify({
-                    'success': False,
-                    'message': 'Número EDP debe ser positivo'
-                }), 400
-        except (ValueError, TypeError):
-            return jsonify({
-                'success': False,
-                'message': 'Número EDP debe ser un número válido'
-            }), 400
-        
-        # Verificar duplicado
-        is_duplicate = check_duplicate_edp(n_edp_int, proyecto)
-        
-        return jsonify({
-            'success': True,
-            'is_duplicate': is_duplicate,
-            'message': f'EDP #{n_edp} para proyecto {proyecto} {"ya existe" if is_duplicate else "es único"}'
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Error validando duplicado: {str(e)}'
-        }), 500
 
 @edp_upload_bp.route('/debug/check-edps', methods=['GET'])
 @login_required
@@ -1653,3 +1541,187 @@ def process_bulk_upload(df: pd.DataFrame, user: str) -> Dict[str, Any]:
             },
             'errors': errors
         } 
+        
+        
+@edp_upload_bp.route('/upload/options')
+@login_required
+def get_form_options():
+    """Obtener opciones para los campos del formulario desde la BD."""
+    try:
+        print("🔍 Obteniendo opciones del formulario...")
+        
+        # Obtener datos desde EDPs existentes para opciones del formulario
+        result = edp_repository.find_all()
+        print(f"🔍 Resultado de edp_repository.find_all(): {type(result)}")
+        print(f"🔍 Keys del resultado: {result.keys() if isinstance(result, dict) else 'No es dict'}")
+        
+        # Verificar si la operación fue exitosa
+        if not result or not result.get('success', False):
+            print(f"❌ Error en find_all: {result.get('message', 'Unknown error') if result else 'No result'}")
+            # Devolver opciones vacías si hay error
+            return jsonify({
+                'success': True,
+                'options': {
+                    'proyectos': [],
+                    'clientes': [],
+                    'gestores': [],
+                    'jefes_proyecto': []
+                },
+                'projects_info': {}
+            })
+        
+        # Extraer la lista de EDPs del resultado
+        edps_list = result.get('data', [])
+        print(f"🔍 EDPs extraídos: {type(edps_list)} - Cantidad: {len(edps_list) if edps_list else 0}")
+        
+        # Inicializar conjuntos para opciones
+        proyectos = set()
+        clientes = set()
+        gestores = set()
+        jefes_proyecto = set()
+        projects_info = {}
+        
+        # Si hay EDPs, extraer datos
+        if edps_list and len(edps_list) > 0:
+            print(f"🔍 Procesando {len(edps_list)} EDPs...")
+            
+            for i, edp in enumerate(edps_list):
+                # Los EDPs pueden ser objetos EDP o diccionarios
+                if hasattr(edp, 'to_dict'):
+                    # Es un objeto EDP, convertir a diccionario
+                    edp_dict = edp.to_dict()
+                elif isinstance(edp, dict):
+                    # Ya es un diccionario
+                    edp_dict = edp
+                else:
+                    print(f"⚠️ EDP {i+1} no es ni objeto ni diccionario: {type(edp)}")
+                    continue
+                
+                proyecto = edp_dict.get('proyecto', '')
+                cliente = edp_dict.get('cliente', '')
+                gestor = edp_dict.get('gestor', '')
+                jefe = edp_dict.get('jefe_proyecto', '')
+                
+                if i < 3:  # Mostrar solo los primeros 3 para debug
+                    print(f"🔍 EDP {i+1}: proyecto='{proyecto}', cliente='{cliente}', gestor='{gestor}', jefe='{jefe}'")
+                
+                if proyecto:
+                    proyectos.add(proyecto)
+                    if proyecto not in projects_info:
+                        projects_info[proyecto] = {
+                            'cliente': cliente,
+                            'jefe_proyecto': jefe,
+                            'gestor': gestor
+                        }
+                
+                if cliente:
+                    clientes.add(cliente)
+                if gestor:
+                    gestores.add(gestor)
+                if jefe:
+                    jefes_proyecto.add(jefe)
+        else:
+            print("⚠️ No hay EDPs en la base de datos")
+        
+        # Si no hay datos de EDPs, agregar opciones básicas de ejemplo
+        if not proyectos:
+            print("🔧 Agregando opciones básicas de ejemplo...")
+            proyectos_ejemplo = [
+                'PROYECTO_DEMO_A',
+                'PROYECTO_DEMO_B', 
+                'PROYECTO_DEMO_C'
+            ]
+            clientes_ejemplo = [
+                'Cliente Demo 1',
+                'Cliente Demo 2',
+                'Cliente Demo 3'
+            ]
+            gestores_ejemplo = [
+                'Gestor Demo 1',
+                'Gestor Demo 2'
+            ]
+            jefes_ejemplo = [
+                'Jefe Demo 1',
+                'Jefe Demo 2'
+            ]
+            
+            proyectos.update(proyectos_ejemplo)
+            clientes.update(clientes_ejemplo)
+            gestores.update(gestores_ejemplo)
+            jefes_proyecto.update(jefes_ejemplo)
+            
+            # Crear info de proyectos demo
+            for i, proyecto in enumerate(proyectos_ejemplo):
+                projects_info[proyecto] = {
+                    'cliente': clientes_ejemplo[i % len(clientes_ejemplo)],
+                    'jefe_proyecto': jefes_ejemplo[i % len(jefes_ejemplo)],
+                    'gestor': gestores_ejemplo[i % len(gestores_ejemplo)]
+                }
+        
+        final_options = {
+            'proyectos': sorted(list(proyectos)),
+            'clientes': sorted(list(clientes)),
+            'gestores': sorted(list(gestores)),
+            'jefes_proyecto': sorted(list(jefes_proyecto))
+        }
+        
+        print(f"✅ Opciones extraídas:")
+        print(f"   - Proyectos: {len(final_options['proyectos'])} ({final_options['proyectos'][:3] if final_options['proyectos'] else []})")
+        print(f"   - Clientes: {len(final_options['clientes'])} ({final_options['clientes'][:3] if final_options['clientes'] else []})")
+        print(f"   - Gestores: {len(final_options['gestores'])}")
+        print(f"   - Jefes: {len(final_options['jefes_proyecto'])}")
+        
+        return jsonify({
+            'success': True,
+            'options': final_options,
+            'projects_info': projects_info
+        })
+        
+    except Exception as e:
+        print(f"❌ Error obteniendo opciones: {str(e)}")
+        print(f"❌ Traceback: {traceback.format_exc()}")
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
+
+
+@edp_upload_bp.route('/upload/validate-duplicate', methods=['POST'])
+@login_required
+def validate_duplicate():
+    """Validar si un número EDP es duplicado."""
+    try:
+        data = request.get_json()
+        n_edp = data.get('n_edp')
+        proyecto = data.get('proyecto', '').strip()
+        
+        if not n_edp:
+            return jsonify({
+                'success': False,
+                'message': 'Número EDP requerido'
+            }), 400
+        
+        # Convertir a entero
+        try:
+            n_edp = int(n_edp)
+        except ValueError:
+            return jsonify({
+                'success': False,
+                'message': 'Número EDP debe ser un número válido'
+            }), 400
+        
+        # Verificar duplicado
+        is_duplicate = check_duplicate_fast(n_edp, proyecto)
+        
+        return jsonify({
+            'success': True,
+            'is_duplicate': is_duplicate,
+            'message': f'EDP #{n_edp} {"ya existe" if is_duplicate else "está disponible"}' + (f' para el proyecto {proyecto}' if proyecto else '')
+        })
+        
+    except Exception as e:
+        print(f"Error validando duplicado: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500

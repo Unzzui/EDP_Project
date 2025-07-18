@@ -33,12 +33,20 @@ class ProjectManagerRepository:
         except Exception as e:
             logger.error(f"Error getting manager projects for {manager_name}: {str(e)}")
             return []
-
+    def get_manager_edps(self, manager_name: str) -> List[Dict[str, Any]]:
+        """Obtiene todos los EDPs asignados a un jefe de proyecto."""
+        try:
+            edps_data = self.edp_repo.find_by_filters({'jefe_proyecto': manager_name})
+            return edps_data
+        except Exception as e:
+            logger.error(f"Error getting manager edps for {manager_name}: {str(e)}")
+    
     def get_manager_summary(self, manager_name: str) -> Dict[str, Any]:
         """Get summary statistics for a project manager."""
         try:
             proyectos = self.get_manager_projects(manager_name)
             df = pd.DataFrame(proyectos)
+            print(f"DEBUG: {df}")
             if df.empty:
                 return {
                     'total_projects': 0,
@@ -51,22 +59,25 @@ class ProjectManagerRepository:
                     'critical_edps': 0,
                     'completion_rate': 0
                 }
-            for col in ["monto_propuesto", "monto_aprobado", "dias_espera"]:
+            for col in ["monto_propuesto", "monto_aprobado"]:
                 if col not in df.columns:
                     df[col] = 0
                 df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
             if "estado" not in df.columns:
                 df["estado"] = ""
             df["monto_pagado"] = df.apply(
-                lambda row: row["monto_aprobado"] if str(row["estado"]).lower() in ["pagado", "validado"] else 0, axis=1
+                lambda row: row["monto_aprobado"] if str(row["estado"]).lower() in ["pagado"] else 0, axis=1
             )
+            # CLEAN NAN VALUES
+            
             total_projects = df['proyecto'].nunique() if 'proyecto' in df.columns else 0
             total_edps = len(df)
             total_proposed = df['monto_propuesto'].sum()
             total_approved = df['monto_aprobado'].sum()
             total_paid = df['monto_pagado'].sum()
             pending_amount = total_approved - total_paid
-            avg_days = df['dias_espera'].mean() if 'dias_espera' in df.columns else 0
+            avg_days = df['dso_actual'].mean() if 'dso_actual' in df.columns else 0
+            print(f"DEBUG: {round(float(avg_days), 1)}")
             completion_rate = (total_paid / total_approved * 100) if total_approved > 0 else 0
 
             return {

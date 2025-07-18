@@ -191,6 +191,58 @@ def _get_empty_dashboard_data() -> Dict[str, Any]:
     }
 
 
+def _generate_fallback_alerts_from_kpis(kpis_dict: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Generate basic alerts based on KPIs when real alerts service fails."""
+    alertas = []
+    
+    # Alerta de proyectos críticos
+    if kpis_dict.get('critical_projects_count', 0) > 0:
+        alertas.append({
+            'titulo': f'Proyectos Críticos Detectados',
+            'descripcion': f'{kpis_dict.get("critical_projects_count", 0)} proyectos requieren atención inmediata',
+            'tipo': 'critico',
+            'impacto_monto': kpis_dict.get('critical_amount', 0) * 1_000_000 if kpis_dict.get('critical_amount', 0) > 0 else 0
+        })
+    
+    # Alerta de DSO elevado
+    if kpis_dict.get('dso_actual', 0) > 40:
+        alertas.append({
+            'titulo': 'DSO Elevado',
+            'descripcion': f'DSO actual de {kpis_dict.get("dso_actual", 0):.1f} días excede objetivo de 35 días',
+            'tipo': 'alto',
+            'impacto_monto': 0
+        })
+    
+    # Alerta de aging 31-60
+    if kpis_dict.get('aging_31_60_count', 0) > 5:
+        alertas.append({
+            'titulo': 'Alto Aging 31-60 Días',
+            'descripcion': f'{kpis_dict.get("aging_31_60_count", 0)} proyectos en zona de riesgo medio',
+            'tipo': 'alto',
+            'impacto_monto': kpis_dict.get('aging_31_60_amount', 0) * 1_000_000 if kpis_dict.get('aging_31_60_amount', 0) > 0 else 0
+        })
+    
+    # Alerta de meta gap
+    if kpis_dict.get('meta_gap', 0) > 100:  # Gap > 100M CLP
+        alertas.append({
+            'titulo': 'Gap vs Meta Mensual',
+            'descripcion': f'Faltan {kpis_dict.get("meta_gap", 0):.1f}M CLP para alcanzar la meta',
+            'tipo': 'alto',
+            'impacto_monto': kpis_dict.get('meta_gap', 0) * 1_000_000 if kpis_dict.get('meta_gap', 0) > 0 else 0
+        })
+    
+    # Si no hay alertas críticas, mostrar mensaje informativo
+    if not alertas:
+        alertas.append({
+            'titulo': 'Sistema Operando Normalmente',
+            'descripcion': 'No se detectaron alertas críticas en este momento',
+            'tipo': 'info',
+            'impacto_monto': 0
+        })
+    
+    return alertas
+
+
 def _format_deadline(deadline_str):
     """Convert deadline from YYYY-MM-DD to DD Mon format"""
     try:
@@ -211,301 +263,10 @@ def _format_deadline(deadline_str):
         return deadline_str  # Return original if parsing fails
 
 
-def _enhance_kpis_for_operational(base_kpis: Dict[str, Any], dashboard_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Enhance KPIs with operational-specific metrics and fill missing template variables."""
-    try:
-        from datetime import datetime
-        
-        # Start with base KPIs - if empty, get default structure
-        if not base_kpis:
-            manager_service_default = ManagerService()
-            base_kpis = manager_service_default.get_empty_kpis()
-
-        enhanced_kpis = base_kpis.copy()
-        
-        # DEBUG: Check what critical projects data we have
-        critical_projects_list = enhanced_kpis.get("critical_projects_list", [])
-        print(f"🔍 DEBUG: Critical projects list length: {len(critical_projects_list)}")
-        if critical_projects_list:
-            print(f"🔍 DEBUG: First critical project: {critical_projects_list[0]}")
-            # Test the extraction logic
-            first_project = critical_projects_list[0]
-            proyecto_name = first_project.get("proyecto", "Proyecto no disponible")
-            cliente_name = first_project.get("cliente", "Cliente no disponible")
-            print(f"🔍 DEBUG: Extracted proyecto_name: '{proyecto_name}'")
-            print(f"🔍 DEBUG: Extracted cliente_name: '{cliente_name}'")
-            print(f"🔍 DEBUG: Combined display: 'Proyecto {proyecto_name} - {cliente_name}'")
-        else:
-            print(f"🔍 DEBUG: No critical projects found! Available KPI keys: {list(enhanced_kpis.keys())[:10]}")
-        
-        # Solo usar datos reales de los KPIs - sin valores hardcodeados
-        operational_enhancements = {
-            # Timing and date fields
-            "ultima_actualizacion": datetime.now().strftime("%d/%m/%Y %H:%M"),
-            
-            # Financial projections - SOLO DATOS REALES
-            "meta_mensual": enhanced_kpis.get("meta_ingresos", 0),
-            "ingresos_totales": enhanced_kpis.get("ingresos_totales", enhanced_kpis.get("total_collected", 0)),
-            "proyeccion_fin_mes": enhanced_kpis.get("ingresos_totales", 0) * 1.15 if enhanced_kpis.get("ingresos_totales", 0) > 0 else 0,
-            "crecimiento_ingresos": enhanced_kpis.get("crecimiento_ingresos", enhanced_kpis.get("growth_rate", 0)),
-            
-            # Revenue breakdown - SOLO DATOS REALES
-            "ingresos_recurrentes_pct": enhanced_kpis.get("recurrent_revenue_pct", 0),
-            "ingresos_nuevos_pct": enhanced_kpis.get("new_revenue_pct", 0),
-            
-            # Client data - SOLO DATOS REALES
-            "top_cliente_1": enhanced_kpis.get("top_cliente_1", enhanced_kpis.get("top_client", "")),
-            
-            # Pending amounts and collections - SOLO DATOS REALES
-            "monto_pendiente": enhanced_kpis.get("monto_pendiente", enhanced_kpis.get("total_pending", 0)),
-            "tasa_recuperacion": enhanced_kpis.get("tasa_recuperacion", enhanced_kpis.get("recovery_rate", 0)),
-            "dso_actual": enhanced_kpis.get("dso", enhanced_kpis.get("dso_actual", 0)),
-            "tendencia_pendiente": enhanced_kpis.get("tendencia_pendiente", enhanced_kpis.get("pending_trend", 0)),
-            
-            # Aging analysis - SOLO DATOS REALES
-            "aging_0_30_pct": enhanced_kpis.get("aging_0_30_pct", enhanced_kpis.get("pct_30d", 0)),
-            "aging_31_60_pct": enhanced_kpis.get("aging_31_60_pct", enhanced_kpis.get("pct_60d", 0)),
-            "aging_61_90_pct": enhanced_kpis.get("aging_61_90_pct", enhanced_kpis.get("pct_90d", 0)),
-            "aging_90_plus_pct": enhanced_kpis.get("aging_90_plus_pct", enhanced_kpis.get("pct_mas90d", 0)),
-            
-            # Historical data - SOLO DATOS REALES
-            "historial_6_meses": enhanced_kpis.get("historial_6_meses", enhanced_kpis.get("income_6_months", [])),
-            "historial_recuperacion_6_meses": enhanced_kpis.get("recovery_6_months", []),
-            "historial_proyectos_criticos_6_meses": enhanced_kpis.get("critical_projects_6_months", []),
-            
-            # Top debtors - SOLO DATOS REALES
-            "top_deudor_1_nombre": enhanced_kpis.get("top_deudor_1_nombre", ""),
-            "top_deudor_1_monto": enhanced_kpis.get("top_deudor_1_monto", 0),
-            "top_deudor_2_nombre": enhanced_kpis.get("top_deudor_2_nombre", ""),
-            "top_deudor_2_monto": enhanced_kpis.get("top_deudor_2_monto", 0),
-            "top_deudor_3_nombre": enhanced_kpis.get("top_deudor_3_nombre", ""),
-            "top_deudor_3_monto": enhanced_kpis.get("top_deudor_3_monto", 0),
-            
-            # Liquidity and financial metrics - SOLO DATOS REALES
-            "liquidez_proyectada": enhanced_kpis.get("liquidez_proyectada", 0),
-            "pct_liquidez": enhanced_kpis.get("pct_liquidez", 0),
-            "ratio_cobertura": enhanced_kpis.get("ratio_cobertura", 0),
-            
-            # Profitability metrics - SOLO DATOS REALES
-            "rentabilidad_general": enhanced_kpis.get("rentabilidad_general", enhanced_kpis.get("profit_margin", 0)),
-            "tendencia_rentabilidad": enhanced_kpis.get("tendencia_rentabilidad", enhanced_kpis.get("profitability_trend", 0)),
-            "posicion_vs_benchmark": enhanced_kpis.get("posicion_vs_benchmark", enhanced_kpis.get("vs_benchmark", 0)),
-            "margen_bruto_absoluto": enhanced_kpis.get("margen_bruto_absoluto", enhanced_kpis.get("gross_margin", 0)),
-            "roi_calculado": enhanced_kpis.get("roi_calculado", enhanced_kpis.get("roi", 0)),
-            "costos_totales": enhanced_kpis.get("costos_totales", enhanced_kpis.get("total_costs", 0)),
-            "ebitda_porcentaje": enhanced_kpis.get("ebitda_porcentaje", enhanced_kpis.get("ebitda", 0)),
-            "meta_rentabilidad": enhanced_kpis.get("meta_rentabilidad", 0),
-            "vs_meta_rentabilidad": enhanced_kpis.get("vs_meta_rentabilidad", 0),
-            "pct_meta_rentabilidad": enhanced_kpis.get("pct_meta_rentabilidad", 0),
-            
-            # Cost breakdown percentages - SOLO DATOS REALES
-            "costos_personal_pct": enhanced_kpis.get("costos_personal_pct", enhanced_kpis.get("personnel_cost_pct", 0)),
-            "costos_overhead_pct": enhanced_kpis.get("costos_overhead_pct", enhanced_kpis.get("overhead_cost_pct", 0)),
-            "costos_tech_pct": enhanced_kpis.get("costos_tech_pct", enhanced_kpis.get("tech_cost_pct", 0)),
-            "margen_neto_pct": enhanced_kpis.get("margen_neto_pct", enhanced_kpis.get("net_margin_pct", 0)),
-            
-            # Efficiency metrics - SOLO DATOS REALES
-            "eficiencia_global": enhanced_kpis.get("efficiency_score", 0),
-            "satisfaccion_cliente": enhanced_kpis.get("satisfaccion_cliente", 0),
-            
-            # Resource allocation - SOLO DATOS REALES
-            "recursos_criticos": enhanced_kpis.get("recursos_criticos", 0),
-            "recursos_limitados": enhanced_kpis.get("recursos_limitados", 0),
-            "recursos_disponibles": enhanced_kpis.get("recursos_disponibles", 0),
-            
-            # Top clients for income - SOLO DATOS REALES
-            "top_cliente_1_valor": enhanced_kpis.get("top_cliente_1_valor", 0),
-            "top_cliente_2": enhanced_kpis.get("top_cliente_2", ""),
-            "top_cliente_2_valor": enhanced_kpis.get("top_cliente_2_valor", 0),
-            "top_cliente_3": enhanced_kpis.get("top_cliente_3", ""),
-            "top_cliente_3_valor": enhanced_kpis.get("top_cliente_3_valor", 0),
-            
-            # Additional operational template variables - SOLO DATOS REALES
-            "cliente_principal": enhanced_kpis.get("cliente_principal", ""),
-            "costo_financiero_total": enhanced_kpis.get("costo_financiero_total", 0),
-            "pct_avance": enhanced_kpis.get("pct_avance", 0),
-            "costo_retraso_estimado": enhanced_kpis.get("costo_retraso_estimado", 0),
-            
-            # Time breakdown for cycle analysis - SOLO DATOS REALES
-            "tiempo_emision": enhanced_kpis.get("tiempo_emision", 0),
-            "tiempo_gestion": enhanced_kpis.get("tiempo_gestion", 0),
-            "tiempo_conformidad": enhanced_kpis.get("tiempo_conformidad", 0),
-            "tiempo_pago": enhanced_kpis.get("tiempo_pago", 0),
-        }
-        
-        # Merge operational enhancements
-        enhanced_kpis.update(operational_enhancements)
-        
-        # Use critical projects data if available
-        critical_projects_data = dashboard_data.get("critical_projects", {})
-        if critical_projects_data:
-            summary = critical_projects_data.get("summary", {})
-            enhanced_kpis.update({
-                "critical_projects_count": summary.get("total_count", enhanced_kpis.get("critical_edps", 0)),
-                "critical_projects_amount": summary.get("total_amount", 0),
-                "high_risk_count": summary.get("high_risk_count", 0),
-                "avg_progress": summary.get("avg_progress", 50),
-            })
-        
-        return enhanced_kpis
-        
-    except Exception as e:
-        logger.error(f"Error enhancing KPIs for operational dashboard: {e}")
-        return base_kpis
+# Función eliminada - ya no se usa en el dashboard simplificado
 
 
-def _prepare_aging_data(kpis: Dict[str, Any], dashboard_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Prepare aging analysis data for operational dashboard using REAL DATA."""
-    try:
-        logger.info("🔄 Preparing aging data with real calculations...")
-        
-        # Get manager service for real aging calculations
-        manager_service = ManagerService()
-        
-        # Get real EDP DataFrame
-        edp_response = manager_service.edp_repo.find_all_dataframe()
-        if isinstance(edp_response, dict) and edp_response.get('success'):
-            df_edp = edp_response.get('data', pd.DataFrame())
-        else:
-            df_edp = pd.DataFrame()
-        
-        if not df_edp.empty:
-            # Calculate REAL aging using ManagerService method
-            aging_kpis = manager_service._calculate_aging_kpis(df_edp)
-            logger.info(f"📊 Real aging KPIs calculated: {aging_kpis}")
-            
-            # Calculate aging buckets from real data
-            total_pending = aging_kpis.get("monto_pendiente", kpis.get("monto_pendiente", 100))
-            
-            # Use REAL aging percentages calculated from data
-            aging_0_30_pct = aging_kpis.get("pct_30d", kpis.get("aging_0_30_pct", 45))
-            aging_31_60_pct = aging_kpis.get("pct_60d", kpis.get("aging_31_60_pct", 25))  
-            aging_61_90_pct = aging_kpis.get("pct_90d", kpis.get("aging_61_90_pct", 15))
-            aging_90_plus_pct = aging_kpis.get("pct_mas90d", kpis.get("aging_90_plus_pct", 15))
-            
-            # Split 90+ bucket into 91-120 and 120+ based on real data analysis
-            df_edp['dias_espera_num'] = pd.to_numeric(df_edp['dias_espera'], errors='coerce').fillna(0) if 'dias_espera' in df_edp.columns else 0
-            df_edp['monto_aprobado_num'] = pd.to_numeric(df_edp['monto_aprobado'], errors='coerce').fillna(0) if 'monto_aprobado' in df_edp.columns else 0
-            
-            # Real 91-120 and 120+ distribution
-            total_91_plus = df_edp[df_edp['dias_espera_num'] > 90]['monto_aprobado_num'].sum() / 1_000_000  # Convert to millions
-            total_120_plus = df_edp[df_edp['dias_espera_num'] > 120]['monto_aprobado_num'].sum() / 1_000_000
-            
-            if total_91_plus > 0:
-                bucket_91_120 = max(0, total_91_plus - total_120_plus)
-                bucket_120_plus = total_120_plus
-            else:
-                # Fallback distribution if no data >90 days
-                bucket_91_120 = round(total_pending * aging_90_plus_pct * 0.65 / 100, 1)
-                bucket_120_plus = round(total_pending * aging_90_plus_pct * 0.35 / 100, 1)
-            
-            # Calculate absolute amounts for other buckets
-            bucket_0_30 = round(total_pending * aging_0_30_pct / 100, 1)
-            bucket_31_60 = round(total_pending * aging_31_60_pct / 100, 1)
-            bucket_61_90 = round(total_pending * aging_61_90_pct / 100, 1)
-            
-            # Get top deudor from real data
-            worst_client = "Cliente ABC"
-            worst_amount = 2.1
-            if not df_edp.empty and 'cliente' in df_edp.columns:
-                # Find client with highest pending amount in critical buckets (>90 days)
-                df_critical = df_edp[df_edp['dias_espera_num'] > 90]
-                if not df_critical.empty:
-                    worst_client_data = df_critical.groupby('cliente')['monto_aprobado_num'].sum().nlargest(1)
-                    if not worst_client_data.empty:
-                        worst_client = str(worst_client_data.index[0])
-                        worst_amount = round(worst_client_data.iloc[0] / 1_000_000, 1)
-            
-            # Determine aging trend based on recent behavior
-            aging_trend = "estable"
-            days_to_target = 15
-            
-            # Simple trend analysis: if >25% is in 90+ days, it's worsening
-            if aging_90_plus_pct > 25:
-                aging_trend = "empeorando"
-                days_to_target = 25
-            elif aging_90_plus_pct < 15:
-                aging_trend = "mejorando"
-                days_to_target = 8
-                
-        else:
-            # Fallback to KPI-based calculation if no EDP data
-            logger.warning("📊 No EDP data available, using KPI-based aging calculation")
-            total_pending = kpis.get("monto_pendiente", 100)
-            
-            aging_0_30_pct = kpis.get("aging_0_30_pct", kpis.get("pct_30d", 45))
-            aging_31_60_pct = kpis.get("aging_31_60_pct", kpis.get("pct_60d", 25))
-            aging_61_90_pct = kpis.get("aging_61_90_pct", kpis.get("pct_90d", 15))
-            aging_90_plus_pct = kpis.get("aging_90_plus_pct", kpis.get("pct_mas90d", 15))
-            
-            bucket_0_30 = round(total_pending * aging_0_30_pct / 100, 1)
-            bucket_31_60 = round(total_pending * aging_31_60_pct / 100, 1)
-            bucket_61_90 = round(total_pending * aging_61_90_pct / 100, 1)
-            bucket_91_120 = round(total_pending * aging_90_plus_pct * 0.65 / 100, 1)
-            bucket_120_plus = round(total_pending * aging_90_plus_pct * 0.35 / 100, 1)
-            
-            worst_client = kpis.get("top_deudor_1_nombre", "Cliente ABC")
-            worst_amount = kpis.get("top_deudor_1_monto", 2.1)
-            aging_trend = "estable"
-            days_to_target = 15
-        
-        aging_data = {
-            "buckets": {
-                "bucket_0_30": bucket_0_30,
-                "bucket_31_60": bucket_31_60,
-                "bucket_61_90": bucket_61_90,
-                "bucket_91_120": bucket_91_120,
-                "bucket_120_plus": bucket_120_plus,
-            },
-            "total_pending": total_pending,
-            "percentages": {
-                "pct_0_30": aging_0_30_pct,
-                "pct_31_60": aging_31_60_pct,
-                "pct_61_90": aging_61_90_pct,
-                "pct_91_120": round((bucket_91_120 / total_pending * 100) if total_pending > 0 else 0, 1),
-                "pct_120_plus": round((bucket_120_plus / total_pending * 100) if total_pending > 0 else 0, 1),
-            },
-            # Additional aging metrics
-            "aging_trend": aging_trend,
-            "days_to_target": days_to_target,
-            "worst_client": worst_client,
-            "worst_amount": worst_amount,
-            "critical_threshold": 90,  # Days threshold for critical aging
-            "risk_amount": bucket_91_120 + bucket_120_plus,  # Total amount in critical buckets
-        }
-        
-        logger.info(f"✅ Aging data prepared successfully: {aging_data['total_pending']}M total, {aging_data['risk_amount']}M at risk")
-        return aging_data
-        
-    except Exception as e:
-        logger.error(f"❌ Error preparing aging data: {e}")
-        import traceback
-        logger.error(f"Full traceback: {traceback.format_exc()}")
-        
-        # Return empty aging structure - solo datos reales
-        return {
-            "buckets": {
-                "bucket_0_30": 0,
-                "bucket_31_60": 0,
-                "bucket_61_90": 0,
-                "bucket_91_120": 0,
-                "bucket_120_plus": 0,
-            },
-            "total_pending": 0,
-            "percentages": {
-                "pct_0_30": 0,
-                "pct_31_60": 0,
-                "pct_61_90": 0,
-                "pct_91_120": 0,
-                "pct_120_plus": 0,
-            },
-            "aging_trend": "sin_datos",
-            "days_to_target": 0,
-            "worst_client": "",
-            "worst_amount": 0,
-            "critical_threshold": 90,
-            "risk_amount": 0,
-        }
+# Función eliminada - ya no se usa en el dashboard simplificado
 
 
 def _prepare_command_center_data(kpis: Dict[str, Any], dashboard_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -533,11 +294,11 @@ def _prepare_command_center_data(kpis: Dict[str, Any], dashboard_data: Dict[str,
         profitability_analysis = manager_service._analyze_profitability_by_managers(df_edp, pd.DataFrame(), False)
         
         # 1. ALERTAS CRÍTICAS usando datos 100% reales
-        df_edp['dias_espera_num'] = pd.to_numeric(df_edp['dias_espera'], errors='coerce').fillna(0) if 'dias_espera' in df_edp.columns else 0
+        df_edp['dso_actual_num'] = pd.to_numeric(df_edp['dso_actual'], errors='coerce').fillna(0) if 'dso_actual' in df_edp.columns else 0
         df_edp['monto_aprobado_num'] = pd.to_numeric(df_edp['monto_aprobado'], errors='coerce').fillna(0) if 'monto_aprobado' in df_edp.columns else 0
         
         # Proyectos >180 días reales
-        proyectos_180_dias = len(df_edp[df_edp['dias_espera_num'] > 180])
+        proyectos_180_dias = len(df_edp[df_edp['dso_actual_num'] > 180])
         
         # Clientes morosos reales (clientes con múltiples proyectos >90 días)
         clientes_morosos = 0
@@ -546,24 +307,24 @@ def _prepare_command_center_data(kpis: Dict[str, Any], dashboard_data: Dict[str,
         
         if 'cliente' in df_edp.columns:
             # Clientes con múltiples proyectos en buckets críticos
-            clientes_morosos_df = df_edp[df_edp['dias_espera_num'] > 90].groupby('cliente').size()
+            clientes_morosos_df = df_edp[df_edp['dso_actual_num'] > 90].groupby('cliente').size()
             clientes_morosos = len(clientes_morosos_df[clientes_morosos_df >= 2])
             
             # Lista detallada de proyectos críticos (>180 días)
-            df_criticos = df_edp[df_edp['dias_espera_num'] > 180].nlargest(3, 'monto_aprobado_num')
+            df_criticos = df_edp[df_edp['dso_actual_num'] > 180].nlargest(3, 'monto_aprobado_num')
             for _, row in df_criticos.iterrows():
                 proyectos_criticos_list.append({
                     "cliente": str(row.get('cliente', 'Cliente desconocido')),
                     "monto": round(row.get('monto_aprobado_num', 0) / 1_000_000, 1),
-                    "dias": int(row.get('dias_espera_num', 0)),
+                    "dias": int(row.get('dso_actual_num', 0)),
                     "edp_id": str(row.get('n_edp', 'N/A'))
                 })
             
             # Clientes en deterioro (que han empeorado >30 días en el último mes)
             # Para simplicidad, usamos clientes con proyectos en 61-90 días que están empeorando
-            df_deterioro = df_edp[(df_edp['dias_espera_num'] > 60) & (df_edp['dias_espera_num'] <= 120)]
+            df_deterioro = df_edp[(df_edp['dso_actual_num'] > 60) & (df_edp['dso_actual_num'] <= 120)]
             if not df_deterioro.empty:
-                clientes_deterioro_group = df_deterioro.groupby('cliente')['dias_espera_num'].mean().nlargest(2)
+                clientes_deterioro_group = df_deterioro.groupby('cliente')['dso_actual_num'].mean().nlargest(2)
                 for cliente, avg_dias in clientes_deterioro_group.items():
                     # Simular porcentaje de deterioro basado en días promedio
                     deterioro_pct = min(int((avg_dias - 60) / 60 * 100), 60)
@@ -599,7 +360,7 @@ def _prepare_command_center_data(kpis: Dict[str, Any], dashboard_data: Dict[str,
             df_pending = df_edp[df_edp['estado'].isin(['enviado', 'revisión', 'pendiente'])]
             gestores_tasks = df_pending.groupby('jefe_proyecto').apply(lambda x: {
                 'tareas_count': len(x),
-                'tareas_details': x[['cliente', 'monto_aprobado_num', 'dias_espera_num', 'estado']].to_dict('records')
+                'tareas_details': x[['cliente', 'monto_aprobado_num', 'dso_actual_num', 'estado']].to_dict('records')
             }).to_dict()
             
             # Construir lista de gestores con tareas reales
@@ -819,14 +580,15 @@ def _get_fallback_command_center_data() -> Dict[str, Any]:
 @login_required
 @require_manager_or_above
 def dashboard():
- 
+    """Dashboard simplificado - Solo calcula lo que realmente usa el template"""
     try:
-        print("🚀 Iniciando dashboard optimizado...")
+        print("🚀 Iniciando dashboard simplificado...")
 
-        # ===== OBTENER DATOS PRINCIPALES =====
+        # ===== OBTENER FILTROS =====
         filters = _parse_filters(request)
         force_refresh = request.args.get("refresh", "false").lower() == "true"
         
+        # ===== OBTENER DATOS BÁSICOS =====
         dashboard_response = manager_service.get_manager_dashboard_data(
             filters=filters,
             force_refresh=force_refresh,
@@ -839,153 +601,184 @@ def dashboard():
 
         dashboard_data = dashboard_response.data
         
-        # ===== PREPARAR DATOS ESENCIALES PARA EL TEMPLATE =====
-        
-        # 1. KPIs principales - usar el KPI service directamente para garantizar datos completos
+        # ===== KPIs ESENCIALES PARA EL TEMPLATE =====
         kpis_dict = dashboard_data.get("executive_kpis", {})
         
-        # Si no hay KPIs suficientes, calcular usando KPI service
-        if not kpis_dict or len(kpis_dict) < 10:
-            print("⚠️ KPIs insuficientes, calculando con KPI service...")
-            try:
-                # Obtener datos de EDPs para KPI service
-                datos_response = manager_service.load_related_data()
-                if datos_response.success:
-                    edps_data = datos_response.data.get("edps", [])
-                    if edps_data:
-                        if isinstance(edps_data, list):
-                            df_edps = pd.DataFrame(edps_data)
-                        else:
-                            df_edps = edps_data
-                        
-                        # Usar KPI service para calcular métricas completas
-                        kpi_response = kpi_service.calculate_manager_dashboard_kpis(df_edps)
-                        if kpi_response.success:
-                            kpis_dict = kpi_response.data
-                            print(f"✅ KPIs calculados con KPI service: {len(kpis_dict)} métricas")
-            except Exception as e:
-                print(f"⚠️ Error calculando KPIs: {e}")
-        
-        # Solo llenar campos faltantes con 0 o valores neutros - NO datos de ejemplo
-        required_zero_fields = [
-            'ingresos_totales', 'crecimiento_ingresos', 'efficiency_score', 'roi_promedio',
-            'proyectos_completados', 'total_edps', 'dso_actual', 'progreso_objetivo',
-            'critical_projects_count', 'critical_projects_change', 'critical_amount',
-            'aging_31_60_count', 'aging_31_60_change', 'aging_31_60_amount',
-            'fast_collection_count', 'fast_collection_change', 'fast_collection_amount',
-            'meta_gap', 'days_remaining', 'forecast_7_dias', 'forecast_accuracy', 'forecast_growth'
-        ]
-        
-        # Llenar campos faltantes solo con 0
-        for field in required_zero_fields:
-            if field not in kpis_dict or kpis_dict[field] is None:
-                kpis_dict[field] = 0
+        # Solo los campos que USA el template
+        template_required_fields = {
+            # Header metrics
+            'dso_actual': kpis_dict.get('dso_actual', 0),
+            'forecast_7_dias': kpis_dict.get('forecast_7_dias', 0),
+            'progreso_objetivo': kpis_dict.get('progreso_objetivo', 0),
+            
+            # KPI Cards
+            'critical_projects_count': kpis_dict.get('critical_projects_count', 0),
+            'critical_projects_change': kpis_dict.get('critical_projects_change', 0),
+            'critical_amount': kpis_dict.get('critical_amount', 0),
+            'aging_31_60_count': kpis_dict.get('aging_31_60_count', 0),
+            'aging_31_60_change': kpis_dict.get('aging_31_60_change', 0),
+            'aging_31_60_amount': kpis_dict.get('aging_31_60_amount', 0),
+            'fast_collection_count': kpis_dict.get('fast_collection_count', 0),
+            'fast_collection_change': kpis_dict.get('fast_collection_change', 0),
+            'fast_collection_amount': kpis_dict.get('fast_collection_amount', 0),
+            'meta_gap': kpis_dict.get('meta_gap', 0),
+            'days_remaining': kpis_dict.get('days_remaining', 0),
+            
+            # Forecast 7 días
+            'forecast_day_1': kpis_dict.get('forecast_day_1', 0),
+            'forecast_day_2': kpis_dict.get('forecast_day_2', 0),
+            'forecast_day_3': kpis_dict.get('forecast_day_3', 0),
+            'forecast_day_4': kpis_dict.get('forecast_day_4', 0),
+            'forecast_day_5': kpis_dict.get('forecast_day_5', 0),
+            'forecast_day_6': kpis_dict.get('forecast_day_6', 0),
+            'forecast_day_7': kpis_dict.get('forecast_day_7', 0),
+            
+            # Executive Summary
+            'ingresos_totales': kpis_dict.get('ingresos_totales', 0),
+            'crecimiento_ingresos': kpis_dict.get('crecimiento_ingresos', 0),
+            'efficiency_score': kpis_dict.get('efficiency_score', 0),
+            'roi_promedio': kpis_dict.get('roi_promedio', 0),
+            'proyectos_completados': kpis_dict.get('proyectos_completados', 0),
+            'satisfaccion_cliente': kpis_dict.get('satisfaccion_cliente', 0),
+        }
         
         # Convertir a objeto para notación de punto
-        kpis_object = DictToObject(kpis_dict)
+        kpis_object = DictToObject(template_required_fields)
         
-        # 2. Gráficos (para los controles 7D, 30D, etc.)
-        charts = dashboard_data.get("chart_data", {})
-        
-        # Si no hay gráficos, crear estructura básica
-        if not charts:
-            charts = {
-                'cash_in_forecast': {
-                    'labels': ['30 días', '60 días', '90 días'],
-                    'datasets': [{
-                        'data': [
-                            kpis_dict.get('monto_pendiente', 10.0) * 0.3,
-                            kpis_dict.get('monto_pendiente', 10.0) * 0.25,
-                            kpis_dict.get('monto_pendiente', 10.0) * 0.45
-                        ]
-                    }]
-                }
-            }
-        
-        # 3. Alertas ejecutivas
-        alertas = []
+        # ===== EQUIPO OPERACIONAL (DSO HEATMAP) =====
+        equipo_operacional = []
         try:
-            alertas_response = manager_service.generate_executive_alerts(
-                dashboard_data.get("related_data", {}), kpis_dict, charts
-            )
-            if alertas_response.success:
-                alertas = alertas_response.data[:3]  # Solo las primeras 3 alertas
-        except Exception as e:
-            print(f"⚠️ Error generando alertas: {e}")
-            # Alertas por defecto si hay error
-            alertas = []
-        
-        # 4. Datos del header (proyectos activos y usuarios)
-        proyectos_activos = []
-        usuarios_activos = 0
-        
-        try:
-            # Obtener proyectos únicos de manera eficiente
             datos_response = manager_service.load_related_data()
             if datos_response.success:
                 edps_data = datos_response.data.get("edps", [])
-                if edps_data:
+                
+                # Verificar si edps_data es válido (DataFrame o lista no vacía)
+                data_count = 0
+                if isinstance(edps_data, pd.DataFrame):
+                    data_count = len(edps_data)
+                elif isinstance(edps_data, list):
+                    data_count = len(edps_data)
+                
+                print(f"🔍 DEBUG equipo_operacional: Datos EDP recibidos: {data_count}")
+                
+                # Procesar datos si hay información disponible
+                if data_count > 0:
                     if isinstance(edps_data, list):
-                        df_proyectos = pd.DataFrame(edps_data)
+                        df_edps = pd.DataFrame(edps_data)
                     else:
-                        df_proyectos = edps_data
+                        df_edps = edps_data
                     
-                    if not df_proyectos.empty and 'proyecto' in df_proyectos.columns:
-                        proyectos_activos = df_proyectos['proyecto'].dropna().unique().tolist()
-                        # Actualizar KPI de total_edps con dato real
-                        kpis_dict['total_edps'] = len(df_proyectos)
-                        kpis_object = DictToObject(kpis_dict)  # Actualizar objeto
-            
-            # Contar usuarios activos
-            from ..models.user import User
-            usuarios_activos = User.query.filter_by(activo=True).count()
-            
+                    print(f"🔍 DEBUG equipo_operacional: DataFrame shape: {df_edps.shape}")
+                    print(f"🔍 DEBUG equipo_operacional: Columnas disponibles: {list(df_edps.columns)}")
+                    
+                    if isinstance(df_edps, pd.DataFrame) and not df_edps.empty:
+                        # Verificar columnas necesarias
+                        required_cols = ['jefe_proyecto', 'dso_actual', 'monto_propuesto']
+                        missing_cols = [col for col in required_cols if col not in df_edps.columns]
+                        
+                        if missing_cols:
+                            print(f"❌ DEBUG equipo_operacional: Columnas faltantes: {missing_cols}")
+                        else:
+                            print(f"✅ DEBUG equipo_operacional: Todas las columnas necesarias presentes")
+                            
+                            # Filtrar registros con jefe_proyecto válido
+                            df_with_jefe = df_edps[df_edps['jefe_proyecto'].notna() & (df_edps['jefe_proyecto'] != '')]
+                            print(f"🔍 DEBUG equipo_operacional: Registros con jefe_proyecto: {len(df_with_jefe)}")
+                            
+                            if not df_with_jefe.empty:
+                                # Mostrar algunos ejemplos
+                                print(f"🔍 DEBUG equipo_operacional: Ejemplos de jefes: {df_with_jefe['jefe_proyecto'].unique()[:5].tolist()}")
+                                
+                                # Agrupar por jefe de proyecto
+                                jefes_proyecto = df_with_jefe.groupby('jefe_proyecto').agg({
+                                    'dso_actual': lambda x: pd.to_numeric(x, errors='coerce').mean(),
+                                    'monto_propuesto': lambda x: pd.to_numeric(x, errors='coerce').sum(),
+                                    'estado': 'count'  # Contar proyectos
+                                }).reset_index()
+                                
+                                print(f"🔍 DEBUG equipo_operacional: Jefes agrupados: {len(jefes_proyecto)}")
+                                
+                                # Solo los datos necesarios para el heatmap
+                                for _, jefe_data in jefes_proyecto.head(8).iterrows():
+                                    jefe_nombre = str(jefe_data['jefe_proyecto']).strip()
+                                    
+                                    # Calcular DSO promedio (puede ser NaN si no hay datos válidos)
+                                    dso_raw = jefe_data['dso_actual']
+                                    dso_days = int(round(dso_raw)) if pd.notna(dso_raw) and dso_raw > 0 else 0
+                                    
+                                    # Calcular monto total gestionado
+                                    monto_raw = jefe_data['monto_propuesto']
+                                    monto_gestionado = int(monto_raw) if pd.notna(monto_raw) and monto_raw > 0 else 0
+                                    
+                                    # Contar proyectos
+                                    proyectos_count = int(jefe_data['estado']) if pd.notna(jefe_data['estado']) else 0
+                                    
+                                    print(f"🔍 DEBUG equipo_operacional: {jefe_nombre} - DSO: {dso_days}, Monto: {monto_gestionado}, Proyectos: {proyectos_count}")
+                                    
+                                    # Agregar al equipo operacional (incluso si DSO es 0)
+                                    equipo_operacional.append({
+                                        'nombre': jefe_nombre,
+                                        'dso_days': dso_days,
+                                        'monto_gestionado': monto_gestionado,
+                                        'proyectos_count': proyectos_count,
+                                    })
+                            else:
+                                print("❌ DEBUG equipo_operacional: No hay registros con jefe_proyecto válido")
+                    else:
+                        print("❌ DEBUG equipo_operacional: DataFrame vacío o inválido")
+                else:
+                    print("❌ DEBUG equipo_operacional: No se recibieron datos de EDPs")
+            else:
+                print(f"❌ DEBUG equipo_operacional: Error cargando datos: {datos_response.message}")
         except Exception as e:
-            print(f"⚠️ Error obteniendo datos básicos: {e}")
+            print(f"❌ Error calculando equipo operacional: {e}")
+            import traceback
+            traceback.print_exc()
         
-        # 5. Equipo operacional (solo datos esenciales)
-        equipo_operacional = []
+        # ===== ALERTAS OPERACIONALES =====
+        alertas = []
         try:
-            from ..models.user import User
-            equipo_query = User.query.filter(
-                User.activo == True,
-                User.rol.in_(['manager', 'jefe_proyecto', 'miembro_equipo_proyecto'])
-            ).limit(4).all()  # Solo los primeros 4
+            from ..services.cashflow_service import CashFlowService
+            cashflow_service = CashFlowService()
             
-            for usuario in equipo_query:
-                # Solo datos reales del usuario - sin métricas simuladas
-                equipo_operacional.append({
-                    'nombre': usuario.nombre,
-                    'apellido': usuario.apellido or '',
-                    'rol': usuario.rol.replace('_', ' ').title() if usuario.rol else 'Team Member',
-                    'activo': usuario.activo,
-                    'proyectos_asignados': 0,  # Se puede calcular real si es necesario
-                    'carga_trabajo': 0,        # Se puede calcular real si es necesario
-                    'rendimiento': 0           # Se puede calcular real si es necesario
-                })
+            alertas_response = cashflow_service.obtener_alertas_criticas()
+            
+            if alertas_response.success:
+                alertas_data = alertas_response.data.get('alertas', [])
+                
+                # Solo las primeras 4 alertas con formato simple
+                for alerta_raw in alertas_data[:4]:
+                    alertas.append({
+                        'titulo': alerta_raw.get('titulo', 'Alerta'),
+                        'descripcion': alerta_raw.get('descripcion', 'Sin descripción'),
+                        'tipo': 'critico' if alerta_raw.get('severidad') == 'alta' else 'alto' if alerta_raw.get('severidad') == 'media' else 'info',
+                        'impacto_monto': alerta_raw.get('valor', 0) * 1000000 if alerta_raw.get('valor') else 0
+                    })
+            else:
+                # Alertas básicas basadas en KPIs
+                alertas = _generate_fallback_alerts_from_kpis(template_required_fields)
+                
         except Exception as e:
-            print(f"⚠️ Error obteniendo equipo: {e}")
+            print(f"❌ Error generando alertas: {e}")
+            alertas = _generate_fallback_alerts_from_kpis(template_required_fields)
         
-        # 6. Predicciones enriquecidas
-        predicciones = {
-            'ingresos_proyectados': kpis_dict.get('ingresos_totales', 0) * 1.15,
-            'nivel_riesgo': 'Bajo' if kpis_dict.get('critical_projects_count', 0) < 3 else 'Medio'
-        }
-
-        # ===== TEMPLATE DATA OPTIMIZADO =====
+        # ===== DATOS FINALES PARA EL TEMPLATE =====
         template_data = {
-            # Datos esenciales que usa el template
             "kpis": kpis_object,
-            "charts": charts,
+            "charts": {},  # No se usan gráficos complejos en el template básico
             "alertas": alertas,
-            "proyectos_activos": proyectos_activos,
-            "usuarios_activos": usuarios_activos,
+            "proyectos_activos": [],  # No se usa en el template
+            "usuarios_activos": 0,   # No se usa en el template
             "equipo_operacional": equipo_operacional,
-            "predicciones": predicciones,
+            "predicciones": {},      # No se usa en el template
             "now": datetime.now,
         }
 
-        print(f"✅ Dashboard optimizado cargado - {len(proyectos_activos)} proyectos, {usuarios_activos} usuarios, {len(alertas)} alertas, {len(kpis_dict)} métricas")
+        print(f"✅ Dashboard simplificado cargado:")
+        print(f"   - {len(template_required_fields)} KPIs esenciales")
+        print(f"   - {len(alertas)} alertas")
+        print(f"   - {len(equipo_operacional)} jefes de proyecto")
+        
         return render_template("management/dashboard.html", **template_data)
 
     except Exception as e:

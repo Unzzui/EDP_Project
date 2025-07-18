@@ -2409,10 +2409,32 @@ def analisis_retrabajos():
 
         # Get rework analysis
         rework_response = analytics_service.get_rework_analysis(filters)
-       
-   
-
-        rework_data = rework_response
+        
+        # Verificar si la respuesta tiene la estructura correcta
+        if not rework_response or not isinstance(rework_response, dict) or rework_response.get("success") == False:
+            # Si hay error, crear estructura básica para evitar errores en template
+            rework_data = {
+                "stats": {},
+                "motivos_rechazo": {},
+                "porcentaje_motivos": {},
+                "tipos_falla": {},
+                "porcentaje_tipos": {},
+                "retrabajos_por_encargado": {},
+                "tendencia_por_mes": {},
+                "proyectos_problematicos": [],
+                "registros": [],
+                "chart_data": {"motivos": [], "tipos": [], "encargados": [], "eficiencia": []},
+                "filter_options": {"meses": [], "encargados": [], "clientes": [], "tipos_falla": []},
+                "usuarios_solicitantes": {},
+                "impacto_financiero": 0,
+                "current_time": datetime.now(),
+            }
+            flash(f"Error al cargar análisis de re-trabajos: {rework_response.get('message', 'Error desconocido')}", "error")
+        else:
+            rework_data = rework_response
+        
+        # Add current time for the template
+        rework_data['current_time'] = datetime.now()
      
         return render_template(
             "controller/controller_retrabajos.html", **rework_data, filtros=filters

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Theme detection script -->
+    <script>
+      (function () {
+        const saved = localStorage.getItem("executiveTheme");
+        if (saved) {
+          document.documentElement.setAttribute("data-theme", saved);
+        } else {
+          // Default to light theme for Executive Suite
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
+
+    <title>Executive Access - Pagora</title>
+
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkgMTl2LTZhMiAyIDAgMDAtMi0ySDVhMiAyIDAgMDAtMiAydjZhMiAyIDAgMDAyIDJoMmEyIDIgMCAwMDItMnptMCAwVjlhMiAyIDAgMDEyLTJoMmEyIDIgMCAwMTIgMnYxMG0tNiAwYTIgMiAwIDAwMiAyaDJhMiAyIDAgMDAyLTJtMCAwVjVhMiAyIDAgMDEyLTJoMmEyIDIgMCAwMTIgMnYxNGEyIDIgMCAwMS0yIDJoLTJhMiAyIDAgMDEtMi0yeiIgc3Ryb2tlPSIjMDA2NmNjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K" />
+
+    <!-- Design System Styles -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/common/styles.css') }}" />
+
+    <!-- Login Executive Page Styles -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/login-executive.css') }}" />
+  </head>
+
+  <body>
+    <div class="login-container">
+      <!-- Theme Toggle -->
+      <button class="theme-toggle" id="themeToggle">
+        <span id="themeText">CMD_MODE</span>
+      </button>
+
+      <div class="login-wrapper">
+        <div class="login-card animate-slide-up">
+          <!-- Logo Section -->
+          <div class="logo-section">
+            <div class="logo-container">
+              <!-- Executive Suite Logo -->
+              <div class="executive-logo">
+                <div class="executive-icon">
+                  <div class="executive-icon-base">
+                    <div class="executive-icon-shape"></div>
+                    <div class="executive-icon-accent"></div>
+                    <div class="executive-icon-highlight"></div>
+                  </div>
+                </div>
+                <div class="executive-text">Pagora</div>
+              </div>
+              
+              <!-- Command Center Logo -->
+              <div class="command-logo">
+                <div class="command-icon">
+                  <div class="command-icon-frame">
+                    <div class="command-icon-core"></div>
+                  </div>
+                  <div class="command-icon-corners">
+                    <div class="command-corner"></div>
+                    <div class="command-corner"></div>
+                    <div class="command-corner"></div>
+                    <div class="command-corner"></div>
+                  </div>
+                </div>
+                <div class="command-text">Pagora</div>
+              </div>
+            </div>
+            
+            <!-- System Status (Command Center only) -->
+            <div class="system-status-badge" id="systemStatus">
+              <div class="status-dot"></div>
+              <span class="status-text">SYSTEM ONLINE</span>
+            </div>
+          </div>
+
+          <!-- Flash Messages -->
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %} {% for category, message in messages %}
+          <div
+            class="alert alert-{{ 'error' if category == 'error' else 'success' }} animate-fade-in">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              {% if category == 'error' %}
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clip-rule="evenodd" />
+              {% else %}
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clip-rule="evenodd" />
+              {% endif %}
+            </svg>
+            {{ message }}
+          </div>
+          {% endfor %} {% endif %} {% endwith %}
+
+          <!-- Login Form -->
+          <form
+            action="{{ url_for('auth.login') }}"
+            method="POST"
+            id="loginForm">
+            {{ form.csrf_token }}
+
+            <div class="form-group">
+              <label for="email" class="form-label">
+                <svg class="form-label-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Usuario
+              </label>
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  id="email"
+                  name="email"
+                  class="form-input"
+                  placeholder="Ingresa tu usuario"
+                  required
+                  autocomplete="username" />
+                <div class="input-feedback" id="emailFeedback">
+                  <svg class="feedback-icon success-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                  <svg class="feedback-icon error-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="validation-message" id="emailError"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="password" class="form-label">
+                <svg class="form-label-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <circle cx="12" cy="16" r="1"/>
+                  <path d="m7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Contraseña
+              </label>
+              <div class="input-wrapper">
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  class="form-input"
+                  placeholder="Ingresa tu contraseña"
+                  required
+                  autocomplete="current-password" />
+                <button type="button" class="password-toggle" id="passwordToggle">
+                  <svg class="toggle-icon show-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="toggle-icon hide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="m9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                    <path d="m10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 11 8 11 8a13.16 13.16 0 0 1-1.67 2.68"/>
+                    <path d="M6.61 6.61A13.526 13.526 0 0 0 1 12s4 8 11 8a9.74 9.74 0 0 0 5.39-1.61"/>
+                    <line x1="2" y1="2" x2="22" y2="22"/>
+                  </svg>
+                </button>
+                <div class="input-feedback" id="passwordFeedback">
+                  <svg class="feedback-icon success-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                  <svg class="feedback-icon error-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                  </line>
+                  </svg>
+                </div>
+              </div>
+              <div class="validation-message" id="passwordError"></div>
+              <div class="password-strength" id="passwordStrength">
+                <div class="strength-bar">
+                  <div class="strength-fill" id="strengthFill"></div>
+                </div>
+                <span class="strength-text" id="strengthText">Ingresa una contraseña</span>
+              </div>
+            </div>
+
+            <!-- Remember Me & Forgot Password -->
+            <div class="form-options">
+              <label class="checkbox-wrapper">
+                <input type="checkbox" id="rememberMe" name="remember_me" class="form-checkbox">
+                <span class="checkmark">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="20,6 9,17 4,12"/>
+                  </svg>
+                </span>
+                <span class="checkbox-label">Recordar sesión</span>
+              </label>
+              <a href="#" class="forgot-password" id="forgotPassword">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <!-- Login Button with Loading State -->
+            <button type="submit" class="btn-primary" id="loginButton">
+              <span class="button-text" id="buttonText">Iniciar Sesión</span>
+              <div class="button-loader" id="buttonLoader">
+                <div class="loader-spinner"></div>
+                <span>Verificando...</span>
+              </div>
+            </button>
+
+            <!-- Additional Actions -->
+            <div class="additional-actions">
+              <button type="button" class="btn-secondary" id="helpButton">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                  <point cx="12" cy="17"/>
+                </svg>
+                Ayuda
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Footer Information -->
+      <div class="login-footer">
+        <div class="footer-content">
+          <div class="security-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M9 12l2 2 4-4"/>
+              <path d="M21 12c-1.1 0-2-.9-2-2V7c0-1.1.9-2 2-2s2 .9 2 2v3c0 1.1-.9 2-2 2z"/>
+              <path d="M3 12c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2s-2 .9-2 2v3c0 1.1.9 2 2 2z"/>
+            </svg>
+            <span>Conexión Segura SSL</span>
+          </div>
+          <div class="version-info">
+            <span>v2.1.0</span>
+            <span class="separator">•</span>
+            <span id="currentTime"></span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Keyboard Shortcuts Panel -->
+      <div class="shortcuts-panel" id="shortcutsPanel">
+        <div class="shortcuts-header">
+          <h4>Atajos de Teclado</h4>
+          <button class="close-shortcuts" id="closeShortcuts">×</button>
+        </div>
+        <div class="shortcuts-list">
+          <div class="shortcut-item">
+            <kbd>Alt</kbd> + <kbd>T</kbd>
+            <span>Cambiar tema</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Alt</kbd> + <kbd>H</kbd>
+            <span>Mostrar ayuda</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+            <span>Iniciar sesión</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Esc</kbd>
+            <span>Limpiar errores</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Help Modal -->
+      <div class="modal-overlay" id="helpModal">
+        <div class="modal">
+          <div class="modal-header">
+            <h3>Centro de Ayuda</h3>
+            <button class="modal-close" id="closeHelp">×</button>
+          </div>
+          <div class="modal-content">
+            <div class="help-section">
+              <h4>Problemas de Acceso</h4>
+              <p>Si tienes problemas para iniciar sesión, verifica:</p>
+              <ul>
+                <li>Usuario y contraseña correctos</li>
+                <li>Conexión a internet estable</li>
+                <li>Navegador actualizado</li>
+              </ul>
+            </div>
+            <div class="help-section">
+              <h4>Contacto</h4>
+              <p>Para soporte técnico:</p>
+              <div class="contact-info">
+                <div class="contact-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  <span>soporte@pagora.com</span>
+                </div>
+                <div class="contact-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                  <span>+1 (555) 123-4567</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/common/login-executive.js') }}"></script>
+  </body>
+</html>

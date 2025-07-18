@@ -1538,7 +1538,7 @@ block head %} {{ super() }}
               data-responsable="{{ edp['jefe_proyecto'] }}"
               data-cliente="{{ edp['cliente'] }}"
               data-estado="{{ estado }}"
-              data-dias="{{ edp['dias_espera'] }}"
+              data-dias="{{ edp['dso_actual'] }}"
               data-proyecto="{{ edp['proyecto'] }}"
               data-mes="{{ edp.get('fecha_creacion', '')[:7] if edp.get('fecha_creacion') else '' }}">
               <!-- CABECERA OPTIMIZADA: ID Y MONTO JUNTOS -->
@@ -1572,11 +1572,11 @@ block head %} {{ super() }}
                     </span>
                   </div>
                   <div class="flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 {% if edp['dias_espera']|int > 30 %}text-[color:var(--accent-danger)]{% elif edp['dias_espera']|int > 20 %}text-[color:var(--accent-warning)]{% else %}text-[color:var(--accent-blue)]{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 {% if edp['dso_actual']|int > 30 %}text-[color:var(--accent-danger)]{% elif edp['dso_actual']|int > 20 %}text-[color:var(--accent-warning)]{% else %}text-[color:var(--accent-blue)]{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span class="text-xs font-bold mono-font {% if edp['dias_espera']|int > 30 %}text-[color:var(--accent-danger)] bg-[color:var(--accent-danger)]/10{% elif edp['dias_espera']|int > 20 %}text-[color:var(--accent-warning)] bg-[color:var(--accent-warning)]/10{% else %}text-[color:var(--accent-blue)] bg-[color:var(--accent-blue)]/10{% endif %} px-2 py-0.5 rounded">
-                      {{ edp["dias_espera"] }}d
+                    <span class="text-xs font-bold mono-font {% if edp['dso_actual']|int > 30 %}text-[color:var(--accent-danger)] bg-[color:var(--accent-danger)]/10{% elif edp['dso_actual']|int > 20 %}text-[color:var(--accent-warning)] bg-[color:var(--accent-warning)]/10{% else %}text-[color:var(--accent-blue)] bg-[color:var(--accent-blue)]/10{% endif %} px-2 py-0.5 rounded">
+                      {{ edp["dso_actual"] }}d
                     </span>
                   </div>
                 </div>

@@ -1,2127 +1,820 @@
-{% extends "base.html" %} {% block title %}Dashboard - {{ manager_name }} | Jefe
-de Proyecto{% endblock %} {% block head_extras %}
-<!-- Chart.js para gráficos -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-<!-- JP Dashboard Styles -->
+{% extends "base.html" %} {% block title %}Dashboard JP - {{ manager_name or
+'Jefe de Proyecto' }} | EDP Manager{% endblock %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/common/styles.css') }}" />
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/projects/jp-dashboard.css') }}" />
-{% endblock %} {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
-<!-- Banner Superior -->
-<div
-  class="banner-gradient text-white p-6 rounded-xl mb-6 shadow-lg animate-fade-in-up"
-  style="animation-delay: 0.05s; opacity: 0">
-  <div class="flex flex-col lg:flex-row justify-between gap-6">
-    <!-- Información del JP -->
-    <div class="flex items-center space-x-4">
-      <div class="relative">
-        <div
-          class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center banner-icon">
-          <span class="text-2xl font-bold"
-            >{{ manager_name[0] if manager_name else 'JP' }}</span
-          >
-        </div>
-        {% if alerts and alerts|length > 0 %}
-        <div
-          class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center alert-badge">
-          {{ alerts|length }}
-        </div>
-        {% endif %}
-      </div>
-      <div>
-        <h1 class="text-2xl font-bold">{{ manager_name }}</h1>
-        <p class="text-blue-100 font-medium">Jefe de Proyecto</p>
-        <div class="flex items-center mt-2 text-sm text-blue-100">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 mr-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
-          {{ project_performance|length }} proyectos activos
-          <span class="mx-2">•</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 mr-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 515.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 919.288 0M15 7a3 3 0 11-6 0 3 3 0 616 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          {{ team_performance|length if team_performance else 0 }} miembros del
-          equipo
-        </div>
-      </div>
-    </div>
-
-    <!-- Acciones -->
-    <div class="flex flex-col sm:flex-row gap-3 lg:flex-col lg:gap-2">
-      <a
-        href="{{ url_for('project_management.team_dashboard', manager_name=manager_name) }}"
-        class="btn btn-outline bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30 hover:border-opacity-50 px-4 py-2 rounded-lg transition-all duration-300 text-sm">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-        </svg>
-        Equipo
-      </a>
-      <a
-        href="{{ url_for('project_management.reports', manager_name=manager_name) }}"
-        class="btn btn-primary bg-white bg-opacity-30 hover:bg-opacity-40 text-white px-4 py-2 rounded-lg transition-all duration-300 text-sm">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        Reportes
-      </a>
-    </div>
-  </div>
-</div>
-<!-- Hidden data element for JavaScript -->
-<script id="trends-data" type="application/json">
-  {{ trends.monthly_trends | tojson }}
+<!-- Analytics Data for JavaScript -->
+<script id="jp-dashboard-data" type="application/json">
+  {
+    "projects": {
+      "total": {{ project_performance|length or 0 }},
+      "approved_amount": {{ summary['total_amount_approved'] or 0 }},
+      "pending_amount": {{ summary['pending_amount'] or 0 }},
+      "avg_dso": {{ kpis.avg_processing_days or 0 }},
+      "critical_count": {{ projects_by_status.overdue|length or 0 }}
+    },
+    "trends": {{ trends.monthly_trends | tojson if trends else '{}' }}
+  }
 </script>
 
-<!-- Panel de Acciones Rápidas -->
-<div
-  class="bg-gradient-to-r from-[#1e3a8a] via-[#1e40af] to-[#2563eb] rounded-xl p-6 mb-8 shadow-lg border border-opacity-20 border-white">
-  <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
-    <div class="text-white">
-      <h2 class="text-lg font-semibold mb-2">Centro de Control Operativo</h2>
-      <p class="text-blue-100 text-sm">
-        Gestión centralizada de problemas y comunicación con equipos
-      </p>
-    </div>
-
-    <div class="flex flex-wrap gap-3">
-      <!-- Comunicación General -->
-      <button
-        onclick="quickCommunicate('General', 'info', 'Consulta general')"
-        class="flex items-center px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-all duration-300 border border-white border-opacity-20 hover:border-opacity-40">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-        Chat Rápido
-      </button>
-
-      <!-- Revisar EDPs Pendientes -->
-      {% if summary['pending_amount'] > 0 %}
-      <button
-        onclick="reviewPendingEDPs()"
-        class="flex items-center px-4 py-2 bg-[color:var(--accent-amber)] hover:bg-[color:var(--accent-amber-dark)] text-white rounded-lg transition-all duration-300 pulse-animation">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        EDPs Pendientes
-        <span
-          class="ml-2 px-2 py-0.5 bg-white bg-opacity-30 rounded-full text-xs font-bold">
-          {{ format_currency(summary['pending_amount']) }}
-        </span>
-      </button>
-      {% endif %}
-
-      <!-- Crear Reunión -->
-      <button
-        onclick="scheduleTeamMeeting()"
-        class="flex items-center px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-all duration-300 border border-white border-opacity-20 hover:border-opacity-40">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0V2a2 2 0 012-2h4a2 2 0 012 2v5m-6 0V4a2 2 0 012-2h4a2 2 0 012 2v3m-6 0V3a2 2 0 012-2h4a2 2 0 012 2v4" />
-        </svg>
-        Reunión
-      </button>
-
-      <!-- Ver Problemas Críticos -->
-      {% if projects_by_status.overdue|length > 0 %}
-      <button
-        onclick="reviewCriticalProjects()"
-        class="flex items-center px-4 py-2 bg-[color:var(--accent-red)] hover:bg-[color:var(--accent-red-dark)] text-white rounded-lg transition-all duration-300 urgent-animation">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
-        </svg>
-        Críticos
-        <span
-          class="ml-2 px-2 py-0.5 bg-white bg-opacity-30 rounded-full text-xs font-bold">
-          {{ projects_by_status.overdue|length }}
-        </span>
-      </button>
-      {% endif %}
-    </div>
-  </div>
-</div>
-
-<!-- KPIs Financieros Principales -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-  <!-- Ingresos Aprobados -->
-  <div
-    class="kpi-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center">
-        <div
-          class="w-12 h-12 bg-[color:var(--accent-green)] bg-opacity-15 rounded-xl flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 text-[color:var(--accent-white)]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <div
-          class="ml-1 cursor-help"
-          title="Total acumulado de EDPs validados y aprobados">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 text-[color:var(--text-secondary)]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-    <div
-      class="text-2xl font-bold text-[color:var(--accent-green)] mb-1 kpi-value"
-      data-value="{{ summary['total_amount_approved'] or 0 }}">
-      {{ format_currency(summary['total_amount_approved'] or 0) }}
-    </div>
-    <h3 class="font-semibold text-[color:var(--text-primary)] mb-1 text-sm">
-      Ingresos Aprobados
-    </h3>
-    <p class="text-xs text-[color:var(--text-secondary)]">EDPs validados</p>
-  </div>
-
-  <!-- EDPs Pendientes por Cobrar -->
-  <div
-    class="kpi-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center">
-        <div
-          class="w-12 h-12 bg-[color:var(--accent-amber)] bg-opacity-15 rounded-xl flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 text-[color:var(--accent-white)]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <div
-          class="ml-1 cursor-help"
-          title="Suma de montos de EDPs aún no validados">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 text-[color:var(--text-secondary)]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-    <div
-      class="text-2xl font-bold text-[color:var(--accent-amber)] mb-1 kpi-value"
-      data-value="{{ summary['pending_amount'] or 0 }}">
-      {{ format_currency(summary['pending_amount'] or 0) }}
-    </div>
-    <h3 class="font-semibold text-[color:var(--text-primary)] mb-1 text-sm">
-      Pendientes por Cobrar
-    </h3>
-    <p class="text-xs text-[color:var(--text-secondary)]">EDPs sin validar</p>
-  </div>
-
-  <!-- DSO Promedio -->
-  <div
-    class="kpi-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center">
-        <div
-          class="w-12 h-12 bg-[color:var(--accent-blue)] bg-opacity-15 rounded-xl flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 text-[color:var(--accent-white)]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-        </div>
-        <div
-          class="ml-1 cursor-help"
-          title="Promedio de días que tardan en validarse los EDPs">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 text-[color:var(--text-secondary)]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-    <div
-      class="text-2xl font-bold text-[color:var(--accent-blue)] mb-1 kpi-value"
-      data-value="{{ kpis.avg_processing_days or 0 }}">
-      {{ kpis.avg_processing_days or 0 }}<span class="text-lg">d</span>
-    </div>
-    <h3 class="font-semibold text-[color:var(--text-primary)] mb-1 text-sm">
-      DSO Promedio
-    </h3>
-    <p class="text-xs text-[color:var(--text-secondary)]">Días validación</p>
-  </div>
-
-  <!-- Costo Total -->
-  <div
-    class="kpi-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center">
-        <div
-          class="w-12 h-12 bg-[color:var(--accent-red)] bg-opacity-15 rounded-xl flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 text-[color:var(--accent-white)]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </div>
-        <div
-          class="ml-1 cursor-help"
-          title="Total de costos asociados a los proyectos">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 text-[color:var(--text-secondary)]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-    <div
-      class="text-2xl font-bold text-[color:var(--accent-red)] mb-1 kpi-value"
-      data-value="{{ kpis.total_costs or 0 }}">
-      {{ format_currency(kpis.total_costs or 0) }}
-    </div>
-    <h3 class="font-semibold text-[color:var(--text-primary)] mb-1 text-sm">
-      Costo Total
-    </h3>
-    <p class="text-xs text-[color:var(--text-secondary)]">Proyectos JP</p>
-  </div>
-
-  <!-- Margen Estimado -->
-  <div
-    class="kpi-card bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center">
-        <div
-          class="w-12 h-12 bg-[color:var(--accent-purple)] bg-opacity-15 rounded-xl flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 text-[color:var(--accent-white)]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-        </div>
-        <div
-          class="ml-1 cursor-help"
-          title="Porcentaje de ganancia estimada: (Ingresos - Costos) / Ingresos × 100">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 text-[color:var(--text-secondary)]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-    <div
-      class="text-2xl font-bold text-[color:var(--accent-purple)] mb-1 kpi-value"
-      data-value="{{ kpis.profit_margin or 0 }}">
-      {{ kpis.profit_margin or 0 }}%
-    </div>
-    <h3 class="font-semibold text-[color:var(--text-primary)] mb-1 text-sm">
-      Margen Estimado
-    </h3>
-    <p class="text-xs text-[color:var(--text-secondary)]">Rentabilidad</p>
-  </div>
-</div>
-
-<!-- Gráfico Comparativo de Flujo de EDPs -->
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-  <div class="lg:col-span-3">
-    <div
-      class="edp-flow-container bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-2xl shadow-lg">
-      <div class="edp-flow-header">
-        <h2
-          class="text-xl font-semibold flex items-center text-[color:var(--text-primary)]">
-          <div
-            class="bg-[color:var(--accent-blue)] bg-opacity-15 p-2 rounded-lg mr-3">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 text-[color:var(--accent-blue)]"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="white">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-          </div>
-          <div>
-            <span class="text-xl font-bold">Flujo de EDPs por Mes</span>
-            <p
-              class="text-sm text-[color:var(--text-secondary)] font-normal mt-1">
-              Seguimiento mensual del estado de los EDPs
-            </p>
-          </div>
-        </h2>
-        <div class="edp-flow-filters">
-          <select
-            id="edpFlowFilter"
-            class="px-3 py-1 border border-[color:var(--border-color)] rounded-lg text-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)]">
-            <option value="all">Todos los proyectos</option>
-            {% for project in project_performance %}
-            <option value="{{ project.project_name }}">
-              {{ project.project_name }}
-            </option>
-            {% endfor %}
-          </select>
-          <select
-            id="edpPeriodFilter"
-            class="px-3 py-1 border border-[color:var(--border-color)] rounded-lg text-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)]">
-            <option value="monthly">Mensual</option>
-            <option value="quarterly">Trimestral</option>
-          </select>
-        </div>
-      </div>
-      <div class="chart-container">
-        <canvas id="edpFlowChart" class="w-full h-full"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <div class="space-y-6">
-    <!-- Resumen Financiero Detallado -->
-    <div
-      class="bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-secondary)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg">
-      <h3 class="font-semibold mb-4 flex items-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 mr-2 text-[color:var(--accent-green)]"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-        </svg>
-        Estado Financiero
-      </h3>
-      <div class="space-y-4">
-        <div class="bg-[color:var(--bg-subtle)] rounded-lg p-3">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-sm font-medium text-[color:var(--text-secondary)]"
-              >Total Propuesto</span
-            >
-            <span class="font-semibold text-[color:var(--text-primary)]"
-              >{{ format_currency(summary['total_amount_proposed']) }}</span
-            >
-          </div>
-          <div class="w-full bg-[color:var(--border-color)] rounded-full h-2">
-            <div
-              class="bg-[color:var(--accent-blue)] h-2 rounded-full"
-              style="width: 100%"></div>
-          </div>
-        </div>
-
-        <div class="bg-[color:var(--bg-subtle)] rounded-lg p-3">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-sm font-medium text-[color:var(--text-secondary)]"
-              >Total Aprobado</span
-            >
-            <span class="font-semibold text-[color:var(--accent-blue)]"
-              >{{ format_currency(summary['total_amount_approved']) }}</span
-            >
-          </div>
-          <div class="w-full bg-[color:var(--border-color)] rounded-full h-2">
-            <div
-              class="bg-[color:var(--accent-blue)] h-2 rounded-full"
-              style="width: {{ ((summary['total_amount_approved'] or 0) / (summary['total_amount_proposed'] or 1) * 100) if summary['total_amount_proposed'] else 0 }}%"></div>
-          </div>
-        </div>
-
-        <div class="bg-[color:var(--bg-subtle)] rounded-lg p-3">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-sm font-medium text-[color:var(--text-secondary)]"
-              >Total Pagado</span
-            >
-            <span class="font-semibold text-[color:var(--accent-green)]"
-              >{{ format_currency(summary['total_amount_paid']) }}</span
-            >
-          </div>
-          <div class="w-full bg-[color:var(--border-color)] rounded-full h-2">
-            <div
-              class="bg-[color:var(--accent-green)] h-2 rounded-full"
-              style="width: {{ ((summary['total_amount_paid'] or 0) / (summary['total_amount_approved'] or 1) * 100) if summary['total_amount_approved'] else 0 }}%"></div>
-          </div>
-        </div>
-
-        <hr class="border-[color:var(--border-color)]" />
-
-        <div
-          class="bg-gradient-to-r from-[color:var(--accent-amber)] to-[color:var(--accent-red)] bg-opacity-10 rounded-lg p-3">
-          <div class="flex justify-between items-center">
-            <span class="text-sm font-medium text-[color:var(--text-primary)]"
-              >Pendiente por Cobrar</span
-            >
-            <span class="font-bold text-[color:var(--accent-amber)]"
-              >{{ format_currency(summary['pending_amount']) }}</span
-            >
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Alertas y Proyectos -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-  <!-- Alertas -->
-  {% if alerts and alerts|length > 0 %}
-  <div
-    class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6">
-    <h2 class="text-lg font-semibold mb-4 flex items-center">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5 mr-2 text-[color:var(--accent-red)]"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
-      </svg>
-      Alertas
-      <span
-        class="ml-2 px-2 py-1 bg-[color:var(--accent-red)] text-white text-xs rounded-full"
-        >{{ alerts|length }}</span
-      >
-    </h2>
-    <div class="space-y-3">
-      {% for alert in alerts[:3] %}
-      <div
-        class="border-l-4 {% if alert.type == 'danger' %}border-[color:var(--accent-red)]{% elif alert.type == 'warning' %}border-[color:var(--accent-amber)]{% else %}border-[color:var(--accent-blue)]{% endif %} bg-opacity-10 p-3 rounded alert-card">
-        <div class="flex items-start justify-between">
-          <div class="flex items-start flex-1">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4 mr-2 mt-0.5 {% if alert.type == 'danger' %}text-[color:var(--accent-red)]{% elif alert.type == 'warning' %}text-[color:var(--accent-amber)]{% else %}text-[color:var(--accent-blue)]{% endif %}"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <div class="flex-1">
-              <div class="font-medium text-sm">{{ alert.title }}</div>
-              <div class="text-xs text-[color:var(--text-secondary)] mt-1">
-                {{ alert.message }}
-              </div>
+<div class="container mx-auto px-2 sm:px-4 py-4 sm:py-6 space-y-10">
+  <div class="container-fluid">
+    <!-- JP Dashboard Header - Exact same style as Analytics -->
+    <header class="analytics-header">
+      <div class="analytics-header-content">
+        <div class="analytics-header-brand">
+          <h1>Dashboard JP - Jefe de Proyecto</h1>
+          <div class="analytics-header-status">
+            <div class="analytics-status-indicator">
+              <div class="status-dot status-active"></div>
+              <span class="status-text"
+                >Sistema Activo • Última actualización:
+                <span id="last-update"
+                  >{{ moment().format('HH:mm') if moment else 'Ahora' }}</span
+                ></span
+              >
+            </div>
+            <div class="timestamp">
+              {{ manager_name or 'Jefe de Proyecto' }} •
+              <span id="current-time">Loading...</span>
             </div>
           </div>
-          <!-- Botones de Acción Rápida -->
-          <div class="flex gap-2 ml-3">
-            <button
-              onclick="quickCommunicate('{{ alert.project_name or 'General' }}', '{{ alert.type }}', '{{ alert.title }}')"
-              title="Comunicar problema inmediatamente"
-              class="flex items-center px-2 py-1 bg-[color:var(--accent-blue)] hover:bg-[color:var(--accent-blue-dark)] text-white rounded text-xs transition-colors duration-200">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-3 w-3 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              Chat
-            </button>
-            {% if alert.type == 'danger' %}
-            <button
-              onclick="escalateAlert('{{ alert.project_name or 'General' }}', '{{ alert.title }}')"
-              title="Escalar problema a supervisión"
-              class="flex items-center px-2 py-1 bg-[color:var(--accent-red)] hover:bg-[color:var(--accent-red-dark)] text-white rounded text-xs transition-colors duration-200">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-3 w-3 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Escalar
-            </button>
-            {% endif %}
+        </div>
+
+        <!-- Real-time Project Metrics -->
+        <div class="analytics-header-metrics">
+          <div class="analytics-header-metric">
+            <div
+              class="analytics-metric-value {{ 'positive' if (summary['total_amount_approved'] or 0) > 0 else 'neutral' }}">
+              {{ project_performance|length or 0 }}
+            </div>
+            <div class="analytics-metric-label">PROYECTOS</div>
+          </div>
+
+          <div class="analytics-header-metric">
+            <div
+              class="analytics-metric-value {{ 'warning' if (summary['pending_amount'] or 0) > 0 else 'positive' }}">
+              {{ summary['pending_amount'] or 0 }}
+            </div>
+            <div class="analytics-metric-label">PENDIENTES</div>
+          </div>
+
+          <div class="analytics-header-metric">
+            <div
+              class="analytics-metric-value {{ 'warning' if (kpis.avg_processing_days or 0) > 90 else 'positive' }}">
+              {{ kpis.avg_processing_days or 0 }}d
+            </div>
+            <div class="analytics-metric-label">DSO PROM</div>
+          </div>
+
+          <div class="analytics-header-metric">
+            <div class="analytics-metric-value positive">
+              {{ "%.1f" | format(kpis.efficiency_score or 0) }}%
+            </div>
+            <div class="analytics-metric-label">EFICIENCIA</div>
+          </div>
+
+          <div class="analytics-header-metric">
+            <div
+              class="analytics-metric-value {{ 'critical' if projects_by_status.overdue|length > 0 else 'positive' }}">
+              {{ projects_by_status.overdue|length or 0 }}
+            </div>
+            <div class="analytics-metric-label">CRÍTICOS</div>
           </div>
         </div>
       </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
+    </header>
 
-  <!-- Distribución de Estados -->
-  <div
-    class="{% if not alerts or alerts|length == 0 %}lg:col-span-2{% else %}lg:col-span-2{% endif %}">
-    <div
-      class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-xl p-6">
-      <h2 class="text-lg font-semibold mb-6 flex items-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5 mr-2 text-[color:var(--accent-purple)]"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-        </svg>
-        Estados de Proyectos
-      </h2>
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="text-center">
-          <div
-            class="w-16 h-16 bg-[color:var(--accent-amber)] bg-opacity-15 rounded-full flex items-center justify-center mx-auto mb-2 project-status-circle pending"
-            data-tooltip="Proyectos en revisión inicial">
-            <span
-              class="text-2xl font-bold text-[color:var(--accent-white)] status-number"
-              >{{ projects_by_status.pending|length }}</span
-            >
+    <!-- KPIs Section - Optimized and Unique -->
+    <div class="analytics-chart-section">
+      <!-- Unique KPIs with specific functionality -->
+      <div class="kpi-grid-inline">
+        <div
+          class="kpi-card primary compact"
+          onclick="reviewApprovedProjects()">
+          <div class="kpi-header">
+            <span class="kpi-label">EDPs APROBADOS</span>
+            <div class="kpi-status-indicator active"></div>
           </div>
-          <div class="text-sm font-medium text-[color:var(--text-primary)]">
-            Pendientes
+          <div class="kpi-value">
+            {{ format_currency(summary['total_amount_approved'] or 0) }}
           </div>
-          <div class="text-xs text-[color:var(--text-secondary)] mt-1">
-            En revisión inicial
-          </div>
+          <div class="kpi-unit">CLP</div>
+          <div class="kpi-trend positive">Validados</div>
         </div>
-        <div class="text-center">
-          <div
-            class="w-16 h-16 bg-[color:var(--accent-blue)] bg-opacity-15 rounded-full flex items-center justify-center mx-auto mb-2 project-status-circle in-progress"
-            data-tooltip="Proyectos con EDPs en proceso">
-            <span
-              class="text-2xl font-bold text-[color:var(--accent-white)] status-number"
-              >{{ projects_by_status.in_progress|length }}</span
-            >
+
+        <div class="kpi-card warning compact" onclick="reviewPendingEDPs()">
+          <div class="kpi-header">
+            <span class="kpi-label">PENDIENTES VALIDACIÓN</span>
+            <div
+              class="kpi-status-indicator {{ 'critical' if (summary['pending_amount'] or 0) > 0 else 'active' }}"></div>
           </div>
-          <div class="text-sm font-medium text-[color:var(--text-primary)]">
-            En Progreso
+          <div class="kpi-value">
+            {{ format_currency(summary['pending_amount'] or 0) }}
           </div>
-          <div class="text-xs text-[color:var(--text-secondary)] mt-1">
-            EDPs enviados/procesando
-          </div>
+          <div class="kpi-unit">CLP</div>
+          <div class="kpi-trend">Requieren acción</div>
         </div>
-        <div class="text-center">
-          <div
-            class="w-16 h-16 bg-[color:var(--accent-green)] bg-opacity-15 rounded-full flex items-center justify-center mx-auto mb-2 project-status-circle completed"
-            data-tooltip="Proyectos con >90% EDPs validados">
-            <span
-              class="text-2xl font-bold text-[color:var(--accent-white)] status-number"
-              >{{ projects_by_status.completed|length }}</span
-            >
+
+        <div class="kpi-card info compact" onclick="showDSOAnalysis()">
+          <div class="kpi-header">
+            <span class="kpi-label">TIEMPO PROMEDIO</span>
+            <div
+              class="kpi-status-indicator {{ 'critical' if (kpis.avg_processing_days or 0) > 90 else 'active' }}"></div>
           </div>
-          <div class="text-sm font-medium text-[color:var(--text-primary)]">
-            Completados
-          </div>
-          <div class="text-xs text-[color:var(--text-secondary)] mt-1">
-            >90% validados
-          </div>
+          <div class="kpi-value">{{ kpis.avg_processing_days or 0 }}</div>
+          <div class="kpi-unit">días</div>
+          <div class="kpi-trend">Procesamiento</div>
         </div>
-        <div class="text-center">
-          <div
-            class="w-16 h-16 bg-[color:var(--accent-red)] bg-opacity-15 rounded-full flex items-center justify-center mx-auto mb-2 project-status-circle overdue"
-            data-tooltip="Proyectos con EDPs vencidos (>45 días)">
-            <span
-              class="text-2xl font-bold text-[color:var(--accent-white)] status-number"
-              >{{ projects_by_status.overdue|length }}</span
-            >
+
+        <div class="kpi-card success compact" onclick="showTeamPerformance()">
+          <div class="kpi-header">
+            <span class="kpi-label">EFICIENCIA EQUIPO</span>
+            <div class="kpi-status-indicator active"></div>
           </div>
-          <div class="text-sm font-medium text-[color:var(--text-primary)]">
-            Vencidos
+          <div class="kpi-value">
+            {{ "%.1f" | format(kpis.efficiency_score or 0) }}
           </div>
-          <div class="text-xs text-[color:var(--text-secondary)] mt-1">
-            >45 días sin procesar
-          </div>
+          <div class="kpi-unit">%</div>
+          <div class="kpi-trend positive">Rendimiento</div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
-<!-- Tabla Resumen por Proyecto -->
-<div
-  class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg">
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-xl font-semibold flex items-center">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-      </svg>
-      Resumen por Proyecto
-      <span class="ml-2 text-sm text-[color:var(--text-secondary)]"
-        >({{ project_performance|length }} proyectos)</span
-      >
-    </h2>
-  </div>
+      <!-- Control Operativo Panel - Enhanced with specific actions -->
+      <div class="analytics-chart-grid">
+        <div class="col-span-12">
+          <div class="analytics-chart-card">
+            <div class="analytics-chart-header">
+              <div>
+                <h3 class="analytics-chart-title">
+                  <svg
+                    class="w-5 h-5 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  </svg>
+                  Centro de Control Operativo
+                </h3>
+                <p class="analytics-chart-subtitle">
+                  Acciones prioritarias y gestión de incidencias
+                </p>
+              </div>
+            </div>
 
-  <div class="overflow-x-auto -mx-6">
-    <div class="min-w-full px-6">
-      <table class="w-full min-w-[1200px]">
-        <thead class="bg-[color:var(--bg-subtle)] rounded-lg">
-          <tr class="border-b border-[color:var(--border-color)]">
-            <th
-              class="text-left py-4 px-4 font-semibold text-[color:var(--text-primary)] min-w-[200px] rounded-l-lg">
-              <div class="flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                Proyecto
-              </div>
-            </th>
-            <th
-              class="text-right py-4 px-4 font-semibold text-[color:var(--text-primary)] min-w-[130px]">
-              <div class="flex items-center justify-end">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Ingresos Aprobados
-              </div>
-            </th>
-            <th
-              class="text-right py-4 px-4 font-semibold text-[color:var(--text-primary)] min-w-[130px]">
-              <div class="flex items-center justify-end">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                EDPs Pendientes
-              </div>
-            </th>
-            <th
-              class="text-center py-4 px-4 font-semibold text-[color:var(--text-primary)] w-24">
-              <div class="flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                DSO (días)
-              </div>
-            </th>
-            <th
-              class="text-right py-4 px-4 font-semibold text-[color:var(--text-primary)] min-w-[120px]">
-              <div class="flex items-center justify-end">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-                Costo Total
-              </div>
-            </th>
-            <th
-              class="text-center py-4 px-4 font-semibold text-[color:var(--text-primary)] w-24">
-              <div class="flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Margen %
-              </div>
-            </th>
-            <th
-              class="text-center py-4 px-4 font-semibold text-[color:var(--text-primary)] w-20 rounded-r-lg">
-              Acciones
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for project in project_performance %}
-          <tr
-            class="border-b border-[color:var(--border-color-subtle)] hover:bg-[color:var(--bg-hover)] transition-all duration-200 project-table-row">
-            <td class="py-4 px-4">
-              <div class="flex items-center">
-                <div
-                  class="w-3 h-3 rounded-full mr-3 {% if project.status == 'completed' %}bg-[color:var(--accent-green)]{% elif project.status == 'in_progress' %}bg-[color:var(--accent-blue)]{% elif project.status == 'critical' %}bg-[color:var(--accent-red)]{% else %}bg-[color:var(--accent-amber)]{% endif %}"></div>
-                <div>
-                  <div
-                    class="font-medium text-[color:var(--text-primary)] truncate max-w-[160px]"
-                    title="{{ project.project_name }}">
-                    {{ project.project_name }}
-                  </div>
-                  <div class="text-xs text-[color:var(--text-secondary)]">
-                    {{ project.total_edps }} EDPs total
-                  </div>
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+              <!-- Acción Prioritaria 1 -->
+              {% if summary['pending_amount'] > 0 %}
+              <div class="action-card critical" onclick="reviewPendingEDPs()">
+                <div class="action-icon">
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div class="action-content">
+                  <h4 class="action-title">Validar EDPs</h4>
+                  <p class="action-description">
+                    {{ summary['pending_amount'] }} pendientes
+                  </p>
+                  <span class="action-priority">ALTA PRIORIDAD</span>
                 </div>
               </div>
-            </td>
-            <td class="py-4 px-4 text-right">
-              <div class="font-semibold text-[color:var(--accent-green)]">
-                {{ format_currency(project.total_approved) }}
-              </div>
-            </td>
-            <td class="py-4 px-4 text-right">
-              <div class="font-medium text-[color:var(--accent-amber)]">
-                {{ format_currency(project.pending_amount) }}
-              </div>
-            </td>
-            <td class="py-4 px-4 text-center">
-              <span
-                class="px-3 py-1 rounded-full text-xs font-medium {% if project.avg_processing_days <= 30 %}bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] {% elif project.avg_processing_days <= 45 %}bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)] {% else %}bg-[color:var(--state-danger-bg)] text-[color:var(--accent-red)]{% endif %}">
-                {{ project.avg_processing_days }}d
-              </span>
-            </td>
-            <td class="py-4 px-4 text-right">
-              <div class="font-medium text-[color:var(--accent-red)]">
-                {{ format_currency(project.total_costs or 0) }}
-              </div>
-            </td>
-            <td class="py-4 px-4 text-center">
-              {% set margin = project.profit_margin or 0 %}
-              <span
-                class="px-3 py-1 rounded-full text-xs font-bold {% if margin >= 20 %}bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)] {% elif margin >= 10 %}bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)] {% elif margin >= 0 %}bg-[color:var(--state-info-bg)] text-[color:var(--accent-blue)] {% else %}bg-[color:var(--state-danger-bg)] text-[color:var(--accent-red)]{% endif %}">
-                {{ margin }}%
-              </span>
-            </td>
-            <td class="py-4 px-4 text-center">
-              <div class="flex items-center justify-center gap-2">
-                <a
-                  href="{{ url_for('project_management.project_detail', manager_name=manager_name, project_name=project.project_name) }}"
-                  class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-blue)] text-white rounded-lg hover:bg-[color:var(--accent-blue-dark)] transition-colors text-xs font-medium"
-                  title="Ver detalles del proyecto">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </a>
+              {% endif %}
 
-                <!-- Botón de Comunicación si hay problemas -->
-                {% if project.pending_amount > 0 or project.avg_processing_days
-                > 45 %}
-                <button
-                  onclick="quickCommunicateProject('{{ project.project_name }}', {{ project.pending_amount }}, {{ project.avg_processing_days }})"
-                  title="Comunicar sobre problemas del proyecto"
-                  class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-amber)] hover:bg-[color:var(--accent-amber-dark)] text-white rounded-lg transition-colors text-xs font-medium pulse-animation">
+              <!-- Acción Prioritaria 2 -->
+              {% if projects_by_status.overdue|length > 0 %}
+              <div
+                class="action-card critical"
+                onclick="reviewCriticalProjects()">
+                <div class="action-icon">
                   <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3"
+                    class="w-6 h-6"
                     fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                </button>
-                {% endif %}
-
-                <!-- Botón de Escalación si es crítico -->
-                {% if project.status == 'critical' or
-                project.avg_processing_days > 60 %}
-                <button
-                  onclick="escalateProject('{{ project.project_name }}', '{{ project.status }}')"
-                  title="Escalar proyecto crítico"
-                  class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-red)] hover:bg-[color:var(--accent-red-dark)] text-white rounded-lg transition-colors text-xs font-medium urgent-animation">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor">
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
                       stroke-width="2"
                       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
-                </button>
-                {% endif %}
+                </div>
+                <div class="action-content">
+                  <h4 class="action-title">Proyectos Críticos</h4>
+                  <p class="action-description">
+                    {{ projects_by_status.overdue|length }} atrasados
+                  </p>
+                  <span class="action-priority">URGENTE</span>
+                </div>
               </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+              {% endif %}
 
-  <!-- CTA Button: Ver Desglose de Costos -->
-  <div class="mt-8 text-center">
-    <a
-      href="#"
-      onclick="alert('Funcionalidad de desglose de costos próximamente disponible'); return false;"
-      class="cta-button inline-flex items-center px-8 py-4 bg-gradient-to-r from-[color:var(--accent-purple)] to-[color:var(--accent-blue)] text-white rounded-2xl hover:from-[color:var(--accent-purple-dark)] hover:to-[color:var(--accent-blue-dark)] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-semibold text-lg">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-6 w-6 mr-3"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-      Ver Desglose Detallado de Costos
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5 ml-2"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M13 7l5 5-5 5M6 12h12" />
-      </svg>
-    </a>
-  </div>
-</div>
+              <!-- Acción Prioritaria 3 -->
+              <div class="action-card info" onclick="scheduleTeamMeeting()">
+                <div class="action-icon">
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div class="action-content">
+                  <h4 class="action-title">Reunión Equipo</h4>
+                  <p class="action-description">Coordinación semanal</p>
+                  <span class="action-priority">PROGRAMADA</span>
+                </div>
+              </div>
 
-<!-- EDPs en Proceso de Validación -->
-<div
-  class="bg-[color:var(--bg-card)] border border-[color:var(--border-color)] rounded-2xl p-6 shadow-lg mb-8">
-  <div class="flex justify-between items-center mb-6">
-    <h2
-      class="text-xl font-semibold flex items-center text-[color:var(--text-primary)]">
-      <div
-        class="bg-[color:var(--accent-amber)] bg-opacity-15 p-2 rounded-lg mr-3">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5 text-[color:var(--accent-amber)]"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+              <!-- Acción Prioritaria 4 -->
+              <div class="action-card success" onclick="generateWeeklyReport()">
+                <div class="action-icon">
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div class="action-content">
+                  <h4 class="action-title">Reporte Semanal</h4>
+                  <p class="action-description">Generar informe</p>
+                  <span class="action-priority">PENDIENTE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      EDPs en Proceso de Validación
-      <span
-        class="ml-3 px-3 py-1 bg-[color:var(--accent-amber)] bg-opacity-20 text-[color:var(--accent-amber)] rounded-full text-sm font-medium">
-        {{ pending_edps|length if pending_edps else '0' }} pendientes
-      </span>
-    </h2>
 
-    <div class="flex gap-2">
-      <button
-        onclick="refreshEDPValidation()"
-        class="flex items-center px-3 py-2 bg-[color:var(--accent-blue)] text-white rounded-lg hover:bg-[color:var(--accent-blue-dark)] transition-colors text-sm">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 mr-1"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        Actualizar
-      </button>
-      <button
-        onclick="escalateAllPendingEDPs()"
-        class="flex items-center px-3 py-2 bg-[color:var(--accent-red)] text-white rounded-lg hover:bg-[color:var(--accent-red-dark)] transition-colors text-sm">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-4 w-4 mr-1"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
-        </svg>
-        Escalar Todos
-      </button>
-    </div>
-  </div>
-
-  {% if pending_edps and pending_edps|length > 0 %}
-  <div class="overflow-x-auto">
-    <table class="w-full">
-      <thead class="bg-[color:var(--bg-subtle)] rounded-lg">
-        <tr class="border-b border-[color:var(--border-color)]">
-          <th
-            class="text-left py-3 px-4 font-semibold text-[color:var(--text-primary)] rounded-l-lg">
-            <div class="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              EDP
-            </div>
-          </th>
-          <th
-            class="text-left py-3 px-4 font-semibold text-[color:var(--text-primary)]">
-            <div class="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              Proyecto
-            </div>
-          </th>
-          <th
-            class="text-left py-3 px-4 font-semibold text-[color:var(--text-primary)]">
-            <div class="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Cliente
-            </div>
-          </th>
-          <th
-            class="text-left py-3 px-4 font-semibold text-[color:var(--text-primary)]">
-            <div class="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Gestor
-            </div>
-          </th>
-          <th
-            class="text-right py-3 px-4 font-semibold text-[color:var(--text-primary)]">
-            <div class="flex items-center justify-end">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-              Monto
-            </div>
-          </th>
-          <th
-            class="text-center py-3 px-4 font-semibold text-[color:var(--text-primary)]">
-            <div class="flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Días Pendiente
-            </div>
-          </th>
-          <th
-            class="text-center py-3 px-4 font-semibold text-[color:var(--text-primary)] rounded-r-lg">
-            Acciones
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for edp in pending_edps %}
-        <tr
-          class="border-b border-[color:var(--border-color-subtle)] hover:bg-[color:var(--bg-hover)] transition-all duration-200 edp-validation-row"
-          data-edp-id="{{ edp.id }}">
-          <td class="py-4 px-4">
-            <div class="flex items-center">
-              <div
-                class="w-3 h-3 rounded-full mr-3 bg-[color:var(--accent-amber)]"></div>
+      <!-- Project Status Overview - Simplified and Actionable -->
+      <div class="analytics-chart-grid">
+        <div class="col-span-8">
+          <div class="analytics-chart-card">
+            <div class="analytics-chart-header">
               <div>
-                <div class="font-medium text-[color:var(--text-primary)]">
-                  {{ edp.codigo or edp.numero or ('EDP-' + edp.id|string) }}
-                </div>
-                <div class="text-xs text-[color:var(--text-secondary)]">
-                  {{ edp.fecha_creacion.strftime('%d/%m/%Y') if
-                  edp.fecha_creacion }}
-                </div>
+                <h3 class="analytics-chart-title">
+                  <svg
+                    class="w-5 h-5 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                  </svg>
+                  Estado de Proyectos - Vista Ejecutiva
+                </h3>
+                <p class="analytics-chart-subtitle">
+                  Resumen de proyectos que requieren atención inmediata
+                </p>
               </div>
             </div>
-          </td>
-          <td class="py-4 px-4">
-            <div class="font-medium text-[color:var(--text-primary)]">
-              {{ edp.project_name or edp.proyecto }}
-            </div>
-            <div class="text-xs text-[color:var(--text-secondary)]">
-              {{ edp.proyecto_descripcion or 'Sin descripción' }}
-            </div>
-          </td>
-          <td class="py-4 px-4">
-            <div class="font-medium text-[color:var(--text-primary)]">
-              {{ edp.cliente_nombre or edp.cliente or 'Cliente no asignado' }}
-            </div>
-            <div class="text-xs text-[color:var(--text-secondary)]">
-              {{ edp.cliente_email or 'Sin email' }}
-            </div>
-          </td>
-          <td class="py-4 px-4">
-            <div class="font-medium text-[color:var(--text-primary)]">
-              {{ edp.gestor_nombre or edp.gestor or 'Sin gestor asignado' }}
-            </div>
-            <div class="text-xs text-[color:var(--text-secondary)]">
-              {{ edp.gestor_email or 'Sin email' }}
-            </div>
-          </td>
-          <td class="py-4 px-4 text-right">
-            <div class="font-semibold text-[color:var(--accent-green)]">
-              {{ format_currency(edp.monto or 0) }}
-            </div>
-          </td>
-          <td class="py-4 px-4 text-center">
-            {% set days_pending = edp.dias_pendiente or 0 %}
-            <span
-              class="px-3 py-1 rounded-full text-xs font-medium {% if days_pending <= 15 %}bg-[color:var(--state-success-bg)] text-[color:var(--accent-green)]{% elif days_pending <= 30 %}bg-[color:var(--state-warning-bg)] text-[color:var(--accent-amber)]{% else %}bg-[color:var(--state-danger-bg)] text-[color:var(--accent-red)]{% endif %}">
-              {{ days_pending }}d
-            </span>
-          </td>
-          <td class="py-4 px-4 text-center">
-            <div class="flex items-center justify-center gap-2">
-              <!-- Contactar Cliente -->
-              <button
-                onclick="contactClient('{{ edp.codigo or edp.id }}', '{{ edp.cliente_nombre or 'Cliente' }}', '{{ edp.gestor_nombre or 'Gestor' }}', {{ days_pending }})"
-                title="Contactar cliente para seguimiento"
-                class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-blue)] hover:bg-[color:var(--accent-blue-dark)] text-white rounded-lg transition-colors text-xs font-medium">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3 w-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </button>
 
-              <!-- Contactar Gestor -->
-              <button
-                onclick="contactManager('{{ edp.codigo or edp.id }}', '{{ edp.gestor_nombre or 'Gestor' }}', '{{ edp.cliente_nombre or 'Cliente' }}', {{ days_pending }})"
-                title="Contactar gestor interno"
-                class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-green)] hover:bg-[color:var(--accent-green-dark)] text-white rounded-lg transition-colors text-xs font-medium">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3 w-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </button>
+            {% if projects_by_status %}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <!-- Proyectos Críticos -->
+              {% if projects_by_status.overdue %}
+              <div
+                class="status-card critical"
+                onclick="showCriticalProjects()">
+                <div class="status-header">
+                  <div class="status-icon">
+                    <svg
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div class="status-count">
+                    {{ projects_by_status.overdue|length }}
+                  </div>
+                </div>
+                <h4 class="status-title">Críticos</h4>
+                <p class="status-description">Requieren atención inmediata</p>
+              </div>
+              {% endif %}
 
-              <!-- Escalar si está muy retrasado -->
-              {% if days_pending > 30 %}
-              <button
-                onclick="escalateEDP('{{ edp.codigo or edp.id }}', '{{ edp.cliente_nombre or 'Cliente' }}', {{ days_pending }})"
-                title="Escalar EDP retrasado"
-                class="inline-flex items-center px-2 py-1 bg-[color:var(--accent-red)] hover:bg-[color:var(--accent-red-dark)] text-white rounded-lg transition-colors text-xs font-medium urgent-animation">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3 w-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </button>
+              <!-- Proyectos en Progreso -->
+              {% if projects_by_status.in_progress %}
+              <div class="status-card active" onclick="showActiveProjects()">
+                <div class="status-header">
+                  <div class="status-icon">
+                    <svg
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div class="status-count">
+                    {{ projects_by_status.in_progress|length }}
+                  </div>
+                </div>
+                <h4 class="status-title">En Progreso</h4>
+                <p class="status-description">Desarrollo activo</p>
+              </div>
+              {% endif %}
+
+              <!-- Proyectos Completados -->
+              {% if projects_by_status.completed %}
+              <div
+                class="status-card completed"
+                onclick="showCompletedProjects()">
+                <div class="status-header">
+                  <div class="status-icon">
+                    <svg
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div class="status-count">
+                    {{ projects_by_status.completed|length }}
+                  </div>
+                </div>
+                <h4 class="status-title">Completados</h4>
+                <p class="status-description">Finalizados exitosamente</p>
+              </div>
               {% endif %}
             </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <div class="text-center py-12">
-    <div class="flex flex-col items-center">
-      <div
-        class="w-16 h-16 bg-[color:var(--accent-green)] bg-opacity-15 rounded-full flex items-center justify-center mb-4">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-[color:var(--accent-green)]"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+            {% endif %}
+
+            <!-- Lista de Proyectos Prioritarios -->
+            {% if project_performance %}
+            <div class="mt-6">
+              <div class="flex justify-between items-center mb-4">
+                <h4 class="text-lg font-semibold">Proyectos Prioritarios</h4>
+                <a
+                  href="{{ url_for('projects.dashboard') }}"
+                  class="text-blue-600 hover:text-blue-800 text-sm"
+                  >Ver todos</a
+                >
+              </div>
+
+              <div class="space-y-3">
+                {% for project in project_performance[:5] %}
+                <div
+                  class="project-item"
+                  onclick="openProjectDetail('{{ project.project_name }}')">
+                  <div class="project-info">
+                    <h5 class="project-name">{{ project.project_name }}</h5>
+                    <p class="project-client">
+                      {{ project.client_name or 'Sin cliente' }}
+                    </p>
+                  </div>
+                  <div class="project-status">
+                    <span
+                      class="status-badge {% if project.status == 'Completado' %}completed{% elif project.status == 'En Progreso' %}active{% elif project.status == 'Atrasado' %}critical{% else %}pending{% endif %}">
+                      {{ project.status or 'Sin estado' }}
+                    </span>
+                    <div class="project-progress">
+                      <div class="progress-bar">
+                        <div
+                          class="progress-fill"
+                          style="width: {{ project.progress_percentage or 0 }}%"></div>
+                      </div>
+                      <span class="progress-text"
+                        >{{ project.progress_percentage or 0 }}%</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Sidebar with Unique Information -->
+        <div class="col-span-4">
+          <div class="space-y-4">
+            <!-- Sistema de Alertas -->
+            {% if alerts and alerts|length > 0 %}
+            <div class="terminal-section">
+              <div class="terminal-header">ALERTAS ACTIVAS</div>
+              {% for alert in alerts[:3] %}
+              <div class="alert-item" onclick="handleAlert('{{ alert.id }}')">
+                <div class="alert-icon {{ alert.type }}">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 13.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div class="alert-content">
+                  <p class="alert-message">{{ alert.message }}</p>
+                  <span class="alert-time">{{ alert.timestamp }}</span>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- KPIs Adicionales Únicos -->
+            <div class="terminal-section">
+              <div class="terminal-header">MÉTRICAS DE RENDIMIENTO</div>
+              <div class="metric-item">
+                <span class="metric-label">Margen de Beneficio:</span>
+                <span
+                  class="metric-value {{ 'positive' if (kpis.profit_margin or 0) > 15 else 'warning' }}">
+                  {{ "%.1f" | format(kpis.profit_margin or 0) }}%
+                </span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Costo Total:</span>
+                <span class="metric-value">
+                  {{ format_currency(summary['total_cost'] or 0) }}
+                </span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">EDPs Total:</span>
+                <span class="metric-value"> {{ kpis.total_edps or 0 }} </span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Tiempo Promedio:</span>
+                <span
+                  class="metric-value {{ 'critical' if (kpis.avg_processing_days or 0) > 90 else 'positive' }}">
+                  {{ kpis.avg_processing_days or 0 }} días
+                </span>
+              </div>
+            </div>
+
+            <!-- Acciones Rápidas -->
+            <div class="quick-actions">
+              <h4 class="quick-actions-title">Acciones Rápidas</h4>
+              <div class="quick-actions-grid">
+                <button
+                  onclick="quickCommunicate('General', 'info', 'Consulta general')"
+                  class="quick-action-btn">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Chat
+                </button>
+                <a
+                  href="{{ url_for('projects.team_dashboard') }}"
+                  class="quick-action-btn">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 715 0z" />
+                  </svg>
+                  Equipo
+                </a>
+                <a
+                  href="{{ url_for('projects.reports') }}"
+                  class="quick-action-btn">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Reportes
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <h3 class="text-lg font-medium text-[color:var(--text-primary)] mb-2">
-        Excelente! No hay EDPs pendientes de validación
-      </h3>
-      <p class="text-[color:var(--text-secondary)] text-sm">
-        Todos los EDPs están procesados o en estados avanzados
-      </p>
     </div>
   </div>
-  {% endif %}
 </div>
 
-<!-- JP Dashboard Utilities -->
-<script src="{{ url_for('static', filename='js/projects/jp-dashboard-utils.js') }}"></script>
-<!-- JP Dashboard JavaScript -->
-<script src="{{ url_for('static', filename='js/projects/jp-dashboard.js') }}"></script>
-
-<!-- Initialize page animations -->
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Trigger entrance animations
-    setTimeout(() => {
-      const animatedElements = document.querySelectorAll(".animate-fade-in-up");
-      animatedElements.forEach((el, index) => {
-        setTimeout(() => {
-          el.style.opacity = "1";
-        }, index * 100);
-      });
-    }, 100);
-
-    // Add page entrance class to body
-    document.body.classList.add("page-entrance");
-
-    // Initialize intersection observer for scroll animations
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: "0px 0px -50px 0px",
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.style.opacity = "1";
-          entry.target.style.transform = "translateY(0)";
-        }
-      });
-    }, observerOptions);
-
-    // Observe elements for scroll animations
-    const scrollElements = document.querySelectorAll(
-      ".kpi-card, .project-status-circle, .project-table-row"
-    );
-    scrollElements.forEach((el, index) => {
-      el.style.opacity = "0";
-      el.style.transform = "translateY(20px)";
-      el.style.transition = "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)";
-      el.style.transitionDelay = `${index * 50}ms`;
-      observer.observe(el);
+  // Update current time and last update
+  function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleString("es-ES", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
+    const lastUpdateString = now.toLocaleString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const timeElement = document.getElementById("current-time");
+    const lastUpdateElement = document.getElementById("last-update");
+
+    if (timeElement) {
+      timeElement.textContent = timeString;
+    }
+    if (lastUpdateElement) {
+      lastUpdateElement.textContent = lastUpdateString;
+    }
+  }
+
+  // Initialize
+  document.addEventListener("DOMContentLoaded", function () {
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // Animate metric values
+    const metricValues = document.querySelectorAll(".metric-value[data-value]");
+    metricValues.forEach((element) => {
+      const value = parseFloat(element.getAttribute("data-value"));
+      if (value > 0) {
+        element.style.animationDelay = Math.random() * 0.5 + "s";
+        element.classList.add("animate-in");
+      }
+    });
+
+    // Initialize tooltips and interactions
+    initializeInteractions();
   });
 
-  // ======= FUNCIONES DE COMUNICACIÓN RÁPIDA =======
-
-  /**
-   * Comunicación rápida desde alertas
-   */
-  function quickCommunicate(projectName, alertType, alertTitle) {
-    showCommunicationModal({
-      project: projectName,
-      type: "alert",
-      priority: alertType === "danger" ? "high" : "medium",
-      subject: `Alerta: ${alertTitle}`,
-      message: `Necesito asistencia urgente con la alerta del proyecto ${projectName}: ${alertTitle}`,
-    });
+  // Placeholder functions for existing functionality
+  function quickCommunicate(type, level, message) {
+    alert(`Comunicación ${type}: ${message}`);
   }
 
-  /**
-   * Escalación de alertas críticas
-   */
-  function escalateAlert(projectName, alertTitle) {
-    showCommunicationModal({
-      project: projectName,
-      type: "escalation",
-      priority: "urgent",
-      subject: `ESCALACIÓN URGENTE: ${alertTitle}`,
-      message: `Requiero escalación inmediata para el proyecto ${projectName}. Problema: ${alertTitle}`,
-      recipients: ["supervisor", "admin"],
-    });
-  }
-
-  /**
-   * Comunicación rápida desde proyectos
-   */
-  function quickCommunicateProject(projectName, pendingAmount, avgDays) {
-    let message = `Necesito asistencia con el proyecto ${projectName}.\n\n`;
-
-    if (pendingAmount > 0) {
-      message += `• Monto pendiente: ${formatCurrency(pendingAmount)}\n`;
-    }
-
-    if (avgDays > 45) {
-      message += `• DSO crítico: ${avgDays} días\n`;
-    }
-
-    message += `\nPor favor, necesito apoyo para resolver estos problemas.`;
-
-    showCommunicationModal({
-      project: projectName,
-      type: "project_issue",
-      priority: avgDays > 60 ? "high" : "medium",
-      subject: `Problemas en proyecto ${projectName}`,
-      message: message,
-    });
-  }
-
-  /**
-   * Escalación de proyectos críticos
-   */
-  function escalateProject(projectName, status) {
-    showCommunicationModal({
-      project: projectName,
-      type: "escalation",
-      priority: "urgent",
-      subject: `ESCALACIÓN: Proyecto ${projectName} en estado crítico`,
-      message: `El proyecto ${projectName} requiere atención inmediata de supervisión.\n\nEstado: ${status}\n\nSolicito intervención urgente.`,
-      recipients: ["supervisor", "admin"],
-    });
-  }
-
-  /**
-   * Mostrar modal de comunicación
-   */
-  function showCommunicationModal(params) {
-    // Crear modal dinámico
-    const modal = document.createElement("div");
-    modal.className =
-      "fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in";
-    modal.innerHTML = `
-      <div class="bg-[color:var(--bg-card)] rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-scale-in">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-[color:var(--text-primary)] flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 ${getPriorityColor(
-                params.priority
-              )}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              ${
-                params.type === "escalation" ? "Escalación" : "Comunicación"
-              } Rápida
-            </h3>
-            <button onclick="closeModal(this)" class="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <form onsubmit="sendQuickMessage(event, '${params.project}', '${
-      params.type
-    }')">
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-[color:var(--text-primary)] mb-1">Proyecto</label>
-                <input type="text" value="${
-                  params.project
-                }" readonly class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-subtle)] text-[color:var(--text-primary)]">
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-[color:var(--text-primary)] mb-1">Prioridad</label>
-                <select name="priority" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-card)] text-[color:var(--text-primary)]">
-                  <option value="low" ${
-                    params.priority === "low" ? "selected" : ""
-                  }>Baja</option>
-                  <option value="medium" ${
-                    params.priority === "medium" ? "selected" : ""
-                  }>Media</option>
-                  <option value="high" ${
-                    params.priority === "high" ? "selected" : ""
-                  }>Alta</option>
-                  <option value="urgent" ${
-                    params.priority === "urgent" ? "selected" : ""
-                  }>Urgente</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-[color:var(--text-primary)] mb-1">Asunto</label>
-                <input type="text" name="subject" value="${
-                  params.subject
-                }" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-card)] text-[color:var(--text-primary)]" required>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-[color:var(--text-primary)] mb-1">Mensaje</label>
-                <textarea name="message" rows="4" class="w-full px-3 py-2 border border-[color:var(--border-color)] rounded-lg bg-[color:var(--bg-card)] text-[color:var(--text-primary)] resize-none" required>${
-                  params.message
-                }</textarea>
-              </div>
-
-              ${
-                params.recipients
-                  ? `
-              <div>
-                <label class="block text-sm font-medium text-[color:var(--text-primary)] mb-1">Destinatarios</label>
-                <div class="flex flex-wrap gap-2">
-                  ${params.recipients
-                    .map(
-                      (r) =>
-                        `<span class="px-2 py-1 bg-[color:var(--accent-blue)] text-white rounded-full text-xs">${r}</span>`
-                    )
-                    .join("")}
-                </div>
-              </div>
-              `
-                  : ""
-              }
-            </div>
-
-            <div class="flex gap-3 mt-6">
-              <button type="button" onclick="closeModal(this)" class="flex-1 px-4 py-2 border border-[color:var(--border-color)] text-[color:var(--text-primary)] rounded-lg hover:bg-[color:var(--bg-hover)] transition-colors">
-                Cancelar
-              </button>
-              <button type="submit" class="flex-1 px-4 py-2 bg-[color:var(--accent-blue)] text-white rounded-lg hover:bg-[color:var(--accent-blue-dark)] transition-colors font-medium">
-                ${params.type === "escalation" ? "Escalar" : "Enviar"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    // Focus en el primer input
-    setTimeout(() => {
-      modal.querySelector('input[name="subject"]').focus();
-    }, 100);
-  }
-
-  /**
-   * Cerrar modal
-   */
-  function closeModal(button) {
-    const modal = button.closest(".fixed");
-    modal.style.opacity = "0";
-    modal.style.transform = "scale(0.95)";
-    setTimeout(() => {
-      modal.remove();
-    }, 200);
-  }
-
-  /**
-   * Enviar mensaje rápido
-   */
-  function sendQuickMessage(event, project, type) {
-    event.preventDefault();
-
-    const form = event.target;
-    const formData = new FormData(form);
-
-    // Simular envío (aquí integrarías con tu backend)
-    const button = form.querySelector('button[type="submit"]');
-    const originalText = button.textContent;
-
-    button.disabled = true;
-    button.innerHTML =
-      '<svg class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Enviando...';
-
-    setTimeout(() => {
-      // Mostrar notificación de éxito
-      showNotification(
-        type === "escalation"
-          ? "🚨 Escalación enviada exitosamente"
-          : "💬 Mensaje enviado exitosamente",
-        "success"
-      );
-
-      closeModal(button);
-    }, 1500);
-  }
-
-  /**
-   * Obtener color según prioridad
-   */
-  function getPriorityColor(priority) {
-    const colors = {
-      low: "text-[color:var(--accent-blue)]",
-      medium: "text-[color:var(--accent-amber)]",
-      high: "text-[color:var(--accent-red)]",
-      urgent: "text-[color:var(--accent-red)] animate-pulse",
-    };
-    return colors[priority] || colors.medium;
-  }
-
-  /**
-   * Formatear moneda
-   */
-  function formatCurrency(amount) {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount);
-  }
-
-  /**
-   * Mostrar notificación
-   */
-  function showNotification(message, type = "info") {
-    const notification = document.createElement("div");
-    notification.className = `fixed top-4 right-4 z-60 px-4 py-3 rounded-lg shadow-lg animate-slide-in-right ${getNotificationClasses(
-      type
-    )}`;
-    notification.textContent = message;
-
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-      notification.classList.add("animate-slide-out-right");
-      setTimeout(() => notification.remove(), 300);
-    }, 3000);
-  }
-
-  /**
-   * Obtener clases de notificación
-   */
-  function getNotificationClasses(type) {
-    const classes = {
-      success: "bg-[color:var(--accent-green)] text-white",
-      error: "bg-[color:var(--accent-red)] text-white",
-      warning: "bg-[color:var(--accent-amber)] text-white",
-      info: "bg-[color:var(--accent-blue)] text-white",
-    };
-    return classes[type] || classes.info;
-  }
-
-  // ======= FUNCIONES DEL CENTRO DE COMANDO =======
-
-  /**
-   * Revisar EDPs pendientes
-   */
   function reviewPendingEDPs() {
-    const pendingAmount = {{ summary['pending_amount'] or 0 }};
-
-    showCommunicationModal({
-      project: 'Revisión General',
-      type: 'pending_review',
-      priority: 'high',
-      subject: `Revisión de EDPs pendientes (${formatCurrency(pendingAmount)})`,
-      message: `Solicito revisión urgente de los EDPs pendientes por un valor total de ${formatCurrency(pendingAmount)}.\n\nNecesito conocer:\n• Estado actual de validación\n• Tiempos estimados de resolución\n• Posibles bloqueos o problemas\n\nEs importante acelerar estos procesos para mejorar el flujo de caja.`
-    });
+    alert("Revisando EDPs pendientes...");
   }
 
-  /**
-   * Programar reunión de equipo
-   */
-  function scheduleTeamMeeting() {
-    const today = new Date();
-    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    showCommunicationModal({
-      project: 'Reunión de Equipo',
-      type: 'meeting_request',
-      priority: 'medium',
-      subject: `Solicitud de reunión - Seguimiento de proyectos`,
-      message: `Solicito programar una reunión de seguimiento para la próxima semana.\n\nTemas a tratar:\n• Revisión de proyectos en curso\n• Análisis de EDPs pendientes\n• Identificación de bloqueos\n• Planificación de próximas acciones\n\nDuración estimada: 1 hora\nFecha propuesta: ${nextWeek.toLocaleDateString('es-ES')}\n\nPor favor, confirmar disponibilidad.`,
-      recipients: ['team_leads', 'coordinators']
-    });
-  }
-
-  /**
-   * Revisar proyectos críticos
-   */
   function reviewCriticalProjects() {
-    const criticalCount = {{ projects_by_status.overdue|length }};
-
-    showCommunicationModal({
-      project: 'Proyectos Críticos',
-      type: 'critical_review',
-      priority: 'urgent',
-      subject: `URGENTE: Revisión de ${criticalCount} proyecto(s) crítico(s)`,
-      message: `Requiero atención inmediata para ${criticalCount} proyecto(s) en estado crítico.\n\nProblemas identificados:\n• EDPs vencidos (>45 días)\n• Posibles retrasos en validación\n• Riesgo de impacto en flujo de caja\n\nNecesito:\n• Plan de acción inmediato\n• Responsables asignados\n• Cronograma de resolución\n• Escalación si es necesario\n\nEsta situación requiere resolución prioritaria.`,
-      recipients: ['supervisor', 'team_leads']
-    });
+    alert("Revisando proyectos críticos...");
   }
 
-  /**
-   * Mostrar detalles de contacto del equipo
-   */
-  function showTeamContacts() {
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in';
-    modal.innerHTML = `
-      <div class="bg-[color:var(--bg-card)] rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scale-in">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-[color:var(--text-primary)] flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-              </svg>
-              Contactos del Equipo
-            </h3>
-            <button onclick="closeModal(this)" class="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div class="space-y-4">
-            <div class="p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-hover)] transition-colors">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h4 class="font-medium text-[color:var(--text-primary)]">Coordinador de Validación</h4>
-                  <p class="text-sm text-[color:var(--text-secondary)]">Responsable de EDPs pendientes</p>
-                </div>
-                <button onclick="quickCommunicate('Coordinación', 'info', 'Consulta sobre validación')" class="px-3 py-1 bg-[color:var(--accent-blue)] text-white rounded-lg text-xs hover:bg-[color:var(--accent-blue-dark)] transition-colors">
-                  Contactar
-                </button>
-              </div>
-            </div>
-
-            <div class="p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-hover)] transition-colors">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h4 class="font-medium text-[color:var(--text-primary)]">Supervisor de Proyectos</h4>
-                  <p class="text-sm text-[color:var(--text-secondary)]">Escalación de problemas críticos</p>
-                </div>
-                <button onclick="escalateAlert('Supervisión', 'Solicitud de escalación')" class="px-3 py-1 bg-[color:var(--accent-red)] text-white rounded-lg text-xs hover:bg-[color:var(--accent-red-dark)] transition-colors">
-                  Escalar
-                </button>
-              </div>
-            </div>
-
-            <div class="p-4 border border-[color:var(--border-color)] rounded-lg hover:bg-[color:var(--bg-hover)] transition-colors">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h4 class="font-medium text-[color:var(--text-primary)]">Equipo de Soporte</h4>
-                  <p class="text-sm text-[color:var(--text-secondary)]">Asistencia técnica y consultas</p>
-                </div>
-                <button onclick="quickCommunicate('Soporte', 'info', 'Consulta técnica')" class="px-3 py-1 bg-[color:var(--accent-green)] text-white rounded-lg text-xs hover:bg-[color:var(--accent-green-dark)] transition-colors">
-                  Soporte
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-6 p-4 bg-[color:var(--bg-subtle)] rounded-lg">
-            <p class="text-sm text-[color:var(--text-secondary)] text-center">
-              💡 <strong>Tip:</strong> Para problemas urgentes, usa los botones de escalación directamente desde las alertas del dashboard.
-            </p>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
+  function scheduleTeamMeeting() {
+    alert("Programando reunión de equipo...");
   }
 
-  // ======= FUNCIONES ESPECÍFICAS PARA EDPs EN VALIDACIÓN =======
-
-  /**
-   * Contactar cliente sobre EDP pendiente
-   */
-  function contactClient(edpCode, clienteName, managerName, daysPending) {
-    showCommunicationModal({
-      project: `EDP ${edpCode}`,
-      type: 'client_contact',
-      priority: daysPending > 30 ? 'high' : 'medium',
-      subject: `Seguimiento EDP ${edpCode} - Validación pendiente`,
-      message: `Estimado/a cliente,\n\nEscribo para hacer seguimiento del EDP ${edpCode} que se encuentra pendiente de validación desde hace ${daysPending} días.\n\nDetalles:\n• EDP: ${edpCode}\n• Cliente: ${clienteName}\n• Gestor asignado: ${managerName}\n• Días pendientes: ${daysPending}\n\n¿Podríamos revisar el estado de este EDP? Si hay algún problema o necesitan información adicional, estoy disponible para resolverlo.\n\nQuedo atento a su respuesta.\n\nSaludos cordiales,`,
-      recipients: ['client', 'account_manager']
-    });
+  // New optimized functionality functions
+  function reviewApprovedProjects() {
+    // Show approved EDPs in a modal or redirect to detailed view
+    const approvedCount = {{ summary['total_amount_approved'] or 0 }};
+    if (approvedCount > 0) {
+      window.location.href = "{{ url_for('projects.dashboard') }}?filter=approved";
+    } else {
+      alert("No hay EDPs aprobados para revisar");
+    }
   }
 
-  /**
-   * Contactar gestor interno sobre EDP
-   */
-  function contactManager(edpCode, managerName, clienteName, daysPending) {
-    showCommunicationModal({
-      project: `EDP ${edpCode}`,
-      type: 'internal_contact',
-      priority: daysPending > 15 ? 'high' : 'medium',
-      subject: `Seguimiento interno EDP ${edpCode}`,
-      message: `Hola ${managerName},\n\nNecesito tu apoyo con el seguimiento del EDP ${edpCode}.\n\nSituación actual:\n• EDP: ${edpCode}\n• Cliente: ${clienteName}\n• Días pendientes: ${daysPending}\n\n¿Podrías ayudarme con lo siguiente?\n• Estado actual de la validación\n• Contactos realizados con el cliente\n• Posibles bloqueos o problemas\n• Plan de acción para acelerar el proceso\n\n${daysPending > 30 ? 'URGENTE: Este EDP lleva más de 30 días pendiente.' : 'Por favor, mantengamos el seguimiento activo.'}\n\nGracias por tu colaboración.`,
-      recipients: ['internal_manager', 'project_team']
-    });
+  function showDSOAnalysis() {
+    // Show detailed DSO analysis
+    const avgDays = {{ kpis.avg_processing_days or 0 }};
+    const message = `Análisis DSO:\n- Tiempo promedio: ${avgDays} días\n- Objetivo: 90 días\n- Estado: ${avgDays > 90 ? 'CRÍTICO' : avgDays > 60 ? 'ADVERTENCIA' : 'ÓPTIMO'}`;
+    alert(message);
   }
 
-  /**
-   * Escalar EDP específico
-   */
-  function escalateEDP(edpCode, clienteName, daysPending) {
-    showCommunicationModal({
-      project: `EDP ${edpCode}`,
-      type: 'edp_escalation',
-      priority: 'urgent',
-      subject: `ESCALACIÓN URGENTE: EDP ${edpCode} - ${daysPending} días pendiente`,
-      message: `Requiero escalación inmediata para el EDP ${edpCode}.\n\nSITUACIÓN CRÍTICA:\n• EDP: ${edpCode}\n• Cliente: ${clienteName}\n• Días pendientes: ${daysPending}\n• Impacto: Retraso en flujo de caja\n\nACCIONES SOLICITADAS:\n• Contacto directo con cliente a nivel gerencial\n• Revisión de posibles problemas contractuales\n• Plan de acción inmediato con plazos específicos\n• Seguimiento diario hasta resolución\n\nEste retraso está afectando nuestros indicadores financieros y requiere atención de nivel superior.\n\nSolicito reunión urgente para definir estrategia de resolución.`,
-      recipients: ['supervisor', 'finance_manager', 'client_director']
-    });
+  function showTeamPerformance() {
+    // Show team performance details
+    const efficiency = {{ "%.1f" | format(kpis.efficiency_score or 0) }};
+    const message = `Rendimiento del Equipo:\n- Eficiencia: ${efficiency}%\n- Estado: ${efficiency > 80 ? 'EXCELENTE' : efficiency > 60 ? 'BUENO' : 'REQUIERE MEJORA'}`;
+    alert(message);
   }
 
-  /**
-   * Actualizar estado de validación de EDPs
-   */
-  function refreshEDPValidation() {
-    const button = event.target.closest('button');
-    const originalText = button.innerHTML;
-
-    button.disabled = true;
-    button.innerHTML = '<svg class="animate-spin h-4 w-4 mr-1" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Actualizando...';
-
-    // Simular actualización (aquí conectarías con tu backend)
+  function generateWeeklyReport() {
+    // Generate and download weekly report
+    alert("Generando reporte semanal...");
+    // Here you would typically make an AJAX call to generate the report
     setTimeout(() => {
-      button.disabled = false;
-      button.innerHTML = originalText;
-      showNotification('✅ Estado de EDPs actualizado', 'success');
-
-           // Simular actualización de contadores
-       const badges = document.querySelectorAll('span');
-       const badge = Array.from(badges).find(span => span.textContent.includes('pendientes'));
-       if (badge) {
-         badge.classList.add('animate-pulse');
-         setTimeout(() => badge.classList.remove('animate-pulse'), 2000);
-       }
+      alert("Reporte generado exitosamente");
     }, 2000);
   }
 
-  /**
-   * Escalar todos los EDPs pendientes
-   */
-  function escalateAllPendingEDPs() {
-    const pendingCount = {{ pending_edps|length if pending_edps else 0 }};
-
-    if (pendingCount === 0) {
-      showNotification('ℹ️ No hay EDPs pendientes para escalar', 'info');
-      return;
+  function showCriticalProjects() {
+    // Show critical projects in detail
+    const criticalCount = {{ projects_by_status.overdue|length or 0 }};
+    if (criticalCount > 0) {
+      window.location.href = "{{ url_for('projects.dashboard') }}?filter=critical";
+    } else {
+      alert("No hay proyectos críticos");
     }
-
-    showCommunicationModal({
-      project: 'Escalación Masiva',
-      type: 'mass_escalation',
-      priority: 'urgent',
-      subject: `ESCALACIÓN MASIVA: ${pendingCount} EDPs pendientes de validación`,
-      message: `Solicito escalación urgente para ${pendingCount} EDPs que se encuentran pendientes de validación.\n\nPROBLEMA SISTÉMICO:\n• Total de EDPs afectados: ${pendingCount}\n• Impacto acumulado en flujo de caja\n• Posible deterioro de relaciones con clientes\n• Riesgo de incumplimiento de objetivos\n\nACCIONES REQUERIDAS:\n• Revisión inmediata de procesos de validación\n• Contacto directo con todos los clientes afectados\n• Identificación de causas raíz del retraso\n• Plan de contingencia para recuperar tiempos\n• Reunión urgente con equipo directivo\n\nEsta situación requiere intervención inmediata a nivel organizacional.\n\nSolicito reunión de crisis para abordar esta problemática.`,
-      recipients: ['ceo', 'finance_director', 'operations_manager', 'client_services']
-    });
   }
 
-  /**
-   * Generar reporte de EDPs pendientes
-   */
-  function generateEDPReport() {
-    const pendingEDPs = document.querySelectorAll('.edp-validation-row');
-    const reportData = {
-      timestamp: new Date().toISOString(),
-      total_pending: pendingEDPs.length,
-      edps: []
-    };
+  function showActiveProjects() {
+    // Show active projects
+    const activeCount = {{ projects_by_status.in_progress|length or 0 }};
+    if (activeCount > 0) {
+      window.location.href = "{{ url_for('projects.dashboard') }}?filter=active";
+    } else {
+      alert("No hay proyectos activos");
+    }
+  }
 
-    pendingEDPs.forEach(row => {
-      const edpId = row.dataset.edpId;
-      const cells = row.querySelectorAll('td');
+  function showCompletedProjects() {
+    // Show completed projects
+    const completedCount = {{ projects_by_status.completed|length or 0 }};
+    if (completedCount > 0) {
+      window.location.href = "{{ url_for('projects.dashboard') }}?filter=completed";
+    } else {
+      alert("No hay proyectos completados");
+    }
+  }
 
-      reportData.edps.push({
-        id: edpId,
-        code: cells[0]?.textContent.trim(),
-        project: cells[1]?.textContent.trim(),
-        client: cells[2]?.textContent.trim(),
-        manager: cells[3]?.textContent.trim(),
-        amount: cells[4]?.textContent.trim(),
-        days_pending: cells[5]?.textContent.trim()
+  function openProjectDetail(projectName) {
+    // Open project detail view
+    window.location.href = `{{ url_for('projects.project_detail', project_name='') }}${encodeURIComponent(projectName)}`;
+  }
+
+  function handleAlert(alertId) {
+    // Handle alert interaction
+    alert(`Procesando alerta ${alertId}...`);
+    // Here you would typically mark the alert as read or take action
+  }
+
+  function initializeInteractions() {
+    // Add hover effects and other interactions
+    const cards = document.querySelectorAll(
+      ".card, .metric-card, .client-card"
+    );
+    cards.forEach((card) => {
+      card.addEventListener("mouseenter", function () {
+        this.style.transform = "translateY(-2px)";
+      });
+      card.addEventListener("mouseleave", function () {
+        this.style.transform = "translateY(0)";
       });
     });
 
-    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `edps-pendientes-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    // Add click effects for action cards
+    const actionCards = document.querySelectorAll(".action-card");
+    actionCards.forEach((card) => {
+      card.addEventListener("click", function() {
+        // Add click animation
+        this.style.transform = "scale(0.98)";
+        setTimeout(() => {
+          this.style.transform = "translateY(-2px)";
+        }, 150);
+      });
+    });
 
-    showNotification('📁 Reporte generado exitosamente', 'success');
+    // Add click effects for status cards
+    const statusCards = document.querySelectorAll(".status-card");
+    statusCards.forEach((card) => {
+      card.addEventListener("click", function() {
+        this.style.transform = "scale(0.98)";
+        setTimeout(() => {
+          this.style.transform = "translateY(-2px)";
+        }, 150);
+      });
+    });
+
+    // Add click effects for project items
+    const projectItems = document.querySelectorAll(".project-item");
+    projectItems.forEach((item) => {
+      item.addEventListener("click", function() {
+        this.style.transform = "scale(0.98)";
+        setTimeout(() => {
+          this.style.transform = "translateY(-1px)";
+        }, 150);
+      });
+    });
+
+    // Add click effects for alert items
+    const alertItems = document.querySelectorAll(".alert-item");
+    alertItems.forEach((item) => {
+      item.addEventListener("click", function() {
+        this.style.transform = "scale(0.98)";
+        setTimeout(() => {
+          this.style.transform = "translateY(0)";
+        }, 150);
+      });
+    });
+
+    // Add keyboard navigation support
+    document.addEventListener("keydown", function(e) {
+      // Quick shortcuts
+      if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+          case "1":
+            e.preventDefault();
+            reviewPendingEDPs();
+            break;
+          case "2":
+            e.preventDefault();
+            reviewCriticalProjects();
+            break;
+          case "3":
+            e.preventDefault();
+            scheduleTeamMeeting();
+            break;
+          case "4":
+            e.preventDefault();
+            generateWeeklyReport();
+            break;
+        }
+      }
+    });
+
+    // Add tooltips for better UX
+    const tooltipElements = document.querySelectorAll("[data-tooltip]");
+    tooltipElements.forEach((element) => {
+      element.addEventListener("mouseenter", function() {
+        const tooltip = document.createElement("div");
+        tooltip.className = "tooltip";
+        tooltip.textContent = this.getAttribute("data-tooltip");
+        tooltip.style.cssText = `
+          position: absolute;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-primary);
+          border-radius: var(--radius-md);
+          padding: var(--space-sm);
+          font-size: 12px;
+          color: var(--text-primary);
+          z-index: 1000;
+          pointer-events: none;
+          box-shadow: var(--shadow-elevated);
+        `;
+        document.body.appendChild(tooltip);
+
+        const rect = this.getBoundingClientRect();
+        tooltip.style.left = rect.left + "px";
+        tooltip.style.top = (rect.bottom + 5) + "px";
+
+        this._tooltip = tooltip;
+      });
+
+      element.addEventListener("mouseleave", function() {
+        if (this._tooltip) {
+          document.body.removeChild(this._tooltip);
+          this._tooltip = null;
+        }
+      });
+    });
   }
 </script>
-
-<!-- Estilos CSS para animaciones -->
-<style>
-  .pulse-animation {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  .urgent-animation {
-    animation: urgent-pulse 1s ease-in-out infinite;
-  }
-
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
-
-  .animate-scale-in {
-    animation: scaleIn 0.3s ease-out;
-  }
-
-  .animate-slide-in-right {
-    animation: slideInRight 0.3s ease-out;
-  }
-
-  .animate-slide-out-right {
-    animation: slideOutRight 0.3s ease-in;
-  }
-
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
-  }
-
-  @keyframes urgent-pulse {
-    0%,
-    100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    50% {
-      transform: scale(1.05);
-      opacity: 0.8;
-    }
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes scaleIn {
-    from {
-      opacity: 0;
-      transform: scale(0.9);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  @keyframes slideInRight {
-    from {
-      opacity: 0;
-      transform: translateX(100%);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  @keyframes slideOutRight {
-    from {
-      opacity: 1;
-      transform: translateX(0);
-    }
-    to {
-      opacity: 0;
-      transform: translateX(100%);
-    }
-  }
-
-  /* Mejorar hover de botones de acción */
-  .alert-card:hover .pulse-animation,
-  .alert-card:hover .urgent-animation {
-    animation-duration: 0.5s;
-  }
-
-  /* Estilo para indicadores de problemas */
-  .project-table-row:has(.pulse-animation) {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(245, 158, 11, 0.05),
-      transparent
-    );
-  }
-
-  .project-table-row:has(.urgent-animation) {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(239, 68, 68, 0.05),
-      transparent
-    );
-  }
-</style>
 
 {% endblock %}

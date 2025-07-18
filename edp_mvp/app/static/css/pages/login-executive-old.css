@@ -1,0 +1,3818 @@
+/* ==========================================================================
+   Executive Login Page Styles
+   Following Executive Dashboard Design System Philosophy
+   Dual Theme: Command Center (Dark) / Executive Suite (Light)
+   ========================================================================== */
+
+/* Login-specific styles following Executive Dashboard Design System */
+.login-container {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Executive Suite Background Enhancement */
+.login-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at center top,
+    rgba(0, 102, 204, 0.03) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+/* Command Center Background Enhancement */
+[data-theme="dark"] .login-container::before {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 255, 136, 0.05) 0%,
+    rgba(0, 102, 255, 0.03) 30%,
+    transparent 70%
+  );
+}
+
+.login-wrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-md); /* Reduced padding */
+}
+
+.login-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 16px; /* More elegant rounded corners */
+  box-shadow: var(--shadow-elevated);
+  padding: 2rem; /* More generous and elegant padding */
+  width: 100%;
+  max-width: 420px; /* Better proportions for content */
+  min-height: 480px; /* Taller for better balance */
+  position: relative;
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Better distribution */
+  gap: 0; /* Remove gap, use specific margins instead */
+}
+
+.login-card:hover {
+  box-shadow: var(--shadow-interactive);
+  transform: translateY(-2px);
+}
+
+[data-theme="dark"] .login-card:hover {
+  box-shadow: var(--shadow-interactive);
+}
+
+/* ==========================================================================
+   Logo Section Styles
+   ========================================================================== */
+
+.logo-section {
+  text-align: center;
+  margin-bottom: 0; /* Remove margin, controlled by parent */
+  flex-shrink: 0; /* Don't shrink */
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm); 
+  margin-bottom: var(--space-md); /* Better spacing between logo and status */
+}
+
+/* Executive Logo */
+.executive-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.executive-icon {
+  position: relative;
+  width: 56px; /* Larger for better visual impact */
+  height: 56px;
+}
+
+.executive-icon-base {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--accent-primary), #1d4ed8);
+  border-radius: 12px; /* More elegant rounded corners */
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 102, 204, 0.25);
+}
+
+[data-theme="dark"] .executive-icon-base {
+  background: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    var(--accent-tertiary)
+  );
+  box-shadow: 0 8px 32px rgba(0, 255, 136, 0.25);
+}
+
+.executive-icon-shape {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 28px; /* Proportional to larger icon */
+  height: 28px;
+  background: white;
+  border-radius: 4px;
+  opacity: 0.95;
+}
+
+[data-theme="dark"] .executive-icon-shape {
+  background: var(--bg-primary);
+}
+
+.executive-icon-accent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 14px; /* Proportional to larger icon */
+  height: 14px;
+  background: var(--accent-primary);
+  border-radius: 2px;
+}
+
+.executive-icon-highlight {
+  position: absolute;
+  top: 10px; /* Proportional positioning */
+  left: 10px;
+  width: 20px; /* Proportional to larger icon */
+  height: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    transparent 50%
+  );
+  border-radius: 10px;
+}
+
+.executive-text {
+  font-family: var(--font-primary);
+  font-size: 32px; /* Larger for better presence */
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  position: relative;
+  margin-left: var(--space-sm); /* Better spacing from icon */
+}
+
+.executive-text::after {
+  content: "Admin";
+  position: absolute;
+  bottom: -20px; /* Better positioning */
+  left: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: -0.01em;
+}
+
+/* Command Center Logo */
+.command-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.command-icon {
+  position: relative;
+  width: 56px; /* Match executive logo size */
+  height: 56px;
+}
+
+.command-icon-frame {
+  width: 56px;
+  height: 56px;
+  border: 2px solid var(--accent-primary);
+  background: var(--bg-primary);
+  position: relative;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+}
+
+.command-icon-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px; /* Proportional to larger frame */
+  height: 24px;
+  background: var(--accent-primary);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% 100%,
+    5px 100%,
+    0 calc(100% - 5px)
+  );
+  animation: command-pulse 2s ease-in-out infinite;
+}
+
+@keyframes command-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.command-icon-corners {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.command-corner {
+  position: absolute;
+  width: 8px; /* Slightly larger for better proportion */
+  height: 8px;
+  background: var(--accent-secondary);
+}
+
+.command-corner:nth-child(1) {
+  top: -1px;
+  left: -1px;
+}
+.command-corner:nth-child(2) {
+  top: -1px;
+  right: -1px;
+}
+.command-corner:nth-child(3) {
+  bottom: -1px;
+  left: -1px;
+}
+.command-corner:nth-child(4) {
+  bottom: -1px;
+  right: -1px;
+}
+
+.command-text {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 32px; /* Match executive text size */
+  font-weight: 800;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  position: relative;
+  margin-left: var(--space-sm); /* Better spacing from icon */
+}
+
+.command-text::after {
+  content: "ADMIN";
+  position: absolute;
+  bottom: -18px; /* Better positioning */
+  left: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.2em;
+}
+
+/* ==========================================================================
+   Form Styles
+   ========================================================================== */
+
+.form-group {
+  margin-bottom: var(--space-lg); /* Better spacing for elegance */
+  flex-shrink: 0; /* Don't shrink form elements */
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.form-input {
+  width: 100%;
+  padding: 16px var(--space-md); /* More generous padding */
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px; /* More elegant rounded corners */
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1); /* Larger focus ring */
+  transform: translateY(-1px); /* Subtle lift on focus */
+}
+
+[data-theme="dark"] .form-input:focus {
+  box-shadow: 0 0 0 4px rgba(0, 255, 136, 0.1); /* Larger focus ring */
+}
+
+.form-input:hover {
+  border-color: var(--accent-primary);
+}
+
+.form-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ==========================================================================
+   Button Styles
+   ========================================================================== */
+
+.btn-primary {
+  width: 100%;
+  padding: 14px var(--space-lg);
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary:hover {
+  background: #0052a3;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-interactive);
+}
+
+[data-theme="dark"] .btn-primary:hover {
+  background: #00e67a;
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   Button Secondary and Additional Actions
+   ========================================================================== */
+
+.additional-actions {
+  margin-top: var(--space-sm);
+  text-align: center;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-quaternary);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   Theme Toggle
+   ========================================================================== */
+
+.theme-toggle {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: 1000;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px; /* More squared design */
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
+}
+
+.theme-toggle:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Alert Messages
+   ========================================================================== */
+
+.alert {
+  padding: var(--space-md);
+  border-radius: 6px; /* More squared design */
+  margin-bottom: var(--space-lg);
+  border: 1px solid;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.alert-error {
+  background: var(--status-danger-bg);
+  color: var(--status-danger);
+  border-color: var(--status-danger);
+}
+
+.alert-success {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+  border-color: var(--status-success);
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0.7;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Logo Visibility Based on Theme
+   ========================================================================== */
+
+.executive-logo {
+  display: flex;
+}
+
+.command-logo {
+  display: none;
+}
+
+[data-theme="dark"] .executive-logo {
+  display: none;
+}
+
+[data-theme="dark"] .command-logo {
+  display: flex;
+}
+
+/* ==========================================================================
+   System Status Badge (Command Center)
+   ========================================================================== */
+
+.system-status-badge {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--space-xs) var(--space-md); /* Wider padding for better proportion */
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 20px; /* More pill-like shape for elegance */
+  margin: 0; /* Remove margin, using gap from parent */
+}
+
+[data-theme="dark"] .system-status-badge {
+  display: flex;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ==========================================================================
+   Welcome Message
+   ========================================================================== */
+
+/* Welcome message styles removed - no longer needed */
+
+[data-theme="dark"] .welcome-title {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 16px;
+}
+
+[data-theme="dark"] .welcome-subtitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Enhanced Form Styles
+   ========================================================================== */
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.form-label-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px var(--space-md);
+  padding-right: 48px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.input-feedback {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.feedback-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  display: none;
+}
+
+.success-icon {
+  color: var(--status-success);
+}
+
+.error-icon {
+  color: var(--status-danger);
+}
+
+.form-input.valid + .input-feedback .success-icon {
+  display: block;
+}
+
+.form-input.invalid + .input-feedback .error-icon {
+  display: block;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.password-toggle:hover {
+  color: var(--accent-primary);
+  background: var(--bg-quaternary);
+}
+
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.hide-icon {
+  display: none;
+}
+
+.validation-message {
+  font-size: 12px;
+  color: var(--status-danger);
+  margin-top: var(--space-xs);
+  min-height: 16px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  font-weight: 500;
+}
+
+.validation-message.show {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Password Strength Indicator
+   ========================================================================== */
+
+.password-strength {
+  margin-top: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.password-strength.show {
+  opacity: 1;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-quaternary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  transition: all var(--transition-normal);
+  border-radius: var(--radius-full);
+}
+
+.strength-fill.weak {
+  width: 25%;
+  background: var(--status-danger);
+}
+
+.strength-fill.fair {
+  width: 50%;
+  background: var(--status-warning);
+}
+
+.strength-fill.good {
+  width: 75%;
+  background: var(--accent-primary);
+}
+
+.strength-fill.strong {
+  width: 100%;
+  background: var(--status-success);
+}
+
+.strength-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Form Options
+   ========================================================================== */
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg); /* Better spacing */
+  flex-shrink: 0;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.form-checkbox {
+  display: none;
+}
+
+.checkmark {
+  width: 20px; /* Slightly larger for better proportion */
+  height: 20px;
+  border: 2px solid var(--border-primary);
+  border-radius: 6px; /* More rounded */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.checkmark svg {
+  width: 14px; /* Proportional to larger checkmark */
+  height: 14px;
+  stroke-width: 3;
+  color: white;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all var(--transition-fast);
+}
+
+.form-checkbox:checked + .checkmark {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  transform: scale(1.05); /* Slight scale on checked */
+}
+
+.form-checkbox:checked + .checkmark svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.forgot-password {
+  font-size: 14px;
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   Enhanced Button Styles
+   ========================================================================== */
+
+.btn-primary {
+  position: relative;
+  width: 100%;
+  padding: 16px var(--space-lg); /* More generous padding */
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: 12px; /* More elegant rounded corners */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+  flex-shrink: 0;
+}
+
+.button-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--transition-fast);
+}
+
+.button-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.btn-primary.loading .button-text {
+  opacity: 0;
+}
+
+.btn-primary.loading .button-loader {
+  opacity: 1;
+}
+
+.loader-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.additional-actions {
+  margin-top: var(--space-sm);
+  text-align: center;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-quaternary);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   Theme Toggle
+   ========================================================================== */
+
+.theme-toggle {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: 1000;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px; /* More squared design */
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
+}
+
+.theme-toggle:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Alert Messages
+   ========================================================================== */
+
+.alert {
+  padding: var(--space-md);
+  border-radius: 6px; /* More squared design */
+  margin-bottom: var(--space-lg);
+  border: 1px solid;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.alert-error {
+  background: var(--status-danger-bg);
+  color: var(--status-danger);
+  border-color: var(--status-danger);
+}
+
+.alert-success {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+  border-color: var(--status-success);
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0.7;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Logo Visibility Based on Theme
+   ========================================================================== */
+
+.executive-logo {
+  display: flex;
+}
+
+.command-logo {
+  display: none;
+}
+
+[data-theme="dark"] .executive-logo {
+  display: none;
+}
+
+[data-theme="dark"] .command-logo {
+  display: flex;
+}
+
+/* ==========================================================================
+   System Status Badge (Command Center)
+   ========================================================================== */
+
+.system-status-badge {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--space-xs) var(--space-md); /* Wider padding for better proportion */
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 20px; /* More pill-like shape for elegance */
+  margin: 0; /* Remove margin, using gap from parent */
+}
+
+[data-theme="dark"] .system-status-badge {
+  display: flex;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ==========================================================================
+   Welcome Message
+   ========================================================================== */
+
+/* Welcome message styles removed - no longer needed */
+
+[data-theme="dark"] .welcome-title {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 16px;
+}
+
+[data-theme="dark"] .welcome-subtitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Enhanced Form Styles
+   ========================================================================== */
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.form-label-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px var(--space-md);
+  padding-right: 48px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.input-feedback {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.feedback-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  display: none;
+}
+
+.success-icon {
+  color: var(--status-success);
+}
+
+.error-icon {
+  color: var(--status-danger);
+}
+
+.form-input.valid + .input-feedback .success-icon {
+  display: block;
+}
+
+.form-input.invalid + .input-feedback .error-icon {
+  display: block;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.password-toggle:hover {
+  color: var(--accent-primary);
+  background: var(--bg-quaternary);
+}
+
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.hide-icon {
+  display: none;
+}
+
+.validation-message {
+  font-size: 12px;
+  color: var(--status-danger);
+  margin-top: var(--space-xs);
+  min-height: 16px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  font-weight: 500;
+}
+
+.validation-message.show {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Password Strength Indicator
+   ========================================================================== */
+
+.password-strength {
+  margin-top: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.password-strength.show {
+  opacity: 1;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-quaternary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  transition: all var(--transition-normal);
+  border-radius: var(--radius-full);
+}
+
+.strength-fill.weak {
+  width: 25%;
+  background: var(--status-danger);
+}
+
+.strength-fill.fair {
+  width: 50%;
+  background: var(--status-warning);
+}
+
+.strength-fill.good {
+  width: 75%;
+  background: var(--accent-primary);
+}
+
+.strength-fill.strong {
+  width: 100%;
+  background: var(--status-success);
+}
+
+.strength-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Form Options
+   ========================================================================== */
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg); /* Better spacing */
+  flex-shrink: 0;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.form-checkbox {
+  display: none;
+}
+
+.checkmark {
+  width: 20px; /* Slightly larger for better proportion */
+  height: 20px;
+  border: 2px solid var(--border-primary);
+  border-radius: 6px; /* More rounded */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.checkmark svg {
+  width: 14px; /* Proportional to larger checkmark */
+  height: 14px;
+  stroke-width: 3;
+  color: white;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all var(--transition-fast);
+}
+
+.form-checkbox:checked + .checkmark {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  transform: scale(1.05); /* Slight scale on checked */
+}
+
+.form-checkbox:checked + .checkmark svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.forgot-password {
+  font-size: 14px;
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   Enhanced Button Styles
+   ========================================================================== */
+
+.btn-primary {
+  position: relative;
+  width: 100%;
+  padding: 16px var(--space-lg); /* More generous padding */
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: 12px; /* More elegant rounded corners */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+  flex-shrink: 0;
+}
+
+.button-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--transition-fast);
+}
+
+.button-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.btn-primary.loading .button-text {
+  opacity: 0;
+}
+
+.btn-primary.loading .button-loader {
+  opacity: 1;
+}
+
+.loader-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.additional-actions {
+  margin-top: var(--space-sm);
+  text-align: center;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-quaternary);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   Theme Toggle
+   ========================================================================== */
+
+.theme-toggle {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: 1000;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px; /* More squared design */
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
+}
+
+.theme-toggle:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Alert Messages
+   ========================================================================== */
+
+.alert {
+  padding: var(--space-md);
+  border-radius: 6px; /* More squared design */
+  margin-bottom: var(--space-lg);
+  border: 1px solid;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.alert-error {
+  background: var(--status-danger-bg);
+  color: var(--status-danger);
+  border-color: var(--status-danger);
+}
+
+.alert-success {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+  border-color: var(--status-success);
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0.7;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Logo Visibility Based on Theme
+   ========================================================================== */
+
+.executive-logo {
+  display: flex;
+}
+
+.command-logo {
+  display: none;
+}
+
+[data-theme="dark"] .executive-logo {
+  display: none;
+}
+
+[data-theme="dark"] .command-logo {
+  display: flex;
+}
+
+/* ==========================================================================
+   System Status Badge (Command Center)
+   ========================================================================== */
+
+.system-status-badge {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--space-xs) var(--space-md); /* Wider padding for better proportion */
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 20px; /* More pill-like shape for elegance */
+  margin: 0; /* Remove margin, using gap from parent */
+}
+
+[data-theme="dark"] .system-status-badge {
+  display: flex;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ==========================================================================
+   Welcome Message
+   ========================================================================== */
+
+/* Welcome message styles removed - no longer needed */
+
+[data-theme="dark"] .welcome-title {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 16px;
+}
+
+[data-theme="dark"] .welcome-subtitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Enhanced Form Styles
+   ========================================================================== */
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.form-label-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px var(--space-md);
+  padding-right: 48px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.input-feedback {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.feedback-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  display: none;
+}
+
+.success-icon {
+  color: var(--status-success);
+}
+
+.error-icon {
+  color: var(--status-danger);
+}
+
+.form-input.valid + .input-feedback .success-icon {
+  display: block;
+}
+
+.form-input.invalid + .input-feedback .error-icon {
+  display: block;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.password-toggle:hover {
+  color: var(--accent-primary);
+  background: var(--bg-quaternary);
+}
+
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.hide-icon {
+  display: none;
+}
+
+.validation-message {
+  font-size: 12px;
+  color: var(--status-danger);
+  margin-top: var(--space-xs);
+  min-height: 16px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  font-weight: 500;
+}
+
+.validation-message.show {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Password Strength Indicator
+   ========================================================================== */
+
+.password-strength {
+  margin-top: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.password-strength.show {
+  opacity: 1;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-quaternary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  transition: all var(--transition-normal);
+  border-radius: var(--radius-full);
+}
+
+.strength-fill.weak {
+  width: 25%;
+  background: var(--status-danger);
+}
+
+.strength-fill.fair {
+  width: 50%;
+  background: var(--status-warning);
+}
+
+.strength-fill.good {
+  width: 75%;
+  background: var(--accent-primary);
+}
+
+.strength-fill.strong {
+  width: 100%;
+  background: var(--status-success);
+}
+
+.strength-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Form Options
+   ========================================================================== */
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg); /* Better spacing */
+  flex-shrink: 0;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.form-checkbox {
+  display: none;
+}
+
+.checkmark {
+  width: 20px; /* Slightly larger for better proportion */
+  height: 20px;
+  border: 2px solid var(--border-primary);
+  border-radius: 6px; /* More rounded */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.checkmark svg {
+  width: 14px; /* Proportional to larger checkmark */
+  height: 14px;
+  stroke-width: 3;
+  color: white;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all var(--transition-fast);
+}
+
+.form-checkbox:checked + .checkmark {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  transform: scale(1.05); /* Slight scale on checked */
+}
+
+.form-checkbox:checked + .checkmark svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.forgot-password {
+  font-size: 14px;
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   Enhanced Button Styles
+   ========================================================================== */
+
+.btn-primary {
+  position: relative;
+  width: 100%;
+  padding: 16px var(--space-lg); /* More generous padding */
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: 12px; /* More elegant rounded corners */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+  flex-shrink: 0;
+}
+
+.button-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--transition-fast);
+}
+
+.button-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.btn-primary.loading .button-text {
+  opacity: 0;
+}
+
+.btn-primary.loading .button-loader {
+  opacity: 1;
+}
+
+.loader-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.additional-actions {
+  margin-top: var(--space-sm);
+  text-align: center;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-quaternary);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   Theme Toggle
+   ========================================================================== */
+
+.theme-toggle {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: 1000;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px; /* More squared design */
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
+}
+
+.theme-toggle:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Alert Messages
+   ========================================================================== */
+
+.alert {
+  padding: var(--space-md);
+  border-radius: 6px; /* More squared design */
+  margin-bottom: var(--space-lg);
+  border: 1px solid;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.alert-error {
+  background: var(--status-danger-bg);
+  color: var(--status-danger);
+  border-color: var(--status-danger);
+}
+
+.alert-success {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+  border-color: var(--status-success);
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0.7;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Logo Visibility Based on Theme
+   ========================================================================== */
+
+.executive-logo {
+  display: flex;
+}
+
+.command-logo {
+  display: none;
+}
+
+[data-theme="dark"] .executive-logo {
+  display: none;
+}
+
+[data-theme="dark"] .command-logo {
+  display: flex;
+}
+
+/* ==========================================================================
+   System Status Badge (Command Center)
+   ========================================================================== */
+
+.system-status-badge {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--space-xs) var(--space-md); /* Wider padding for better proportion */
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 20px; /* More pill-like shape for elegance */
+  margin: 0; /* Remove margin, using gap from parent */
+}
+
+[data-theme="dark"] .system-status-badge {
+  display: flex;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ==========================================================================
+   Welcome Message
+   ========================================================================== */
+
+/* Welcome message styles removed - no longer needed */
+
+[data-theme="dark"] .welcome-title {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 16px;
+}
+
+[data-theme="dark"] .welcome-subtitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Enhanced Form Styles
+   ========================================================================== */
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.form-label-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px var(--space-md);
+  padding-right: 48px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.input-feedback {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.feedback-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  display: none;
+}
+
+.success-icon {
+  color: var(--status-success);
+}
+
+.error-icon {
+  color: var(--status-danger);
+}
+
+.form-input.valid + .input-feedback .success-icon {
+  display: block;
+}
+
+.form-input.invalid + .input-feedback .error-icon {
+  display: block;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.password-toggle:hover {
+  color: var(--accent-primary);
+  background: var(--bg-quaternary);
+}
+
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.hide-icon {
+  display: none;
+}
+
+.validation-message {
+  font-size: 12px;
+  color: var(--status-danger);
+  margin-top: var(--space-xs);
+  min-height: 16px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  font-weight: 500;
+}
+
+.validation-message.show {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Password Strength Indicator
+   ========================================================================== */
+
+.password-strength {
+  margin-top: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.password-strength.show {
+  opacity: 1;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-quaternary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  transition: all var(--transition-normal);
+  border-radius: var(--radius-full);
+}
+
+.strength-fill.weak {
+  width: 25%;
+  background: var(--status-danger);
+}
+
+.strength-fill.fair {
+  width: 50%;
+  background: var(--status-warning);
+}
+
+.strength-fill.good {
+  width: 75%;
+  background: var(--accent-primary);
+}
+
+.strength-fill.strong {
+  width: 100%;
+  background: var(--status-success);
+}
+
+.strength-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Form Options
+   ========================================================================== */
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg); /* Better spacing */
+  flex-shrink: 0;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.form-checkbox {
+  display: none;
+}
+
+.checkmark {
+  width: 20px; /* Slightly larger for better proportion */
+  height: 20px;
+  border: 2px solid var(--border-primary);
+  border-radius: 6px; /* More rounded */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.checkmark svg {
+  width: 14px; /* Proportional to larger checkmark */
+  height: 14px;
+  stroke-width: 3;
+  color: white;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all var(--transition-fast);
+}
+
+.form-checkbox:checked + .checkmark {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  transform: scale(1.05); /* Slight scale on checked */
+}
+
+.form-checkbox:checked + .checkmark svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.forgot-password {
+  font-size: 14px;
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   Enhanced Button Styles
+   ========================================================================== */
+
+.btn-primary {
+  position: relative;
+  width: 100%;
+  padding: 16px var(--space-lg); /* More generous padding */
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: 12px; /* More elegant rounded corners */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+  flex-shrink: 0;
+}
+
+.button-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--transition-fast);
+}
+
+.button-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.btn-primary.loading .button-text {
+  opacity: 0;
+}
+
+.btn-primary.loading .button-loader {
+  opacity: 1;
+}
+
+.loader-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.additional-actions {
+  margin-top: var(--space-sm);
+  text-align: center;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-quaternary);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   Theme Toggle
+   ========================================================================== */
+
+.theme-toggle {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: 1000;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px; /* More squared design */
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
+}
+
+.theme-toggle:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Alert Messages
+   ========================================================================== */
+
+.alert {
+  padding: var(--space-md);
+  border-radius: 6px; /* More squared design */
+  margin-bottom: var(--space-lg);
+  border: 1px solid;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.alert-error {
+  background: var(--status-danger-bg);
+  color: var(--status-danger);
+  border-color: var(--status-danger);
+}
+
+.alert-success {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+  border-color: var(--status-success);
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0.7;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Logo Visibility Based on Theme
+   ========================================================================== */
+
+.executive-logo {
+  display: flex;
+}
+
+.command-logo {
+  display: none;
+}
+
+[data-theme="dark"] .executive-logo {
+  display: none;
+}
+
+[data-theme="dark"] .command-logo {
+  display: flex;
+}
+
+/* ==========================================================================
+   System Status Badge (Command Center)
+   ========================================================================== */
+
+.system-status-badge {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--space-xs) var(--space-md); /* Wider padding for better proportion */
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 20px; /* More pill-like shape for elegance */
+  margin: 0; /* Remove margin, using gap from parent */
+}
+
+[data-theme="dark"] .system-status-badge {
+  display: flex;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ==========================================================================
+   Welcome Message
+   ========================================================================== */
+
+/* Welcome message styles removed - no longer needed */
+
+[data-theme="dark"] .welcome-title {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 16px;
+}
+
+[data-theme="dark"] .welcome-subtitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Enhanced Form Styles
+   ========================================================================== */
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.form-label-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px var(--space-md);
+  padding-right: 48px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.input-feedback {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.feedback-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  display: none;
+}
+
+.success-icon {
+  color: var(--status-success);
+}
+
+.error-icon {
+  color: var(--status-danger);
+}
+
+.form-input.valid + .input-feedback .success-icon {
+  display: block;
+}
+
+.form-input.invalid + .input-feedback .error-icon {
+  display: block;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.password-toggle:hover {
+  color: var(--accent-primary);
+  background: var(--bg-quaternary);
+}
+
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.hide-icon {
+  display: none;
+}
+
+.validation-message {
+  font-size: 12px;
+  color: var(--status-danger);
+  margin-top: var(--space-xs);
+  min-height: 16px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  font-weight: 500;
+}
+
+.validation-message.show {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Password Strength Indicator
+   ========================================================================== */
+
+.password-strength {
+  margin-top: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.password-strength.show {
+  opacity: 1;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-quaternary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  transition: all var(--transition-normal);
+  border-radius: var(--radius-full);
+}
+
+.strength-fill.weak {
+  width: 25%;
+  background: var(--status-danger);
+}
+
+.strength-fill.fair {
+  width: 50%;
+  background: var(--status-warning);
+}
+
+.strength-fill.good {
+  width: 75%;
+  background: var(--accent-primary);
+}
+
+.strength-fill.strong {
+  width: 100%;
+  background: var(--status-success);
+}
+
+.strength-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Form Options
+   ========================================================================== */
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg); /* Better spacing */
+  flex-shrink: 0;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.form-checkbox {
+  display: none;
+}
+
+.checkmark {
+  width: 20px; /* Slightly larger for better proportion */
+  height: 20px;
+  border: 2px solid var(--border-primary);
+  border-radius: 6px; /* More rounded */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.checkmark svg {
+  width: 14px; /* Proportional to larger checkmark */
+  height: 14px;
+  stroke-width: 3;
+  color: white;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all var(--transition-fast);
+}
+
+.form-checkbox:checked + .checkmark {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  transform: scale(1.05); /* Slight scale on checked */
+}
+
+.form-checkbox:checked + .checkmark svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.forgot-password {
+  font-size: 14px;
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   Enhanced Button Styles
+   ========================================================================== */
+
+.btn-primary {
+  position: relative;
+  width: 100%;
+  padding: 16px var(--space-lg); /* More generous padding */
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: 12px; /* More elegant rounded corners */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+  flex-shrink: 0;
+}
+
+.button-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--transition-fast);
+}
+
+.button-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.btn-primary.loading .button-text {
+  opacity: 0;
+}
+
+.btn-primary.loading .button-loader {
+  opacity: 1;
+}
+
+.loader-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.additional-actions {
+  margin-top: var(--space-sm);
+  text-align: center;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-quaternary);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   Theme Toggle
+   ========================================================================== */
+
+.theme-toggle {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: 1000;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px; /* More squared design */
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
+}
+
+.theme-toggle:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Alert Messages
+   ========================================================================== */
+
+.alert {
+  padding: var(--space-md);
+  border-radius: 6px; /* More squared design */
+  margin-bottom: var(--space-lg);
+  border: 1px solid;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.alert-error {
+  background: var(--status-danger-bg);
+  color: var(--status-danger);
+  border-color: var(--status-danger);
+}
+
+.alert-success {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+  border-color: var(--status-success);
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0.7;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Logo Visibility Based on Theme
+   ========================================================================== */
+
+.executive-logo {
+  display: flex;
+}
+
+.command-logo {
+  display: none;
+}
+
+[data-theme="dark"] .executive-logo {
+  display: none;
+}
+
+[data-theme="dark"] .command-logo {
+  display: flex;
+}
+
+/* ==========================================================================
+   System Status Badge (Command Center)
+   ========================================================================== */
+
+.system-status-badge {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--space-xs) var(--space-md); /* Wider padding for better proportion */
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 20px; /* More pill-like shape for elegance */
+  margin: 0; /* Remove margin, using gap from parent */
+}
+
+[data-theme="dark"] .system-status-badge {
+  display: flex;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ==========================================================================
+   Welcome Message
+   ========================================================================== */
+
+/* Welcome message styles removed - no longer needed */
+
+[data-theme="dark"] .welcome-title {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 16px;
+}
+
+[data-theme="dark"] .welcome-subtitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Enhanced Form Styles
+   ========================================================================== */
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.form-label-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px var(--space-md);
+  padding-right: 48px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.input-feedback {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.feedback-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  display: none;
+}
+
+.success-icon {
+  color: var(--status-success);
+}
+
+.error-icon {
+  color: var(--status-danger);
+}
+
+.form-input.valid + .input-feedback .success-icon {
+  display: block;
+}
+
+.form-input.invalid + .input-feedback .error-icon {
+  display: block;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.password-toggle:hover {
+  color: var(--accent-primary);
+  background: var(--bg-quaternary);
+}
+
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.hide-icon {
+  display: none;
+}
+
+.validation-message {
+  font-size: 12px;
+  color: var(--status-danger);
+  margin-top: var(--space-xs);
+  min-height: 16px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  font-weight: 500;
+}
+
+.validation-message.show {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Password Strength Indicator
+   ========================================================================== */
+
+.password-strength {
+  margin-top: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.password-strength.show {
+  opacity: 1;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-quaternary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  transition: all var(--transition-normal);
+  border-radius: var(--radius-full);
+}
+
+.strength-fill.weak {
+  width: 25%;
+  background: var(--status-danger);
+}
+
+.strength-fill.fair {
+  width: 50%;
+  background: var(--status-warning);
+}
+
+.strength-fill.good {
+  width: 75%;
+  background: var(--accent-primary);
+}
+
+.strength-fill.strong {
+  width: 100%;
+  background: var(--status-success);
+}
+
+.strength-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Form Options
+   ========================================================================== */
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg); /* Better spacing */
+  flex-shrink: 0;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.form-checkbox {
+  display: none;
+}
+
+.checkmark {
+  width: 20px; /* Slightly larger for better proportion */
+  height: 20px;
+  border: 2px solid var(--border-primary);
+  border-radius: 6px; /* More rounded */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.checkmark svg {
+  width: 14px; /* Proportional to larger checkmark */
+  height: 14px;
+  stroke-width: 3;
+  color: white;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all var(--transition-fast);
+}
+
+.form-checkbox:checked + .checkmark {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  transform: scale(1.05); /* Slight scale on checked */
+}
+
+.form-checkbox:checked + .checkmark svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.forgot-password {
+  font-size: 14px;
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   Enhanced Button Styles
+   ========================================================================== */
+
+.btn-primary {
+  position: relative;
+  width: 100%;
+  padding: 16px var(--space-lg); /* More generous padding */
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: 12px; /* More elegant rounded corners */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+  flex-shrink: 0;
+}
+
+.button-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--transition-fast);
+}
+
+.button-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.btn-primary.loading .button-text {
+  opacity: 0;
+}
+
+.btn-primary.loading .button-loader {
+  opacity: 1;
+}
+
+.loader-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.additional-actions {
+  margin-top: var(--space-sm);
+  text-align: center;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-quaternary);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   Theme Toggle
+   ========================================================================== */
+
+.theme-toggle {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: 1000;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px; /* More squared design */
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-subtle);
+}
+
+.theme-toggle:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Alert Messages
+   ========================================================================== */
+
+.alert {
+  padding: var(--space-md);
+  border-radius: 6px; /* More squared design */
+  margin-bottom: var(--space-lg);
+  border: 1px solid;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.alert-error {
+  background: var(--status-danger-bg);
+  color: var(--status-danger);
+  border-color: var(--status-danger);
+}
+
+.alert-success {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+  border-color: var(--status-success);
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0.7;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Logo Visibility Based on Theme
+   ========================================================================== */
+
+.executive-logo {
+  display: flex;
+}
+
+.command-logo {
+  display: none;
+}
+
+[data-theme="dark"] .executive-logo {
+  display: none;
+}
+
+[data-theme="dark"] .command-logo {
+  display: flex;
+}
+
+/* ==========================================================================
+   System Status Badge (Command Center)
+   ========================================================================== */
+
+.system-status-badge {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--space-xs) var(--space-md); /* Wider padding for better proportion */
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 20px; /* More pill-like shape for elegance */
+  margin: 0; /* Remove margin, using gap from parent */
+}
+
+[data-theme="dark"] .system-status-badge {
+  display: flex;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ==========================================================================
+   Welcome Message
+   ========================================================================== */
+
+/* Welcome message styles removed - no longer needed */
+
+[data-theme="dark"] .welcome-title {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 16px;
+}
+
+[data-theme="dark"] .welcome-subtitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Enhanced Form Styles
+   ========================================================================== */
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.form-label-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px var(--space-md);
+  padding-right: 48px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.input-feedback {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.feedback-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  display: none;
+}
+
+.success-icon {
+  color: var(--status-success);
+}
+
+.error-icon {
+  color: var(--status-danger);
+}
+
+.form-input.valid + .input-feedback .success-icon {
+  display: block;
+}
+
+.form-input.invalid + .input-feedback .error-icon {
+  display: block;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.password-toggle:hover {
+  color: var(--accent-primary);
+  background: var(--bg-quaternary);
+}
+
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.hide-icon {
+  display: none;
+}
+
+.validation-message {
+  font-size: 12px;
+  color: var(--status-danger);
+  margin-top: var(--space-xs);
+  min-height: 16px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  font-weight: 500;
+}
+
+.validation-message.show {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Password Strength Indicator
+   ========================================================================== */
+
+.password-strength {
+  margin-top: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.password-strength.show {
+  opacity: 1;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-quaternary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  transition: all var(--transition-normal);
+  border-radius: var(--radius-full);
+}
+
+.strength-fill.weak {
+  width: 25%;
+  background: var(--status-danger);
+}
+
+.strength-fill.fair {
+  width: 50%;
+  background: var(--status-warning);
+}
+
+.strength-fill.good {
+  width: 75%;
+  background: var(--accent-primary);
+}
+
+.strength-fill.strong {
+  width: 100%;
+  background: var(--status-success);
+}
+
+.strength-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Form Options
+   ========================================================================== */
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg); /* Better spacing */
+  flex-shrink: 0;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.form-checkbox {
+  display: none;
+}
+
+.checkmark {
+  width: 20px; /* Slightly larger for better proportion */
+  height: 20px;
+  border: 2px solid var(--border-primary);
+  border-radius: 6px; /* More rounded */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.checkmark svg {
+  width: 14px; /* Proportional to larger checkmark */
+  height: 14px;
+  stroke-width: 3;
+  color: white;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all var(--transition-fast);
+}
+
+.form-checkbox:checked + .checkmark {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  transform: scale(1.05); /* Slight scale on checked */
+}
+
+.form-checkbox:checked + .checkmark svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.forgot-password {
+  font-size: 14px;
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   Enhanced Button Styles
+   ========================================================================== */
+
+.btn-primary {
+  position: relative;
+  width: 100%;
+  padding: 16px var(--space-lg); /* More generous padding */
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: 12px; /* More elegant rounded corners */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+  flex-shrink: 0;
+}
+
+.button-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--transition-fast);
+}
+
+.button-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.btn-primary.loading .button-text {
+  opacity: 0;
+}
+
+.btn-primary.loading .button-loader {
+  opacity: 1;
+}
+
+.loader-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.additional-actions {
+  margin-top: var(--space-sm);
+  text-align: center;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-quaternary);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}

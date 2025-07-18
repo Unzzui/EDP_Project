@@ -335,13 +335,13 @@ class AnalyticsService:
             # DSO
             dso = self._calcular_dso_dataset(df_encargado)
 
-            # Criticidad - calcular basado en dias_espera si no existe la columna critico
+            # Criticidad - calcular basado en dso_actual si no existe la columna critico
             if "critico" in df_encargado.columns:
                 edps_criticos = len(df_encargado[df_encargado["critico"] == 1])
             else:
                 # Considerar críticos los EDPs con más de 30 días de espera
                 edps_criticos = len(df_encargado[
-                    (df_encargado["dias_espera"].fillna(0) > 30) &
+                    (df_encargado["dso_actual"].fillna(0) > 30) &
                     (~df_encargado["estado"].isin(["pagado", "validado"]))
                 ])
 
@@ -373,17 +373,17 @@ class AnalyticsService:
         """
         if (
             df.empty
-            or "dias_espera" not in df.columns
+            or "dso_actual" not in df.columns
             or "monto_aprobado" not in df.columns
         ):
             return 0
 
         # Filter valid records with positive amounts and days
         df_valid = df[
-            (df["dias_espera"].notna())
+            (df["dso_actual"].notna())
             & (df["monto_aprobado"].notna())
             & (df["monto_aprobado"] > 0)
-            & (df["dias_espera"] >= 0)
+            & (df["dso_actual"] >= 0)
         ].copy()
 
         if df_valid.empty:
@@ -393,11 +393,11 @@ class AnalyticsService:
         total_amount = df_valid["monto_aprobado"].sum()
         if total_amount > 0:
             weighted_dso = (
-                df_valid["dias_espera"] * df_valid["monto_aprobado"]
+                df_valid["dso_actual"] * df_valid["monto_aprobado"]
             ).sum() / total_amount
             return weighted_dso
 
-        return df_valid["dias_espera"].mean()
+        return df_valid["dso_actual"].mean()
 
     def get_basic_stats(self) -> ServiceResponse:
         """
@@ -457,9 +457,9 @@ class AnalyticsService:
             edps_criticos = 0
             if "critico" in df.columns:
                 edps_criticos = df["critico"].fillna(False).sum()
-            elif "dias_espera" in df.columns:
+            elif "dso_actual" in df.columns:
                 # Si no hay columna critico, considerar críticos los que tienen >30 días
-                edps_criticos = (df["dias_espera"].fillna(0) > 30).sum()
+                edps_criticos = (df["dso_actual"].fillna(0) > 30).sum()
 
             # Tasa de aprobación
             tasa_aprobacion = 0
@@ -533,7 +533,7 @@ class AnalyticsService:
         ].copy()
 
         # Convertir fechas
-        df_retrabajos["fecha_hora"] = pd.to_datetime(df_retrabajos["fecha_hora"])
+        df_retrabajos["fecha_hora"] = pd.to_datetime(df_retrabajos["fecha_hora"], format='mixed', errors='coerce')
 
         # Aplicar filtros temporales
         if filtros.get("fecha_inicio"):
@@ -608,8 +608,8 @@ class AnalyticsService:
         # Calculate upcoming collections (próximos a cobrar) - EDPs close to payment
         df_proximos = df_encargado[
             (df_encargado["estado"].isin(["enviado", "revisión", "pendiente"]))
-            & (df_encargado["dias_espera"] <= 15)
-            & (df_encargado["dias_espera"] >= 0)
+            & (df_encargado["dso_actual"] <= 15)
+            & (df_encargado["dso_actual"] >= 0)
         ]
         monto_proximo_cobro = df_proximos["monto_aprobado"].sum()
         cantidad_edp_proximos = len(df_proximos)
@@ -617,7 +617,7 @@ class AnalyticsService:
         # Calculate critical pending amounts (pendientes críticos > 30 días)
         df_criticos = df_encargado[
             (df_encargado["estado"].isin(["enviado", "revisión", "pendiente"]))
-            & (df_encargado["dias_espera"] > 30)
+            & (df_encargado["dso_actual"] > 30)
         ]
         monto_pendiente_critico = df_criticos["monto_aprobado"].sum()
         cantidad_edp_criticos = len(df_criticos)
@@ -628,33 +628,33 @@ class AnalyticsService:
         ]
 
         distribucion_aging = {
-            "reciente": len(df_pendientes[df_pendientes["dias_espera"] <= 15]),
+            "reciente": len(df_pendientes[df_pendientes["dso_actual"] <= 15]),
             "medio": len(
                 df_pendientes[
-                    (df_pendientes["dias_espera"] > 15)
-                    & (df_pendientes["dias_espera"] <= 30)
+                    (df_pendientes["dso_actual"] > 15)
+                    & (df_pendientes["dso_actual"] <= 30)
                 ]
             ),
-            "critico": len(df_pendientes[df_pendientes["dias_espera"] > 30]),
+            "critico": len(df_pendientes[df_pendientes["dso_actual"] > 30]),
         }
 
         # Calculate amounts by aging buckets
         montos_aging = {
-            "reciente": df_pendientes[df_pendientes["dias_espera"] <= 15][
+            "reciente": df_pendientes[df_pendientes["dso_actual"] <= 15][
                 "monto_aprobado"
             ].sum(),
             "medio": df_pendientes[
-                (df_pendientes["dias_espera"] > 15)
-                & (df_pendientes["dias_espera"] <= 30)
+                (df_pendientes["dso_actual"] > 15)
+                & (df_pendientes["dso_actual"] <= 30)
             ]["monto_aprobado"].sum(),
-            "critico": df_pendientes[df_pendientes["dias_espera"] > 30][
+            "critico": df_pendientes[df_pendientes["dso_actual"] > 30][
                 "monto_aprobado"
             ].sum(),
         }
 
         # Calculate efficiency metrics
         tiempo_promedio_resolucion = (
-            df_pagados["dias_espera"].mean() if len(df_pagados) > 0 else 0
+            df_pagados["dso_actual"].mean() if len(df_pagados) > 0 else 0
         )
 
         # Calculate risk score (0-100, lower is better)
@@ -711,7 +711,7 @@ class AnalyticsService:
         else:
             # Considerar críticos los EDPs con más de 30 días de espera
             edps_criticos = df_encargado[
-                (df_encargado["dias_espera"].fillna(0) > 30) &
+                (df_encargado["dso_actual"].fillna(0) > 30) &
                 (~df_encargado["estado"].isin(["pagado", "validado"]))
             ]
         porcentaje_criticos = (
@@ -723,11 +723,11 @@ class AnalyticsService:
         # Calculate average approval time (días promedio de aprobación)
         df_con_fechas = df_encargado[
             (df_encargado["estado"].isin(["pagado", "validado"]))
-            & (df_encargado["dias_espera"].notna())
-            & (df_encargado["dias_espera"] > 0)
+            & (df_encargado["dso_actual"].notna())
+            & (df_encargado["dso_actual"] > 0)
         ]
         dias_promedio_aprobacion = (
-            df_con_fechas["dias_espera"].mean() if len(df_con_fechas) > 0 else 0
+            df_con_fechas["dso_actual"].mean() if len(df_con_fechas) > 0 else 0
         )
 
         # Calculate velocity metrics (EDPs processed per month)
@@ -799,7 +799,7 @@ class AnalyticsService:
         if "critico" not in df_encargado.columns:
             df_encargado = df_encargado.copy()
             df_encargado["critico"] = (
-                (df_encargado["dias_espera"].fillna(0) > 30) &
+                (df_encargado["dso_actual"].fillna(0) > 30) &
                 (~df_encargado["estado"].isin(["pagado", "validado"]))
             ).astype(int)
         
@@ -1095,9 +1095,9 @@ class AnalyticsService:
                 elif col == "cliente":
                     df_pendientes[col] = "Cliente No Especificado"
                 elif col == "critico":
-                    # Calcular critico basado en dias_espera si no existe
+                    # Calcular critico basado en dso_actual si no existe
                     df_pendientes[col] = (
-                        (df_pendientes["dias_espera"].fillna(0) > 30) &
+                        (df_pendientes["dso_actual"].fillna(0) > 30) &
                         (~df_pendientes["estado"].isin(["pagado", "validado"]))
                     ).astype(int)
                 else:
@@ -1117,7 +1117,7 @@ class AnalyticsService:
                     "estado": str(row["estado"]),
                     "es_critico": bool(row.get("critico", 0)),
                     "monto_pendiente": float(row["monto_pendiente"]),
-                    "dias_espera": int(row.get("dias_espera", 30)),
+                    "dso_actual": int(row.get("dso_actual", 30)),
                 }
             )
 
@@ -1143,7 +1143,7 @@ class AnalyticsService:
             df_log_retrabajos = df_log_retrabajos.copy()
 
             df_log_retrabajos.loc[:, "fecha_hora"] = pd.to_datetime(
-                df_log_retrabajos["fecha_hora"]
+                df_log_retrabajos["fecha_hora"], format='mixed', errors='coerce'
             )
             # Aplicar filtros temporales si existen
             if filtros["fecha_inicio"]:
@@ -1160,6 +1160,11 @@ class AnalyticsService:
 
             if "proyecto" in df_log_retrabajos.columns:
                 df_log_retrabajos = df_log_retrabajos.drop(columns=["proyecto"], axis=1)
+            
+            # Asegurar que n_edp tenga el mismo tipo en ambos DataFrames
+            df_log_retrabajos["n_edp"] = df_log_retrabajos["n_edp"].astype(str)
+            df_edp["n_edp"] = df_edp["n_edp"].astype(str)
+            
             # Enriquecer log con información de EDP para poder filtrar por encargado y cliente
             df_log_enriquecido = pd.merge(
                 df_log_retrabajos,
@@ -1219,16 +1224,16 @@ class AnalyticsService:
                 motivo_cercano = df_log[
                     (df_log["n_edp"] == edp_id)
                     & (df_log["campo"] == "motivo_no_aprobado")
-                    & (pd.to_datetime(df_log["fecha_hora"]) >= fecha_inicio)
-                    & (pd.to_datetime(df_log["fecha_hora"]) <= fecha_fin)
+                    & (pd.to_datetime(df_log["fecha_hora"], format='mixed', errors='coerce') >= fecha_inicio)
+                    & (pd.to_datetime(df_log["fecha_hora"], format='mixed', errors='coerce') <= fecha_fin)
                 ]
 
                 # Buscar tipo de falla cercano
                 tipo_cercano = df_log[
                     (df_log["n_edp"] == edp_id)
                     & (df_log["campo"] == "tipo_falla")
-                    & (pd.to_datetime(df_log["fecha_hora"]) >= fecha_inicio)
-                    & (pd.to_datetime(df_log["fecha_hora"]) <= fecha_fin)
+                    & (pd.to_datetime(df_log["fecha_hora"], format='mixed', errors='coerce') >= fecha_inicio)
+                    & (pd.to_datetime(df_log["fecha_hora"], format='mixed', errors='coerce') <= fecha_fin)
                 ]
 
                 # Crear registro enriquecido
@@ -1445,7 +1450,26 @@ class AnalyticsService:
             logger.error(traceback.format_exc())
             return {
                 "success": False,
-                "data": [],
+                "stats": {
+                    "total_edps": 0,
+                    "total_retrabajos": 0,
+                    "edps_con_retrabajo": 0,
+                    "porcentaje_edps_afectados": 0,
+                    "porcentaje_retrabajos": 0,
+                    "promedio_retrabajos_por_edp": 0,
+                },
+                "motivos_rechazo": {},
+                "porcentaje_motivos": {},
+                "tipos_falla": {},
+                "porcentaje_tipos": {},
+                "retrabajos_por_encargado": {},
+                "tendencia_por_mes": {},
+                "proyectos_problematicos": [],
+                "registros": [],
+                "chart_data": {"motivos": [], "tipos": [], "encargados": [], "eficiencia": []},
+                "filter_options": {"meses": [], "encargados": [], "clientes": [], "tipos_falla": []},
+                "usuarios_solicitantes": {},
+                "impacto_financiero": 0,
                 "message": f"Error retrieving EDPs DataFrame: {str(e)}",
             }
     def get_edp_log_csv(self, n_edp: str) -> str:
@@ -1464,7 +1488,7 @@ class AnalyticsService:
             
             # Format datetime for CSV
             if 'fecha_hora' in df_log.columns:
-                df_log["fecha_hora"] = pd.to_datetime(df_log["fecha_hora"]).dt.strftime(
+                df_log["fecha_hora"] = pd.to_datetime(df_log["fecha_hora"], format='mixed', errors='coerce').dt.strftime(
                     "%Y-%m-%d %H:%M:%S"
                 )
 

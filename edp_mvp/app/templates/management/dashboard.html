@@ -4,9 +4,11 @@ Manager{% endblock %} {% block content %}
   rel="stylesheet"
   href="{{ url_for('static', filename='css/management/manager-dashboard.css') }}" />
 
-<!-- Include dashboard JavaScript -->
-<script src="{{ url_for('static', filename='js/management/dashboard.js') }}"></script>
+<!-- Include Chart.js and dashboard JavaScript -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/management/dashboard-charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/management/dashboard-modals.js') }}"></script>
+<script src="{{ url_for('static', filename='js/management/dashboard-main.js') }}"></script>
 
 <!-- Pass data to JavaScript -->
 <script>
@@ -18,109 +20,395 @@ Manager{% endblock %} {% block content %}
 </script>
 
 <div class="dashboard-container">
-  <!-- Compact Metrics Header -->
-  <header class="dashboard-metrics-header">
-    <div class="header-brand">
-      <h1>Operations Visual Intelligence</h1>
-      <div class="timestamp">{{ current_user.nombre if current_user else 'Manager' }} • <span id="current-time">Loading...</span></div>
-    </div>
-    <div class="header-metrics">
-      <div class="header-metric">
-        <div class="header-metric-value {{ 'critical' if kpis.dso_actual and kpis.dso_actual > 40 else 'warning' if kpis.dso_actual and kpis.dso_actual > 30 else 'positive' }}">
-          {{ "{:.1f}".format(kpis.dso_actual if kpis and kpis.dso_actual else 47.2) }}
+  <!-- Analytics Header -->
+  <header class="analytics-header">
+    <div class="analytics-header-content">
+      <div class="analytics-header-brand">
+        <h1>Operations Visual Intelligence</h1>
+        <div class="analytics-header-status">
+          <div class="analytics-status-indicator">
+            <div class="status-dot status-active"></div>
+            <span class="status-text">Sistema Activo • Última actualización: <span id="last-update">{{ moment().format('HH:mm') if moment else 'Ahora' }}</span></span>
+          </div>
+          <div class="timestamp">
+            {{ current_user.nombre if current_user else 'Manager' }} •
+            <span id="current-time">Loading...</span>
+          </div>
         </div>
-        <div class="header-metric-label">DSO Actual</div>
       </div>
-      <div class="header-metric">
-        <div class="header-metric-value critical">
-          {{ "{:+.0f}k".format((kpis.dso_actual - 35) * -35 if kpis and kpis.dso_actual else -420) }}
+      
+      <!-- Real-time Management Metrics -->
+      <div class="analytics-header-metrics">
+        <div class="analytics-header-metric" data-tooltip="dso-tooltip">
+          <div class="analytics-metric-value {{ 'critical' if kpis.dso_actual and kpis.dso_actual > 40 else 'warning' if kpis.dso_actual and kpis.dso_actual > 30 else 'positive' if kpis.dso_actual and kpis.dso_actual > 0 else 'neutral' }}">
+            {% if kpis and kpis.dso_actual and kpis.dso_actual > 0 %}
+              {{ "{:.1f}".format(kpis.dso_actual) }}
+            {% else %}
+              --
+            {% endif %}
+          </div>
+          <div class="analytics-metric-label">DSO DÍAS</div>
+          <!-- DSO Tooltip -->
+          <div class="metric-tooltip" id="dso-tooltip">
+            <div class="tooltip-header">
+              <span class="tooltip-title">Days Sales Outstanding</span>
+              <span class="tooltip-formula">Promedio días entre facturación y cobro</span>
+            </div>
+            <div class="tooltip-content">
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Target objetivo:</span>
+                <span class="tooltip-value">≤ 35 días</span>
+              </div>
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Benchmark industria:</span>
+                <span class="tooltip-value">30-45 días</span>
+              </div>
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Período anterior:</span>
+                <span class="tooltip-value">
+                  {% if kpis and kpis.dso_anterior and kpis.dso_anterior > 0 %}
+                    {{ "{:.1f}".format(kpis.dso_anterior) }} días
+                  {% else %}
+                    Sin datos
+                  {% endif %}
+                </span>
+              </div>
+              <div class="tooltip-impact">
+                <span class="tooltip-impact-label">Impacto por día de retraso:</span>
+                <span class="tooltip-impact-value">-35k CLP flujo diario</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="header-metric-label">CLP/Día Perdido</div>
-      </div>
-      <div class="header-metric">
-        <div class="header-metric-value warning">
-          {{ "{:.1f}M".format(kpis.forecast_7_dias if kpis and kpis.forecast_7_dias else 6.8) }}
+        
+        <div class="analytics-header-metric" data-tooltip="impact-tooltip">
+          <div class="analytics-metric-value {{ 'positive' if kpis and kpis.dso_actual and kpis.dso_actual <= 35 else 'critical' if kpis and kpis.dso_actual and kpis.dso_actual > 35 else 'neutral' }}">
+            {% if kpis and kpis.dso_actual and kpis.dso_actual > 0 %}
+              {{ "{:+.0f}k".format((kpis.dso_actual - 35) * -35) }}
+            {% else %}
+              --
+            {% endif %}
+          </div>
+          <div class="analytics-metric-label">CLP/Día Impacto</div>
+          <!-- Impact Tooltip -->
+          <div class="metric-tooltip" id="impact-tooltip">
+            <div class="tooltip-header">
+              <span class="tooltip-title">Impacto Financiero Diario</span>
+              <span class="tooltip-formula">Pérdida/ganancia por desviación DSO</span>
+            </div>
+            <div class="tooltip-content">
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Cálculo base:</span>
+                <span class="tooltip-value">(DSO actual - 35d) × -35k CLP</span>
+              </div>
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Impacto mensual:</span>
+                <span class="tooltip-value">
+                  {% if kpis and kpis.dso_actual and kpis.dso_actual > 0 %}
+                    {{ "{:+.0f}k".format((kpis.dso_actual - 35) * -35 * 30) }} CLP
+                  {% else %}
+                    Sin datos
+                  {% endif %}
+                </span>
+              </div>
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Costo oportunidad:</span>
+                <span class="tooltip-value">Flujo de caja operacional</span>
+              </div>
+              <div class="tooltip-impact">
+                <span class="tooltip-impact-label">Objetivo:</span>
+                <span class="tooltip-impact-value">Mantener DSO ≤ 35 días</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="header-metric-label">Forecast 7D</div>
-      </div>
-      <div class="header-metric">
-        <div class="header-metric-value positive">
-          {{ "{:.0f}%".format(kpis.progreso_objetivo if kpis and kpis.progreso_objetivo else 78) }}
+        
+        <div class="analytics-header-metric" data-tooltip="forecast-tooltip">
+          <div class="analytics-metric-value {{ 'positive' if kpis and kpis.forecast_7_dias and kpis.forecast_7_dias > 0 else 'neutral' }}">
+            {% if kpis and kpis.forecast_7_dias and kpis.forecast_7_dias > 0 %}
+              {{ "{:.1f}M".format(kpis.forecast_7_dias) }}
+            {% else %}
+              --
+            {% endif %}
+          </div>
+          <div class="analytics-metric-label">FORECAST 7D</div>
+          <!-- Forecast Tooltip -->
+          <div class="metric-tooltip" id="forecast-tooltip">
+            <div class="tooltip-header">
+              <span class="tooltip-title">Proyección Ingresos 7 Días</span>
+              <span class="tooltip-formula">Suma EDPs con fecha cobro próxima</span>
+            </div>
+            <div class="tooltip-content">
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Metodología:</span>
+                <span class="tooltip-value">EDPs con probabilidad >70%</span>
+              </div>
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Confianza promedio:</span>
+                <span class="tooltip-value">
+                  {% if kpis and kpis.forecast_confidence and kpis.forecast_confidence > 0 %}
+                    {{ "{:.0f}".format(kpis.forecast_confidence) }}%
+                  {% else %}
+                    Sin datos
+                  {% endif %}
+                </span>
+              </div>
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Período anterior:</span>
+                <span class="tooltip-value">
+                  {% if kpis and kpis.forecast_7_dias_anterior and kpis.forecast_7_dias_anterior > 0 %}
+                    {{ "{:.1f}M".format(kpis.forecast_7_dias_anterior) }} CLP
+                  {% else %}
+                    Sin datos
+                  {% endif %}
+                </span>
+              </div>
+              <div class="tooltip-impact">
+                <span class="tooltip-impact-label">Actualización:</span>
+                <span class="tooltip-impact-value">Tiempo real • Cada 15 min</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="header-metric-label">Meta Mensual</div>
+        
+        <div class="analytics-header-metric" data-tooltip="meta-tooltip">
+          <div class="analytics-metric-value {{ 'positive' if kpis and kpis.progreso_objetivo and kpis.progreso_objetivo > 70 else 'warning' if kpis and kpis.progreso_objetivo and kpis.progreso_objetivo > 50 else 'critical' if kpis and kpis.progreso_objetivo and kpis.progreso_objetivo > 0 else 'neutral' }}">
+            {% if kpis and kpis.progreso_objetivo and kpis.progreso_objetivo > 0 %}
+              {{ "{:.0f}%".format(kpis.progreso_objetivo) }}
+            {% else %}
+              --
+            {% endif %}
+          </div>
+          <div class="analytics-metric-label">META MENSUAL</div>
+          <!-- Meta Tooltip -->
+          <div class="metric-tooltip" id="meta-tooltip">
+            <div class="tooltip-header">
+              <span class="tooltip-title">Progreso Meta Cobro Mensual</span>
+              <span class="tooltip-formula">Cobrado vs objetivo mensual</span>
+            </div>
+            <div class="tooltip-content">
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Meta mensual:</span>
+                <span class="tooltip-value">
+                  {% if kpis and kpis.objetivo_anual and kpis.objetivo_anual > 0 %}
+                    {{ "{:.1f}M".format(kpis.objetivo_anual / 12) }} CLP
+                  {% else %}
+                    Sin definir
+                  {% endif %}
+                </span>
+              </div>
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Cobrado a la fecha:</span>
+                <span class="tooltip-value">
+                  {% if kpis and kpis.ingresos_totales and kpis.ingresos_totales > 0 %}
+                    {{ "{:.1f}M".format(kpis.ingresos_totales) }} CLP
+                  {% else %}
+                    Sin datos
+                  {% endif %}
+                </span>
+              </div>
+              <div class="tooltip-metric">
+                <span class="tooltip-label">Días restantes:</span>
+                <span class="tooltip-value">{{ kpis.days_remaining if kpis and kpis.days_remaining else 0 }} días</span>
+              </div>
+              <div class="tooltip-impact">
+                <span class="tooltip-impact-label">Requerido diario:</span>
+                <span class="tooltip-impact-value">
+                  {% if kpis and kpis.meta_gap and kpis.meta_gap > 0 and kpis.days_remaining and kpis.days_remaining > 0 %}
+                    {{ "{:.1f}M".format(kpis.meta_gap / kpis.days_remaining) }} CLP/día
+                  {% else %}
+                    Meta cumplida
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="analytics-header-metric">
+          <div class="analytics-metric-value {{ 'positive' if kpis and kpis.forecast_confidence and kpis.forecast_confidence > 70 else 'warning' if kpis and kpis.forecast_confidence and kpis.forecast_confidence > 50 else 'neutral' }}">
+            {% if kpis and kpis.forecast_confidence and kpis.forecast_confidence > 0 %}
+              {{ "{:.0f}%".format(kpis.forecast_confidence) }}
+            {% else %}
+              --
+            {% endif %}
+          </div>
+          <div class="analytics-metric-label">CONFIANZA</div>
+        </div>
       </div>
     </div>
   </header>
 
   <!-- KPI Cards Row -->
   <section class="kpi-cards-row">
-    <div class="kpi-card critical-kpi">
+    <div class="kpi-card critical-kpi" onclick="showCriticalKPIModal()">
       <div class="kpi-impact critical"></div>
       <div class="kpi-header">
         <div class="kpi-title">EDPs Críticos</div>
-        <div class="kpi-trend down">
-          {{ "↓ {:.0f}%".format(kpis.critical_projects_change if kpis and kpis.critical_projects_change else 12) }}
+        <div class="kpi-trend {{ 'down' if kpis and kpis.critical_projects_change and kpis.critical_projects_change < 0 else 'up' if kpis and kpis.critical_projects_change and kpis.critical_projects_change > 0 else 'stable' }}">
+          {% if kpis and kpis.critical_projects_change and kpis.critical_projects_change != 0 %}
+            {{ "↓ {:.0f}%".format(-kpis.critical_projects_change) if kpis.critical_projects_change < 0 else "↑ {:.0f}%".format(kpis.critical_projects_change) }}
+          {% else %}
+            → --
+          {% endif %}
         </div>
       </div>
       <div class="kpi-value critical">
-        {{ kpis.critical_projects_count if kpis and kpis.critical_projects_count else 7 }}
+        {{ kpis.critical_projects_count if kpis and kpis.critical_projects_count else 0 }}
       </div>
       <div class="kpi-context">
-        EDPs >60 días • {{ "{:.1f}M".format(kpis.critical_amount if kpis and kpis.critical_amount else 8.2) }} CLP en riesgo alto
+        EDPs >60 días • 
+        {% if kpis and kpis.critical_amount and kpis.critical_amount > 0 %}
+          {{ "{:.1f}M".format(kpis.critical_amount) }} CLP en riesgo
+        {% else %}
+          Sin riesgo monetario
+        {% endif %}
       </div>
     </div>
 
-    <div class="kpi-card warning-kpi">
+    <div class="kpi-card warning-kpi" onclick="showAgingKPIModal()">
       <div class="kpi-impact warning"></div>
       <div class="kpi-header">
         <div class="kpi-title">Aging 31-60</div>
-        <div class="kpi-trend up">
-          {{ "↑ {:.0f}%".format(kpis.aging_31_60_change if kpis and kpis.aging_31_60_change else 8) }}
+        <div class="kpi-trend {{ 'up' if kpis and kpis.aging_31_60_change and kpis.aging_31_60_change > 0 else 'down' if kpis and kpis.aging_31_60_change and kpis.aging_31_60_change < 0 else 'stable' }}">
+          {% if kpis and kpis.aging_31_60_change and kpis.aging_31_60_change != 0 %}
+            {{ "↑ {:.0f}%".format(kpis.aging_31_60_change) if kpis.aging_31_60_change > 0 else "↓ {:.0f}%".format(-kpis.aging_31_60_change) }}
+          {% else %}
+            → --
+          {% endif %}
         </div>
       </div>
       <div class="kpi-value warning">
-        {{ kpis.aging_31_60_count if kpis and kpis.aging_31_60_count else 12 }}
+        {{ kpis.aging_31_60_count if kpis and kpis.aging_31_60_count else 0 }}
       </div>
       <div class="kpi-context">
-        EDPs en zona warning • {{ "{:.1f}M".format(kpis.aging_31_60_amount if kpis and kpis.aging_31_60_amount else 4.5) }} CLP
+        EDPs en zona warning • 
+        {% if kpis and kpis.aging_31_60_amount and kpis.aging_31_60_amount > 0 %}
+          {{ "{:.1f}M".format(kpis.aging_31_60_amount) }} CLP
+        {% else %}
+          Sin monto en riesgo
+        {% endif %}
       </div>
     </div>
 
-    <div class="kpi-card positive-kpi">
+    <div class="kpi-card positive-kpi" onclick="showFastCollectionModal()">
       <div class="kpi-impact positive"></div>
       <div class="kpi-header">
         <div class="kpi-title">Cobro Rápido</div>
-        <div class="kpi-trend up">
-          {{ "↑ {:.0f}%".format(kpis.fast_collection_change if kpis and kpis.fast_collection_change else 15) }}
+        <div class="kpi-trend {{ 'up' if kpis and kpis.fast_collection_change and kpis.fast_collection_change > 0 else 'down' if kpis and kpis.fast_collection_change and kpis.fast_collection_change < 0 else 'stable' }}">
+          {% if kpis and kpis.fast_collection_change and kpis.fast_collection_change != 0 %}
+            {{ "↑ {:.0f}%".format(kpis.fast_collection_change) if kpis.fast_collection_change > 0 else "↓ {:.0f}%".format(-kpis.fast_collection_change) }}
+          {% else %}
+            → --
+          {% endif %}
         </div>
       </div>
       <div class="kpi-value positive">
-        {{ kpis.fast_collection_count if kpis and kpis.fast_collection_count else 18 }}
+        {{ kpis.fast_collection_count if kpis and kpis.fast_collection_count else 0 }}
       </div>
       <div class="kpi-context">
-        EDPs <30 días • {{ "{:.1f}M".format(kpis.fast_collection_amount if kpis and kpis.fast_collection_amount else 6.1) }} CLP saludable
+        EDPs <30 días • 
+        {% if kpis and kpis.fast_collection_amount and kpis.fast_collection_amount > 0 %}
+          {{ "{:.1f}M".format(kpis.fast_collection_amount) }} CLP saludable
+        {% else %}
+          Sin datos de monto
+        {% endif %}
       </div>
     </div>
 
-    <div class="kpi-card revenue-kpi">
-      <div class="kpi-impact warning"></div>
+    <div class="kpi-card revenue-kpi" onclick="showMetaGapModal()">
+      <div class="kpi-impact {{ 'warning' if kpis and kpis.meta_gap and kpis.meta_gap > 3 else 'positive' if kpis and kpis.meta_gap and kpis.meta_gap > 0 else 'neutral' }}"></div>
       <div class="kpi-header">
         <div class="kpi-title">Meta Gap</div>
-        <div class="kpi-trend stable">→ 0%</div>
+        <div class="kpi-trend stable">→ --</div>
       </div>
-      <div class="kpi-value warning">
-        {{ "{:.1f}M".format(kpis.meta_gap if kpis and kpis.meta_gap else 5.5) }}
+      <div class="kpi-value {{ 'warning' if kpis and kpis.meta_gap and kpis.meta_gap > 3 else 'positive' if kpis and kpis.meta_gap and kpis.meta_gap > 0 else 'neutral' }}">
+        {% if kpis and kpis.meta_gap and kpis.meta_gap > 0 %}
+          {{ "{:.1f}M".format(kpis.meta_gap) }}
+        {% else %}
+          --
+        {% endif %}
       </div>
       <div class="kpi-context">
-        CLP restantes • {{ kpis.days_remaining if kpis and kpis.days_remaining else 8 }} días disponibles
+        {% if kpis and kpis.meta_gap and kpis.meta_gap > 0 %}
+          CLP restantes • {{ kpis.days_remaining if kpis and kpis.days_remaining else 0 }} días disponibles
+        {% else %}
+          Sin datos de meta
+        {% endif %}
       </div>
     </div>
   </section>
-
+    <!-- ALERTAS OPERACIONALES - MÁXIMO 3, JERARQUIZADAS -->
+  <section class="alerts-priority-banner">
+    <div class="alerts-header-clean">
+      <h3 class="alerts-title-clean">Alertas Operacionales</h3>
+    </div>
+    <div class="alerts-hierarchy">
+      <!-- ALERTA 1: Solo si hay EDPs críticos reales -->
+      {% if kpis and kpis.critical_projects_count and kpis.critical_projects_count > 0 %}
+      <div class="alert-primary critical" onclick="showCriticalEDPsModal()">
+        <div class="alert-severity critical">CRÍTICO</div>
+        <div class="alert-content-primary">
+          <div class="alert-title-primary">{{ kpis.critical_projects_count }} EDPs Vencidos</div>
+          <div class="alert-subtitle">
+            {% if kpis.critical_amount and kpis.critical_amount > 0 %}
+              ${{ "{:.1f}".format(kpis.critical_amount) }}M CLP en riesgo • >90 días
+            {% else %}
+              Más de 90 días pendientes
+            {% endif %}
+          </div>
+        </div>
+        <div class="alert-action-primary">REVISAR</div>
+      </div>
+      {% endif %}
+      
+      <!-- ALERTA 2: Solo si DSO está realmente elevado -->
+      {% if kpis and kpis.dso_actual and kpis.dso_actual > 80 %}
+      <div class="alert-primary warning" onclick="showDSOAlertModal()">
+        <div class="alert-severity warning">ALTO</div>
+        <div class="alert-content-primary">
+          <div class="alert-title-primary">DSO Elevado: {{ "{:.0f}".format(kpis.dso_actual) }} días</div>
+          <div class="alert-subtitle">
+            {{ "{:.0f}".format(kpis.dso_actual - 60) }} días sobre target de 60d • Impacta flujo de caja
+          </div>
+        </div>
+        <div class="alert-action-primary">ANALIZAR</div>
+      </div>
+      {% endif %}
+      
+      <!-- ALERTA 3: Solo si forecast está realmente bajo -->
+      {% if kpis and kpis.forecast_7_dias and kpis.forecast_7_dias < 1.0 %}
+      <div class="alert-primary info" onclick="showLowCashflowModal()">
+        <div class="alert-severity info">MEDIO</div>
+        <div class="alert-content-primary">
+          <div class="alert-title-primary">Flujo Proyectado Bajo</div>
+          <div class="alert-subtitle">
+            {{ "{:.1f}M".format(kpis.forecast_7_dias) }} CLP próximos 7 días • Revisar pipeline
+          </div>
+        </div>
+        <div class="alert-action-primary">PLANIFICAR</div>
+      </div>
+      {% endif %}
+      
+      <!-- ESTADO: Sin alertas críticas -->
+      {% if not ((kpis and kpis.critical_projects_count and kpis.critical_projects_count > 0) or 
+                (kpis and kpis.dso_actual and kpis.dso_actual > 80) or 
+                (kpis and kpis.forecast_7_dias and kpis.forecast_7_dias < 1.0)) %}
+      <div class="alert-primary success">
+        <div class="alert-severity success">NORMAL</div>
+        <div class="alert-content-primary">
+          <div class="alert-title-primary">Operaciones Estables</div>
+          <div class="alert-subtitle">Sin alertas críticas • Sistemas funcionando correctamente</div>
+        </div>
+        <div class="alert-status-ok">OK</div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
   <!-- Main Analytics Grid -->
   <section class="analytics-grid">
     <!-- DSO Heatmap by Project Manager -->
-    <div class="chart-panel">
+    <div class="chart-panel half">
       <div class="chart-header">
         <div class="chart-title">DSO por Jefe Proyecto</div>
         <button class="chart-action critical" onclick="coordinateManagers()">Coordinar</button>
@@ -128,57 +416,37 @@ Manager{% endblock %} {% block content %}
       <div class="chart-container">
         <div class="dso-heatmap">
           {% if equipo_operacional and equipo_operacional|length > 0 %}
-            {% for miembro in equipo_operacional[:8] %}
-            <div class="dso-cell {{ 'critical' if (miembro.dso_days or 50) > 60 else 'warning' if (miembro.dso_days or 50) > 40 else 'good' }}" 
-                 onclick="showManagerDetail('{{ miembro.nombre }}', '{{ miembro.dso_days or 45 }}d', '{{ "{:.1f}M".format((miembro.monto_gestionado or 2000000) / 1000000) }} CLP')">
-              <div class="dso-manager">{{ miembro.nombre[:8] }}{{ "." if miembro.nombre|length > 8 else "" }}</div>
-              <div class="dso-days" style="color: {{ '#ff0066' if (miembro.dso_days or 50) > 60 else '#ffa500' if (miembro.dso_days or 50) > 40 else '#00ff88' }}">
-                {{ miembro.dso_days or (range(25, 72) | random) }}d
+            {% for jefe in equipo_operacional %}
+            <div class="dso-cell {{ 'critical' if (jefe.dso_days or 0) > 60 else 'warning' if (jefe.dso_days or 0) > 40 else 'good' if (jefe.dso_days or 0) > 0 else 'neutral' }}" 
+                 onclick="showManagerDetail('{{ jefe.nombre }}', '{{ jefe.dso_days or 0 }}d', '{{ "{:.1f}M".format((jefe.monto_gestionado or 0) / 1000000) }} CLP', '{{ jefe.proyectos_count or 0 }} proyectos')">
+              <div class="dso-manager">{{ jefe.nombre[:15] }}{{ "..." if jefe.nombre|length > 15 else "" }}</div>
+              <div class="dso-days" style="color: {{ '#ff0066' if (jefe.dso_days or 0) > 60 else '#ffa500' if (jefe.dso_days or 0) > 40 else '#00ff88' if (jefe.dso_days or 0) > 0 else '#888888' }}">
+                {% if jefe.dso_days and jefe.dso_days > 0 %}
+                  {{ jefe.dso_days }}d
+                {% else %}
+                  --
+                {% endif %}
               </div>
-              <div class="dso-amount">{{ "{:.1f}M".format((miembro.monto_gestionado or (range(800000, 3100000) | random)) / 1000000) }} CLP</div>
+              <div class="dso-amount">
+                {% if jefe.monto_gestionado and jefe.monto_gestionado > 0 %}
+                  {{ "{:.1f}M CLP".format(jefe.monto_gestionado / 1000000) }}
+                {% else %}
+                  Sin datos
+                {% endif %}
+              </div>
+              <div class="dso-projects">
+                {% if jefe.proyectos_count and jefe.proyectos_count > 0 %}
+                  {{ jefe.proyectos_count }} proyectos
+                {% else %}
+                  Sin proyectos
+                {% endif %}
+              </div>
             </div>
             {% endfor %}
           {% else %}
-            <!-- Default heatmap data -->
-            <div class="dso-cell critical" onclick="showManagerDetail('Carlos M.', '67d', '2.3M CLP')">
-              <div class="dso-manager">Carlos M.</div>
-              <div class="dso-days" style="color: #ff0066">67d</div>
-              <div class="dso-amount">2.3M CLP</div>
-            </div>
-            <div class="dso-cell warning" onclick="showManagerDetail('María G.', '51d', '3.1M CLP')">
-              <div class="dso-manager">María G.</div>
-              <div class="dso-days" style="color: #ffa500">51d</div>
-              <div class="dso-amount">3.1M CLP</div>
-            </div>
-            <div class="dso-cell warning" onclick="showManagerDetail('Ana R.', '42d', '1.8M CLP')">
-              <div class="dso-manager">Ana R.</div>
-              <div class="dso-days" style="color: #ffa500">42d</div>
-              <div class="dso-amount">1.8M CLP</div>
-            </div>
-            <div class="dso-cell good" onclick="showManagerDetail('Roberto S.', '28d', '1.2M CLP')">
-              <div class="dso-manager">Roberto S.</div>
-              <div class="dso-days" style="color: #00ff88">28d</div>
-              <div class="dso-amount">1.2M CLP</div>
-            </div>
-            <div class="dso-cell warning" onclick="showManagerDetail('Luis P.', '45d', '2.0M CLP')">
-              <div class="dso-manager">Luis P.</div>
-              <div class="dso-days" style="color: #ffa500">45d</div>
-              <div class="dso-amount">2.0M CLP</div>
-            </div>
-            <div class="dso-cell good" onclick="showManagerDetail('Carmen V.', '32d', '1.5M CLP')">
-              <div class="dso-manager">Carmen V.</div>
-              <div class="dso-days" style="color: #00ff88">32d</div>
-              <div class="dso-amount">1.5M CLP</div>
-            </div>
-            <div class="dso-cell critical" onclick="showManagerDetail('Diego L.', '72d', '1.9M CLP')">
-              <div class="dso-manager">Diego L.</div>
-              <div class="dso-days" style="color: #ff0066">72d</div>
-              <div class="dso-amount">1.9M CLP</div>
-            </div>
-            <div class="dso-cell good" onclick="showManagerDetail('Sofia T.', '25d', '0.8M CLP')">
-              <div class="dso-manager">Sofia T.</div>
-              <div class="dso-days" style="color: #00ff88">25d</div>
-              <div class="dso-amount">0.8M CLP</div>
+            <div class="no-data-message">
+              <div class="no-data-text">Sin datos de equipo operacional</div>
+              <div class="no-data-subtext">Los datos aparecerán cuando haya proyectos con jefe asignado</div>
             </div>
           {% endif %}
         </div>
@@ -186,88 +454,48 @@ Manager{% endblock %} {% block content %}
     </div>
 
     <!-- Cash Flow Forecast Chart -->
-    <div class="chart-panel wide">
+    <div class="chart-panel half">
       <div class="chart-header">
-        <div class="chart-title">Forecast Ingresos - Próximos 7 Días</div>
+        <div class="chart-title" onclick="showWeeklyForecastModal()" style="cursor: pointer;">Forecast Ingresos - Próximos 7 Días</div>
         <button class="chart-action" onclick="exportForecast()">Exportar</button>
+      </div>
+      <div class="chart-subheader">
+        <div class="chart-clarification">% = Probabilidad de cobro</div>
       </div>
       <div class="chart-container">
         <div class="cashflow-bars">
-          {% set forecast_data = [
-            {'day': 'Lun 24', 'amount': kpis.forecast_day_1 if kpis and kpis.forecast_day_1 else 1.2, 'prob': 85, 'color': 'high'},
-            {'day': 'Mar 25', 'amount': kpis.forecast_day_2 if kpis and kpis.forecast_day_2 else 2.3, 'prob': 72, 'color': 'high'},
-            {'day': 'Mié 26', 'amount': kpis.forecast_day_3 if kpis and kpis.forecast_day_3 else 1.8, 'prob': 68, 'color': 'medium'},
-            {'day': 'Jue 27', 'amount': kpis.forecast_day_4 if kpis and kpis.forecast_day_4 else 0.9, 'prob': 45, 'color': 'low'},
-            {'day': 'Vie 28', 'amount': kpis.forecast_day_5 if kpis and kpis.forecast_day_5 else 0.6, 'prob': 78, 'color': 'medium'},
-            {'day': 'Sáb 29', 'amount': kpis.forecast_day_6 if kpis and kpis.forecast_day_6 else 0.4, 'prob': 25, 'color': 'low'},
-            {'day': 'Dom 30', 'amount': kpis.forecast_day_7 if kpis and kpis.forecast_day_7 else 0.2, 'prob': 15, 'color': 'low'}
-          ] %}
-          {% set max_amount = forecast_data | map(attribute='amount') | max %}
-          {% for item in forecast_data %}
-          <div class="cashflow-day" onclick="showForecastDetail('{{ item.day }}', '{{ "{:.1f}M".format(item.amount) }}', '{{ item.prob }}% prob')">
-            <div class="cashflow-bar" style="height: {{ (item.amount / max_amount * 80) | round(0) }}%">
-              <div class="cashflow-fill {{ item.color }}" style="height: 100%">
-                <div class="cashflow-value">{{ "{:.1f}M".format(item.amount) }}</div>
-              </div>
-            </div>
-            <div class="cashflow-label">{{ item.day }}</div>
-            <div class="cashflow-prob">{{ item.prob }}% prob</div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-
-    <!-- Alerts & Actions Panel -->
-    <div class="chart-panel">
-      <div class="chart-header">
-        <div class="chart-title">Alertas Operacionales</div>
-        <button class="chart-action critical" onclick="executeAllAlerts()">Actuar</button>
-      </div>
-      <div class="chart-container">
-        <div class="alert-panel">
-          {% if alertas and alertas|length > 0 %}
-            {% for alerta in alertas[:4] %}
-            <div class="alert-item {{ 'critical' if alerta.tipo == 'critico' else 'warning' if alerta.tipo == 'alto' else 'info' }}"
-                 onclick="executeAlert('{{ alerta.titulo }}', '{{ alerta.impacto_monto if alerta.impacto_monto else "N/A" }}', '{{ alerta.descripcion }}')">
-              <div class="alert-header">
-                <div class="alert-title">{{ alerta.titulo }}</div>
-                <div class="alert-impact {{ 'critical' if alerta.tipo == 'critico' else 'warning' if alerta.tipo == 'alto' else 'info' }}">
-                  {% if alerta.impacto_monto %}{{ "{:.1f}M".format(alerta.impacto_monto / 1000000) }}{% else %}N/A{% endif %}
+          {% if kpis and (kpis.forecast_day_1 or kpis.forecast_day_2 or kpis.forecast_day_3 or kpis.forecast_day_4 or kpis.forecast_day_5 or kpis.forecast_day_6 or kpis.forecast_day_7) %}
+            {% set forecast_data = [
+              {'day': 'Lun', 'amount': kpis.forecast_day_1 or 0, 'prob': 0},
+              {'day': 'Mar', 'amount': kpis.forecast_day_2 or 0, 'prob': 0},
+              {'day': 'Mié', 'amount': kpis.forecast_day_3 or 0, 'prob': 0},
+              {'day': 'Jue', 'amount': kpis.forecast_day_4 or 0, 'prob': 0},
+              {'day': 'Vie', 'amount': kpis.forecast_day_5 or 0, 'prob': 0},
+              {'day': 'Sáb', 'amount': kpis.forecast_day_6 or 0, 'prob': 0},
+              {'day': 'Dom', 'amount': kpis.forecast_day_7 or 0, 'prob': 0}
+            ] %}
+            {% set max_amount = forecast_data | map(attribute='amount') | max %}
+            {% if max_amount > 0 %}
+              {% for item in forecast_data %}
+              <div class="cashflow-day" onclick="showForecastDetail('{{ item.day }}', '{{ "{:.1f}M".format(item.amount) }}', '{{ item.prob }}% prob')">
+                <div class="cashflow-bar" style="height: {{ (item.amount / max_amount * 80) | round(0) }}%">
+                  <div class="cashflow-fill {{ 'high' if item.amount > 1.5 else 'medium' if item.amount > 0.5 else 'low' }}" style="height: 100%">
+                    {% if item.amount > 0 %}
+                      <div class="cashflow-value">{{ "{:.1f}M".format(item.amount) }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="cashflow-label">{{ item.day }}</div>
+                <div class="cashflow-prob {{ 'high-prob' if item.prob > 70 else 'medium-prob' if item.prob > 50 else 'low-prob' if item.prob > 0 else 'no-prob' }}">
+                  {% if item.prob > 0 %}{{ item.prob }}%{% else %}--{% endif %}
                 </div>
               </div>
-              <div class="alert-description">{{ alerta.descripcion }}</div>
-            </div>
-            {% endfor %}
+              {% endfor %}
+            {% endif %}
           {% else %}
-            <!-- Default alerts -->
-            <div class="alert-item critical" onclick="executeAlert('Cliente ABC Corp', '2.3M', '67 días sin respuesta • Escalar a Carlos Mendoza')">
-              <div class="alert-header">
-                <div class="alert-title">Cliente ABC Corp</div>
-                <div class="alert-impact critical">2.3M</div>
-              </div>
-              <div class="alert-description">67 días sin respuesta • Escalar a Carlos Mendoza</div>
-            </div>
-            <div class="alert-item warning" onclick="executeAlert('DSO Deterioro', '-420k/d', '+12 días vs benchmark • Revisar procesos')">
-              <div class="alert-header">
-                <div class="alert-title">DSO Deterioro</div>
-                <div class="alert-impact warning">-420k/d</div>
-              </div>
-              <div class="alert-description">+12 días vs benchmark • Revisar procesos</div>
-            </div>
-            <div class="alert-item warning" onclick="executeAlert('7 EDPs >60d', '8.2M', 'Concentración riesgo • Diversificar seguimiento')">
-              <div class="alert-header">
-                <div class="alert-title">{{ kpis.critical_projects_count if kpis else 7 }} EDPs >60d</div>
-                <div class="alert-impact warning">{{ "{:.1f}M".format(kpis.critical_amount if kpis and kpis.critical_amount else 8.2) }}</div>
-              </div>
-              <div class="alert-description">Concentración riesgo • Diversificar seguimiento</div>
-            </div>
-            <div class="alert-item info" onclick="executeAlert('Meta Mensual', '78%', 'En objetivo • 5.5M CLP restantes factibles')">
-              <div class="alert-header">
-                <div class="alert-title">Meta Mensual</div>
-                <div class="alert-impact info">{{ "{:.0f}%".format(kpis.progreso_objetivo if kpis else 78) }}</div>
-              </div>
-              <div class="alert-description">En objetivo • {{ "{:.1f}M".format(kpis.meta_gap if kpis and kpis.meta_gap else 5.5) }} CLP restantes factibles</div>
+            <div class="no-forecast-data">
+              <div class="no-forecast-text">Sin datos de forecast disponibles</div>
+              <div class="no-forecast-subtext">Los datos se generarán cuando haya proyecciones</div>
             </div>
           {% endif %}
         </div>
@@ -275,247 +503,97 @@ Manager{% endblock %} {% block content %}
     </div>
 
     <!-- DSO Trend Chart -->
-    <div class="chart-panel wide">
+    <div class="chart-panel half">
       <div class="chart-header">
         <div class="chart-title">Tendencia DSO</div>
         <button class="chart-action" onclick="analyzeDSOTrend()">Analizar</button>
       </div>
       <div class="chart-container">
-        <canvas id="dsoTrendChart"></canvas>
+        {% if kpis and kpis.dso_actual and kpis.dso_actual > 0 %}
+          <canvas id="dsoTrendChart"></canvas>
+        {% else %}
+          <div class="no-chart-data">
+            <div class="no-chart-text">Sin datos suficientes para mostrar tendencia DSO</div>
+            <div class="no-chart-subtext">Se necesitan datos históricos de DSO</div>
+          </div>
+        {% endif %}
       </div>
     </div>
-  </section>
-
-  <!-- Executive Summary with AI -->
-  <div class="executive-summary">
-    <div class="summary-header">
-      <div class="summary-title">
-        <span>Resumen Ejecutivo</span>
-        <div class="ai-badge">AI</div>
-      </div>
-      <div class="summary-confidence">
-        <span>Confianza: 94%</span>
-        <div class="confidence-bar">
-          <div class="confidence-fill"></div>
-        </div>
+ <!-- Executive Summary with AI -->
+ <div class="executive-summary">
+  <div class="summary-header">
+    <div class="summary-title">
+      <span>Resumen Ejecutivo</span>
+      <div class="ai-badge">AI</div>
+    </div>
+    <div class="summary-confidence">
+      <span>Confianza: {{ "94%" if kpis and kpis.ingresos_totales and kpis.ingresos_totales > 0 else "N/A" }}</span>
+      <div class="confidence-bar">
+        <div class="confidence-fill" style="width: {{ "94%" if kpis and kpis.ingresos_totales and kpis.ingresos_totales > 0 else "0%" }}"></div>
       </div>
     </div>
-    <div class="summary-content">
-      <div class="summary-text">
-        {% if kpis and kpis.ingresos_totales and kpis.ingresos_totales > 0 %} El
-        portfolio presenta un
-        <span class="summary-highlight">rendimiento sólido</span> con ingresos de
-        <span class="summary-highlight"
-          >${{ "{:,.1f}".format(kpis.ingresos_totales) }}M CLP</span
-        >. {% if kpis.crecimiento_ingresos and kpis.crecimiento_ingresos > 0 %}
-        Los ingresos han incrementado
-        <span class="summary-highlight"
-          >{{ "{:.1f}".format(kpis.crecimiento_ingresos) }}%</span
-        >
-        vs período anterior, {% endif %} con una eficiencia operacional del
-        <span class="summary-highlight"
-          >{{ "{:.1f}".format(kpis.efficiency_score if kpis.efficiency_score
-          else 85.0) }}%</span
-        >. {% if kpis.critical_projects_count and kpis.critical_projects_count <
-        3 %} El nivel de riesgo se mantiene controlado. {% else %} Se recomienda
-        atención a proyectos críticos para optimizar resultados. {% endif %} {%
-        else %} El sistema está configurado y listo para mostrar métricas de
-        rendimiento. Los datos se actualizarán conforme se registren más EDPs en
-        el sistema. {% endif %}
+  </div>
+  <div class="summary-content">
+    <div class="summary-text">
+      {% if kpis and kpis.ingresos_totales and kpis.ingresos_totales > 0 %}
+        El portfolio presenta 
+        <span class="summary-highlight">ingresos registrados</span> por
+        <span class="summary-highlight">${{ "{:.1f}".format(kpis.ingresos_totales) }}M CLP</span>.
+        {% if kpis.crecimiento_ingresos and kpis.crecimiento_ingresos > 0 %}
+          Los ingresos han incrementado
+          <span class="summary-highlight">{{ "{:.1f}".format(kpis.crecimiento_ingresos) }}%</span>
+          vs período anterior.
+        {% endif %}
+        {% if kpis.efficiency_score and kpis.efficiency_score > 0 %}
+          La eficiencia operacional es del
+          <span class="summary-highlight">{{ "{:.1f}".format(kpis.efficiency_score) }}%</span>.
+        {% endif %}
+        {% if kpis.critical_projects_count and kpis.critical_projects_count > 0 %}
+          Se detectaron <span class="summary-highlight critical">{{ kpis.critical_projects_count }}</span> proyectos críticos que requieren atención.
+        {% else %}
+          No se detectaron proyectos en estado crítico.
+        {% endif %}
+      {% else %}
+        El sistema está configurado y listo para analizar datos. 
+        Las métricas de rendimiento se mostrarán una vez que se registren EDPs y transacciones en el sistema.
+      {% endif %}
+    </div>
+    <div class="summary-metrics">
+      <div class="summary-metric">
+        <div class="metric-label">ROI Promedio</div>
+        <div class="metric-value">
+          {% if kpis and kpis.roi_promedio and kpis.roi_promedio > 0 %}
+            {{ "{:.1f}".format(kpis.roi_promedio) }}%
+          {% else %}
+            --
+          {% endif %}
+        </div>
       </div>
-      <div class="summary-metrics">
-        <div class="summary-metric">
-          <div class="metric-label">ROI Promedio</div>
-          <div class="metric-value">
-            {{ kpis.roi_promedio if kpis and kpis.roi_promedio else '23.4' }}%
-          </div>
+      <div class="summary-metric">
+        <div class="metric-label">Proyectos Completados</div>
+        <div class="metric-value">
+          {{ kpis.proyectos_completados if kpis and kpis.proyectos_completados else 0 }}
         </div>
-        <div class="summary-metric">
-          <div class="metric-label">Proyectos Completados</div>
-          <div class="metric-value">
-            {{ kpis.proyectos_completados if kpis and kpis.proyectos_completados
-            else '12' }}
-          </div>
-        </div>
-        <div class="summary-metric">
-          <div class="metric-label">Satisfacción Cliente</div>
-          <div class="metric-value">
-            {{ kpis.satisfaccion_cliente if kpis and kpis.satisfaccion_cliente
-            else '96' }}%
-          </div>
+      </div>
+      <div class="summary-metric">
+        <div class="metric-label">Satisfacción Cliente</div>
+        <div class="metric-value">
+          {% if kpis and kpis.satisfaccion_cliente and kpis.satisfaccion_cliente > 0 %}
+            {{ "{:.0f}".format(kpis.satisfaccion_cliente) }}%
+          {% else %}
+            --
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
 </div>
-
-<script>
-// Initialize DSO Trend Chart
-document.addEventListener('DOMContentLoaded', function() {
-  // Update current time
-  function updateTime() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('es-ES', { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      second: '2-digit' 
-    });
-    const timeElement = document.getElementById('current-time');
-    if (timeElement) {
-      timeElement.textContent = timeString;
-    }
-  }
   
-  // Update time immediately and then every second
-  updateTime();
-  setInterval(updateTime, 1000);
-  
-  const ctx = document.getElementById('dsoTrendChart').getContext('2d');
-  
-  const dsoChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-      datasets: [{
-        label: 'DSO Actual',
-        data: [38, 42, 45, 41, 44, {{ kpis.dso_actual if kpis and kpis.dso_actual else 47.2 }}],
-        borderColor: '#ff0066',
-        backgroundColor: 'rgba(255, 0, 102, 0.1)',
-        borderWidth: 3,
-        fill: true,
-        tension: 0.4,
-      }, {
-        label: 'Target DSO',
-        data: [35, 35, 35, 35, 35, 35],
-        borderColor: '#00ff88',
-        borderWidth: 2,
-        borderDash: [5, 5],
-        fill: false,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        x: {
-          grid: { color: 'rgba(255, 255, 255, 0.1)' },
-          ticks: { color: '#888888', font: { family: 'JetBrains Mono', size: 10 } }
-        },
-        y: {
-          grid: { color: 'rgba(255, 255, 255, 0.1)' },
-          ticks: { color: '#888888', font: { family: 'JetBrains Mono', size: 10 } },
-          min: 25, max: 50
-        }
-      },
-      elements: {
-        point: { radius: 4, hoverRadius: 6 }
-      }
-    }
-  });
-});
+  </section>
 
-// Interactive functions
-function showManagerDetail(manager, days, amount) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.innerHTML = `
-    <div class="modal-content">
-      <h3>${manager} - Detalle DSO</h3>
-      <div class="modal-body">
-        <div>DSO Actual: <span style="color: #ff0066; font-family: 'JetBrains Mono'">${days}</span></div>
-        <div>Monto Gestionado: <span style="color: #00ff88; font-family: 'JetBrains Mono'">${amount}</span></div>
-        <div style="margin-top: 16px; color: #888;">
-          Recomendación: ${getDSORecommendation(days)}
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button onclick="coordinateWithManager('${manager}')" class="btn-primary">COORDINAR</button>
-        <button onclick="this.closest('.modal-overlay').remove()" class="btn-secondary">CERRAR</button>
-      </div>
-    </div>
-  `;
-  
-  modal.addEventListener('click', function(e) {
-    if (e.target === modal) modal.remove();
-  });
-  
-  document.body.appendChild(modal);
-}
+ 
+</div>
 
-function getDSORecommendation(days) {
-  const dsoValue = parseInt(days);
-  if (dsoValue > 60) return "Escalar inmediatamente. Revisar estrategia de cobranza.";
-  if (dsoValue > 45) return "Intensificar seguimiento. Evaluar incentivos de pago.";
-  if (dsoValue > 35) return "Monitoreo cercano. Mantener comunicación regular.";
-  return "Excelente performance. Replicar mejores prácticas.";
-}
 
-function coordinateWithManager(manager) {
-  showNotification(`Coordinación iniciada con ${manager}`, 'success');
-  document.querySelector('.modal-overlay').remove();
-}
-
-function showForecastDetail(day, amount, probability) {
-  showNotification(`${day}: ${amount} (${probability})`, 'info');
-}
-
-function executeAlert(title, impact, description) {
-  showNotification(`Ejecutando acción para: ${title}`, 'success');
-}
-
-function showNotification(message, type = 'info') {
-  const notification = document.createElement('div');
-  notification.className = `notification notification-${type}`;
-  notification.textContent = message;
-  notification.style.cssText = `
-    position: fixed; top: 20px; right: 20px; z-index: 1000;
-    padding: 12px 20px; border-radius: 8px; color: white;
-    background: ${type === 'success' ? '#00ff88' : type === 'warning' ? '#ffab00' : '#0066ff'};
-    animation: slideIn 0.3s ease;
-  `;
-  
-  document.body.appendChild(notification);
-  setTimeout(() => notification.remove(), 3000);
-}
-
-// Utility functions
-function coordinateManagers() { showNotification('Iniciando coordinación con jefes de proyecto', 'success'); }
-function exportForecast() { showNotification('Exportando datos de forecast', 'info'); }
-function executeAllAlerts() { showNotification('Ejecutando todas las alertas críticas', 'warning'); }
-function showTargetDetails() { showNotification('Generando reporte detallado de objetivos', 'info'); }
-function analyzeDSOTrend() { showNotification('Iniciando análisis profundo de DSO', 'info'); }
-
-// Add CSS for modals and notifications
-const style = document.createElement('style');
-style.textContent = `
-  .modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center;
-    z-index: 1000; backdrop-filter: blur(10px);
-  }
-  .modal-content {
-    background: var(--bg-secondary); border: 1px solid var(--border-primary);
-    border-radius: 8px; padding: 24px; max-width: 400px; width: 90%;
-    color: var(--text-primary);
-  }
-  .modal-content h3 { color: var(--accent-primary); margin-bottom: 16px; }
-  .modal-body { margin: 16px 0; line-height: 1.6; }
-  .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
-  .btn-primary, .btn-secondary {
-    padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer;
-    font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 600;
-  }
-  .btn-primary { background: var(--accent-primary); color: var(--bg-primary); }
-  .btn-secondary { background: var(--bg-tertiary); color: var(--text-secondary); }
-  @keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-`;
-document.head.appendChild(style);
-</script>
 
 {% include 'management/modal-proyectos-criticos.html' %} {% endblock %}

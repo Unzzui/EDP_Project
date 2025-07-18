@@ -824,77 +824,105 @@
     const rowsToSort = Array.from(tableBody.querySelectorAll('tr'));
     console.log(`Found ${rowsToSort.length} rows to sort`); // Debug line
 
-    try {
-      rowsToSort.sort((a, b) => {
-        let valueA, valueB;
+            try {
+          rowsToSort.sort((a, b) => {
+            let valueA, valueB;
 
-        // Correct indices for your table structure
-        switch (sortBy) {
-          case "proyecto":
-            valueA = a.querySelector("td:nth-child(1)").textContent.toLowerCase().trim();
-            valueB = b.querySelector("td:nth-child(1)").textContent.toLowerCase().trim();
-            break;
+            // Helper function to safely get cell content
+            function getCellContent(row, index, defaultValue = '') {
+              const cell = row.querySelector(`td:nth-child(${index})`);
+              return cell ? cell.textContent.trim() : defaultValue;
+            }
 
-          case "jefe":
-            valueA = a.querySelector("td:nth-child(2)").textContent.toLowerCase().trim();
-            valueB = b.querySelector("td:nth-child(2)").textContent.toLowerCase().trim();
-            break;
+            // Helper function to safely get numeric value
+            function getNumericValue(row, index, defaultValue = 0) {
+              const content = getCellContent(row, index);
+              if (!content) return defaultValue;
+              
+              // For monetary values, remove currency symbols and commas
+              const cleanContent = content.replace(/[$,\.]/g, "");
+              const numValue = parseFloat(cleanContent);
+              return isNaN(numValue) ? defaultValue : numValue;
+            }
 
-          case "cliente":
-            valueA = a.querySelector("td:nth-child(3)").textContent.toLowerCase().trim();
-            valueB = b.querySelector("td:nth-child(3)").textContent.toLowerCase().trim();
-            break;
+            // Detect table type and adjust column mappings
+            const isRetrabajoTable = tableBody.closest('table')?.id === 'tablaRetrabajos';
+            
+            if (isRetrabajoTable) {
+              // Column mapping for retrabajos table:
+              // 1: N° EDP, 2: Proyecto, 3: Encargado, 4: Motivo, 5: Tipo Falla, 6: Acciones
+              switch (sortBy) {
+                case "N° EDP":
+                case "edp":
+                  valueA = getCellContent(a, 1).toLowerCase();
+                  valueB = getCellContent(b, 1).toLowerCase();
+                  break;
+                case "Proyecto":
+                case "proyecto":
+                  valueA = getCellContent(a, 2).toLowerCase();
+                  valueB = getCellContent(b, 2).toLowerCase();
+                  break;
+                case "Encargado":
+                case "jefe":
+                  valueA = getCellContent(a, 3).toLowerCase();
+                  valueB = getCellContent(b, 3).toLowerCase();
+                  break;
+                case "Motivo":
+                  valueA = getCellContent(a, 4).toLowerCase();
+                  valueB = getCellContent(b, 4).toLowerCase();
+                  break;
+                case "Tipo Falla":
+                  valueA = getCellContent(a, 5).toLowerCase();
+                  valueB = getCellContent(b, 5).toLowerCase();
+                  break;
+                default:
+                  valueA = getCellContent(a, 1).toLowerCase();
+                  valueB = getCellContent(b, 1).toLowerCase();
+              }
+                         } else {
+               // Corrected column mapping for main control panel table:
+               // 1: N° EDP, 2: Proyecto, 3: Encargado, 4: Cliente, 5: Estado, 6: Días, 7: M. Aprobado, 8: Acciones
+               switch (sortBy) {
+                 case "edp":
+                   valueA = getCellContent(a, 1);
+                   valueB = getCellContent(b, 1);
+                   break;
 
-          case "mes":
-            valueA = a.querySelector("td:nth-child(4)").textContent.toLowerCase().trim();
-            valueB = b.querySelector("td:nth-child(4)").textContent.toLowerCase().trim();
-            break;
+                 case "proyecto":
+                   valueA = getCellContent(a, 2).toLowerCase();
+                   valueB = getCellContent(b, 2).toLowerCase();
+                   break;
 
-          case "edp":
-            valueA = a.querySelector("td:nth-child(5)").textContent.trim();
-            valueB = b.querySelector("td:nth-child(5)").textContent.trim();
-            break;
+                 case "jefe":
+                   valueA = getCellContent(a, 3).toLowerCase();
+                   valueB = getCellContent(b, 3).toLowerCase();
+                   break;
 
-          case "n-conformidad":
-            valueA = a.querySelector("td:nth-child(6)").textContent.trim();
-            valueB = b.querySelector("td:nth-child(6)").textContent.trim();
-            break;
+                 case "cliente":
+                   valueA = getCellContent(a, 4).toLowerCase();
+                   valueB = getCellContent(b, 4).toLowerCase();
+                   break;
 
-          case "estado":
-            valueA = a.querySelector("td:nth-child(7)").textContent.toLowerCase().trim();
-            valueB = b.querySelector("td:nth-child(7)").textContent.toLowerCase().trim();
-            break;
+                 case "estado":
+                   valueA = getCellContent(a, 5).toLowerCase();
+                   valueB = getCellContent(b, 5).toLowerCase();
+                   break;
 
-          case "dias":
-            valueA = parseInt(a.querySelector("td:nth-child(8)").textContent) || 0;
-            valueB = parseInt(b.querySelector("td:nth-child(8)").textContent) || 0;
-            break;
+                 case "dias":
+                   valueA = getNumericValue(a, 6);
+                   valueB = getNumericValue(b, 6);
+                   break;
 
-          case "dias-habiles":
-            valueA = parseInt(a.querySelector("td:nth-child(9)").textContent) || 0;
-            valueB = parseInt(b.querySelector("td:nth-child(9)").textContent) || 0;
-            break;
+                 case "monto-aprobado":
+                   valueA = getNumericValue(a, 7);
+                   valueB = getNumericValue(b, 7);
+                   break;
 
-          case "monto-propuesto":
-            valueA = parseFloat(a.querySelector("td:nth-child(10)").textContent.replace(/[$,\.]/g, "")) || 0;
-            valueB = parseFloat(b.querySelector("td:nth-child(10)").textContent.replace(/[$,\.]/g, "")) || 0;
-            break;
-
-          case "monto-aprobado":
-            valueA = parseFloat(a.querySelector("td:nth-child(11)").textContent.replace(/[$,\.]/g, "")) || 0;
-            valueB = parseFloat(b.querySelector("td:nth-child(11)").textContent.replace(/[$,\.]/g, "")) || 0;
-            break;
-
-          case "critico":
-            // Look for the indicator in the Critical column
-            valueA = a.querySelector("td:nth-child(12)").textContent.includes("●") ? 1 : 0;
-            valueB = b.querySelector("td:nth-child(12)").textContent.includes("●") ? 1 : 0;
-            break;
-
-          default:
-            valueA = a.querySelector("td:first-child").textContent.toLowerCase().trim();
-            valueB = b.querySelector("td:first-child").textContent.toLowerCase().trim();
-        }
+                 default:
+                   valueA = getCellContent(a, 1).toLowerCase();
+                   valueB = getCellContent(b, 1).toLowerCase();
+               }
+             }
 
         // Compare values
         if (valueA < valueB) {

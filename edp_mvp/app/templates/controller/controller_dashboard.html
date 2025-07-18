@@ -444,12 +444,12 @@
         <p class="metric-label font-medium text-[color:var(--text-secondary)]">Prom. días espera</p>
         <span class="text-xs bg-[color:var(--bg-highlight)] px-2 py-1 rounded-full text-[color:var(--text-secondary)]">Meta: ≤20</span>
       </div>
-      <p class="metric-value text-3xl font-bold mb-3 {% if dias_espera_promedio_global > 30 %}text-[color:var(--accent-red)]{% elif dias_espera_promedio_global <= 20 %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %}">
-        {{ dias_espera_promedio_global }}
+      <p class="metric-value text-3xl font-bold mb-3 {% if dso_promedio_global > 30 %}text-[color:var(--accent-red)]{% elif dso_promedio_global <= 20 %}text-[color:var(--accent-green)]{% else %}text-[color:var(--accent-amber)]{% endif %}">
+        {{ dso_promedio_global }}
       </p>
       <div class="h-2 w-full bg-[color:var(--bg-input)] rounded-full">
-        <div class="h-full {% if dias_espera_promedio_global > 30 %}bg-[color:var(--accent-red)]{% elif dias_espera_promedio_global <= 20 %}bg-[color:var(--accent-green)]{% else %}bg-[color:var(--accent-amber)]{% endif %} rounded-full" 
-             style="width: {{ (dias_espera_promedio_global / 45 * 100) if dias_espera_promedio_global < 45 else 100 }}%"></div>
+        <div class="h-full {% if dso_promedio_global > 30 %}bg-[color:var(--accent-red)]{% elif dso_promedio_global <= 20 %}bg-[color:var(--accent-green)]{% else %}bg-[color:var(--accent-amber)]{% endif %} rounded-full" 
+             style="width: {{ (dso_promedio_global / 45 * 100) if dso_promedio_global < 45 else 100 }}%"></div>
       </div>
     </div>
   </div>
@@ -461,7 +461,7 @@
     </div>
     <div class="flex flex-col items-center">
       <span class="text-xs text-[color:var(--text-secondary)] mb-1">Días Promedio</span>
-      <span class="text-lg font-bold">{{ dias_espera_promedio_global }}</span>
+      <span class="text-lg font-bold">{{ dso_promedio_global }}</span>
     </div>
     <div class="flex flex-col items-center">
       <span class="text-xs text-[color:var(--text-secondary)] mb-1">Meta Mensual</span>

@@ -1,0 +1,148 @@
+/* ==========================================================================
+   Cash Flow Bars
+   ========================================================================== */
+
+.cashflow-bars {
+  display: flex;
+  align-items: end;
+  height: 100%;
+  gap: var(--space-md);
+  padding: var(--space-lg) 0;
+}
+
+.cashflow-day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  cursor: pointer;
+}
+
+.cashflow-bar {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  position: relative;
+  margin-bottom: var(--space-sm);
+  transition: all var(--transition-fast);
+  border: 1px solid var(--border-primary);
+}
+
+[data-theme="dark"] .cashflow-bar {
+  background: var(--bg-tertiary);
+  border-radius: 0;
+  border: none;
+}
+
+.cashflow-bar:hover {
+  transform: scaleY(1.05);
+}
+
+.cashflow-fill {
+  width: 100%;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+[data-theme="dark"] .cashflow-fill {
+  border-radius: 0;
+}
+
+.cashflow-fill.high {
+  background: linear-gradient(180deg, var(--status-success), #10b981);
+}
+
+.cashflow-fill.medium {
+  background: linear-gradient(180deg, var(--status-warning), #f59e0b);
+}
+
+.cashflow-fill.low {
+  background: linear-gradient(180deg, var(--status-danger), #ef4444);
+}
+
+[data-theme="dark"] .cashflow-fill.high {
+  background: var(--status-success);
+}
+
+[data-theme="dark"] .cashflow-fill.medium {
+  background: var(--status-warning);
+}
+
+[data-theme="dark"] .cashflow-fill.low {
+  background: var(--status-danger);
+}
+
+.cashflow-value {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .cashflow-value {
+  font-weight: 500;
+}
+
+.cashflow-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.cashflow-prob {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+}
+
+.cashflow-prob.high-prob {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+}
+
+.cashflow-prob.medium-prob {
+  background: var(--status-warning-bg);
+  color: var(--status-warning);
+}
+
+.cashflow-prob.low-prob {
+  background: var(--status-danger-bg);
+  color: var(--status-danger);
+}
+
+.cashflow-prob.no-prob {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .cashflow-prob.high-prob {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+}
+
+[data-theme="dark"] .cashflow-prob.medium-prob {
+  background: rgba(255, 165, 0, 0.2);
+  color: #ffa500;
+}
+
+[data-theme="dark"] .cashflow-prob.low-prob {
+  background: rgba(255, 0, 102, 0.2);
+  color: #ff0066;
+}
+
+[data-theme="dark"] .cashflow-prob.no-prob {
+  background: rgba(136, 136, 136, 0.2);
+  color: #888888;
+}

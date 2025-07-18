@@ -102,7 +102,7 @@ class CashFlowService:
                 'probabilidades': probabilidades,
                 'metricas_calidad': metricas_calidad,
                 'fecha_generacion': datetime.now().isoformat(),
-                'total_backlog': float(df_pendientes["Monto Aprobado"].sum())
+                'total_backlog': float(df_pendientes["monto_aprobado"].sum())
             }
             
             return ServiceResponse(
@@ -350,7 +350,7 @@ class CashFlowService:
             ]
         
         if filtros.get('cliente'):
-            df_filtrado = df_filtrado[df_filtrado['Cliente'] == filtros['cliente']]
+            df_filtrado = df_filtrado[df_filtrado['cliente'] == filtros['cliente']]
         
         if filtros.get('departamento'):
             df_filtrado = df_filtrado[df_filtrado['jefe_proyecto'] == filtros['departamento']]
@@ -364,25 +364,23 @@ class CashFlowService:
         """Genera buckets de aging estándar (30, 60, 90+ días)"""
         # Bucket 0-30 días
         df_30d = df_pendientes[df_pendientes["dias_pendiente"] <= 30]
-        total_30d = float(df_30d["Monto Aprobado"].sum())
+        total_30d = float(df_30d["monto_aprobado"].sum())
         
         # Bucket 31-60 días
         df_60d = df_pendientes[
-            (df_pendientes["dias_pendiente"] > 30) & 
-            (df_pendientes["dias_pendiente"] <= 60)
+            (df_pendientes["dias_pendiente"] > 30) & (df_pendientes["dias_pendiente"] <= 60)
         ]
-        total_60d = float(df_60d["Monto Aprobado"].sum())
+        total_60d = float(df_60d["monto_aprobado"].sum())
         
         # Bucket 61-90 días
         df_90d = df_pendientes[
-            (df_pendientes["dias_pendiente"] > 60) & 
-            (df_pendientes["dias_pendiente"] <= 90)
+            (df_pendientes["dias_pendiente"] > 60) & (df_pendientes["dias_pendiente"] <= 90)
         ]
-        total_90d = float(df_90d["Monto Aprobado"].sum())
+        total_90d = float(df_90d["monto_aprobado"].sum())
         
         # Bucket 90+ días
         df_90plus = df_pendientes[df_pendientes["dias_pendiente"] > 90]
-        total_90plus = float(df_90plus["Monto Aprobado"].sum())
+        total_90plus = float(df_90plus["monto_aprobado"].sum())
         
         return {
             '0-30': {'monto': total_30d, 'count': len(df_30d), 'df': df_30d},
@@ -535,16 +533,16 @@ class CashFlowService:
     def _calcular_metricas_calidad(self, df_pendientes: pd.DataFrame) -> Dict:
         """Calcula métricas de calidad del forecast"""
         total_edps = len(df_pendientes)
-        total_monto = df_pendientes["Monto Aprobado"].sum()
+        total_monto = df_pendientes["monto_aprobado"].sum()
         
         # Concentración por cliente
         concentracion_cliente = (
-            df_pendientes.groupby("Cliente")["Monto Aprobado"].sum().max() / total_monto
+            df_pendientes.groupby("cliente")["monto_aprobado"].sum().max() / total_monto
         ) if total_monto > 0 else 0
         
         # Variabilidad de montos
-        std_monto = df_pendientes["Monto Aprobado"].std()
-        cv_monto = std_monto / df_pendientes["Monto Aprobado"].mean() if df_pendientes["Monto Aprobado"].mean() > 0 else 0
+        std_monto = df_pendientes["monto_aprobado"].std()
+        cv_monto = std_monto / df_pendientes["monto_aprobado"].mean() if df_pendientes["monto_aprobado"].mean() > 0 else 0
         
         # Distribución por días
         dias_promedio = df_pendientes["dias_pendiente"].mean()
@@ -564,7 +562,7 @@ class CashFlowService:
         if len(df_pendientes) == 0:
             return "Sin datos"
         
-        cv = df_pendientes["Monto Aprobado"].std() / df_pendientes["Monto Aprobado"].mean()
+        cv = df_pendientes["monto_aprobado"].std() / df_pendientes["monto_aprobado"].mean()
         
         if cv < 0.5:
             return "Baja"
@@ -658,15 +656,15 @@ class CashFlowService:
                     (df_pendientes["dias_pendiente"] <= bucket['max'])
                 ]
             
-            monto_total = df_bucket["Monto Aprobado"].sum()
+            monto_total = df_bucket["monto_aprobado"].sum()
             count = len(df_bucket)
             
             buckets_con_datos.append({
                 'rango': bucket['rango'],
                 'monto': float(monto_total),
                 'count': count,
-                'porcentaje': round((monto_total / df_pendientes["Monto Aprobado"].sum() * 100), 1) 
-                if df_pendientes["Monto Aprobado"].sum() > 0 else 0
+                'porcentaje': round((monto_total / df_pendientes["monto_aprobado"].sum() * 100), 1) 
+                if df_pendientes["monto_aprobado"].sum() > 0 else 0
             })
         
         return buckets_con_datos
@@ -682,7 +680,7 @@ class CashFlowService:
             'dias_max': int(df_pendientes["dias_pendiente"].max()),
             'dias_min': int(df_pendientes["dias_pendiente"].min()),
             'edps_criticos': len(df_pendientes[df_pendientes["dias_pendiente"] > 90]),
-            'monto_critico': float(df_pendientes[df_pendientes["dias_pendiente"] > 90]["Monto Aprobado"].sum()),
+            'monto_critico': float(df_pendientes[df_pendientes["dias_pendiente"] > 90]["monto_aprobado"].sum()),
             'porcentaje_critico': round(
                 len(df_pendientes[df_pendientes["dias_pendiente"] > 90]) / len(df_pendientes) * 100, 1
             )
@@ -692,18 +690,18 @@ class CashFlowService:
         """Analiza aging por cliente"""
         aging_clientes = {}
         
-        for cliente in df_pendientes["Cliente"].unique():
+        for cliente in df_pendientes["cliente"].unique():
             if pd.isna(cliente):
                 continue
                 
-            df_cliente = df_pendientes[df_pendientes["Cliente"] == cliente]
+            df_cliente = df_pendientes[df_pendientes["cliente"] == cliente]
             
             aging_clientes[cliente] = {
                 'total_edps': len(df_cliente),
-                'monto_total': float(df_cliente["Monto Aprobado"].sum()),
+                'monto_total': float(df_cliente["monto_aprobado"].sum()),
                 'dso_promedio': round(df_cliente["dias_pendiente"].mean(), 1),
                 'edps_criticos': len(df_cliente[df_cliente["dias_pendiente"] > 90]),
-                'monto_critico': float(df_cliente[df_cliente["dias_pendiente"] > 90]["Monto Aprobado"].sum())
+                'monto_critico': float(df_cliente[df_cliente["dias_pendiente"] > 90]["monto_aprobado"].sum())
             }
         
         return aging_clientes
@@ -721,13 +719,13 @@ class CashFlowService:
         
         trends = df_historico.groupby('año_mes').agg({
             'N° EDP': 'count',
-            'Monto Aprobado': 'sum'
+            'monto_aprobado': 'sum'
         }).tail(6)  # Últimos 6 meses
         
         return {
             'meses': [str(periodo) for periodo in trends.index],
             'edps_por_mes': trends['N° EDP'].tolist(),
-            'montos_por_mes': trends['Monto Aprobado'].tolist()
+            'montos_por_mes': trends['monto_aprobado'].tolist()
         }
     
     def _generar_alertas_vencidos(self, df: pd.DataFrame) -> List[Dict]:
@@ -743,7 +741,7 @@ class CashFlowService:
         edps_criticos = df_pendientes[df_pendientes["dias_pendiente"] > 90]
         
         if not edps_criticos.empty:
-            monto_critico = edps_criticos["Monto Aprobado"].sum()
+            monto_critico = edps_criticos["monto_aprobado"].sum()
             alertas.append({
                 'tipo': 'vencidos_criticos',
                 'severidad': 'alta',
@@ -762,8 +760,8 @@ class CashFlowService:
         # Concentración por cliente
         df_pendientes = df[~df["estado"].isin(["pagado", "validado"])]
         if not df_pendientes.empty:
-            total_pendiente = df_pendientes["Monto Aprobado"].sum()
-            max_cliente = df_pendientes.groupby("Cliente")["Monto Aprobado"].sum().max()
+            total_pendiente = df_pendientes["monto_aprobado"].sum()
+            max_cliente = df_pendientes.groupby("cliente")["monto_aprobado"].sum().max()
             concentracion = max_cliente / total_pendiente if total_pendiente > 0 else 0
             
             if concentracion > 0.4:  # Más del 40% en un cliente
@@ -788,8 +786,8 @@ class CashFlowService:
             hoy = pd.Timestamp.now().normalize()
             df_pendientes["dias_pendiente"] = (hoy - pd.to_datetime(df_pendientes["fecha_emision"])).dt.days
             
-            monto_30d = df_pendientes[df_pendientes["dias_pendiente"] <= 30]["Monto Aprobado"].sum()
-            monto_total = df_pendientes["Monto Aprobado"].sum()
+            monto_30d = df_pendientes[df_pendientes["dias_pendiente"] <= 30]["monto_aprobado"].sum()
+            monto_total = df_pendientes["monto_aprobado"].sum()
             porcentaje_30d = monto_30d / monto_total if monto_total > 0 else 0
             
             if porcentaje_30d < 0.3:  # Menos del 30% cobrable en 30 días
@@ -849,7 +847,7 @@ class CashFlowService:
             fecha = datetime.now() + timedelta(days=30*i)
             
             # Proyección básica basada en patterns históricos
-            monto_base = df["Monto Aprobado"].sum() / meses
+            monto_base = df["monto_aprobado"].sum() / meses
             factor_estacional = 1 + (0.1 * np.sin(i * np.pi / 6))  # Variación estacional
             
             proyeccion.append({
@@ -862,7 +860,7 @@ class CashFlowService:
     
     def _generar_analisis_escenarios(self, df: pd.DataFrame, meses: int) -> Dict:
         """Genera análisis de escenarios optimista/pesimista/realista"""
-        base_amount = df[~df["estado"].isin(["pagado", "validado"])]["Monto Aprobado"].sum()
+        base_amount = df[~df["estado"].isin(["pagado", "validado"])]["monto_aprobado"].sum()
         
         return {
             'optimista': {
@@ -886,8 +884,8 @@ class CashFlowService:
         """Calcula métricas de confianza de la proyección"""
         # Análisis de estabilidad histórica
         meses_unicos = df["Mes"].nunique()
-        variabilidad_mensual = df.groupby("Mes")["Monto Aprobado"].sum().std()
-        promedio_mensual = df.groupby("Mes")["Monto Aprobado"].sum().mean()
+        variabilidad_mensual = df.groupby("Mes")["monto_aprobado"].sum().std()
+        promedio_mensual = df.groupby("Mes")["monto_aprobado"].sum().mean()
         
         cv = variabilidad_mensual / promedio_mensual if promedio_mensual > 0 else 0
         

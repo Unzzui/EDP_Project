@@ -3,6 +3,37 @@
  * Switching to ApexCharts for better stability and compatibility
  */
 
+/*
+ * MEJORAS DE ESTILO APLICADAS:
+ * 
+ * 1. FORMATEO DE NÚMEROS:
+ *    - Máximo 1 decimal en todos los valores numéricos
+ *    - Función formatNumber() para consistencia
+ *    - Función formatCurrency() para valores monetarios
+ *    - Soporte para formato K/M en números grandes
+ * 
+ * 2. ESTILO VISUAL:
+ *    - Paleta de colores mejorada y tema-aware
+ *    - Gradientes suaves y consistentes
+ *    - Animaciones suaves y profesionales
+ *    - Tipografía Inter en todos los elementos
+ * 
+ * 3. TOOLTIPS Y ETIQUETAS:
+ *    - Formato consistente con máximo 1 decimal
+ *    - Etiquetas descriptivas y claras
+ *    - Colores tema-aware para mejor legibilidad
+ * 
+ * 4. INTERACTIVIDAD:
+ *    - Animaciones suaves al cargar
+ *    - Hover effects mejorados
+ *    - Transiciones fluidas entre temas
+ * 
+ * 5. RESPONSIVIDAD:
+ *    - Adaptación automática a tema claro/oscuro
+ *    - Colores dinámicos basados en CSS variables
+ *    - Tamaños de fuente escalables
+ */
+
 // Theme-aware color palette
 const CHART_COLORS = {
     primary: '#3b82f6',
@@ -34,6 +65,59 @@ function getThemeColors() {
     };
 }
 
+// Standard number formatting function - max 1 decimal place
+function formatNumber(value, decimals = 1, suffix = '') {
+    if (value === null || value === undefined) return '0';
+    
+    const num = parseFloat(value);
+    if (isNaN(num)) return '0';
+    
+    // For very large numbers, use K/M formatting only if no suffix is provided
+    if (!suffix && Math.abs(num) >= 1000000) {
+        return (num / 1000000).toFixed(decimals) + 'M';
+    } else if (!suffix && Math.abs(num) >= 1000) {
+        return (num / 1000).toFixed(decimals) + 'K';
+    }
+    
+    // For regular numbers, use specified decimals
+    return num.toFixed(decimals) + suffix;
+}
+
+// Special formatter for currency values in Chilean Pesos (CLP)
+function formatCurrency(value, decimals = 0) {
+    if (value === null || value === undefined) return '$0';
+    
+    const num = parseFloat(value);
+    if (isNaN(num)) return '$0';
+    
+    if (Math.abs(num) >= 1000000000) {
+        return '$' + (num / 1000000000).toFixed(decimals) + 'B';
+    } else if (Math.abs(num) >= 1000000) {
+        return '$' + (num / 1000000).toFixed(decimals) + 'M';
+    } else if (Math.abs(num) >= 1000) {
+        return '$' + (num / 1000).toFixed(decimals) + 'K';
+    }
+    
+    // For regular amounts, format with thousand separators
+    return '$' + num.toLocaleString('es-CL', { 
+        minimumFractionDigits: decimals, 
+        maximumFractionDigits: decimals 
+    });
+}
+
+// Formatter for large Chilean Peso amounts with proper separators
+function formatChileanPesos(value, showDecimals = false) {
+    if (value === null || value === undefined) return '$0';
+    
+    const num = parseFloat(value);
+    if (isNaN(num)) return '$0';
+    
+    return '$' + num.toLocaleString('es-CL', {
+        minimumFractionDigits: showDecimals ? 2 : 0,
+        maximumFractionDigits: showDecimals ? 2 : 0
+    });
+}
+
 // Get common chart theme configuration
 function getChartTheme() {
     const colors = getThemeColors();
@@ -57,25 +141,67 @@ function getChartTheme() {
             animations: {
                 enabled: true,
                 easing: 'easeinout',
-                speed: 800
+                speed: 800,
+                animateGradually: {
+                    enabled: true,
+                    delay: 150
+                },
+                dynamicAnimation: {
+                    enabled: true,
+                    speed: 350
+                }
+            },
+            dropShadow: {
+                enabled: false
             }
         },
         grid: {
             borderColor: colors.borderColor,
             strokeDashArray: 3,
-            opacity: isDark ? 0.3 : 0.2
+            opacity: isDark ? 0.3 : 0.2,
+            xaxis: {
+                lines: {
+                    show: true
+                }
+            },
+            yaxis: {
+                lines: {
+                    show: true
+                }
+            },
+            padding: {
+                top: 10,
+                right: 10,
+                bottom: 10,
+                left: 10
+            }
         },
         tooltip: {
             theme: isDark ? 'dark' : 'light',
             style: {
                 fontSize: '12px',
                 fontFamily: 'Inter, sans-serif'
+            },
+            custom: undefined,
+            fillSeriesColor: false,
+            marker: {
+                show: true
             }
         },
         legend: {
             labels: {
-                colors: colors.textSecondary
+                colors: colors.textSecondary,
+                useSeriesColors: false
+            },
+            fontSize: '12px',
+            fontWeight: 500,
+            itemMargin: {
+                horizontal: 12,
+                vertical: 5
             }
+        },
+        stroke: {
+            lineCap: 'round'
         }
     };
 }
@@ -144,21 +270,21 @@ class AnalyticsDashboard {
                 ]
             },
             predictions: {
-                cash_flow_30d: 38500000,
+                cash_flow_30d: 36575000000,
                 confidence: 85.2,
                 risk_score: 4.8,
                 projects_at_risk: 6
             },
             segmentation: {
                 client_segments: [
-                    {"name": "Premium", "count": 12, "dso": 68, "revenue": 45, "risk": "low"},
-                    {"name": "Estándar", "count": 28, "dso": 95, "revenue": 35, "risk": "medium"},
-                    {"name": "Básico", "count": 15, "dso": 145, "revenue": 20, "risk": "high"}
+                    {"name": "Premium", "count": 12, "dso": 68, "revenue": 42750000, "risk": "low"},
+                    {"name": "Estándar", "count": 28, "dso": 95, "revenue": 33250000, "risk": "medium"},
+                    {"name": "Básico", "count": 15, "dso": 145, "revenue": 19000000, "risk": "high"}
                 ],
                 size_segments: [
-                    {"name": "Grande", "count": 8, "revenue": 60, "margin": 18},
-                    {"name": "Mediano", "count": 25, "revenue": 30, "margin": 22},
-                    {"name": "Pequeño", "count": 22, "revenue": 10, "margin": 15}
+                    {"name": "Grande", "count": 8, "revenue": 57000000, "margin": 18},
+                    {"name": "Mediano", "count": 25, "revenue": 28500000, "margin": 22},
+                    {"name": "Pequeño", "count": 22, "revenue": 9500000, "margin": 15}
                 ]
             }
         };
@@ -188,8 +314,8 @@ class AnalyticsDashboard {
      * Create DSO Evolution Chart with ApexCharts
      */
     createDSOEvolutionChart() {
-        const container = document.getElementById('dsoEvolutionChart');
-        console.log('🔍 Looking for dsoEvolutionChart container:', container);
+        const container = document.getElementById('dso-evolution-chart');
+        console.log('🔍 Looking for dso-evolution-chart container:', container);
         if (!container) {
             console.warn('❌ DSO Evolution chart container not found');
             return;
@@ -206,7 +332,8 @@ class AnalyticsDashboard {
             const dsoData = last30Days.map((timestamp, i) => {
                 const baseValue = this.analyticsData.dso.current_dso;
                 const variation = Math.sin(i * 0.3) * 8 + Math.random() * 6 - 3;
-                return [timestamp, Math.max(60, baseValue + variation)];
+                const value = Math.max(60, baseValue + variation);
+                return [timestamp, Math.round(value * 10) / 10]; // Max 1 decimal
             });
 
             const targetData = last30Days.map(timestamp => [timestamp, this.analyticsData.dso.target_dso]);
@@ -264,24 +391,57 @@ class AnalyticsDashboard {
                 },
                 yaxis: {
                     title: {
-                        text: 'Días'
+                        text: 'Días',
+                        style: {
+                            color: themeConfig.colors.textSecondary,
+                            fontSize: '12px',
+                            fontWeight: 600
+                        }
                     },
                     labels: {
                         formatter: function(value) {
-                            return value.toFixed(0) + 'd';
+                            return formatNumber(value, 0, 'd');
+                        },
+                        style: {
+                            colors: themeConfig.colors.textSecondary,
+                            fontSize: '11px'
                         }
-                    }
+                    },
+                    min: 50,
+                    tickAmount: 6
                 },
                 tooltip: {
                     shared: true,
                     intersect: false,
+                    theme: themeConfig.tooltip.theme,
+                    style: {
+                        fontSize: '12px',
+                        fontFamily: 'Inter, sans-serif'
+                    },
                     x: {
                         format: 'dd MMM yyyy'
                     },
                     y: {
-                        formatter: function(value) {
-                            return value.toFixed(0) + ' días';
+                        formatter: function(value, { seriesIndex }) {
+                            if (seriesIndex === 0) {
+                                return formatNumber(value, 0, ' días (Real)');
+                            }
+                            return formatNumber(value, 0, ' días (Objetivo)');
                         }
+                    },
+                    marker: {
+                        show: true
+                    }
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                markers: {
+                    size: 4,
+                    strokeWidth: 2,
+                    strokeColors: '#ffffff',
+                    hover: {
+                        size: 6
                     }
                 }
             };
@@ -299,7 +459,7 @@ class AnalyticsDashboard {
      * Create Correlation Matrix with ApexCharts
      */
     createCorrelationMatrix() {
-        const container = document.getElementById('correlationMatrix');
+        const container = document.getElementById('correlation-matrix');
         console.log('🔍 Looking for correlationMatrix container:', container);
         if (!container) {
             console.warn('❌ Correlation chart container not found');
@@ -331,9 +491,13 @@ class AnalyticsDashboard {
                 },
                 plotOptions: {
                     bar: {
-                        borderRadius: 4,
+                        borderRadius: 6,
                         horizontal: false,
-                        distributed: true
+                        distributed: true,
+                        barHeight: '70%',
+                        dataLabels: {
+                            position: 'top'
+                        }
                     }
                 },
                 colors: [themeConfig.colors.info, themeConfig.colors.warning, themeConfig.colors.danger],
@@ -341,23 +505,54 @@ class AnalyticsDashboard {
                     categories: categories,
                     labels: {
                         style: {
-                            fontSize: '12px'
-                        }
+                            fontSize: '11px',
+                            colors: themeConfig.colors.textSecondary,
+                            fontWeight: 500
+                        },
+                        rotate: -45,
+                        maxHeight: 80
                     }
                 },
                 yaxis: {
                     title: {
-                        text: 'Fuerza de Correlación (%)'
+                        text: 'Fuerza de Correlación (%)',
+                        style: {
+                            color: themeConfig.colors.textSecondary,
+                            fontSize: '12px',
+                            fontWeight: 600
+                        }
                     },
-                    max: 100
+                    max: 100,
+                    labels: {
+                        formatter: function(value) {
+                            return formatNumber(value, 0, '%');
+                        },
+                        style: {
+                            colors: themeConfig.colors.textSecondary,
+                            fontSize: '11px'
+                        }
+                    },
+                    tickAmount: 5
                 },
                 tooltip: {
                     ...themeConfig.tooltip,
                     y: {
                         formatter: function(value, { dataPointIndex }) {
                             const correlation = correlations[dataPointIndex].correlation;
-                            return `${value.toFixed(0)}% (${correlation.toFixed(2)})`;
+                            const correlationValue = formatNumber(correlation, 1, '');
+                            return `${formatNumber(value, 0, '%')} (${correlationValue})`;
                         }
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(value) {
+                        return formatNumber(value, 0, '%');
+                    },
+                    style: {
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        colors: ['#ffffff']
                     }
                 }
             };
@@ -375,7 +570,7 @@ class AnalyticsDashboard {
      * Create Cash Flow Prediction Chart with ApexCharts
      */
     createCashFlowPrediction() {
-        const container = document.getElementById('cashFlowPrediction');
+        const container = document.getElementById('cash-flow-prediction');
         console.log('🔍 Looking for cashFlowPrediction container:', container);
         if (!container) {
             console.warn('❌ Cash Flow chart container not found');
@@ -387,7 +582,8 @@ class AnalyticsDashboard {
             const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
             const cashFlowData = months.map((_, i) => {
                 const base = this.analyticsData.predictions.cash_flow_30d;
-                return (base * (1 + (Math.random() - 0.5) * 0.3)) / 1000000; // Convert to millions
+                const value = (base * (1 + (Math.random() - 0.5) * 0.3)) / 1000000; // Convert to millions
+                return parseFloat(value.toFixed(1)); // Max 1 decimal
             });
 
             const themeConfig = getChartTheme();
@@ -422,24 +618,52 @@ class AnalyticsDashboard {
                     }
                 },
                 xaxis: {
-                    categories: months
+                    categories: months,
+                    labels: {
+                        style: {
+                            colors: themeConfig.colors.textSecondary,
+                            fontSize: '11px',
+                            fontWeight: 500
+                        }
+                    }
                 },
                 yaxis: {
                     title: {
-                        text: 'Millones (€)'
+                        text: 'Millones (CLP)',
+                        style: {
+                            color: themeConfig.colors.textSecondary,
+                            fontSize: '12px',
+                            fontWeight: 600
+                        }
                     },
                     labels: {
                         formatter: function(value) {
-                            return '€' + value.toFixed(1) + 'M';
+                            return formatCurrency(value * 1000000, 0);
+                        },
+                        style: {
+                            colors: themeConfig.colors.textSecondary,
+                            fontSize: '11px'
                         }
-                    }
+                    },
+                    tickAmount: 6
                 },
                 tooltip: {
                     ...themeConfig.tooltip,
                     y: {
                         formatter: function(value) {
-                            return '€' + value.toFixed(1) + 'M';
+                            return formatCurrency(value * 1000000, 0) + ' CLP';
                         }
+                    }
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                markers: {
+                    size: 4,
+                    strokeWidth: 2,
+                    strokeColors: '#ffffff',
+                    hover: {
+                        size: 6
                     }
                 }
             };
@@ -457,7 +681,7 @@ class AnalyticsDashboard {
      * Create Risk Analysis Chart with ApexCharts
      */
     createRiskAnalysis() {
-        const container = document.getElementById('riskAnalysis');
+        const container = document.getElementById('risk-analysis');
         console.log('🔍 Looking for riskAnalysis container:', container);
         if (!container) {
             console.warn('❌ Risk chart container not found');
@@ -479,12 +703,35 @@ class AnalyticsDashboard {
                 tooltip: themeConfig.tooltip,
                 legend: {
                     ...themeConfig.legend,
-                    position: 'bottom'
+                    position: 'bottom',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    markers: {
+                        width: 12,
+                        height: 12,
+                        radius: 6
+                    }
                 },
                 plotOptions: {
                     pie: {
                         donut: {
-                            size: '65%'
+                            size: '65%',
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Total Proyectos',
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    color: themeConfig.colors.textPrimary,
+                                    formatter: function() {
+                                        return '100%';
+                                    }
+                                }
+                            }
+                        },
+                        dataLabels: {
+                            offset: -10
                         }
                     }
                 },
@@ -492,8 +739,22 @@ class AnalyticsDashboard {
                     ...themeConfig.tooltip,
                     y: {
                         formatter: function(value) {
-                            return value + '%';
+                            return formatNumber(value, 0, '%');
                         }
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val) {
+                        return formatNumber(val, 0, '%');
+                    },
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        colors: ['#ffffff']
+                    },
+                    dropShadow: {
+                        enabled: false
                     }
                 }
             };
@@ -511,7 +772,7 @@ class AnalyticsDashboard {
      * Create Client Segmentation Chart with ApexCharts
      */
     createClientSegmentation() {
-        const container = document.getElementById('clientSegmentation');
+        const container = document.getElementById('client-segmentation');
         console.log('🔍 Looking for clientSegmentation container:', container);
         if (!container) {
             console.warn('❌ Client Segment chart container not found');
@@ -530,8 +791,8 @@ class AnalyticsDashboard {
                         color: themeConfig.colors.primary
                     },
                     {
-                        name: 'Revenue (%)',
-                        data: segments.map(s => s.revenue),
+                        name: 'Revenue (CLP)',
+                        data: segments.map(s => s.revenue / 1000000), // Convert to millions
                         color: themeConfig.colors.success
                     }
                 ],
@@ -549,23 +810,70 @@ class AnalyticsDashboard {
                 },
                 plotOptions: {
                     bar: {
-                        borderRadius: 4,
+                        borderRadius: 6,
                         horizontal: false,
-                        columnWidth: '70%'
+                        columnWidth: '65%',
+                        dataLabels: {
+                            position: 'top'
+                        }
                     }
                 },
                 xaxis: {
-                    categories: segments.map(s => s.name)
+                    categories: segments.map(s => s.name),
+                    labels: {
+                        style: {
+                            colors: themeConfig.colors.textSecondary,
+                            fontSize: '12px',
+                            fontWeight: 500
+                        }
+                    }
                 },
                 yaxis: {
                     title: {
-                        text: 'Valores'
-                    }
+                        text: 'Valores (DSO días / Revenue M CLP)',
+                        style: {
+                            color: themeConfig.colors.textSecondary,
+                            fontSize: '12px',
+                            fontWeight: 600
+                        }
+                    },
+                    labels: {
+                        formatter: function(value) {
+                            return formatNumber(value, 1, '');
+                        },
+                        style: {
+                            colors: themeConfig.colors.textSecondary,
+                            fontSize: '11px'
+                        }
+                    },
+                    tickAmount: 6
                 },
                 tooltip: {
                     ...themeConfig.tooltip,
                     shared: true,
-                    intersect: false
+                    intersect: false,
+                    y: {
+                        formatter: function(value, { seriesIndex }) {
+                            if (seriesIndex === 0) {
+                                return formatNumber(value, 0, ' días');
+                            }
+                            return formatNumber(value, 0, '%');
+                        }
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(value, { seriesIndex }) {
+                        if (seriesIndex === 0) {
+                            return formatNumber(value, 0, 'd');
+                        }
+                        return formatNumber(value, 0, '%');
+                    },
+                    style: {
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        colors: ['#ffffff']
+                    }
                 }
             };
 
@@ -582,7 +890,7 @@ class AnalyticsDashboard {
      * Create Size Segmentation Chart with ApexCharts
      */
     createSizeSegmentation() {
-        const container = document.getElementById('sizeSegmentation');
+        const container = document.getElementById('size-segmentation');
         console.log('🔍 Looking for sizeSegmentation container:', container);
         if (!container) {
             console.warn('❌ Size Segment chart container not found');
@@ -594,7 +902,7 @@ class AnalyticsDashboard {
             
             const themeConfig = getChartTheme();
             const options = {
-                series: segments.map(s => s.revenue),
+                series: segments.map(s => s.revenue / 1000000), // Convert to millions
                 labels: segments.map(s => s.name),
                 colors: [themeConfig.colors.purple, themeConfig.colors.info, themeConfig.colors.warning],
                 chart: {
@@ -606,12 +914,33 @@ class AnalyticsDashboard {
                 tooltip: themeConfig.tooltip,
                 legend: {
                     ...themeConfig.legend,
-                    position: 'bottom'
+                    position: 'bottom',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    markers: {
+                        width: 12,
+                        height: 12,
+                        radius: 6
+                    }
                 },
                 plotOptions: {
                     pie: {
                         donut: {
-                            size: '50%'
+                            size: '50%',
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Total Revenue (M CLP)',
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    color: themeConfig.colors.textPrimary,
+                                    formatter: function(w) {
+                                        const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                                        return '$' + formatNumber(total, 1, 'M');
+                                    }
+                                }
+                            }
                         }
                     }
                 },
@@ -619,8 +948,23 @@ class AnalyticsDashboard {
                     ...themeConfig.tooltip,
                     y: {
                         formatter: function(value) {
-                            return value + '%';
+                            return '$' + formatNumber(value, 1, 'M CLP');
                         }
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val, opts) {
+                        const value = opts.w.config.series[opts.seriesIndex];
+                        return '$' + formatNumber(value, 1, 'M');
+                    },
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        colors: ['#ffffff']
+                    },
+                    dropShadow: {
+                        enabled: false
                     }
                 }
             };
@@ -684,23 +1028,6 @@ class AnalyticsDashboard {
      * Add event listeners
      */
     addEventListeners() {
-        // Update button
-        const updateBtn = document.querySelector('[onclick="updateAnalytics()"]');
-        if (updateBtn) {
-            updateBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.updateAnalytics();
-            });
-        }
-
-        // Filter changes
-        const filters = document.querySelectorAll('#periodFilter, #segmentFilter, #metricFilter');
-        filters.forEach(filter => {
-            filter.addEventListener('change', () => {
-                this.updateAnalytics();
-            });
-        });
-
         // Theme change detection
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
@@ -731,12 +1058,160 @@ class AnalyticsDashboard {
             });
         }
     }
+
+    /*
+     * Get enhanced chart options with consistent styling
+     */
+    getEnhancedChartOptions(baseOptions, chartType = 'default') {
+        const themeConfig = getChartTheme();
+        
+        // Common enhancements for all chart types
+        const enhancements = {
+            chart: {
+                ...baseOptions.chart,
+                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                toolbar: {
+                    show: false
+                },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800,
+                    animateGradually: {
+                        enabled: true,
+                        delay: 150
+                    },
+                    dynamicAnimation: {
+                        enabled: true,
+                        speed: 350
+                    }
+                },
+                dropShadow: {
+                    enabled: false
+                }
+            },
+            dataLabels: {
+                ...baseOptions.dataLabels,
+                style: {
+                    fontSize: '11px',
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 600,
+                    colors: undefined
+                }
+            },
+            legend: {
+                ...baseOptions.legend,
+                fontSize: '12px',
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 500,
+                labels: {
+                    colors: themeConfig.colors.textSecondary,
+                    useSeriesColors: false
+                },
+                itemMargin: {
+                    horizontal: 10,
+                    vertical: 5
+                }
+            }
+        };
+        
+        // Chart-specific enhancements
+        if (chartType === 'bar') {
+            enhancements.plotOptions = {
+                ...baseOptions.plotOptions,
+                bar: {
+                    ...baseOptions.plotOptions?.bar,
+                    borderRadius: 4,
+                    borderRadiusApplication: 'end',
+                    borderRadiusWhenStacked: 'last',
+                    dataLabels: {
+                        position: 'top'
+                    }
+                }
+            };
+        } else if (chartType === 'line' || chartType === 'area') {
+            enhancements.stroke = {
+                ...baseOptions.stroke,
+                lineCap: 'round',
+                width: chartType === 'area' ? 3 : 4
+            };
+            enhancements.markers = {
+                size: 4,
+                colors: undefined,
+                strokeColors: '#fff',
+                strokeWidth: 2,
+                hover: {
+                    size: 6
+                }
+            };
+        } else if (chartType === 'donut' || chartType === 'pie') {
+            enhancements.plotOptions = {
+                ...baseOptions.plotOptions,
+                pie: {
+                    ...baseOptions.plotOptions?.pie,
+                    expandOnClick: true,
+                    donut: {
+                        ...baseOptions.plotOptions?.pie?.donut,
+                        labels: {
+                            ...baseOptions.plotOptions?.pie?.donut?.labels,
+                            name: {
+                                fontSize: '14px',
+                                fontFamily: 'Inter, sans-serif',
+                                fontWeight: 600,
+                                color: themeConfig.colors.textPrimary
+                            },
+                            value: {
+                                fontSize: '16px',
+                                fontFamily: 'Inter, sans-serif',
+                                fontWeight: 700,
+                                color: themeConfig.colors.textPrimary,
+                                formatter: function(val) {
+                                    return formatNumber(val, 0, '%');
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+        }
+        
+        return {
+            ...baseOptions,
+            ...enhancements
+        };
+    }
+
+    /*
+     * Get enhanced color palette for charts based on theme
+     */
+    getChartColorPalette() {
+        const colors = getThemeColors();
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || 
+                      (!document.documentElement.getAttribute('data-theme') && 
+                       window.matchMedia('(prefers-color-scheme: dark)').matches);
+        
+        return {
+            primary: isDark ? '#3b82f6' : '#2563eb',
+            success: isDark ? '#10b981' : '#059669',
+            warning: isDark ? '#f59e0b' : '#d97706',
+            danger: isDark ? '#ef4444' : '#dc2626',
+            info: isDark ? '#06b6d4' : '#0891b2',
+            purple: isDark ? '#8b5cf6' : '#7c3aed',
+            orange: isDark ? '#f97316' : '#ea580c',
+            gradient: {
+                primary: isDark ? ['#3b82f6', '#1d4ed8'] : ['#60a5fa', '#3b82f6'],
+                success: isDark ? ['#10b981', '#047857'] : ['#34d399', '#10b981'],
+                warning: isDark ? ['#f59e0b', '#b45309'] : ['#fbbf24', '#f59e0b'],
+                info: isDark ? ['#06b6d4', '#0e7490'] : ['#22d3ee', '#06b6d4']
+            }
+        };
+    }
 }
 
-// Global function for update button
+// Global function for programmatic updates
 function updateAnalytics() {
-    if (window.analyticsInstance) {
-        window.analyticsInstance.updateAnalytics();
+    if (window.analyticsDashboard) {
+        window.analyticsDashboard.updateAnalytics();
     } else {
         console.error('❌ Analytics instance not found');
     }
