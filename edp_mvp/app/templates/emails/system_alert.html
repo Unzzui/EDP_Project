@@ -1,0 +1,18 @@
+{% extends "emails/base.html" %} {% block theme_styles %} .header { background:
+linear-gradient(135deg, #6b7280 0%, #4b5563 100%); } .section-title {
+border-bottom: 2px solid #e5e7eb; } {% endblock %} {% block title %}⚠️ Alerta
+del Sistema{% endblock %} {% block subtitle %}Notificación Automática{% endblock
+%} {% block content %}
+<h2 class="section-title">{{ alert_data.title }}</h2>
+<div class="alert-info">
+  <p><strong>Descripción:</strong> {{ alert_data.description }}</p>
+  <p>
+    <strong>Severidad:</strong>
+    <span
+      class="severity-{{ alert_data.severity.lower() if alert_data.severity else 'low' }}">
+      {{ alert_data.severity.upper() if alert_data.severity else 'BAJA' }}
+    </span>
+  </p>
+  <p><strong>Fecha:</strong> {{ alert_data.timestamp }}</p>
+</div>
+{% endblock %}

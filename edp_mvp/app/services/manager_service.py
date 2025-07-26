@@ -2614,6 +2614,8 @@ class ManagerService(BaseService):
         # Clean estado column
         if "estado" in df.columns:
             df["estado"] = df["estado"].str.strip().str.lower()
+        if "dias_espera" not in df.columns and "dso_actual" in df.columns:
+            df["dias_espera"] = df["dso_actual"]
 
         return df
 
@@ -3553,7 +3555,7 @@ class ManagerService(BaseService):
             
             if not df_stalled.empty:
                 # Convertir días de espera a numérico
-                df_stalled["dias_espera_num"] = pd.to_numeric(df_stalled["dias_espera"], errors="coerce").fillna(0)
+                df_stalled["dias_espera_num"] = pd.to_numeric(df_stalled["dso_actual"], errors="coerce").fillna(0)
                 
                 # Criterio crítico: EDPs con 30+ días sin movimiento
                 df_critical = df_stalled[df_stalled["dias_espera_num"] >= 30].copy()
@@ -3651,7 +3653,7 @@ class ManagerService(BaseService):
     def _calculate_last_movement_date(self, row: pd.Series) -> str:
         """Calculate the last movement date for an EDP"""
         try:
-            dias_espera = row.get("dias_espera_num", 0)
+            dias_espera = row.get("dso_actual", 0)
             if dias_espera > 0:
                 last_date = datetime.now() - timedelta(days=int(dias_espera))
                 return last_date.strftime("%Y-%m-%d")
@@ -3699,3 +3701,158 @@ class ManagerService(BaseService):
             return int(time_score + amount_score)
         except:
             return 50  # Default moderate urgency
+
+    def get_payment_reminder_data(self, filters: Optional[Dict[str, Any]] = None) -> ServiceResponse:
+        """Get EDPs that need payment reminders."""
+        try:
+            # Load EDP data
+            edps_response = self.edp_repo.find_all_dataframe()
+            
+            if isinstance(edps_response, dict) and not edps_response.get("success", False):
+                return ServiceResponse(
+                    success=False,
+                    message=f"Failed to load EDPs data: {edps_response.get('message', 'Unknown error')}",
+                    data=None,
+                )
+
+            df_edp = edps_response.get("data", pd.DataFrame())
+            if df_edp.empty:
+                return ServiceResponse(
+                    success=False, 
+                    message="No EDP data available", 
+                    data=None
+                )
+
+            # Apply filters if provided
+            df_filtered = self._apply_manager_filters(df_edp, filters or {})
+            df_prepared = self._prepare_kpi_data(df_filtered.copy())
+            
+            # Find EDPs that need payment reminders (20-30 days pending)
+            reminder_edps = []
+            
+            # Estados que consideramos para recordatorios
+            reminder_states = ["enviado", "revisión", "pendiente"]
+            
+            # Filtrar EDPs en estados de recordatorio
+            df_reminder = df_prepared[
+                df_prepared["estado"].str.strip().str.lower().isin([s.lower() for s in reminder_states])
+            ].copy()
+            
+            if not df_reminder.empty:
+                # Convertir días de espera a numérico
+                df_reminder["dias_espera_num"] = pd.to_numeric(df_reminder["dso_actual"], errors="coerce").fillna(0)
+                
+                # Criterio: EDPs con 20-30 días sin movimiento (necesitan recordatorio)
+                df_reminder_filtered = df_reminder[
+                    (df_reminder["dias_espera_num"] >= 20) & 
+                    (df_reminder["dias_espera_num"] <= 30)
+                ].copy()
+                
+                # Ordenar por días sin movimiento (descendente)
+                df_reminder_filtered = df_reminder_filtered.sort_values("dias_espera_num", ascending=False)
+                
+                for _, row in df_reminder_filtered.iterrows():
+                    reminder_edps.append({
+                        "n_edp": row.get("n_edp", "N/A"),
+                        "cliente": row.get("cliente", "Cliente N/A"),
+                        "proyecto": row.get("proyecto", "Proyecto N/A"),
+                        "monto_aprobado": float(row.get("monto_aprobado", 0)),
+                        "dias_espera": int(row.get("dias_espera_num", 0)),
+                        "estado": row.get("estado", "pendiente"),
+                        "jefe_proyecto": row.get("jefe_proyecto", "Sin asignar"),
+                        "fecha_emision": row.get("fecha_emision", "Sin fecha"),
+                        "fecha_ultimo_movimiento": self._calculate_last_movement_date(row)
+                    })
+            
+            return ServiceResponse(
+                success=True,
+                message=f"Payment reminder data retrieved: {len(reminder_edps)} EDPs need reminders",
+                data={"reminder_edps": reminder_edps},
+            )
+
+        except Exception as e:
+            logger.error(f"Error getting payment reminder data: {str(e)}")
+            return ServiceResponse(
+                success=False,
+                message=f"Error getting payment reminder data: {str(e)}",
+                data=None,
+            )
+
+    def get_weekly_kpis_data(self, filters: Optional[Dict[str, Any]] = None) -> ServiceResponse:
+        """Get weekly KPIs data for email summaries."""
+        try:
+            # Load EDP data
+            edps_response = self.edp_repo.find_all_dataframe()
+            
+            if isinstance(edps_response, dict) and not edps_response.get("success", False):
+                return ServiceResponse(
+                    success=False,
+                    message=f"Failed to load EDPs data: {edps_response.get('message', 'Unknown error')}",
+                    data=None,
+                )
+
+            df_edp = edps_response.get("data", pd.DataFrame())
+            if df_edp.empty:
+                return ServiceResponse(
+                    success=False, 
+                    message="No EDP data available", 
+                    data=None
+                )
+
+            # Apply filters if provided
+            df_filtered = self._apply_manager_filters(df_edp, filters or {})
+            df_prepared = self._prepare_kpi_data(df_filtered.copy())
+            
+            # Calculate weekly KPIs
+            total_edps = len(df_prepared)
+            total_amount = df_prepared["monto_aprobado"].sum()
+            
+            # Calculate DSO (Days Sales Outstanding)
+            dso_actual = self._calculate_dso(df_prepared)
+            
+            # Get critical EDPs
+            critical_response = self.get_critical_projects_data(filters)
+            critical_edps = critical_response.data.get("critical_edps", []) if critical_response.success else []
+            
+            # Calculate weekly activity (last 7 days)
+            current_date = datetime.now()
+            week_ago = current_date - timedelta(days=7)
+            
+            # Mock weekly activity (in real implementation, you'd check actual activity)
+            weekly_activity = {
+                "edps_aprobados": len(df_prepared[df_prepared["estado"] == "aprobado"]),
+                "edps_pagados": len(df_prepared[df_prepared["estado"] == "pagado"]),
+                "monto_cobrado": df_prepared[df_prepared["estado"] == "pagado"]["monto_aprobado"].sum(),
+                "nuevos_edps": len(df_prepared[df_prepared["estado"] == "enviado"])
+            }
+            
+            # Prepare weekly summary data
+            weekly_data = {
+                "periodo": "semanal",
+                "fecha_inicio": week_ago.strftime("%Y-%m-%d"),
+                "fecha_fin": current_date.strftime("%Y-%m-%d"),
+                "kpis_principales": {
+                    "total_edps": total_edps,
+                    "monto_total": total_amount,
+                    "dso_promedio": dso_actual,
+                    "edps_criticos": len(critical_edps)
+                },
+                "actividad_semanal": weekly_activity,
+                "edps_criticos": critical_edps[:5],  # Top 5 critical EDPs
+                "resumen_por_estado": df_prepared["estado"].value_counts().to_dict(),
+                "resumen_por_jefe": df_prepared["jefe_proyecto"].value_counts().head(5).to_dict()
+            }
+            
+            return ServiceResponse(
+                success=True,
+                message="Weekly KPIs data retrieved successfully",
+                data=weekly_data,
+            )
+
+        except Exception as e:
+            logger.error(f"Error getting weekly KPIs data: {str(e)}")
+            return ServiceResponse(
+                success=False,
+                message=f"Error getting weekly KPIs data: {str(e)}",
+                data=None,
+            )

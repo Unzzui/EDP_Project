@@ -1,0 +1,58 @@
+{% extends "emails/base.html" %} {% block theme_styles %} .header { background:
+linear-gradient(135deg, #059669 0%, #047857 100%); } .section-title {
+border-bottom: 2px solid #d1fae5; } .kpi-value { color: #059669; } .summary-list
+.highlight { color: #059669; } .button { background: linear-gradient(135deg,
+#0066cc 0%, #0052a3 100%); box-shadow: 0 2px 4px rgba(0, 102, 204, 0.2); }
+.button:hover { box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3); } {% endblock %}
+{% block title %}📊 Reporte de Performance{% endblock %} {% block subtitle %}{{
+jefe_proyecto }} - {{ periodo.title() }}{% endblock %} {% block content %}
+<h2 class="section-title">KPIs Principales</h2>
+<div class="report-info">
+  <p><strong>Jefe de Proyecto:</strong> {{ jefe_proyecto }}</p>
+  <p><strong>Período:</strong> {{ periodo.title() }}</p>
+</div>
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-value">{{ performance_data.total_edps or 0 }}</div>
+    <div class="kpi-label">Total EDPs</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value">
+      ${{ "{:,.0f}".format(performance_data.total_monto or 0) }}
+    </div>
+    <div class="kpi-label">Monto Total</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value">{{ performance_data.dso_promedio or 0 }}</div>
+    <div class="kpi-label">DSO Promedio</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value">{{ performance_data.edps_criticos or 0 }}</div>
+    <div class="kpi-label">EDPs Críticos</div>
+  </div>
+</div>
+
+<div class="summary-list">
+  <h3>Resumen de Actividad</h3>
+  <ul>
+    <li>
+      EDPs aprobados:
+      <span class="highlight">{{ performance_data.edps_aprobados or 0 }}</span>
+    </li>
+    <li>
+      EDPs pagados:
+      <span class="highlight">{{ performance_data.edps_pagados or 0 }}</span>
+    </li>
+    <li>
+      Monto cobrado:
+      <span class="highlight"
+        >${{ "{:,.0f}".format(performance_data.monto_cobrado or 0) }}</span
+      >
+    </li>
+  </ul>
+</div>
+
+<a href="{{ app_url }}/management/dashboard" class="button"
+  >Ver Dashboard Completo</a
+>
+{% endblock %}

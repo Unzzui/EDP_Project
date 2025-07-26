@@ -1,0 +1,350 @@
+/* Business Rules Documentation Styles - Executive Suite Design System */
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-primary);
+}
+
+.rules-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px;
+    font-family: var(--font-primary);
+}
+
+.rules-header {
+    background: var(--bg-primary);
+    color: white;
+    padding: 32px;
+    border-radius: 8px;
+    margin-bottom: 32px;
+    text-align: center;
+    box-shadow: var(--shadow-elevated);
+}
+
+.rules-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 2.25rem;
+    font-weight: 600;
+    font-family: var(--font-primary);
+}
+
+.rules-header p {
+    margin: 0;
+    font-size: 1.125rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.rule-category {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-subtle);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rule-category:hover {
+    box-shadow: var(--shadow-elevated);
+}
+
+.rule-category h2 {
+    color: var(--accent-primary);
+    margin: 0 0 24px 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    border-bottom: 2px solid var(--accent-primary);
+    padding-bottom: 12px;
+    font-family: var(--font-primary);
+}
+
+.rule-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-primary);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rule-item:last-child {
+    border-bottom: none;
+}
+
+.rule-item:hover {
+    background-color: var(--bg-tertiary);
+    margin: 0 -16px;
+    padding: 16px;
+    border-radius: 4px;
+}
+
+.rule-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-family: var(--font-primary);
+}
+
+.rule-value {
+    font-family: var(--font-secondary);
+    font-weight: 500;
+    color: var(--accent-primary);
+    background: var(--accent-muted);
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-primary);
+}
+
+.rule-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.states-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.state-badge {
+    background: var(--accent-tertiary);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: var(--font-secondary);
+    border: 1px solid transparent;
+}
+
+.config-section {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 28px;
+    margin-top: 24px;
+    box-shadow: var(--shadow-subtle);
+}
+
+.config-section h3 {
+    margin: 0 0 20px 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-family: var(--font-primary);
+}
+
+.validation-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.validation-item:hover {
+    background-color: var(--bg-primary);
+}
+
+.validation-icon {
+    margin-right: 12px;
+    font-size: 1.125rem;
+    font-family: var(--font-secondary);
+}
+
+.validation-icon.valid {
+    color: var(--accent-tertiary);
+}
+
+.validation-icon.invalid {
+    color: var(--accent-secondary);
+}
+
+.refresh-btn {
+    background: var(--accent-primary);
+    color: white;
+    border: 1px solid var(--accent-primary);
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    font-family: var(--font-primary);
+    font-size: 0.875rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-subtle);
+}
+
+.refresh-btn:hover {
+    background: #004d99;
+    box-shadow: var(--shadow-interactive);
+    transform: translateY(-1px);
+}
+
+.refresh-btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-subtle);
+}
+
+.update-info {
+    text-align: center;
+    margin-top: 32px;
+    padding: 28px;
+    background: var(--accent-muted);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    box-shadow: var(--shadow-subtle);
+}
+
+.update-info h4 {
+    margin: 0 0 16px 0;
+    color: var(--accent-primary);
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.update-info p {
+    margin: 8px 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.update-info code {
+    background: var(--bg-primary);
+    color: var(--accent-primary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--font-secondary);
+    font-size: 0.875rem;
+    border: 1px solid var(--border-primary);
+}
+
+/* Responsive Design - Executive Suite Standards */
+/* Breakpoints: 1200px, 768px, 480px */
+
+@media (max-width: 1200px) {
+    .rules-container {
+        max-width: 960px;
+        padding: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    .rules-container {
+        padding: 20px;
+    }
+    
+    .rules-header {
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+    
+    .rules-header h1 {
+        font-size: 1.875rem;
+    }
+    
+    .rules-header p {
+        font-size: 1rem;
+    }
+    
+    .rule-category {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .rule-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 0;
+    }
+    
+    .rule-item:hover {
+        margin: 0 -12px;
+        padding: 12px;
+    }
+    
+    .states-list {
+        width: 100%;
+    }
+    
+    .config-section {
+        padding: 20px;
+    }
+    
+    .update-info {
+        padding: 20px;
+        text-align: left;
+    }
+}
+
+@media (max-width: 480px) {
+    .rules-container {
+        padding: 16px;
+    }
+    
+    .rules-header {
+        padding: 20px;
+    }
+    
+    .rules-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .rule-category {
+        padding: 16px;
+    }
+    
+    .config-section {
+        padding: 16px;
+    }
+    
+    .refresh-btn {
+        width: 100%;
+        padding: 14px 24px;
+    }
+}
+
+
+
+/* Performance Optimizations */
+.rule-category,
+.config-section,
+.validation-item,
+.rule-item {
+    will-change: auto;
+}
+
+/* Accessibility Enhancements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --border-primary: #000000;
+        --border-secondary: #000000;
+    }
+    
+    .rule-category,
+    .config-section {
+        border-width: 2px;
+    }
+    
+    .rule-value,
+    .state-badge {
+        border-width: 2px;
+    }
+} 

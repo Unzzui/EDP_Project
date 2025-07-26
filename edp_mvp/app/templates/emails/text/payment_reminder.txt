@@ -1,0 +1,11 @@
+Recordatorio de Pago
+
+EDP Pendiente de Pago:
+- Número EDP: {{ edp_data.get('n_edp', 'N/A') }}
+- Cliente: {{ edp_data.get('cliente', 'N/A') }}
+- Proyecto: {{ edp_data.get('proyecto', 'N/A') }}
+- Monto: ${{ "{:,.0f}".format(edp_data.get('monto_aprobado', 0)) }}
+- Estado: {{ edp_data.get('estado', 'N/A') }}
+- Días pendiente: {{ edp_data.get('dso_actual', 0) }} días
+
+Este es un mensaje automático del sistema Pagora. 

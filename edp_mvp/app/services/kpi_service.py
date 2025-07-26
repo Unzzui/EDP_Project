@@ -13,6 +13,7 @@ import calendar
 from ..models import EDP, KPI
 from ..repositories.edp_repository import EDPRepository
 from . import BaseService, ServiceResponse
+from ..utils.business_rules import business_rules, es_critico
 
 logger = logging.getLogger(__name__)
 
@@ -298,7 +299,7 @@ class KPIService(BaseService):
     def _calculate_kpi_cards_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Calculate KPI cards metrics: critical projects, aging 31-60, fast collection, meta gap"""
         try:
-            # Critical Projects (>60 días DSO)
+            # Critical Projects (>30 días DSO and not paid - same as API)
             critical_projects_count = self._calculate_critical_projects_count(df)
             critical_amount = self._calculate_critical_amount(df) / 1_000_000  # Convert to millions
             
@@ -601,32 +602,43 @@ class KPIService(BaseService):
             )
 
     def _calculate_critical_projects_count(self, df: pd.DataFrame) -> int:
-        """Calculate number of critical projects based on DSO actual from database."""
+        """Calculate number of critical projects using centralized business rules."""
         try:
-            if df.empty or 'dso_actual' not in df.columns:
+            if df.empty or 'dso_actual' not in df.columns or 'estado' not in df.columns:
                 return 0
             
-            # Projects with high DSO (>60 days) using database column dso_actual
-            dso_numeric = pd.to_numeric(df['dso_actual'], errors='coerce').fillna(0)
-            critical_count = (dso_numeric > 60).sum()
+            # Use centralized business rules
+            critical_count = 0
+            for _, row in df.iterrows():
+                dso_actual = row.get('dso_actual', 0)
+                estado = row.get('estado', '')
+                
+                if es_critico(dso_actual, estado):
+                    critical_count += 1
             
-            return int(critical_count)
+            return critical_count
         except Exception as e:
             logger.error(f"Error calculating critical projects count: {str(e)}")
             return 0
 
     def _calculate_critical_amount(self, df: pd.DataFrame) -> float:
-        """Calculate total amount at risk in critical projects using DSO actual."""
+        """Calculate total amount at risk in critical projects using centralized business rules."""
         try:
-            if df.empty or 'dso_actual' not in df.columns or 'monto_propuesto' not in df.columns:
+            if df.empty or 'dso_actual' not in df.columns or 'monto_propuesto' not in df.columns or 'estado' not in df.columns:
                 return 0.0
             
-            # Amount from high DSO projects (>60 days)
-            dso_numeric = pd.to_numeric(df['dso_actual'], errors='coerce').fillna(0)
-            high_dso_mask = dso_numeric > 60
-            critical_amount = df[high_dso_mask]['monto_propuesto'].sum()
+            # Use centralized business rules
+            critical_amount = 0.0
+            for _, row in df.iterrows():
+                dso_actual = row.get('dso_actual', 0)
+                estado = row.get('estado', '')
+                
+                if es_critico(dso_actual, estado):
+                    monto = pd.to_numeric(row.get('monto_propuesto', 0), errors='coerce')
+                    if pd.notna(monto):
+                        critical_amount += float(monto)
             
-            return float(critical_amount)  # Return in original units, will be converted to millions later
+            return critical_amount  # Return in original units, will be converted to millions later
         except Exception as e:
             logger.error(f"Error calculating critical amount: {str(e)}")
             return 0.0

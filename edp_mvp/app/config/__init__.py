@@ -181,6 +181,59 @@ class SecurityConfig:
 
 
 @dataclass
+class EmailConfig:
+    """Email configuration for notifications."""
+    
+    # SMTP settings
+    mail_server: str = "smtp.gmail.com"
+    mail_port: int = 587
+    mail_use_tls: bool = True
+    mail_use_ssl: bool = False
+    mail_username: str = ""
+    mail_password: str = ""
+    
+    # Email settings
+    mail_default_sender: str = ""
+    mail_max_emails: int = 100
+    
+    # Test email settings
+    test_email_recipient: str = "diegobravobe@gmail.com"
+    
+    # Notification settings
+    enable_critical_alerts: bool = True
+    enable_weekly_summary: bool = True
+    enable_payment_reminders: bool = True
+    enable_system_alerts: bool = True
+    
+    # Alert thresholds
+    critical_edp_days: int = 60
+    payment_reminder_days: int = 30
+    weekly_summary_day: str = "monday"  # day of week
+    
+    @classmethod
+    def from_env(cls) -> 'EmailConfig':
+        """Create EmailConfig from environment variables."""
+        return cls(
+            mail_server=os.getenv('MAIL_SERVER', 'smtp.gmail.com'),
+            mail_port=int(os.getenv('MAIL_PORT', '587')),
+            mail_use_tls=os.getenv('MAIL_USE_TLS', 'True').lower() == 'true',
+            mail_use_ssl=os.getenv('MAIL_USE_SSL', 'False').lower() == 'true',
+            mail_username=os.getenv('MAIL_USERNAME', ''),
+            mail_password=os.getenv('MAIL_PASSWORD', ''),
+            mail_default_sender=os.getenv('MAIL_DEFAULT_SENDER', ''),
+            mail_max_emails=int(os.getenv('MAIL_MAX_EMAILS', '100')),
+            test_email_recipient=os.getenv('TEST_EMAIL_RECIPIENT', 'diegobravobe@gmail.com'),
+            enable_critical_alerts=os.getenv('ENABLE_CRITICAL_ALERTS', 'True').lower() == 'true',
+            enable_weekly_summary=os.getenv('ENABLE_WEEKLY_SUMMARY', 'True').lower() == 'true',
+            enable_payment_reminders=os.getenv('ENABLE_PAYMENT_REMINDERS', 'True').lower() == 'true',
+            enable_system_alerts=os.getenv('ENABLE_SYSTEM_ALERTS', 'True').lower() == 'true',
+            critical_edp_days=int(os.getenv('CRITICAL_EDP_DAYS', '60')),
+            payment_reminder_days=int(os.getenv('PAYMENT_REMINDER_DAYS', '30')),
+            weekly_summary_day=os.getenv('WEEKLY_SUMMARY_DAY', 'monday')
+        )
+
+
+@dataclass
 class KPIConfig:
     """KPI calculation configuration."""
     
@@ -230,6 +283,7 @@ class Config:
         self.app = AppConfig.from_env()
         self.database = DatabaseConfig.from_env()
         self.security = SecurityConfig.from_env()
+        self.email = EmailConfig.from_env()
         self.kpi = KPIConfig.from_env()
         
         # NUEVO: Configurar backend de datos

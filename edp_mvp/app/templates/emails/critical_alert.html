@@ -1,0 +1,41 @@
+{% extends "emails/base.html" %} {% block theme_styles %} .header { background:
+linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); } .section-title {
+border-bottom: 2px solid #fecaca; } .edp-info { background-color: #fef2f2;
+border-color: #fecaca; border-left-color: #dc2626; } .button { background:
+linear-gradient(135deg, #0066cc 0%, #0052a3 100%); box-shadow: 0 2px 4px rgba(0,
+102, 204, 0.2); } .button:hover { box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+} {% endblock %} {% block title %}🚨 ALERTA CRÍTICA{% endblock %} {% block
+subtitle %}EDP Requiere Atención Inmediata{% endblock %} {% block content %}
+<h2 class="section-title">Detalles del EDP Crítico</h2>
+<div class="edp-info">
+  <p><strong>Número EDP:</strong> {{ edp_data.n_edp }}</p>
+  <p><strong>Cliente:</strong> {{ edp_data.cliente }}</p>
+  <p><strong>Proyecto:</strong> {{ edp_data.proyecto }}</p>
+  <p>
+    <strong>Monto:</strong> ${{ "{:,.0f}".format(edp_data.monto_aprobado or 0)
+    }}
+  </p>
+  <p>
+    <strong>Estado:</strong> <span class="critical">{{ edp_data.estado }}</span>
+  </p>
+  <p>
+    <strong>Días sin movimiento:</strong>
+    <span class="critical">{{ edp_data.dso_actual or 0 }} días</span>
+  </p>
+  <p><strong>Jefe de Proyecto:</strong> {{ edp_data.jefe_proyecto }}</p>
+</div>
+
+<div class="actions-list">
+  <h3>Acciones Recomendadas</h3>
+  <ul>
+    <li>Contactar inmediatamente al cliente</li>
+    <li>Revisar documentación pendiente</li>
+    <li>Actualizar estado del EDP</li>
+    <li>Escalar si es necesario</li>
+  </ul>
+</div>
+
+<a href="{{ app_url }}/edp/{{ edp_data.id }}" class="button"
+  >Ver EDP en Sistema</a
+>
+{% endblock %}

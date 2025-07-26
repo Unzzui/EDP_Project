@@ -1,7 +1,7 @@
 from flask import Flask
 from .config import get_config
 from flask_login import LoginManager
-from .extensions import socketio, login_manager, db
+from .extensions import socketio, login_manager, db, mail
 from celery import Celery
 import os
 import logging
@@ -10,34 +10,13 @@ import numpy as np
 import pandas as pd
 from typing import Any
 
-# Celery application with improved error handling
-def create_celery():
-    """Create Celery instance with better error handling for production."""
-    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    
-    # Test Redis connection
-    try:
-        import redis
-        r = redis.from_url(redis_url)
-        r.ping()
-        print("✅ Redis conectado correctamente")
-    except Exception as e:
-        print(f"⚠️ Redis no disponible para cache: {e}")
-        # En producción sin Redis, usar un broker en memoria (no recomendado para producción real)
-        # Render debería proporcionar Redis
-        
-    return Celery(
-        __name__,
-        broker=redis_url,
-        backend=redis_url,
-    )
 
-celery = create_celery()
 
-# Configure task imports
-celery.conf.imports = [
-    'edp_mvp.app.tasks.metrics',
-]
+logger = logging.getLogger(__name__)
+
+
+# Import Celery instance from celery.py to avoid conflicts
+from .celery import celery
 
 
 def init_celery(app: Flask) -> Celery:
@@ -45,13 +24,24 @@ def init_celery(app: Flask) -> Celery:
 
     celery.conf.update(app.config)
     celery.conf.broker_connection_retry_on_startup = True
-    celery.conf.worker_send_task_events = True
-    celery.conf.worker_enable_remote_control = True
+    celery.conf.worker_send_task_events = False  # Deshabilitar eventos problemáticos
+    celery.conf.worker_enable_remote_control = False  # Deshabilitar control remoto problemático
+    celery.conf.task_events = False  # Deshabilitar eventos de tareas
+    celery.conf.event_queue_expires = 60  # Expirar eventos rápidamente
     
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):
             with app.app_context():
                 return super().__call__(*args, **kwargs)
+        
+        def on_failure(self, exc, task_id, args, kwargs, einfo):
+            """Handle task failures."""
+            logger.error(f"❌ Task {task_id} failed: {exc}")
+            super().on_failure(exc, task_id, args, kwargs, einfo)
+        
+        def after_return(self, status, retval, task_id, args, kwargs, einfo):
+            """Clean up after task completion."""
+            super().after_return(status, retval, task_id, args, kwargs, einfo)
 
     celery.Task = ContextTask
     return celery
@@ -125,6 +115,7 @@ def create_app():
     login_manager.init_app(app)
     socketio.init_app(app)
     db.init_app(app)
+    mail.init_app(app)
 
     if os.getenv("ENABLE_PROFILER") == "1" and ProfilerMiddleware:
         app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
@@ -147,6 +138,7 @@ def create_app():
     from .routes.control_panel import control_panel_bp
     from .routes.analytics import analytics_bp
     from .routes.edp_upload import edp_upload_bp
+    from .routes.email_notifications import email_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(edp_bp, url_prefix="/edp")
@@ -163,38 +155,14 @@ def create_app():
     app.register_blueprint(control_panel_bp)
     app.register_blueprint(analytics_bp)  # ✨ Analytics and insights
     app.register_blueprint(edp_upload_bp)  # 📋 Sistema de carga de EDPs
+    app.register_blueprint(email_bp)  # 📧 Sistema de notificaciones por email
 
     # Old monolithic controllers (comment out when fully migrated)
     # app.register_blueprint(controller_bp)
     # app.register_blueprint(manager_bp)
 
     init_celery(app)
-    celery.conf.beat_schedule = {
-        "refresh-kpis": {
-            "task": "edp_mvp.app.tasks.metrics.refresh_executive_kpis",
-            "schedule": 600,  # Every 10 minutes
-        },
-        "refresh-kanban": {
-            "task": "edp_mvp.app.tasks.metrics.refresh_kanban_metrics",
-            "schedule": 300,  # Every 5 minutes
-        },
-        "refresh-cashflow": {
-            "task": "edp_mvp.app.tasks.metrics.refresh_cashflow",
-            "schedule": 3600,  # Every hour
-        },
-        "refresh-global-analytics": {
-            "task": "edp_mvp.app.tasks.metrics.refresh_global_analytics",
-            "schedule": 900,  # Every 15 minutes
-        },
-        "precompute-dashboards": {
-            "task": "edp_mvp.app.tasks.metrics.precompute_dashboard_variants",
-            "schedule": 1800,  # Every 30 minutes
-        },
-        "cleanup-cache": {
-            "task": "edp_mvp.app.tasks.metrics.cleanup_stale_cache", 
-            "schedule": 3600,  # Every hour
-        },
-    }
+    # Beat schedule configuration moved to celery.py to avoid conflicts
 
     # Import tasks to ensure they are registered with Celery
     from . import tasks

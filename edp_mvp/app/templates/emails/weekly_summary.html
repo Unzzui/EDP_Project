@@ -1,0 +1,107 @@
+{% extends "emails/base.html" %} {% block theme_styles %} .header { background:
+linear-gradient(135deg, #0066cc 0%, #0052a3 100%); } .section-title {
+border-bottom: 2px solid #e6f3ff; } .kpi-value { color: #0066cc; } .summary-list
+.highlight { color: #0066cc; } .button { background: linear-gradient(135deg,
+#0066cc 0%, #0052a3 100%); box-shadow: 0 2px 4px rgba(0, 102, 204, 0.2); }
+.button:hover { box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3); } .projects-table
+{ width: 100%; border-collapse: collapse; margin: 24px 0; background-color:
+#ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0,
+0, 0.1); } .projects-table th { background-color: #f8f9fa; color: #1a1a1a;
+font-weight: 600; font-size: 14px; text-align: left; padding: 16px 12px;
+border-bottom: 2px solid #e5e7eb; text-transform: uppercase; letter-spacing:
+0.5px; } .projects-table td { padding: 12px; border-bottom: 1px solid #e5e7eb;
+font-size: 14px; color: #374151; } .projects-table tr:hover { background-color:
+#f8f9fa; } .projects-table .project-name { font-weight: 600; color: #1a1a1a; }
+.projects-table .client-name { color: #6b7280; font-size: 13px; }
+.projects-table .amount { font-family: 'JetBrains Mono', 'Courier New',
+monospace; font-weight: 600; color: #0066cc; } .projects-table .status {
+padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;
+text-transform: uppercase; } .projects-table .status.activo { background-color:
+#d1fae5; color: #059669; } .projects-table .status.inactivo { background-color:
+#fecaca; color: #dc2626; } .projects-table .days { font-weight: 600; color:
+#d97706; } {% endblock %} {% block title %}📊 Resumen Semanal{% endblock %} {%
+block subtitle %}{{ date }}{% endblock %} {% block content %}
+<h2 class="section-title">KPIs Principales</h2>
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-value">{{ processed_kpis.total_edps }}</div>
+    <div class="kpi-label">Total EDPs</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value">${{ processed_kpis.total_monto }}</div>
+    <div class="kpi-label">Monto Total</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value">{{ processed_kpis.dso_promedio }}</div>
+    <div class="kpi-label">DSO Promedio</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value">{{ processed_kpis.edps_criticos }}</div>
+    <div class="kpi-label">EDPs Críticos</div>
+  </div>
+</div>
+
+<div class="summary-list">
+  <h3>Resumen de Actividad</h3>
+  <ul>
+    <li>
+      EDPs aprobados esta semana:
+      <span class="highlight">{{ processed_kpis.edps_aprobados_semana }}</span>
+    </li>
+    <li>
+      EDPs pagados esta semana:
+      <span class="highlight">{{ processed_kpis.edps_pagados_semana }}</span>
+    </li>
+    <li>
+      Monto cobrado esta semana:
+      <span class="highlight">${{ processed_kpis.monto_cobrado_semana }}</span>
+    </li>
+    <li>
+      Proyectos activos:
+      <span class="highlight">{{ processed_kpis.proyectos_activos }}</span>
+    </li>
+  </ul>
+</div>
+
+{% if processed_kpis.proyectos_por_jefe %}
+<h2 class="section-title">Proyectos por Jefe</h2>
+<table class="projects-table">
+  <thead>
+    <tr>
+      <th>Proyecto</th>
+      <th>Cliente</th>
+      <th>Jefe de Proyecto</th>
+      <th>EDPs</th>
+      <th>Monto Total</th>
+      <th>Días Sin Movimiento</th>
+      <th>Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for proyecto in processed_kpis.proyectos_por_jefe %}
+    <tr>
+      <td>
+        <div class="project-name">{{ proyecto.proyecto }}</div>
+      </td>
+      <td>
+        <div class="client-name">{{ proyecto.cliente }}</div>
+      </td>
+      <td>{{ proyecto.jefe_proyecto }}</td>
+      <td>{{ proyecto.edps|length }}</td>
+      <td class="amount">${{ "{:,.0f}".format(proyecto.total_monto) }}</td>
+      <td class="days">{{ proyecto.max_dias_sin_movimiento }} días</td>
+      <td>
+        <span class="status {{ proyecto.estado_proyecto }}">
+          {{ proyecto.estado_proyecto }}
+        </span>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<a href="{{ app_url }}/management/dashboard" class="button"
+  >Ver Dashboard Completo</a
+>
+{% endblock %}

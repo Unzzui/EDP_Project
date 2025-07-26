@@ -1,0 +1,8 @@
+Alerta del Sistema
+
+Título: {{ alert_data.get('title', 'N/A') }}
+Descripción: {{ alert_data.get('description', 'N/A') }}
+Severidad: {{ alert_data.get('severity', 'N/A') }}
+Fecha: {{ alert_data.get('timestamp', 'N/A') }}
+
+Este es un mensaje automático del sistema Pagora. 

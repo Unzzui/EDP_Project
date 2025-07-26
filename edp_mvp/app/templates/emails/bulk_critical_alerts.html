@@ -1,0 +1,52 @@
+{% extends "emails/base.html" %} {% block theme_styles %} .header { background:
+linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); } .section-title {
+border-bottom: 2px solid #fecaca; } .edp-item { background-color: #fef2f2;
+border-color: #fecaca; border-left-color: #dc2626; } .summary-stats .stat-value
+{ color: #dc2626; } .button { background: linear-gradient(135deg, #0066cc 0%,
+#0052a3 100%); box-shadow: 0 2px 4px rgba(0, 102, 204, 0.2); } .button:hover {
+box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3); } {% endblock %} {% block title
+%}🚨 {{ critical_edps|length }} EDPs Críticos{% endblock %} {% block subtitle
+%}Requieren Atención Inmediata{% endblock %} {% block content %}
+<div class="summary-stats">
+  <div class="stat">
+    <div class="stat-value">{{ critical_edps|length }}</div>
+    <div class="stat-label">EDPs Críticos</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">
+      ${{ "{:,.0f}".format(sum(edp.get('monto_aprobado', 0) for edp in
+      critical_edps)) }}
+    </div>
+    <div class="stat-label">Monto Total</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">
+      {{ "{:.0f}".format(sum(edp.get('dso_actual', 0) for edp in critical_edps)
+      / len(critical_edps)) }}
+    </div>
+    <div class="stat-label">DSO Promedio</div>
+  </div>
+</div>
+
+<h2 class="section-title">Lista de EDPs Críticos</h2>
+{% for edp in critical_edps %}
+<div class="edp-item">
+  <h3>EDP {{ edp.n_edp }}</h3>
+  <p><strong>Cliente:</strong> {{ edp.cliente }}</p>
+  <p><strong>Proyecto:</strong> {{ edp.proyecto }}</p>
+  <p>
+    <strong>Monto:</strong> ${{ "{:,.0f}".format(edp.monto_aprobado or 0) }}
+  </p>
+  <p><strong>Estado:</strong> <span class="critical">{{ edp.estado }}</span></p>
+  <p>
+    <strong>Días sin movimiento:</strong>
+    <span class="critical">{{ edp.dso_actual or 0 }} días</span>
+  </p>
+  <p><strong>Jefe de Proyecto:</strong> {{ edp.jefe_proyecto }}</p>
+</div>
+{% endfor %}
+
+<a href="{{ app_url }}/management/dashboard" class="button"
+  >Ver Dashboard Completo</a
+>
+{% endblock %}

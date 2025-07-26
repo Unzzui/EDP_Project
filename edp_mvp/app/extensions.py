@@ -1,6 +1,7 @@
 from flask_socketio import SocketIO
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail
 
 # Configurar SocketIO para usar threading mode (más compatible con servidores WSGI estándar)
 socketio = SocketIO(
@@ -14,3 +15,4 @@ login_manager.login_view = "auth.login"
 login_manager.login_message = "Inicia sesión para acceder a esta página."
 
 db = SQLAlchemy()
+mail = Mail()

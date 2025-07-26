@@ -1,0 +1,14 @@
+{{ critical_edps|length }} EDPs Críticos Requieren Atención
+
+Lista de EDPs Críticos:
+{% for edp in critical_edps %}
+EDP {{ edp.get('n_edp', 'N/A') }}:
+- Cliente: {{ edp.get('cliente', 'N/A') }}
+- Proyecto: {{ edp.get('proyecto', 'N/A') }}
+- Monto: ${{ "{:,.0f}".format(edp.get('monto_aprobado', 0)) }}
+- Estado: {{ edp.get('estado', 'N/A') }}
+- Días sin movimiento: {{ edp.get('dso_actual', 0) }} días
+- Jefe de Proyecto: {{ edp.get('jefe_proyecto', 'N/A') }}
+
+{% endfor %}
+Este es un mensaje automático del sistema Pagora. 

@@ -1,0 +1,18 @@
+ALERTA CRÍTICA - EDP REQUIERE ATENCIÓN INMEDIATA
+
+Detalles del EDP Crítico:
+- Número EDP: {{ edp_data.get('n_edp', 'N/A') }}
+- Cliente: {{ edp_data.get('cliente', 'N/A') }}
+- Proyecto: {{ edp_data.get('proyecto', 'N/A') }}
+- Monto: ${{ "{:,.0f}".format(edp_data.get('monto_aprobado', 0)) }}
+- Estado: {{ edp_data.get('estado', 'N/A') }}
+- Días sin movimiento: {{ edp_data.get('dso_actual', 0) }} días
+- Jefe de Proyecto: {{ edp_data.get('jefe_proyecto', 'N/A') }}
+
+Acciones Recomendadas:
+1. Contactar inmediatamente al cliente
+2. Revisar documentación pendiente
+3. Actualizar estado del EDP
+4. Escalar si es necesario
+
+Este es un mensaje automático del sistema Pagora. 

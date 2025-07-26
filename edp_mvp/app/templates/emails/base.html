@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      {% include 'emails/base_styles.css' %}
+
+      /* Theme-specific styles */
+      {% block theme_styles %}{% endblock %}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header" style="{% block header_style %}{% endblock %}">
+        <h1>{% block title %}{% endblock %}</h1>
+        <div class="subtitle">{% block subtitle %}{% endblock %}</div>
+      </div>
+      <div class="content">{% block content %}{% endblock %}</div>
+      <div class="footer">
+        <p>
+          Este es un mensaje automático del sistema Pagora. Por favor, no
+          responda a este email.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

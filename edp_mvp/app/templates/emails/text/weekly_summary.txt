@@ -1,0 +1,28 @@
+Resumen Semanal - {{ date }}
+
+KPIs Principales:
+- Total EDPs: {{ processed_kpis.get('total_edps', '0') }}
+- Monto Total: ${{ processed_kpis.get('total_monto', '0') }}
+- DSO Promedio: {{ processed_kpis.get('dso_promedio', '0') }}
+- EDPs Críticos: {{ processed_kpis.get('edps_criticos', '0') }}
+
+Resumen de Actividad:
+- EDPs aprobados esta semana: {{ processed_kpis.get('edps_aprobados_semana', '0') }}
+- EDPs pagados esta semana: {{ processed_kpis.get('edps_pagados_semana', '0') }}
+- Monto cobrado esta semana: ${{ processed_kpis.get('monto_cobrado_semana', '0') }}
+- Proyectos activos: {{ processed_kpis.get('proyectos_activos', '0') }}
+
+{% if processed_kpis.get('proyectos_por_jefe') %}
+Proyectos por Jefe:
+{% for proyecto in processed_kpis.proyectos_por_jefe %}
+- {{ proyecto.proyecto }} ({{ proyecto.cliente }})
+  Jefe: {{ proyecto.jefe_proyecto }}
+  EDPs: {{ proyecto.edps|length }}
+  Monto: ${{ "{:,.0f}".format(proyecto.total_monto) }}
+  Días sin movimiento: {{ proyecto.max_dias_sin_movimiento }}
+  Estado: {{ proyecto.estado_proyecto }}
+
+{% endfor %}
+{% endif %}
+
+Este es un mensaje automático del sistema Pagora. 

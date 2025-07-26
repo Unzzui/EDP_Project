@@ -1,0 +1,14 @@
+Reporte de Performance - {{ jefe_proyecto }} ({{ periodo.title() }})
+
+KPIs Principales:
+- Total EDPs: {{ performance_data.get('total_edps', 0) }}
+- Monto Total: ${{ "{:,.0f}".format(performance_data.get('total_monto', 0)) }}
+- DSO Promedio: {{ performance_data.get('dso_promedio', 0) }}
+- EDPs Críticos: {{ performance_data.get('edps_criticos', 0) }}
+
+Resumen de Actividad:
+- EDPs aprobados: {{ performance_data.get('edps_aprobados', 0) }}
+- EDPs pagados: {{ performance_data.get('edps_pagados', 0) }}
+- Monto cobrado: ${{ "{:,.0f}".format(performance_data.get('monto_cobrado', 0)) }}
+
+Este es un mensaje automático del sistema Pagora. 

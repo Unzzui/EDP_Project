@@ -1,0 +1,228 @@
+{% extends "base.html" %} {% block title %}Reglas de Negocio - Sistema EDP{%
+endblock %} {% block content %}
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/management/business-rules.css') }}" />
+<div class="rules-container">
+  <div class="rules-header">
+    <h1>Reglas de Negocio</h1>
+    <p>Configuración centralizada del Sistema EDP</p>
+  </div>
+
+  <!-- EDPs Críticos -->
+  <div class="rule-category">
+    <h2>EDPs Críticos</h2>
+    <div class="rule-item">
+      <div>
+        <div class="rule-name">DSO Mínimo para Crítico</div>
+        <div class="rule-description">
+          Días mínimos para considerar un EDP como crítico
+        </div>
+      </div>
+      <div class="rule-value" id="criticos-dso-minimo">30 días</div>
+    </div>
+    <div class="rule-item">
+      <div>
+        <div class="rule-name">Estados Excluidos</div>
+        <div class="rule-description">
+          Estados que NO se consideran críticos (EDPs ya resueltos)
+        </div>
+        <div class="states-list" id="criticos-estados-excluidos">
+          <span class="state-badge">pagado</span>
+          <span class="state-badge">cobrado</span>
+          <span class="state-badge">cerrado</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDPs Aging -->
+  <div class="rule-category">
+    <h2>EDPs en Aging</h2>
+    <div class="rule-item">
+      <div>
+        <div class="rule-name">DSO Mínimo</div>
+        <div class="rule-description">Días mínimos para considerar aging</div>
+      </div>
+      <div class="rule-value" id="aging-dso-minimo">20 días</div>
+    </div>
+    <div class="rule-item">
+      <div>
+        <div class="rule-name">DSO Máximo</div>
+        <div class="rule-description">
+          Días máximos para aging (después son críticos)
+        </div>
+      </div>
+      <div class="rule-value" id="aging-dso-maximo">45 días</div>
+    </div>
+  </div>
+
+  <!-- Fast Collection -->
+  <div class="rule-category">
+    <h2>Fast Collection</h2>
+    <div class="rule-item">
+      <div>
+        <div class="rule-name">DSO Máximo</div>
+        <div class="rule-description">
+          Días máximos para considerar cobro rápido
+        </div>
+      </div>
+      <div class="rule-value" id="fast-dso-maximo">25 días</div>
+    </div>
+    <div class="rule-item">
+      <div>
+        <div class="rule-name">Estados Favorables</div>
+        <div class="rule-description">
+          Estados que favorecen el cobro rápido
+        </div>
+        <div class="states-list" id="fast-estados-favorables">
+          <span class="state-badge">validado</span>
+          <span class="state-badge">pagado</span>
+          <span class="state-badge">aprobado</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Benchmarks -->
+  <div class="rule-category">
+    <h2>Benchmarks DSO</h2>
+    <div class="rule-item">
+      <div>
+        <div class="rule-name">Target Ideal</div>
+        <div class="rule-description">
+          Objetivo ideal de DSO para la empresa
+        </div>
+      </div>
+      <div class="rule-value" id="dso-target">35 días</div>
+    </div>
+    <div class="rule-item">
+      <div>
+        <div class="rule-name">Benchmark Industria</div>
+        <div class="rule-description">Promedio de la industria</div>
+      </div>
+      <div class="rule-value" id="dso-industria">45 días</div>
+    </div>
+    <div class="rule-item">
+      <div>
+        <div class="rule-name">DSO Crítico</div>
+        <div class="rule-description">DSO considerado crítico por tiempo</div>
+      </div>
+      <div class="rule-value" id="dso-critico">60 días</div>
+    </div>
+  </div>
+
+  <!-- Configuración Actual -->
+  <div class="config-section">
+    <h3>Configuración Actual</h3>
+    <div id="config-details">
+      <p>Cargando configuración...</p>
+    </div>
+    <button class="refresh-btn" onclick="loadBusinessRulesConfig()">
+      Actualizar Configuración
+    </button>
+  </div>
+
+  <!-- Validación -->
+  <div class="config-section">
+    <h3>Validación de Reglas</h3>
+    <div id="validation-results">
+      <p>Cargando validación...</p>
+    </div>
+  </div>
+
+  <!-- Información de Actualización -->
+  <div class="update-info">
+    <h4>Cómo Modificar las Reglas</h4>
+    <p>
+      Para cambiar estos criterios, edita el archivo
+      <code>app/utils/business_rules.py</code>
+    </p>
+    <p>
+      Los cambios se aplicarán automáticamente a todo el sistema: KPIs, modales,
+      endpoints API, etc.
+    </p>
+    <p>
+      <strong>Última actualización:</strong>
+      <span id="ultima-actualizacion">2025-07-18</span>
+    </p>
+  </div>
+</div>
+
+<script>
+  // Load business rules configuration
+  function loadBusinessRulesConfig() {
+    fetch("/management/api/business_rules_config")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          updateConfigDisplay(data.config);
+          updateValidationDisplay(data.validation);
+        } else {
+          console.error("Error loading config:", data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
+  function updateConfigDisplay(config) {
+    // Update values in the page
+    document.getElementById("criticos-dso-minimo").textContent =
+      config.criterios_criticos.dso_minimo + " días";
+    document.getElementById("aging-dso-minimo").textContent =
+      config.criterios_aging.dso_minimo + " días";
+    document.getElementById("aging-dso-maximo").textContent =
+      config.criterios_aging.dso_maximo + " días";
+    document.getElementById("fast-dso-maximo").textContent =
+      config.criterios_fast_collection.dso_maximo + " días";
+    document.getElementById("dso-target").textContent =
+      config.benchmarks.dso_target + " días";
+    document.getElementById("dso-industria").textContent =
+      config.benchmarks.dso_industria + " días";
+    document.getElementById("dso-critico").textContent =
+      config.benchmarks.dso_critico + " días";
+    document.getElementById("ultima-actualizacion").textContent =
+      config.fecha_actualizacion;
+
+    // Update config details
+    const configDetails = document.getElementById("config-details");
+    configDetails.innerHTML = `
+        <p><strong>Versión:</strong> ${config.version}</p>
+        <p><strong>Fecha de actualización:</strong> ${
+          config.fecha_actualizacion
+        }</p>
+        <p><strong>Estados excluidos (críticos):</strong> ${config.criterios_criticos.estados_excluidos.join(
+          ", "
+        )}</p>
+        <p><strong>Estados favorables (fast collection):</strong> ${config.criterios_fast_collection.estados_favorables.join(
+          ", "
+        )}</p>
+    `;
+  }
+
+  function updateValidationDisplay(validation) {
+    const validationResults = document.getElementById("validation-results");
+    let html = "";
+
+    for (const [key, isValid] of Object.entries(validation)) {
+      const icon = isValid
+        ? '<span class="validation-icon valid">✅</span>'
+        : '<span class="validation-icon invalid">❌</span>';
+      const label = key
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase());
+      html += `<div class="validation-item">${icon} ${label}</div>`;
+    }
+
+    validationResults.innerHTML = html;
+  }
+
+  // Load config when page loads
+  document.addEventListener("DOMContentLoaded", function () {
+    loadBusinessRulesConfig();
+  });
+</script>
+{% endblock %}

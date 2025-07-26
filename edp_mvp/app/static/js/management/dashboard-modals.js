@@ -1139,11 +1139,11 @@ function showCriticalKPIModal() {
                 </div>
                 <div class="kpi-summary-item critical">
                     <div class="kpi-summary-label">Promedio Días</div>
-                    <div class="kpi-summary-value">${kpis.critical_avg_days || '--'} días</div>
+                    <div class="kpi-summary-value" id="critical-avg-days">--</div>
                 </div>
                 <div class="kpi-summary-item critical">
                     <div class="kpi-summary-label">Tendencia</div>
-                    <div class="kpi-summary-value">${kpis.critical_projects_change ? `${kpis.critical_projects_change > 0 ? '+' : ''}${kpis.critical_projects_change.toFixed(0)}%` : '--'}</div>
+                    <div class="kpi-summary-value" id="critical-trend">--</div>
                 </div>
             </div>
             
@@ -1216,12 +1216,12 @@ function showAgingKPIModal() {
                     <div class="kpi-summary-value">${kpis.aging_31_60_amount ? `${kpis.aging_31_60_amount.toFixed(1)}M CLP` : 'Sin datos'}</div>
                 </div>
                 <div class="kpi-summary-item warning">
-                    <div class="kpi-summary-label">Riesgo Escalamiento</div>
-                    <div class="kpi-summary-value">${kpis.aging_risk_score || 'MEDIO'}</div>
+                    <div class="kpi-summary-label">Días Promedio</div>
+                    <div class="kpi-summary-value" id="aging-avg-days">--</div>
                 </div>
                 <div class="kpi-summary-item warning">
-                    <div class="kpi-summary-label">Días Promedio</div>
-                    <div class="kpi-summary-value">${kpis.aging_avg_days || '--'} días</div>
+                    <div class="kpi-summary-label">Tendencia</div>
+                    <div class="kpi-summary-value" id="aging-trend">--</div>
                 </div>
             </div>
             
@@ -1305,11 +1305,11 @@ function showFastCollectionModal() {
                 </div>
                 <div class="kpi-summary-item positive">
                     <div class="kpi-summary-label">Velocidad Promedio</div>
-                    <div class="kpi-summary-value">${kpis.fast_avg_days || '--'} días</div>
+                    <div class="kpi-summary-value" id="fast-avg-days">--</div>
                 </div>
                 <div class="kpi-summary-item positive">
                     <div class="kpi-summary-label">Tendencia</div>
-                    <div class="kpi-summary-value">${kpis.fast_collection_change ? `${kpis.fast_collection_change > 0 ? '+' : ''}${kpis.fast_collection_change.toFixed(0)}%` : '--'}</div>
+                    <div class="kpi-summary-value" id="fast-trend">--</div>
                 </div>
             </div>
             
@@ -1480,78 +1480,381 @@ function generateManagersPreview(type) {
 }
 
 function generateCriticalEDPsTable() {
-    const kpis = window.kpisData || {};
-    const criticalCount = kpis.critical_projects_count || 0;
+    // Return a loading placeholder initially, then load real data
+    const tableId = 'critical-edps-table-' + Date.now();
     
-    if (criticalCount === 0) {
-        return `
-            <tr><td colspan="6" class="no-data-cell">
-                <div class="no-data-message">
-                    <div class="no-data-text">No hay EDPs críticos</div>
-                    <div class="no-data-subtext">Todos los proyectos están dentro de plazos normales</div>
-                </div>
-            </td></tr>
-        `;
-    }
+    // Start loading data immediately
+    setTimeout(() => loadCriticalEDPsData(tableId), 100);
     
     return `
-        <tr><td colspan="6" class="no-data-cell">
-            <div class="no-data-message">
-                <div class="no-data-text">Datos de EDPs críticos disponibles</div>
-                <div class="no-data-subtext">${criticalCount} EDPs críticos - Se mostrarán cuando se conecte con datos reales</div>
-            </div>
-        </td></tr>
+        <tr id="${tableId}">
+            <td colspan="6" class="no-data-cell">
+                <div class="loading-table">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <div class="loading-text">Cargando EDPs críticos...</div>
+                    </div>
+                </div>
+            </td>
+        </tr>
     `;
+}
+
+function loadCriticalEDPsData(tableId) {
+    fetch('/management/api/critical_edps')
+        .then(response => response.json())
+        .then(data => {
+            const loadingRow = document.getElementById(tableId);
+            if (!loadingRow) return;
+            
+            // Find the tbody parent to insert new rows
+            const tbody = loadingRow.parentElement;
+            if (!tbody) return;
+            
+            // Remove the loading row
+            loadingRow.remove();
+            
+            if (!data.success || !data.critical_edps || data.critical_edps.length === 0) {
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = `
+                    <td colspan="6" class="no-data-cell">
+                        <div class="no-data-message">
+                            <div class="no-data-text">No hay EDPs críticos</div>
+                            <div class="no-data-subtext">Todos los proyectos están dentro de plazos normales</div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(noDataRow);
+                return;
+            }
+            
+            // Generate real table rows and insert them
+            data.critical_edps.forEach(edp => {
+                const urgencyClass = edp.urgencia === 'critical' ? 'critical-row' : 'high-risk-row';
+                const urgencyBadge = edp.urgencia === 'critical' ? 'CRÍTICO' : 'ALTO RIESGO';
+                
+                const row = document.createElement('tr');
+                row.className = urgencyClass;
+                row.style.cursor = 'pointer';
+                row.onclick = () => showEDPDetailModal(edp.n_edp);
+                
+                row.innerHTML = `
+                    <td class="cliente-cell" title="${edp.cliente}">${edp.cliente}</td>
+                    <td class="proyecto-cell font-medium" title="${edp.proyecto}">${edp.proyecto}</td>
+                    <td class="monto-cell text-right">${edp.monto_formatted}</td>
+                    <td class="dias-cell text-center">
+                        <span class="dias-badge ${edp.urgencia}">${edp.dias}d</span>
+                    </td>
+                    <td class="jefe-cell" title="${edp.jefe_proyecto}">${edp.jefe_proyecto}</td>
+                    <td class="estado-cell text-center">
+                        <span class="status-badge ${edp.urgencia}">${urgencyBadge}</span>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Add summary row at the end
+            const summaryRow = document.createElement('tr');
+            summaryRow.innerHTML = `
+                <td colspan="6" class="summary-cell">
+                    <div class="table-summary">
+                        <div class="summary-stats">
+                            <span class="stat-item">
+                                <strong>${data.summary.total_count}</strong> EDPs críticos
+                            </span>
+                            <span class="stat-item">
+                                <strong>${formatCurrency(data.summary.total_amount)}</strong> en riesgo
+                            </span>
+                            <span class="stat-item">
+                                <strong>${data.summary.avg_days}</strong> días promedio
+                            </span>
+                        </div>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(summaryRow);
+            
+            // Update summary metrics with real data
+            if (data.summary) {
+                const avgDaysEl = document.getElementById('critical-avg-days');
+                const trendEl = document.getElementById('critical-trend');
+                
+                if (avgDaysEl) {
+                    avgDaysEl.textContent = `${data.summary.avg_days} días`;
+                }
+                
+                if (trendEl) {
+                    const trend = data.summary.trend_change || 0;
+                    const trendSymbol = trend > 0 ? '+' : '';
+                    const trendClass = trend > 0 ? 'critical' : trend < 0 ? 'positive' : 'neutral';
+                    trendEl.innerHTML = `<span class="${trendClass}">${trendSymbol}${trend}%</span>`;
+                }
+            }
+        })
+        .catch(error => {
+            const loadingRow = document.getElementById(tableId);
+            if (loadingRow) {
+                loadingRow.innerHTML = `
+                    <td colspan="6" class="no-data-cell">
+                        <div class="error-message">
+                            <div class="error-text">Error cargando EDPs críticos</div>
+                            <div class="error-subtext">${error.message}</div>
+                        </div>
+                    </td>
+                `;
+            }
+        });
 }
 
 function generateAgingEDPsTable() {
-    const kpis = window.kpisData || {};
-    const agingCount = kpis.aging_31_60_count || 0;
+    // Return a loading placeholder initially, then load real data
+    const tableId = 'aging-edps-table-' + Date.now();
     
-    if (agingCount === 0) {
-        return `
-            <tr><td colspan="6" class="no-data-cell">
-                <div class="no-data-message">
-                    <div class="no-data-text">No hay EDPs en aging 31-60 días</div>
-                    <div class="no-data-subtext">Excelente gestión preventiva de cobros</div>
-                </div>
-            </td></tr>
-        `;
-    }
+    // Start loading data immediately
+    setTimeout(() => loadAgingEDPsData(tableId), 100);
     
     return `
-        <tr><td colspan="6" class="no-data-cell">
-            <div class="no-data-message">
-                <div class="no-data-text">Datos de aging disponibles</div>
-                <div class="no-data-subtext">${agingCount} EDPs en aging - Se mostrarán cuando se conecte con datos reales</div>
-            </div>
-        </td></tr>
+        <tr id="${tableId}">
+            <td colspan="6" class="no-data-cell">
+                <div class="loading-table">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <div class="loading-text">Cargando EDPs en aging...</div>
+                    </div>
+                </div>
+            </td>
+        </tr>
     `;
 }
 
+function loadAgingEDPsData(tableId) {
+    fetch('/management/api/aging_edps')
+        .then(response => response.json())
+        .then(data => {
+            const loadingRow = document.getElementById(tableId);
+            if (!loadingRow) return;
+            
+            // Find the tbody parent to insert new rows
+            const tbody = loadingRow.parentElement;
+            if (!tbody) return;
+            
+            // Remove the loading row
+            loadingRow.remove();
+            
+            if (!data.success || !data.aging_edps || data.aging_edps.length === 0) {
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = `
+                    <td colspan="6" class="no-data-cell">
+                        <div class="no-data-message">
+                            <div class="no-data-text">No hay EDPs en aging 31-60 días</div>
+                            <div class="no-data-subtext">Excelente gestión preventiva de cobros</div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(noDataRow);
+                return;
+            }
+            
+            // Generate real table rows and insert them
+            data.aging_edps.forEach(edp => {
+                const row = document.createElement('tr');
+                row.className = 'warning-row';
+                row.style.cursor = 'pointer';
+                row.onclick = () => showEDPDetailModal(edp.n_edp);
+                
+                row.innerHTML = `
+                    <td class="cliente-cell" title="${edp.cliente}">${edp.cliente}</td>
+                    <td class="proyecto-cell font-medium" title="${edp.proyecto}">${edp.proyecto}</td>
+                    <td class="monto-cell text-right">${edp.monto_formatted}</td>
+                    <td class="dias-cell text-center">
+                        <span class="dias-badge warning">${edp.dias}d</span>
+                    </td>
+                    <td class="jefe-cell" title="${edp.jefe_proyecto}">${edp.jefe_proyecto}</td>
+                    <td class="estado-cell text-center">
+                        <span class="status-badge warning">AGING</span>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Add summary row
+            const summaryRow = document.createElement('tr');
+            summaryRow.innerHTML = `
+                <td colspan="6" class="summary-cell">
+                    <div class="table-summary">
+                        <div class="summary-stats">
+                            <span class="stat-item">
+                                <strong>${data.summary.total_count}</strong> EDPs en aging
+                            </span>
+                            <span class="stat-item">
+                                <strong>${formatCurrency(data.summary.total_amount)}</strong> en gestión
+                            </span>
+                            <span class="stat-item">
+                                <strong>${data.summary.avg_days}</strong> días promedio
+                            </span>
+                        </div>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(summaryRow);
+            
+            // Update summary metrics with real data
+            if (data.summary) {
+                const avgDaysEl = document.getElementById('aging-avg-days');
+                const trendEl = document.getElementById('aging-trend');
+                
+                if (avgDaysEl) {
+                    avgDaysEl.textContent = `${data.summary.avg_days} días`;
+                }
+                
+                if (trendEl) {
+                    const trend = data.summary.trend_change || 0;
+                    const trendSymbol = trend > 0 ? '+' : '';
+                    const trendClass = trend > 0 ? 'warning' : trend < 0 ? 'positive' : 'neutral';
+                    trendEl.innerHTML = `<span class="${trendClass}">${trendSymbol}${trend}%</span>`;
+                }
+            }
+        })
+        .catch(error => {
+            const loadingRow = document.getElementById(tableId);
+            if (loadingRow) {
+                loadingRow.innerHTML = `
+                    <td colspan="6" class="no-data-cell">
+                        <div class="error-message">
+                            <div class="error-text">Error cargando EDPs en aging</div>
+                            <div class="error-subtext">${error.message}</div>
+                        </div>
+                    </td>
+                `;
+            }
+        });
+}
+
 function generateFastCollectionTable() {
-    const kpis = window.kpisData || {};
-    const fastCount = kpis.fast_collection_count || 0;
+    // Return a loading placeholder initially, then load real data
+    const tableId = 'fast-collection-table-' + Date.now();
     
-    if (fastCount === 0) {
-        return `
-            <tr><td colspan="6" class="no-data-cell">
-                <div class="no-data-message">
-                    <div class="no-data-text">No hay EDPs de cobro rápido</div>
-                    <div class="no-data-subtext">Oportunidad de acelerar procesos de cobro</div>
-                </div>
-            </td></tr>
-        `;
-    }
+    // Start loading data immediately
+    setTimeout(() => loadFastCollectionData(tableId), 100);
     
     return `
-        <tr><td colspan="6" class="no-data-cell">
-            <div class="no-data-message">
-                <div class="no-data-text">Datos de cobro rápido disponibles</div>
-                <div class="no-data-subtext">${fastCount} EDPs <30 días - Se mostrarán cuando se conecte con datos reales</div>
-            </div>
-        </td></tr>
+        <tr id="${tableId}">
+            <td colspan="6" class="no-data-cell">
+                <div class="loading-table">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <div class="loading-text">Cargando EDPs de cobro rápido...</div>
+                    </div>
+                </div>
+            </td>
+        </tr>
     `;
+}
+
+function loadFastCollectionData(tableId) {
+    fetch('/management/api/fast_collection_edps')
+        .then(response => response.json())
+        .then(data => {
+            const loadingRow = document.getElementById(tableId);
+            if (!loadingRow) return;
+            
+            // Find the tbody parent to insert new rows
+            const tbody = loadingRow.parentElement;
+            if (!tbody) return;
+            
+            // Remove the loading row
+            loadingRow.remove();
+            
+            if (!data.success || !data.fast_collection_edps || data.fast_collection_edps.length === 0) {
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = `
+                    <td colspan="6" class="no-data-cell">
+                        <div class="no-data-message">
+                            <div class="no-data-text">No hay EDPs de cobro rápido</div>
+                            <div class="no-data-subtext">Oportunidad de acelerar procesos de cobro</div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(noDataRow);
+                return;
+            }
+            
+            // Generate real table rows and insert them
+            data.fast_collection_edps.forEach(edp => {
+                const row = document.createElement('tr');
+                row.className = 'success-row';
+                row.style.cursor = 'pointer';
+                row.onclick = () => showEDPDetailModal(edp.n_edp);
+                
+                row.innerHTML = `
+                    <td class="cliente-cell" title="${edp.cliente}">${edp.cliente}</td>
+                    <td class="proyecto-cell font-medium" title="${edp.proyecto}">${edp.proyecto}</td>
+                    <td class="monto-cell text-right">${edp.monto_formatted}</td>
+                    <td class="dias-cell text-center">
+                        <span class="dias-badge success">${edp.dias}d</span>
+                    </td>
+                    <td class="jefe-cell" title="${edp.jefe_proyecto}">${edp.jefe_proyecto}</td>
+                    <td class="estado-cell text-center">
+                        <span class="status-badge success">RÁPIDO</span>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Add summary row
+            const summaryRow = document.createElement('tr');
+            summaryRow.innerHTML = `
+                <td colspan="6" class="summary-cell">
+                    <div class="table-summary">
+                        <div class="summary-stats">
+                            <span class="stat-item">
+                                <strong>${data.summary.total_count}</strong> EDPs de cobro rápido
+                            </span>
+                            <span class="stat-item">
+                                <strong>${formatCurrency(data.summary.total_amount)}</strong> saludable
+                            </span>
+                            <span class="stat-item">
+                                <strong>${data.summary.avg_days}</strong> días promedio
+                            </span>
+                        </div>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(summaryRow);
+            
+            // Update summary metrics with real data
+            if (data.summary) {
+                const avgDaysEl = document.getElementById('fast-avg-days');
+                const trendEl = document.getElementById('fast-trend');
+                
+                if (avgDaysEl) {
+                    avgDaysEl.textContent = `${data.summary.avg_days} días`;
+                }
+                
+                if (trendEl) {
+                    const trend = data.summary.trend_change || 0;
+                    const trendSymbol = trend > 0 ? '+' : '';
+                    const trendClass = trend > 0 ? 'warning' : trend < 0 ? 'positive' : 'neutral';
+                    trendEl.innerHTML = `<span class="${trendClass}">${trendSymbol}${trend}%</span>`;
+                }
+            }
+        })
+        .catch(error => {
+            const loadingRow = document.getElementById(tableId);
+            if (loadingRow) {
+                loadingRow.innerHTML = `
+                    <td colspan="6" class="no-data-cell">
+                        <div class="error-message">
+                            <div class="error-text">Error cargando EDPs de cobro rápido</div>
+                            <div class="error-subtext">${error.message}</div>
+                        </div>
+                    </td>
+                `;
+            }
+        });
 }
 
 // ===== ACTION FUNCTIONS =====
@@ -1619,26 +1922,178 @@ function generateMetaReport() {
 // ===== MANAGER DETAIL FUNCTIONS =====
 
 // Generate manager projects data (real data only)
-function generateManagerProjects(managerName, projectCount, totalAmount) {
-    if (projectCount === 0 || totalAmount === 0) {
-        return `
-            <tr><td colspan="6" class="no-data-cell">
-                <div class="no-data-message">
-                    <div class="no-data-text">Sin proyectos asignados</div>
-                    <div class="no-data-subtext">Los proyectos aparecerán cuando se asignen al manager</div>
-                </div>
-            </td></tr>
-        `;
-    }
+function generateManagerProjects(managerName, proyectosCount, montoValue) {
+    // Return a loading placeholder initially, then load real data
+    const tableId = 'manager-projects-table-' + Date.now();
+    
+    // Start loading data immediately
+    setTimeout(() => loadManagerProjectsData(tableId, managerName), 100);
     
     return `
-        <tr><td colspan="6" class="no-data-cell">
-            <div class="no-data-message">
-                <div class="no-data-text">Datos de proyectos disponibles</div>
-                <div class="no-data-subtext">${projectCount} proyectos por ${totalAmount.toFixed(1)}M CLP - Se mostrarán cuando se conecte con datos reales</div>
-            </div>
-        </td></tr>
+        <tr id="${tableId}">
+            <td colspan="6" class="no-data-cell">
+                <div class="loading-table">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <div class="loading-text">Cargando proyectos de ${managerName}...</div>
+                    </div>
+                </div>
+            </td>
+        </tr>
     `;
+}
+
+function loadManagerProjectsData(tableId, managerName) {
+    console.log(`🔍 Cargando proyectos para manager: ${managerName}`);
+    
+    // Encode manager name for URL
+    const encodedManagerName = encodeURIComponent(managerName);
+    
+    fetch(`/management/api/manager_projects/${encodedManagerName}`)
+        .then(response => {
+            console.log(`📡 Response status: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('📊 Manager projects data received:', data);
+            
+            const tableRow = document.getElementById(tableId);
+            if (!tableRow) {
+                console.warn('⚠️ Table row not found');
+                return;
+            }
+            
+            const tbody = tableRow.closest('tbody');
+            if (!tbody) {
+                console.warn('⚠️ Tbody not found');
+                return;
+            }
+            
+            // Remove loading row
+            tableRow.remove();
+            
+            if (!data.success || !data.manager_projects || data.manager_projects.length === 0) {
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = `
+                    <td colspan="6" class="no-data-cell">
+                        <div class="text-center py-4">
+                            <div class="text-xl mb-2">📋</div>
+                            <div class="font-medium mb-1">No hay proyectos asignados</div>
+                            <div class="text-sm opacity-70">${managerName} no tiene proyectos activos en este momento</div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(noDataRow);
+                return;
+            }
+            
+            // Create rows for each project
+            data.manager_projects.forEach((project, index) => {
+                const row = document.createElement('tr');
+                row.className = `manager-project-row ${project.priority} ${index % 2 === 0 ? 'even' : 'odd'}`;
+                
+                // Determine priority colors
+                let priorityClass = '';
+                let dsoClass = 'neutral';
+                if (project.dso > 60) {
+                    priorityClass = 'critical-row';
+                    dsoClass = 'critical';
+                } else if (project.dso > 30) {
+                    priorityClass = 'warning-row';
+                    dsoClass = 'warning';
+                } else if (project.dso < 15) {
+                    priorityClass = 'positive-row';
+                    dsoClass = 'positive';
+                }
+                
+                row.innerHTML = `
+                    <td class="proyecto-cell">
+                        <div class="font-medium">${project.proyecto}</div>
+                        <div class="text-xs opacity-70">EDP: ${project.n_edp}</div>
+                    </td>
+                    <td class="cliente-cell">
+                        <div class="font-medium">${project.cliente}</div>
+                    </td>
+                    <td class="monto-cell text-right">
+                        <span class="font-mono">${project.monto_formatted}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="dso-badge ${dsoClass}">${project.dso}d</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="status-badge ${project.priority}">${project.estado}</span>
+                    </td>
+                    <td class="text-center text-sm">
+                        ${project.last_contact}
+                    </td>
+                `;
+                
+                // Add click event to show EDP detail
+                row.addEventListener('click', () => {
+                    if (project.id && project.id !== 'N/A') {
+                        showEDPDetailModal(project.id);
+                    }
+                });
+                
+                tbody.appendChild(row);
+            });
+            
+            // Add summary row
+            if (data.summary) {
+                const summaryRow = document.createElement('tr');
+                summaryRow.className = 'summary-row';
+                summaryRow.innerHTML = `
+                    <td colspan="6" class="summary-cell">
+                        <div class="table-summary">
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <span class="summary-label">Total Proyectos:</span>
+                                    <span class="summary-value">${data.summary.total_projects}</span>
+                                </div>
+                                                                 <div class="summary-item">
+                                     <span class="summary-label">Monto Total:</span>
+                                     <span class="summary-value">${formatCurrency(data.summary.total_amount || 0)}</span>
+                                 </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">DSO Promedio:</span>
+                                    <span class="summary-value ${data.summary.avg_dso > 60 ? 'critical' : data.summary.avg_dso > 30 ? 'warning' : 'positive'}">${data.summary.avg_dso}d</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Proyectos Críticos:</span>
+                                    <span class="summary-value ${data.summary.critical_projects > 0 ? 'critical' : 'positive'}">${data.summary.critical_projects}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(summaryRow);
+            }
+            
+            console.log(`✅ Manager projects table populated with ${data.manager_projects.length} projects`);
+            
+        })
+        .catch(error => {
+            console.error('❌ Error loading manager projects:', error);
+            
+            const tableRow = document.getElementById(tableId);
+            if (tableRow) {
+                tableRow.innerHTML = `
+                    <td colspan="6" class="error-cell">
+                        <div class="text-center py-4">
+                            <div class="text-xl mb-2">⚠️</div>
+                            <div class="font-medium mb-1">Error al cargar proyectos</div>
+                            <div class="text-sm opacity-70">${error.message}</div>
+                            <button onclick="loadManagerProjectsData('${tableId}', '${managerName}')" class="retry-btn mt-2">
+                                Reintentar
+                            </button>
+                        </div>
+                    </td>
+                `;
+            }
+        });
 }
 
 // Manager contact functions
@@ -1973,4 +2428,363 @@ function exportForecast() {
         'Generando archivo Excel con el forecast completo de los próximos 7 días, incluyendo detalles por EDP y análisis de confianza.',
         'info'
     );
+}
+
+// Helper function to show EDP detail modal
+function showEDPDetailModal(edpId) {
+    // Try to open EDP modal if function exists (from other modal system)
+    if (typeof openEdpModal === 'function') {
+        openEdpModal(edpId);
+        return;
+    }
+    
+    // Alternative: navigate to EDP detail page
+    if (edpId && edpId !== 'N/A') {
+        window.open(`/dashboard/edp/${edpId}`, '_blank');
+    }
+}
+
+// Add CSS styles for loading spinners and table styling
+if (!document.getElementById('modal-table-styles')) {
+    const modalStyles = document.createElement('style');
+    modalStyles.id = 'modal-table-styles';
+    modalStyles.innerHTML = `
+        /* Loading spinner styles */
+        .loading-table {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color, #e5e7eb);
+            border-top: 3px solid var(--accent-blue, #3b82f6);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: var(--text-secondary, #6b7280);
+            font-size: 14px;
+        }
+        
+        /* Table row styling */
+        .kpi-detail-table tbody tr {
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .kpi-detail-table tbody tr:hover {
+            background-color: var(--bg-highlight, #f8fafc);
+        }
+        
+        .critical-row {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+        
+        .critical-row:hover {
+            background-color: rgba(239, 68, 68, 0.15);
+        }
+        
+        .high-risk-row {
+            background-color: rgba(245, 158, 11, 0.1);
+        }
+        
+        .high-risk-row:hover {
+            background-color: rgba(245, 158, 11, 0.15);
+        }
+        
+        .warning-row {
+            background-color: rgba(251, 191, 36, 0.1);
+        }
+        
+        .warning-row:hover {
+            background-color: rgba(251, 191, 36, 0.15);
+        }
+        
+        .success-row {
+            background-color: rgba(34, 197, 94, 0.1);
+        }
+        
+        .success-row:hover {
+            background-color: rgba(34, 197, 94, 0.15);
+        }
+        
+        /* Badge styling */
+        .dias-badge, .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .dias-badge.critical, .status-badge.critical {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .dias-badge.high, .status-badge.high {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        
+        .dias-badge.warning, .status-badge.warning {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        
+        .dias-badge.success, .status-badge.success {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+        
+        /* Table summary styling */
+        .table-summary {
+            margin-top: 16px;
+            padding: 12px;
+            background-color: var(--bg-subtle, #f8fafc);
+            border-radius: 8px;
+            border: 1px solid var(--border-color, #e5e7eb);
+        }
+        
+        .summary-stats {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            color: var(--text-secondary, #6b7280);
+            font-size: 14px;
+        }
+        
+        .stat-item strong {
+            color: var(--text-primary, #111827);
+        }
+        
+        /* Cell styling */
+        .cliente-cell, .proyecto-cell, .jefe-cell {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .monto-cell {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+        
+        /* Summary cell styling */
+        .summary-cell {
+            background-color: var(--bg-subtle, #f8fafc);
+            border-top: 2px solid var(--border-color, #e5e7eb);
+            padding: 12px;
+        }
+        
+        .summary-cell .table-summary {
+            margin: 0;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+        }
+        
+        /* Error message styling */
+        .error-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 32px;
+            color: var(--accent-red, #dc2626);
+        }
+        
+        .error-text {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .error-subtext {
+            font-size: 14px;
+            color: var(--text-secondary, #6b7280);
+        }
+        
+        /* Error message styling */
+        .error-cell {
+            background-color: var(--bg-subtle, #fef2f2);
+            border: 1px solid var(--accent-red, #ef4444);
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .retry-btn {
+            background: var(--accent-blue, #3b82f6);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+        
+        .retry-btn:hover {
+            background: var(--accent-blue-dark, #2563eb);
+        }
+        
+        /* DSO badge styling */
+        .dso-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .dso-badge.critical {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red, #ef4444);
+            border: 1px solid var(--accent-red, #ef4444);
+        }
+        
+        .dso-badge.warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--accent-yellow, #f59e0b);
+            border: 1px solid var(--accent-yellow, #f59e0b);
+        }
+        
+        .dso-badge.positive {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: var(--accent-green, #22c55e);
+            border: 1px solid var(--accent-green, #22c55e);
+        }
+        
+        .dso-badge.neutral {
+            background-color: rgba(107, 114, 128, 0.1);
+            color: var(--text-secondary, #6b7280);
+            border: 1px solid var(--text-secondary, #6b7280);
+        }
+        
+        /* Status badge styling */
+        .status-badge {
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.critical {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red, #ef4444);
+        }
+        
+        .status-badge.warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--accent-yellow, #f59e0b);
+        }
+        
+        .status-badge.positive {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: var(--accent-green, #22c55e);
+        }
+        
+        .status-badge.normal {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue, #3b82f6);
+        }
+        
+        /* Manager project row styling */
+        .manager-project-row {
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        
+        .manager-project-row:hover {
+            background-color: var(--bg-hover, rgba(59, 130, 246, 0.05));
+        }
+        
+        .manager-project-row.critical-row {
+            border-left: 3px solid var(--accent-red, #ef4444);
+        }
+        
+        .manager-project-row.warning-row {
+            border-left: 3px solid var(--accent-yellow, #f59e0b);
+        }
+        
+        .manager-project-row.positive-row {
+            border-left: 3px solid var(--accent-green, #22c55e);
+        }
+        
+        /* Summary row styling */
+        .summary-row {
+            border-top: 2px solid var(--border-color, #e5e7eb);
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 8px 0;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .summary-label {
+            font-weight: 500;
+            color: var(--text-secondary, #6b7280);
+        }
+        
+        .summary-value {
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .summary-value.critical {
+            color: var(--accent-red, #ef4444);
+        }
+        
+        .summary-value.warning {
+            color: var(--accent-yellow, #f59e0b);
+        }
+        
+        .summary-value.positive {
+            color: var(--accent-green, #22c55e);
+        }
+    `;
+    document.head.appendChild(modalStyles);
+}
+
+// Helper function to format numbers with dots as thousand separators
+function formatNumberWithDots(number) {
+    if (!number) return '0';
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// Helper function to format currency with dots
+function formatCurrency(amount) {
+    if (!amount) return '$0';
+    return `$${formatNumberWithDots(Math.round(amount))}`;
 }
