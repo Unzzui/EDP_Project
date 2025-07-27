@@ -247,7 +247,7 @@ class IntelligentEmailService:
             # Para controllers y finance, enviar todos los recordatorios en un email
             user_role = self.permissions_service.get_user_role(recipient)
             
-            if user_role in [EmailRole.CONTROLLER, EmailRole.FINANCE]:
+            if user_role in [EmailRole.CONTROLLER, EmailRole.ADMIN]:
                 # Enviar resumen de todos los recordatorios
                 return self.email_service.send_bulk_critical_alerts(
                     reminders, [recipient]

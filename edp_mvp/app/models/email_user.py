@@ -16,6 +16,21 @@ class EmailUser(db.Model):
     name = Column(String(255), nullable=False)
     role = Column(String(50), nullable=False, default='project_manager')  # executive, manager, project_manager, controller, finance, client
     is_active = Column(Boolean, default=True)
+    
+    # Configuración de correo
+    mail_server = Column(String(255), nullable=True)  # smtp.gmail.com
+    mail_port = Column(Integer, default=587)  # 587 para TLS
+    mail_use_tls = Column(Boolean, default=True)
+    mail_username = Column(String(255), nullable=True)  # usuario@gmail.com
+    mail_password = Column(String(255), nullable=True)  # contraseña de aplicación
+    mail_default_sender = Column(String(255), nullable=True)  # nombre <email>
+    
+    # Configuración de notificaciones
+    enable_critical_alerts = Column(Boolean, default=True)
+    enable_payment_reminders = Column(Boolean, default=True)
+    enable_weekly_summary = Column(Boolean, default=True)
+    enable_system_alerts = Column(Boolean, default=True)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -70,6 +85,40 @@ class EmailUser(db.Model):
     def get_assigned_clients(self) -> list:
         """Get list of assigned client names."""
         return [ac.client_name for ac in self.assigned_clients if ac.is_active]
+    
+    def get_email_config(self) -> dict:
+        """Get email configuration for this user."""
+        return {
+            'mail_server': self.mail_server,
+            'mail_port': self.mail_port,
+            'mail_use_tls': self.mail_use_tls,
+            'mail_username': self.mail_username,
+            'mail_password': self.mail_password,
+            'mail_default_sender': self.mail_default_sender,
+            'enable_critical_alerts': self.enable_critical_alerts,
+            'enable_payment_reminders': self.enable_payment_reminders,
+            'enable_weekly_summary': self.enable_weekly_summary,
+            'enable_system_alerts': self.enable_system_alerts
+        }
+    
+    def is_email_configured(self) -> bool:
+        """Check if email is properly configured for this user."""
+        return bool(
+            self.mail_server and 
+            self.mail_username and 
+            self.mail_password and 
+            self.mail_default_sender
+        )
+    
+    def can_receive_email_type(self, email_type: str) -> bool:
+        """Check if user can receive specific email type."""
+        email_type_mapping = {
+            'critical_alerts': self.enable_critical_alerts,
+            'payment_reminders': self.enable_payment_reminders,
+            'weekly_summary': self.enable_weekly_summary,
+            'system_alerts': self.enable_system_alerts
+        }
+        return email_type_mapping.get(email_type, True)
 
 class EmailUserProject(db.Model):
     """Association table for email users and their assigned projects."""

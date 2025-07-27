@@ -5,44 +5,69 @@ border-color: #fecaca; border-left-color: #dc2626; } .summary-stats .stat-value
 { color: #dc2626; } .button { background: linear-gradient(135deg, #0066cc 0%,
 #0052a3 100%); box-shadow: 0 2px 4px rgba(0, 102, 204, 0.2); } .button:hover {
 box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3); } {% endblock %} {% block title
-%}🚨 {{ critical_edps|length }} EDPs Críticos{% endblock %} {% block subtitle
-%}Requieren Atención Inmediata{% endblock %} {% block content %}
+%}🚨 {{ critical_edps|length }} Proyectos Críticos{% endblock %} {% block
+subtitle %}Requieren Atención Inmediata{% endblock %} {% block content %}
 <div class="summary-stats">
   <div class="stat">
     <div class="stat-value">{{ critical_edps|length }}</div>
-    <div class="stat-label">EDPs Críticos</div>
+    <div class="stat-label">Proyectos Críticos</div>
   </div>
   <div class="stat">
     <div class="stat-value">
-      ${{ "{:,.0f}".format(sum(edp.get('monto_aprobado', 0) for edp in
-      critical_edps)) }}
+      {% set total_monto = critical_edps | map(attribute='total_monto') | sum %}
+      ${{ "{:,.0f}".format(total_monto) }}
     </div>
     <div class="stat-label">Monto Total</div>
   </div>
   <div class="stat">
     <div class="stat-value">
-      {{ "{:.0f}".format(sum(edp.get('dso_actual', 0) for edp in critical_edps)
-      / len(critical_edps)) }}
+      {% set total_edps = critical_edps | map(attribute='edps') | map('length')
+      | sum %} {{ total_edps }}
     </div>
-    <div class="stat-label">DSO Promedio</div>
+    <div class="stat-label">EDPs Críticos</div>
   </div>
 </div>
 
-<h2 class="section-title">Lista de EDPs Críticos</h2>
-{% for edp in critical_edps %}
+<h2 class="section-title">Lista de Proyectos Críticos</h2>
+
+{% for proyecto in critical_edps %}
 <div class="edp-item">
-  <h3>EDP {{ edp.n_edp }}</h3>
-  <p><strong>Cliente:</strong> {{ edp.cliente }}</p>
-  <p><strong>Proyecto:</strong> {{ edp.proyecto }}</p>
+  <h3>Proyecto {{ proyecto.proyecto }}</h3>
+  <p><strong>Cliente:</strong> {{ proyecto.cliente }}</p>
+  <p><strong>Jefe de Proyecto:</strong> {{ proyecto.jefe_proyecto }}</p>
   <p>
-    <strong>Monto:</strong> ${{ "{:,.0f}".format(edp.monto_aprobado or 0) }}
+    <strong>Monto Total:</strong> ${{ "{:,.0f}".format(proyecto.total_monto) }}
   </p>
-  <p><strong>Estado:</strong> <span class="critical">{{ edp.estado }}</span></p>
+  <p><strong>EDPs Críticos:</strong> {{ proyecto.edps|length }}</p>
   <p>
     <strong>Días sin movimiento:</strong>
-    <span class="critical">{{ edp.dso_actual or 0 }} días</span>
+    <span class="critical">{{ proyecto.max_dias_sin_movimiento }} días</span>
   </p>
-  <p><strong>Jefe de Proyecto:</strong> {{ edp.jefe_proyecto }}</p>
+  <p>
+    <strong>Estado:</strong>
+    <span class="critical">{{ proyecto.estado_proyecto }}</span>
+  </p>
+
+  {% if proyecto.edps %}
+  <div
+    style="
+      margin-top: 10px;
+      padding-left: 15px;
+      border-left: 2px solid #fecaca;
+    ">
+    <h4>EDPs del Proyecto:</h4>
+    {% for edp in proyecto.edps[:3] %}
+    <div style="margin: 5px 0; padding: 5px; background-color: #fef7f7">
+      <strong>EDP {{ edp.id }}</strong> - ${{ "{:,.0f}".format(edp.monto) }} -
+      {{ edp.dias_sin_movimiento }} días
+    </div>
+    {% endfor %} {% if proyecto.edps|length > 3 %}
+    <div style="font-style: italic; color: #666">
+      ... y {{ proyecto.edps|length - 3 }} EDPs más
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
 </div>
 {% endfor %}
 

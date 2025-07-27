@@ -40,7 +40,18 @@ def create_sample_users():
         executive = EmailUser(
             email="diegobravobe@gmail.com",
             name="Diego Bravo",
-            role="executive"
+            role="executive",
+            # Configuración de correo (usar configuración actual del sistema)
+            mail_server="smtp.gmail.com",
+            mail_port=587,
+            mail_use_tls=True,
+            mail_username="diegobravobe@gmail.com",  # TODO: Configurar con credenciales reales
+            mail_password="",  # TODO: Configurar contraseña de aplicación
+            mail_default_sender="Pagora EDP <diegobravobe@gmail.com>",
+            enable_critical_alerts=True,
+            enable_payment_reminders=True,
+            enable_weekly_summary=True,
+            enable_system_alerts=True
         )
         db.session.add(executive)
         
