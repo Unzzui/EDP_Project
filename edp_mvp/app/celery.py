@@ -32,6 +32,7 @@ celery = create_celery()
 celery.conf.imports = [
     'edp_mvp.app.tasks.metrics',
     'edp_mvp.app.tasks.email_tasks',
+    'edp_mvp.app.tasks.alert_tasks',
 ]
 
 # Configure Celery settings
@@ -82,15 +83,28 @@ celery.conf.beat_schedule = {
     # Email notification tasks (TESTING MODE - 60 seconds)
     "send-critical-alerts": {
         "task": "edp_mvp.app.tasks.email_tasks.send_critical_edp_alerts",
-        "schedule": 10,  # Every 60 seconds for testing
+        "schedule": 3600,  # Every hour
     },
     "send-payment-reminders": {
         "task": "edp_mvp.app.tasks.email_tasks.send_payment_reminders",
-        "schedule": 15,  # Every 60 seconds for testing
+        "schedule": 3600,  # Every hour
     },
     "send-weekly-summary": {
         "task": "edp_mvp.app.tasks.email_tasks.send_weekly_summary",
-        "schedule": 15,  # Every 60 seconds for testing
+        "schedule": 3600,  # Every hour
+    },
+    # Progressive alert tasks
+    "progressive-alerts": {
+        "task": "alert_tasks.send_progressive_alerts",
+        "schedule": 21600,  # Every 6 hours
+    },
+    "daily-critical-summary": {
+        "task": "alert_tasks.send_daily_critical_summary",
+        "schedule": 86400,  # Every 24 hours
+    },
+    "monthly-alert-cleanup": {
+        "task": "alert_tasks.cleanup_old_alerts",
+        "schedule": 2592000,  # Every 30 days
     },
 }
 

@@ -3989,6 +3989,220 @@ def api_business_rules_config():
             "validation": {}
         })
 
+@management_bp.route("/api/send_critical_emails", methods=["POST"])
+@login_required
+@require_manager_or_above
+def api_send_critical_emails():
+    """
+    API endpoint to send emails for all critical EDPs in the modal.
+    """
+    try:
+        from ..services.email_service import EmailService
+        
+        email_service = EmailService()
+        
+        # Get critical EDPs data
+        critical_response = manager_service.get_critical_projects_data({})
+        
+        if not critical_response.success or not critical_response.data:
+            return jsonify({
+                "success": False,
+                "message": "No se encontraron EDPs críticos para enviar"
+            })
+        
+        critical_edps = critical_response.data.get('critical_edps', [])
+        
+        if not critical_edps:
+            return jsonify({
+                "success": False,
+                "message": "No hay EDPs críticos disponibles"
+            })
+        
+        # Send bulk critical alerts email to test recipient
+        recipients = ["diegobravobe@gmail.com"]
+        
+        success = email_service.send_bulk_critical_alerts(critical_edps, recipients)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": f"Email enviado exitosamente con {len(critical_edps)} EDPs críticos a {', '.join(recipients)}"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Error al enviar el email. Verifique la configuración del servicio de correo."
+            })
+        
+    except Exception as e:
+        logger.error(f"Error sending critical emails: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Error interno: {str(e)}"
+        })
+
+@management_bp.route("/api/send_edp_email", methods=["POST"])
+@login_required
+@require_manager_or_above
+def api_send_edp_email():
+    """
+    API endpoint to send email for a specific EDP to the responsible person.
+    """
+    try:
+        from ..services.email_service import EmailService
+        data = request.get_json()
+        edp_id = data.get('edp_id')
+        if not edp_id:
+            return jsonify({
+                "success": False,
+                "message": "ID del EDP es requerido"
+            })
+        # Buscar el EDP en toda la base de datos
+        edps_response = manager_service.edp_repo.find_all_dataframe()
+        if isinstance(edps_response, dict) and not edps_response.get("success", False):
+            return jsonify({
+                "success": False,
+                "message": f"Error al cargar EDPs: {edps_response.get('message', 'Error desconocido')}"
+            })
+        df_edp = edps_response.get("data")
+        if df_edp is None or df_edp.empty:
+            return jsonify({
+                "success": False,
+                "message": "No hay datos de EDPs disponibles"
+            })
+        # Buscar el EDP por id o n_edp
+        target_row = df_edp[(df_edp['n_edp'].astype(str) == str(edp_id)) | (df_edp['id'].astype(str) == str(edp_id))]
+        if target_row.empty:
+            return jsonify({
+                "success": False,
+                "message": "EDP no encontrado"
+            })
+        edp_dict = target_row.iloc[0].to_dict()
+        # Opcional: agregar info de proyecto si es relevante
+        email_service = EmailService()
+        recipients = ["diegobravobe@gmail.com"]
+        success = email_service.send_critical_edp_alert(edp_dict, recipients)
+        if success:
+            return jsonify({
+                "success": True,
+                "message": f"Email enviado exitosamente para EDP {edp_dict.get('n_edp', edp_id)} a {', '.join(recipients)}"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Error al enviar el email. Verifique la configuración del servicio de correo."
+            })
+    except Exception as e:
+        logger.error(f"Error sending EDP email: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Error interno: {str(e)}"
+        })
+
+@management_bp.route("/api/send_aging_emails", methods=["POST"])
+@login_required
+@require_manager_or_above
+def api_send_aging_emails():
+    """
+    API endpoint to send emails for all aging EDPs (31-60 days).
+    """
+    try:
+        from ..services.email_service import EmailService
+        
+        email_service = EmailService()
+        
+        # Get aging EDPs data
+        aging_response = manager_service.get_aging_edps_analysis()
+        
+        if not aging_response.success or not aging_response.data:
+            return jsonify({
+                "success": False,
+                "message": "No se encontraron EDPs en aging para enviar"
+            })
+        
+        aging_edps = aging_response.data.get('aging_edps', [])
+        
+        if not aging_edps:
+            return jsonify({
+                "success": False,
+                "message": "No hay EDPs en aging disponibles"
+            })
+        
+        # Send bulk aging alerts email to test recipient
+        recipients = ["diegobravobe@gmail.com"]
+        
+        success = email_service.send_bulk_aging_alerts(aging_edps, recipients)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": f"Email preventivo enviado exitosamente con {len(aging_edps)} EDPs en aging a {', '.join(recipients)}"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Error al enviar el email preventivo. Verifique la configuración del servicio de correo."
+            })
+        
+    except Exception as e:
+        logger.error(f"Error sending aging emails: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Error interno: {str(e)}"
+        })
+
+@management_bp.route("/api/send_fast_collection_emails", methods=["POST"])
+@login_required
+@require_manager_or_above
+def api_send_fast_collection_emails():
+    """
+    API endpoint to send emails for all fast collection EDPs (<30 days).
+    """
+    try:
+        from ..services.email_service import EmailService
+        
+        email_service = EmailService()
+        
+        # Get fast collection EDPs data
+        fast_response = manager_service.get_fast_collection_edps_analysis()
+        
+        if not fast_response.success or not fast_response.data:
+            return jsonify({
+                "success": False,
+                "message": "No se encontraron EDPs de cobro rápido para enviar"
+            })
+        
+        fast_edps = fast_response.data.get('fast_collection_edps', [])
+        
+        if not fast_edps:
+            return jsonify({
+                "success": False,
+                "message": "No hay EDPs de cobro rápido disponibles"
+            })
+        
+        # Send bulk fast collection alerts email to test recipient
+        recipients = ["diegobravobe@gmail.com"]
+        
+        success = email_service.send_bulk_fast_collection_alerts(fast_edps, recipients)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": f"Email de confirmación enviado exitosamente con {len(fast_edps)} EDPs de cobro rápido a {', '.join(recipients)}"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Error al enviar el email de confirmación. Verifique la configuración del servicio de correo."
+            })
+        
+    except Exception as e:
+        logger.error(f"Error sending fast collection emails: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Error interno: {str(e)}"
+        })
+
 @management_bp.route("/business_rules_docs")
 @login_required
 def business_rules_docs():

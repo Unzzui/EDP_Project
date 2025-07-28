@@ -111,6 +111,10 @@ def get_redirect_for_role(user_role):
     Returns:
         URL to redirect to based on role
     """
+    # Validar que user_role no sea None o vacío
+    if not user_role:
+        return url_for('auth.login')
+    
     role_redirects = {
         'admin': 'admin.dashboard',
         'manager': 'management.dashboard',
@@ -120,11 +124,34 @@ def get_redirect_for_role(user_role):
         'guest': 'auth.login'
     }
     
+    # Obtener la ruta correspondiente al rol
+    route_name = role_redirects.get(user_role, 'auth.login')
+    
     try:
-        return url_for(role_redirects.get(user_role, 'auth.login'))
+        return url_for(route_name)
     except Exception as e:
-        # Fallback if route doesn't exist
-        print(f"Error redirecting for role {user_role}: {e}")
+        # Fallback si la ruta no existe
+        print(f"Error redirecting for role {user_role} to route {route_name}: {e}")
+        
+        # Intentar con rutas alternativas según el nivel del rol
+        fallback_routes = {
+            'admin': 'admin.dashboard',
+            'manager': 'management.dashboard', 
+            'controller': 'dashboard.dashboard_controller',
+            'jefe_proyecto': 'projects.inicio',
+            'miembro_equipo_proyecto': 'projects.inicio'
+        }
+        
+        # Buscar una ruta de fallback basada en el nivel del rol
+        user_level = get_user_role_level(user_role)
+        for role, level in [(r, get_user_role_level(r)) for r in fallback_routes.keys()]:
+            if level <= user_level:
+                try:
+                    return url_for(fallback_routes[role])
+                except:
+                    continue
+        
+        # Último fallback
         return url_for('auth.login')
 
 

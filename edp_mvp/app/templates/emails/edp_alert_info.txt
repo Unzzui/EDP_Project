@@ -1,0 +1,21 @@
+ALERTA INFORMATIVA - EDP {{ n_edp }}
+
+{{ alert_message }}
+
+DETALLES:
+---------
+N° EDP: {{ n_edp }}
+Cliente: {{ cliente }}
+Jefe de Proyecto: {{ jefe_proyecto }}
+Monto: ${{ "{:,.0f}".format(monto_propuesto) }}
+Estado: {{ estado_edp }}
+Días sin movimiento: {{ dias_sin_movimiento }} días
+Días restantes para crítico: {{ dias_restantes_critico }} días
+
+RECOMENDACIÓN:
+Revisa el estado del EDP y actualiza su progreso para evitar que se vuelva crítico.
+
+Acceder al sistema: {{ app_url }}/controller/kanban
+
+Esta alerta se envía automáticamente cada semana para EDPs con 7+ días sin movimiento.
+Para dejar de recibir estas alertas, actualiza el estado del EDP.

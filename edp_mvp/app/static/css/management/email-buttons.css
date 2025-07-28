@@ -1,0 +1,404 @@
+/* Email Buttons Styles for Dashboard Modals */
+
+.email-btn {
+    background: var(--accent-orange);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 28px;
+}
+
+.email-btn:hover {
+    background: var(--accent-orange-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.email-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.email-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.email-btn svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+
+/* Email button variants */
+.email-btn.critical {
+    background: var(--accent-red);
+}
+
+.email-btn.critical:hover {
+    background: var(--accent-red-dark);
+}
+
+.email-btn.warning {
+    background: var(--accent-orange);
+}
+
+.email-btn.warning:hover {
+    background: var(--accent-orange-dark);
+}
+
+.email-btn.success {
+    background: var(--accent-green);
+}
+
+.email-btn.success:hover {
+    background: var(--accent-green-dark);
+}
+
+.email-btn.info {
+    background: var(--accent-blue);
+}
+
+.email-btn.info:hover {
+    background: var(--accent-blue-dark);
+}
+
+/* Email cell styles */
+.email-cell {
+    text-align: center;
+    vertical-align: middle;
+    width: 60px;
+}
+
+/* Loading animation for email buttons */
+.email-btn.loading {
+    position: relative;
+    color: transparent;
+}
+
+.email-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Email button tooltip */
+.email-btn[title]:hover::before {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 4px;
+}
+
+.email-btn[title]:hover::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top: 4px solid rgba(0, 0, 0, 0.8);
+    margin-bottom: 0;
+}
+
+/* Email action buttons in modal headers */
+.kpi-action-btn[onclick*="send"] {
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-action-btn[onclick*="send"]::before {
+    content: '📧';
+    margin-right: 4px;
+}
+
+/* Success notification for email sent */
+.notification.success {
+    background: var(--accent-green);
+    color: white;
+    border-left: 4px solid var(--accent-green-dark);
+    z-index: 100000 !important;
+}
+
+.notification.error {
+    background: var(--accent-red);
+    color: white;
+    border-left: 4px solid var(--accent-red-dark);
+    z-index: 100000 !important;
+}
+
+.notification.info {
+    background: var(--accent-blue);
+    color: white;
+    border-left: 4px solid var(--accent-blue-dark);
+    z-index: 100000 !important;
+}
+
+.notification.warning {
+    background: var(--accent-orange);
+    color: white;
+    border-left: 4px solid var(--accent-orange-dark);
+    z-index: 100000 !important;
+}
+
+/* Email button in table rows */
+.kpi-detail-table .email-cell {
+    padding: 4px;
+    text-align: center;
+}
+
+.kpi-detail-table .email-btn {
+    margin: 0 auto;
+}
+
+/* Responsive email buttons */
+@media (max-width: 768px) {
+    .email-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+    
+    .email-btn svg {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .email-cell {
+        width: 50px;
+    }
+}
+
+/* Email button focus states for accessibility */
+.email-btn:focus {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* Email button in disabled state */
+.email-btn:disabled {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+}
+
+/* Email button with loading state */
+.email-btn.loading {
+    pointer-events: none;
+}
+
+/* Email button with success state */
+.email-btn.success-state {
+    background: var(--accent-green);
+    animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* ===== NOTIFICATION STYLES ===== */
+
+.notification {
+    position: fixed !important;
+    top: 30px !important;
+    right: 30px !important;
+    max-width: 450px;
+    min-width: 300px;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+    z-index: 999999 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 500;
+    /* Force visibility */
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    transform: translateY(0) scale(1) !important;
+    /* Better text contrast */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.2px;
+}
+
+.notification.show {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    transform: translateY(0) scale(1) !important;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.notification-message {
+    flex: 1;
+    word-wrap: break-word;
+    /* Better text readability */
+    color: #ffffff !important;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: #ffffff !important;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-weight: bold;
+    /* Better contrast for close button */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.notification-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+    color: #ffffff !important;
+}
+
+/* Notification variants with better contrast */
+.notification.success {
+    background: linear-gradient(135deg, #059669, #047857);
+    color: #ffffff !important;
+    border-left: 5px solid #065f46;
+    z-index: 999999 !important;
+    box-shadow: 0 12px 32px rgba(5, 150, 105, 0.4);
+    /* Darker background for better contrast */
+    background: linear-gradient(135deg, #047857, #065f46);
+}
+
+.notification.error {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: #ffffff !important;
+    border-left: 5px solid #991b1b;
+    z-index: 999999 !important;
+    box-shadow: 0 12px 32px rgba(220, 38, 38, 0.4);
+    /* Darker background for better contrast */
+    background: linear-gradient(135deg, #b91c1c, #991b1b);
+}
+
+.notification.info {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff !important;
+    border-left: 5px solid #1e40af;
+    z-index: 999999 !important;
+    box-shadow: 0 12px 32px rgba(37, 99, 235, 0.4);
+    /* Darker background for better contrast */
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}
+
+.notification.warning {
+    background: linear-gradient(135deg, #ea580c, #c2410c);
+    color: #ffffff !important;
+    border-left: 5px solid #9a3412;
+    z-index: 999999 !important;
+    box-shadow: 0 12px 32px rgba(234, 88, 12, 0.4);
+    /* Darker background for better contrast */
+    background: linear-gradient(135deg, #c2410c, #9a3412);
+}
+
+/* Fade out effect for notifications - SLOWER TRANSITION */
+.notification.fade-out {
+    opacity: 0 !important;
+    transform: translateX(100%) scale(0.8) !important;
+    transition: all 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+/* Hover effect to pause auto-hide */
+.notification:hover {
+    transform: translateY(0) scale(1.02) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Notification progress bar with better contrast */
+.notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+}
+
+.notification-progress::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 0 0 12px 12px;
+    transition: width linear;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+/* Ensure notification is always on top */
+.notification {
+    position: fixed !important;
+    z-index: 999999 !important;
+    pointer-events: auto;
+}
+
+/* Force notification to be above modals */
+body .notification {
+    z-index: 999999 !important;
+}
+
+/* Additional safety for z-index */
+.notification,
+.notification * {
+    z-index: 999999 !important;
+} 

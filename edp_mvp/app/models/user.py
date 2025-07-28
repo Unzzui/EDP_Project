@@ -14,6 +14,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre_completo = db.Column(db.String(100), nullable=False)
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
+    email = db.Column(db.String(255), nullable=True, index=True)  # Nueva columna email
     password_hash = db.Column(db.String(120), nullable=False)
     rol = db.Column(db.String(20), nullable=False, index=True)
     jefe_asignado = db.Column(db.String(100), nullable=True, index=True)  # Nuevo campo para asignar jefe
@@ -21,9 +22,10 @@ class User(UserMixin, db.Model):
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
     ultimo_acceso = db.Column(db.DateTime)
     
-    def __init__(self, nombre_completo, username, password, rol, jefe_asignado=None):
+    def __init__(self, nombre_completo, username, password, rol, email=None, jefe_asignado=None):
         self.nombre_completo = nombre_completo
         self.username = username
+        self.email = email
         self.set_password(password)
         self.rol = rol
         self.jefe_asignado = jefe_asignado
@@ -57,6 +59,7 @@ class User(UserMixin, db.Model):
             'id': self.id,
             'nombre_completo': self.nombre_completo,
             'username': self.username,
+            'email': self.email,
             'rol': self.rol,
             'jefe_asignado': self.jefe_asignado,
             'activo': self.activo,
@@ -65,11 +68,15 @@ class User(UserMixin, db.Model):
         }
     
     @staticmethod
-    def create_user(nombre_completo, username, password, rol, jefe_asignado=None):
+    def create_user(nombre_completo, username, password, rol, email=None, jefe_asignado=None):
         """Create a new user."""
         # Check if username already exists
         if User.query.filter_by(username=username).first():
             return None, "El nombre de usuario ya existe"
+        
+        # Email validation removed - allow duplicate emails for testing
+        # if email and User.query.filter_by(email=email).first():
+        #     return None, "El email ya está registrado"
         
         # Validate role
         valid_roles = ['admin', 'controller', 'manager', 'jefe_proyecto', 'miembro_equipo_proyecto']
@@ -77,7 +84,7 @@ class User(UserMixin, db.Model):
             return None, "Rol inválido"
         
         try:
-            user = User(nombre_completo, username, password, rol, jefe_asignado)
+            user = User(nombre_completo, username, password, rol, email, jefe_asignado)
             db.session.add(user)
             db.session.commit()
             return user, "Usuario creado exitosamente"
@@ -89,6 +96,11 @@ class User(UserMixin, db.Model):
     def get_by_username(username):
         """Get user by username."""
         return User.query.filter_by(username=username, activo=True).first()
+    
+    @staticmethod
+    def get_by_email(email):
+        """Get user by email."""
+        return User.query.filter_by(email=email, activo=True).first()
     
     @staticmethod
     def get_all_active():
@@ -106,7 +118,8 @@ class User(UserMixin, db.Model):
         stats = {
             'total_usuarios': User.query.count(),
             'usuarios_activos': User.query.filter_by(activo=True).count(),
-            'usuarios_inactivos': User.query.filter_by(activo=False).count()
+            'usuarios_inactivos': User.query.filter_by(activo=False).count(),
+            'usuarios_con_email': User.query.filter(User.email.isnot(None)).count()
         }
         
         # Add role-based stats
@@ -126,12 +139,17 @@ class User(UserMixin, db.Model):
         jefes = ProjectRepository().get_project_manager()
         return [(jefe, jefe) for jefe in jefes]
     
-    def update_user_info(self, nombre_completo=None, username=None, rol=None, jefe_asignado=None):
+    def update_user_info(self, nombre_completo=None, username=None, email=None, rol=None, jefe_asignado=None):
         """Update user information."""
         # Check if new username already exists (if username is being changed)
         if username and username != self.username:
             if User.query.filter_by(username=username).first():
                 return False, "El nombre de usuario ya existe"
+        
+        # Email validation removed - allow duplicate emails for testing
+        # if email and email != self.email:
+        #     if User.query.filter_by(email=email).first():
+        #         return False, "El email ya está registrado"
         
         # Validate role if being changed
         if rol:
@@ -144,6 +162,8 @@ class User(UserMixin, db.Model):
                 self.nombre_completo = nombre_completo
             if username:
                 self.username = username
+            if email is not None:  # Allow clearing email with empty string
+                self.email = email if email else None
             if rol:
                 self.rol = rol
             if jefe_asignado is not None:  # Allow clearing assignment with empty string

@@ -1075,44 +1075,104 @@ function handleModalEscape(event) {
 }
 
 function showNotification(message, type = 'info') {
+    console.log(`🔔 Showing notification: ${message} (${type})`);
+    
     // Remove existing notification
     const existingNotification = document.getElementById('notification');
     if (existingNotification) {
+        console.log('🗑️ Removing existing notification');
         existingNotification.remove();
     }
     
+    // Clear any existing timeouts
+    if (window.notificationTimeout) {
+        clearTimeout(window.notificationTimeout);
+        window.notificationTimeout = null;
+    }
+    
     const notificationHTML = `
-        <div id="notification" class="notification ${type}">
+        <div id="notification" class="notification ${type} with-icon" style="z-index: 999999; position: fixed; top: 30px; right: 30px;">
             <div class="notification-content">
                 <span class="notification-message">${message}</span>
-                <button class="notification-close" onclick="closeNotification()">&times;</button>
+                <button class="notification-close" onclick="closeNotification()" title="Cerrar notificación">&times;</button>
             </div>
+            <div class="notification-progress"></div>
         </div>
     `;
     
     document.body.insertAdjacentHTML('beforeend', notificationHTML);
     
     const notification = document.getElementById('notification');
-    requestAnimationFrame(() => {
-        notification.style.opacity = '1';
-        notification.style.transform = 'translateY(0)';
-    });
+    if (!notification) {
+        console.error('❌ Failed to create notification element');
+        return;
+    }
     
-    // Auto-hide after 5 seconds
+    // Force immediate visibility
+    notification.style.opacity = '1';
+    notification.style.transform = 'translateY(0) scale(1)';
+    notification.style.visibility = 'visible';
+    notification.style.display = 'block';
+    
+    // Add show class after a brief delay
     setTimeout(() => {
+        notification.classList.add('show');
+        console.log('✅ Notification shown successfully');
+    }, 50);
+    
+    // Auto-hide after different times based on type - MUCH LONGER DURATION
+    let autoHideTime = 15000; // Default 15 seconds
+    
+    if (type === 'error' || type === 'warning') {
+        autoHideTime = 20000; // 20 seconds for critical notifications
+    } else if (type === 'success') {
+        autoHideTime = 18000; // 18 seconds for success notifications
+    }
+    
+    console.log(`⏰ Auto-hide set for ${autoHideTime}ms`);
+    
+    // Add progress bar animation
+    const progressBar = notification.querySelector('.notification-progress');
+    if (progressBar) {
+        progressBar.style.transition = `width ${autoHideTime}ms linear`;
+        setTimeout(() => {
+            progressBar.style.width = '0%';
+        }, 100);
+    }
+    
+    // Set timeout for auto-hide
+    window.notificationTimeout = setTimeout(() => {
+        console.log('⏰ Auto-hiding notification');
         closeNotification();
-    }, 5000);
+    }, autoHideTime);
 }
 
 function closeNotification() {
+    console.log('🔒 Closing notification');
+    
     const notification = document.getElementById('notification');
-    if (notification) {
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateY(-20px)';
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
+    if (!notification) {
+        console.log('❌ No notification found to close');
+        return;
     }
+    
+    // Clear the auto-hide timeout
+    if (window.notificationTimeout) {
+        clearTimeout(window.notificationTimeout);
+        window.notificationTimeout = null;
+    }
+    
+    // Add fade-out class
+    notification.classList.remove('show');
+    notification.classList.add('fade-out');
+    
+    // Remove after transition
+    setTimeout(() => {
+        if (notification && notification.parentNode) {
+            notification.remove();
+            console.log('🗑️ Notification removed from DOM');
+        }
+    }, 2000); // 2 seconds for fade-out
 }
 
 // ===== KPI CARDS MODALS =====
@@ -1160,12 +1220,14 @@ function showCriticalKPIModal() {
                     <table class="kpi-detail-table">
                         <thead>
                             <tr>
+                                <th>EDP</th>
                                 <th>Cliente</th>
                                 <th>Proyecto</th>
                                 <th>Monto</th>
                                 <th>Días</th>
                                 <th>Jefe</th>
                                 <th>Estado</th>
+                                <th>Email</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1178,8 +1240,8 @@ function showCriticalKPIModal() {
             <div class="kpi-actions-section">
                 <div class="kpi-section-title">Acciones Recomendadas</div>
                 <div class="kpi-actions-grid">
-                    <button class="kpi-action-btn critical" onclick="contactAllCriticalClients()">
-                        Contactar Todos los Clientes
+                    <button class="kpi-action-btn critical" onclick="sendCriticalEmails()" id="send-critical-emails">
+                        📧 Enviar Email a Todos los Críticos
                     </button>
                     <button class="kpi-action-btn warning" onclick="generateCriticalReport()">
                         Generar Reporte Detallado
@@ -1231,12 +1293,14 @@ function showAgingKPIModal() {
                     <table class="kpi-detail-table">
                         <thead>
                             <tr>
+                                <th>EDP</th>
                                 <th>Cliente</th>
                                 <th>Proyecto</th>
                                 <th>Monto</th>
                                 <th>Días</th>
-                                <th>Contacto</th>
-                                <th>Acción</th>
+                                <th>Jefe</th>
+                                <th>Estado</th>
+                                <th>Email</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1267,7 +1331,7 @@ function showAgingKPIModal() {
             <div class="kpi-actions-section">
                 <div class="kpi-actions-grid">
                     <button class="kpi-action-btn warning" onclick="sendAgingEmails()">
-                        Enviar Emails Preventivos
+                        📧 Enviar Emails Preventivos
                     </button>
                     <button class="kpi-action-btn info" onclick="scheduleAgingCalls()">
                         Programar Llamadas
@@ -1319,12 +1383,14 @@ function showFastCollectionModal() {
                     <table class="kpi-detail-table">
                         <thead>
                             <tr>
+                                <th>EDP</th>
                                 <th>Cliente</th>
                                 <th>Proyecto</th>
                                 <th>Monto</th>
                                 <th>Días</th>
-                                <th>Fecha Est. Cobro</th>
-                                <th>Probabilidad</th>
+                                <th>Jefe</th>
+                                <th>Estado</th>
+                                <th>Email</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1488,7 +1554,7 @@ function generateCriticalEDPsTable() {
     
     return `
         <tr id="${tableId}">
-            <td colspan="6" class="no-data-cell">
+            <td colspan="8" class="no-data-cell">
                 <div class="loading-table">
                     <div class="loading-spinner">
                         <div class="spinner"></div>
@@ -1517,7 +1583,7 @@ function loadCriticalEDPsData(tableId) {
             if (!data.success || !data.critical_edps || data.critical_edps.length === 0) {
                 const noDataRow = document.createElement('tr');
                 noDataRow.innerHTML = `
-                    <td colspan="6" class="no-data-cell">
+                    <td colspan="8" class="no-data-cell">
                         <div class="no-data-message">
                             <div class="no-data-text">No hay EDPs críticos</div>
                             <div class="no-data-subtext">Todos los proyectos están dentro de plazos normales</div>
@@ -1535,19 +1601,29 @@ function loadCriticalEDPsData(tableId) {
                 
                 const row = document.createElement('tr');
                 row.className = urgencyClass;
-                row.style.cursor = 'pointer';
-                row.onclick = () => showEDPDetailModal(edp.n_edp);
                 
                 row.innerHTML = `
-                    <td class="cliente-cell" title="${edp.cliente}">${edp.cliente}</td>
-                    <td class="proyecto-cell font-medium" title="${edp.proyecto}">${edp.proyecto}</td>
-                    <td class="monto-cell text-right">${edp.monto_formatted}</td>
-                    <td class="dias-cell text-center">
+                    <td class="edp-id-cell text-center" title="Número EDP">${edp.n_edp || edp.id || 'N/A'}</td>
+                    <td class="cliente-cell" title="${edp.cliente}" style="cursor: pointer;" onclick="showEDPDetailModal('${edp.n_edp}')">${edp.cliente}</td>
+                    <td class="proyecto-cell font-medium" title="${edp.proyecto}" style="cursor: pointer;" onclick="showEDPDetailModal('${edp.n_edp}')">${edp.proyecto}</td>
+                    <td class="monto-cell text-right" style="cursor: pointer;" onclick="showEDPDetailModal('${edp.n_edp}')">${edp.monto_formatted}</td>
+                    <td class="dias-cell text-center" style="cursor: pointer;" onclick="showEDPDetailModal('${edp.n_edp}')">
                         <span class="dias-badge ${edp.urgencia}">${edp.dias}d</span>
                     </td>
-                    <td class="jefe-cell" title="${edp.jefe_proyecto}">${edp.jefe_proyecto}</td>
-                    <td class="estado-cell text-center">
+                    <td class="jefe-cell" title="${edp.jefe_proyecto}" style="cursor: pointer;" onclick="showEDPDetailModal('${edp.n_edp}')">${edp.jefe_proyecto}</td>
+                    <td class="estado-cell text-center" style="cursor: pointer;" onclick="showEDPDetailModal('${edp.n_edp}')">
                         <span class="status-badge ${edp.urgencia}">${urgencyBadge}</span>
+                    </td>
+                    <td class="email-cell text-center">
+                        <button 
+                            class="email-btn" 
+                            onclick="event.stopPropagation(); sendEDPEmail('${edp.id || edp.n_edp}')" 
+                            title="Enviar email (diegobravobe@gmail.com)">
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                            </svg>
+                        </button>
                     </td>
                 `;
                 
@@ -1557,7 +1633,7 @@ function loadCriticalEDPsData(tableId) {
             // Add summary row at the end
             const summaryRow = document.createElement('tr');
             summaryRow.innerHTML = `
-                <td colspan="6" class="summary-cell">
+                <td colspan="8" class="summary-cell">
                     <div class="table-summary">
                         <div class="summary-stats">
                             <span class="stat-item">
@@ -1596,7 +1672,7 @@ function loadCriticalEDPsData(tableId) {
             const loadingRow = document.getElementById(tableId);
             if (loadingRow) {
                 loadingRow.innerHTML = `
-                    <td colspan="6" class="no-data-cell">
+                    <td colspan="8" class="no-data-cell">
                         <div class="error-message">
                             <div class="error-text">Error cargando EDPs críticos</div>
                             <div class="error-subtext">${error.message}</div>
@@ -1616,7 +1692,7 @@ function generateAgingEDPsTable() {
     
     return `
         <tr id="${tableId}">
-            <td colspan="6" class="no-data-cell">
+            <td colspan="8" class="no-data-cell">
                 <div class="loading-table">
                     <div class="loading-spinner">
                         <div class="spinner"></div>
@@ -1645,7 +1721,7 @@ function loadAgingEDPsData(tableId) {
             if (!data.success || !data.aging_edps || data.aging_edps.length === 0) {
                 const noDataRow = document.createElement('tr');
                 noDataRow.innerHTML = `
-                    <td colspan="6" class="no-data-cell">
+                    <td colspan="8" class="no-data-cell">
                         <div class="no-data-message">
                             <div class="no-data-text">No hay EDPs en aging 31-60 días</div>
                             <div class="no-data-subtext">Excelente gestión preventiva de cobros</div>
@@ -1664,6 +1740,7 @@ function loadAgingEDPsData(tableId) {
                 row.onclick = () => showEDPDetailModal(edp.n_edp);
                 
                 row.innerHTML = `
+                    <td class="edp-id-cell text-center" title="Número EDP">${edp.n_edp || edp.id || 'N/A'}</td>
                     <td class="cliente-cell" title="${edp.cliente}">${edp.cliente}</td>
                     <td class="proyecto-cell font-medium" title="${edp.proyecto}">${edp.proyecto}</td>
                     <td class="monto-cell text-right">${edp.monto_formatted}</td>
@@ -1674,6 +1751,17 @@ function loadAgingEDPsData(tableId) {
                     <td class="estado-cell text-center">
                         <span class="status-badge warning">AGING</span>
                     </td>
+                    <td class="email-cell text-center">
+                        <button 
+                            class="email-btn" 
+                            onclick="event.stopPropagation(); sendEDPEmail('${edp.id || edp.n_edp}')" 
+                            title="Enviar email preventivo (diegobravobe@gmail.com)">
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                            </svg>
+                        </button>
+                    </td>
                 `;
                 
                 tbody.appendChild(row);
@@ -1682,7 +1770,7 @@ function loadAgingEDPsData(tableId) {
             // Add summary row
             const summaryRow = document.createElement('tr');
             summaryRow.innerHTML = `
-                <td colspan="6" class="summary-cell">
+                <td colspan="8" class="summary-cell">
                     <div class="table-summary">
                         <div class="summary-stats">
                             <span class="stat-item">
@@ -1721,7 +1809,7 @@ function loadAgingEDPsData(tableId) {
             const loadingRow = document.getElementById(tableId);
             if (loadingRow) {
                 loadingRow.innerHTML = `
-                    <td colspan="6" class="no-data-cell">
+                    <td colspan="8" class="no-data-cell">
                         <div class="error-message">
                             <div class="error-text">Error cargando EDPs en aging</div>
                             <div class="error-subtext">${error.message}</div>
@@ -1741,7 +1829,7 @@ function generateFastCollectionTable() {
     
     return `
         <tr id="${tableId}">
-            <td colspan="6" class="no-data-cell">
+            <td colspan="8" class="no-data-cell">
                 <div class="loading-table">
                     <div class="loading-spinner">
                         <div class="spinner"></div>
@@ -1770,7 +1858,7 @@ function loadFastCollectionData(tableId) {
             if (!data.success || !data.fast_collection_edps || data.fast_collection_edps.length === 0) {
                 const noDataRow = document.createElement('tr');
                 noDataRow.innerHTML = `
-                    <td colspan="6" class="no-data-cell">
+                    <td colspan="8" class="no-data-cell">
                         <div class="no-data-message">
                             <div class="no-data-text">No hay EDPs de cobro rápido</div>
                             <div class="no-data-subtext">Oportunidad de acelerar procesos de cobro</div>
@@ -1789,6 +1877,7 @@ function loadFastCollectionData(tableId) {
                 row.onclick = () => showEDPDetailModal(edp.n_edp);
                 
                 row.innerHTML = `
+                    <td class="edp-id-cell text-center" title="Número EDP">${edp.n_edp || edp.id || 'N/A'}</td>
                     <td class="cliente-cell" title="${edp.cliente}">${edp.cliente}</td>
                     <td class="proyecto-cell font-medium" title="${edp.proyecto}">${edp.proyecto}</td>
                     <td class="monto-cell text-right">${edp.monto_formatted}</td>
@@ -1799,6 +1888,17 @@ function loadFastCollectionData(tableId) {
                     <td class="estado-cell text-center">
                         <span class="status-badge success">RÁPIDO</span>
                     </td>
+                    <td class="email-cell text-center">
+                        <button 
+                            class="email-btn" 
+                            onclick="event.stopPropagation(); sendEDPEmail('${edp.id || edp.n_edp}')" 
+                            title="Enviar email de confirmación (diegobravobe@gmail.com)">
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                            </svg>
+                        </button>
+                    </td>
                 `;
                 
                 tbody.appendChild(row);
@@ -1807,7 +1907,7 @@ function loadFastCollectionData(tableId) {
             // Add summary row
             const summaryRow = document.createElement('tr');
             summaryRow.innerHTML = `
-                <td colspan="6" class="summary-cell">
+                <td colspan="8" class="summary-cell">
                     <div class="table-summary">
                         <div class="summary-stats">
                             <span class="stat-item">
@@ -1846,7 +1946,7 @@ function loadFastCollectionData(tableId) {
             const loadingRow = document.getElementById(tableId);
             if (loadingRow) {
                 loadingRow.innerHTML = `
-                    <td colspan="6" class="no-data-cell">
+                    <td colspan="8" class="no-data-cell">
                         <div class="error-message">
                             <div class="error-text">Error cargando EDPs de cobro rápido</div>
                             <div class="error-subtext">${error.message}</div>
@@ -1875,8 +1975,26 @@ function scheduleCriticalFollowup() {
 }
 
 function sendAgingEmails() {
-    showNotification('Enviando emails preventivos...', 'info');
-    // Implementar envío de emails
+    showNotification('Enviando emails preventivos a diegobravobe@gmail.com...', 'info');
+    
+    fetch('/management/api/send_aging_emails', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`✅ ${data.message} - Enviado a diegobravobe@gmail.com`, 'success');
+        } else {
+            showNotification(`❌ ${data.message || 'Error al enviar emails preventivos'}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending aging emails:', error);
+        showNotification('❌ Error de conexión al enviar emails preventivos', 'error');
+    });
 }
 
 function scheduleAgingCalls() {
@@ -1890,8 +2008,26 @@ function exportAgingData() {
 }
 
 function accelerateCollection() {
-    showNotification('Acelerando procesos de cobro...', 'info');
-    // Implementar aceleración de cobros
+    showNotification('Enviando emails de confirmación a diegobravobe@gmail.com...', 'info');
+    
+    fetch('/management/api/send_fast_collection_emails', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`✅ ${data.message} - Enviado a diegobravobe@gmail.com`, 'success');
+        } else {
+            showNotification(`❌ ${data.message || 'Error al enviar emails de confirmación'}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending fast collection emails:', error);
+        showNotification('❌ Error de conexión al enviar emails de confirmación', 'error');
+    });
 }
 
 function confirmCollectionDates() {
@@ -2788,3 +2924,124 @@ function formatCurrency(amount) {
     if (!amount) return '$0';
     return `$${formatNumberWithDots(Math.round(amount))}`;
 }
+
+// ===== EMAIL FUNCTIONALITY =====
+
+/**
+ * Send email with all critical EDPs from the modal
+ */
+function sendCriticalEmails() {
+    const button = document.getElementById('send-critical-emails');
+    if (!button) return;
+    
+    // Disable button and show loading state
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = `
+        <svg class="w-4 h-4 mr-1.5 animate-spin" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4z"></path>
+        </svg>
+        Enviando a diegobravobe@gmail.com...
+    `;
+    
+    fetch('/management/api/send_critical_emails', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`✅ ${data.message} - Enviado a diegobravobe@gmail.com`, 'success');
+        } else {
+            showNotification(`❌ ${data.message || 'Error al enviar emails'}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending critical emails:', error);
+        showNotification('❌ Error de conexión al enviar emails', 'error');
+    })
+    .finally(() => {
+        // Restore button state
+        button.disabled = false;
+        button.innerHTML = originalText;
+    });
+}
+
+/**
+ * Send email for a specific EDP
+ * @param {string} edpId - The ID of the EDP to send email for
+ */
+function sendEDPEmail(edpId) {
+    if (!edpId) {
+        showNotification('❌ ID del EDP no válido', 'error');
+        return;
+    }
+    
+    // Find the button that was clicked to show loading state
+    const button = event.target.closest('.email-btn');
+    if (button) {
+        const originalHTML = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = `
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20" class="animate-spin">
+                <path d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4z"></path>
+            </svg>
+        `;
+        
+        fetch('/management/api/send_edp_email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                edp_id: edpId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`✅ ${data.message} - Enviado a diegobravobe@gmail.com`, 'success');
+            } else {
+                showNotification(`❌ ${data.message || 'Error al enviar email'}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error sending EDP email:', error);
+            showNotification('❌ Error de conexión al enviar email', 'error');
+        })
+        .finally(() => {
+            // Restore button state
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        });
+    }
+}
+
+// Add event listener for the critical emails button when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listener for critical emails button
+    const criticalEmailsBtn = document.getElementById('send-critical-emails');
+    if (criticalEmailsBtn) {
+        criticalEmailsBtn.addEventListener('click', sendCriticalEmails);
+    }
+});
+
+// Also add the event listener when the modal is shown
+function attachEmailEventListeners() {
+    const criticalEmailsBtn = document.getElementById('send-critical-emails');
+    if (criticalEmailsBtn && !criticalEmailsBtn.hasAttribute('data-listener-attached')) {
+        criticalEmailsBtn.addEventListener('click', sendCriticalEmails);
+        criticalEmailsBtn.setAttribute('data-listener-attached', 'true');
+    }
+}
+
+// Test function to verify notifications work
+function testNotification() {
+    console.log('🧪 Testing notification system...');
+    showNotification('🧪 Esta es una notificación de prueba - Debería durar 15 segundos', 'success');
+}
+
+// Add test button to window for debugging
+window.testNotification = testNotification;

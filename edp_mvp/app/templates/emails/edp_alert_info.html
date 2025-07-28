@@ -1,0 +1,415 @@
+{% extends "emails/base.html" %}
+
+{% block theme_styles %}
+/* Executive Suite Design System - Info Alert */
+.header {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #ffffff;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-weight: 600;
+  text-align: center;
+  padding: 32px 28px;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 12px 0 0 0;
+  font-size: 16px;
+  font-weight: 400;
+  opacity: 0.9;
+  letter-spacing: -0.01em;
+}
+
+.content {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  padding: 32px 28px;
+  border-radius: 0 0 8px 8px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  color: #1a1a1a;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 24px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #dbeafe;
+  letter-spacing: -0.01em;
+}
+
+.info-banner {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #3b82f6;
+  padding: 20px 24px;
+  margin: 0 0 32px 0;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.info-banner h3 {
+  margin: 0 0 8px 0;
+  color: #1d4ed8;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.info-banner p {
+  margin: 0;
+  color: #1e40af;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.edp-info {
+  background-color: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #3b82f6;
+  padding: 24px;
+  margin: 24px 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.edp-info p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.edp-info p:last-child {
+  margin-bottom: 0;
+}
+
+.edp-info strong {
+  font-weight: 600;
+  color: #1a1a1a;
+  min-width: 140px;
+  display: inline-block;
+}
+
+.status-info {
+  color: #1d4ed8;
+  font-weight: 500;
+  background-color: #eff6ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.days-info {
+  color: #1d4ed8;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+}
+
+.amount-value {
+  color: #059669;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+}
+
+.recommendations-section {
+  margin: 32px 0;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #64748b;
+}
+
+.recommendations-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.01em;
+}
+
+.recommendations-section ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.recommendations-section li {
+  font-size: 14px;
+  color: #475569;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.recommendations-section li:last-child {
+  margin-bottom: 0;
+}
+
+.button {
+  display: inline-block;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #ffffff;
+  text-decoration: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  text-align: center;
+  margin: 24px 0 0 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: -0.01em;
+}
+
+.button:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.test-notice {
+  font-style: italic;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+  margin: 20px 0 0 0;
+  padding: 12px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.footer {
+  background-color: #fafafa;
+  border-top: 1px solid #e5e7eb;
+  padding: 24px 28px;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.5;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.footer p {
+  margin: 0 0 8px 0;
+}
+
+.footer p:last-child {
+  margin-bottom: 0;
+}
+
+.system-info {
+  color: #9ca3af;
+  font-size: 11px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+{% endblock %}
+
+{% block title %}INFORMACIÓN{% endblock %}
+
+{% block subtitle %}Seguimiento de Documento{% endblock %}
+
+{% block content %}
+<div class="info-banner">
+  <h3>Seguimiento Semanal</h3>
+  <p>Este es un recordatorio informativo del estado de su documento</p>
+</div>
+
+<h2 class="section-title">Información del Documento</h2>
+
+<div class="edp-info">
+  <p><strong>Número EDP:</strong> {{ edp_data.n_edp or n_edp or 'N/A' }}</p>
+  <p><strong>Cliente:</strong> {{ edp_data.cliente or cliente or 'N/A' }}</p>
+  <p><strong>Proyecto:</strong> {{ edp_data.proyecto or proyecto or 'Sin especificar' }}</p>
+  <p><strong>Monto:</strong> <span class="amount-value">${{ "{:,.0f}".format((edp_data.monto_aprobado or edp_data.monto_propuesto or monto_aprobado or monto_propuesto or 0)) }}</span></p>
+  <p><strong>Estado Actual:</strong> <span class="status-info">{{ (edp_data.estado or edp_data.estado_edp or estado or estado_edp or 'N/A')|title }}</span></p>
+  <p><strong>Días Transcurridos:</strong> <span class="days-info">{{ edp_data.dias_sin_movimiento or dias_sin_movimiento or edp_data.dso_actual or dso_actual or 0 }} días</span></p>
+  <p><strong>Responsable:</strong> {{ edp_data.jefe_proyecto or jefe_proyecto or 'Sin asignar' }}</p>
+</div>
+
+<div class="recommendations-section">
+  <h3>Recomendaciones</h3>
+  <ul>
+    <li>Revisar el progreso del documento semanalmente</li>
+    <li>Mantener comunicación regular con el cliente</li>
+    <li>Actualizar el estado según corresponda</li>
+    <li>Documentar cualquier novedad relevante</li>
+  </ul>
+</div>
+
+{% if edp_data.id or id %}
+<a href="{{ app_url }}/dashboard/id/{{ edp_data.id or id }}" class="button">Acceder al Sistema</a>
+{% else %}
+<div class="test-notice">
+  Este es un documento de prueba del sistema - No disponible en producción
+</div>
+{% endif %}
+
+<div class="footer">
+  <p><strong>Sistema de Gestión Pagora</strong></p>
+  <p>Este es un mensaje automático generado por el sistema de alertas progresivas.</p>
+  <p>Por favor, no responda directamente a este correo electrónico.</p>
+  
+  <div class="system-info">
+    <p>Sistema: Pagora EDP Management v2.0</p>
+    <p>Tipo: Alerta Automática - Información</p>
+    <p>Frecuencia: Semanal</p>
+    <p>Generado: {{ datetime.now().strftime('%d/%m/%Y %H:%M') if datetime else 'Sistema' }}</p>
+  </div>
+</div>
+{% endblock %}
+      }
+      .content {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        padding: 30px;
+        border-radius: 0 0 8px 8px;
+      }
+      .alert-box {
+        background: #dbeafe;
+        border-left: 4px solid #3b82f6;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+      }
+      .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+      }
+      .details-table th,
+      .details-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .details-table th {
+        background: #f9fafb;
+        font-weight: 600;
+      }
+      .btn {
+        display: inline-block;
+        background: #3b82f6;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        margin: 20px 0;
+      }
+      .btn:hover {
+        background: #2563eb;
+      }
+      .footer {
+        color: #6b7280;
+        font-size: 14px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .status-info {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📅 Alerta Informativa</h1>
+        <p>{{ alert_message }}</p>
+      </div>
+
+      <div class="content">
+        <div class="alert-box">
+          <h3 style="margin: 0 0 15px 0; color: #1e40af">
+            Información del EDP
+          </h3>
+          <p style="margin: 0; font-size: 16px">
+            El EDP <strong>{{ n_edp }}</strong> del cliente
+            <strong>{{ cliente }}</strong> lleva
+            <strong>{{ dias_sin_movimiento }} días</strong> sin movimiento.
+          </p>
+        </div>
+
+        <table class="details-table">
+          <tr>
+            <th>N° EDP</th>
+            <td><strong>{{ n_edp }}</strong></td>
+          </tr>
+          <tr>
+            <th>Cliente</th>
+            <td>{{ cliente }}</td>
+          </tr>
+          <tr>
+            <th>Jefe de Proyecto</th>
+            <td>{{ jefe_proyecto }}</td>
+          </tr>
+          <tr>
+            <th>Monto</th>
+            <td>${{ "{:,.0f}".format(monto_propuesto) }}</td>
+          </tr>
+          <tr>
+            <th>Estado Actual</th>
+            <td>
+              <span class="status-badge status-info">{{ estado_edp }}</span>
+            </td>
+          </tr>
+          <tr>
+            <th>Días sin movimiento</th>
+            <td><strong>{{ dias_sin_movimiento }} días</strong></td>
+          </tr>
+          <tr>
+            <th>Días restantes para crítico</th>
+            <td>{{ dias_restantes_critico }} días</td>
+          </tr>
+        </table>
+
+        <div style="text-align: center; margin: 30px 0">
+          <a href="{{ app_url }}/controller/kanban" class="btn">
+            🎛️ Ver en Kanban
+          </a>
+        </div>
+
+        <div class="footer">
+          <p>
+            <strong>💡 Recomendación:</strong> Revisa el estado del EDP y
+            actualiza su progreso para evitar que se vuelva crítico.
+          </p>
+          <p>
+            Esta alerta se envía automáticamente cada semana para EDPs con 7+
+            días sin movimiento.
+          </p>
+          <p>
+            <em
+              >Para dejar de recibir estas alertas, actualiza el estado del
+              EDP.</em
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

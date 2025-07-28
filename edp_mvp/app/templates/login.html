@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,12 +7,12 @@
     <!-- Theme detection script -->
     <script>
       (function () {
-        const saved = localStorage.getItem("executiveTheme");
+        const saved = localStorage.getItem("managerTheme");
         if (saved) {
           document.documentElement.setAttribute("data-theme", saved);
         } else {
-          // Default to light theme for Executive Suite
-          document.documentElement.setAttribute("data-theme", "light");
+          // Default to dark theme to match the rest of the application
+          document.documentElement.setAttribute("data-theme", "dark");
         }
       })();
     </script>
@@ -322,5 +322,26 @@
 
     <!-- JavaScript -->
     <script src="{{ url_for('static', filename='js/common/login-executive.js') }}"></script>
+    
+    <!-- Auto-redirect script for authenticated users -->
+    <script>
+      // Verificar si el usuario ya está autenticado al cargar la página
+      document.addEventListener('DOMContentLoaded', function() {
+        // Hacer una petición AJAX para verificar el estado de autenticación
+        fetch('{{ url_for("auth.check_auth") }}')
+          .then(response => response.json())
+          .then(data => {
+            if (data.authenticated) {
+              console.log('Usuario ya autenticado, redirigiendo a:', data.redirect_url);
+              // Redirigir al usuario a su dashboard correspondiente
+              window.location.href = data.redirect_url;
+            }
+          })
+          .catch(error => {
+            console.log('Error verificando autenticación:', error);
+            // Si hay error, continuar con el flujo normal de login
+          });
+      });
+    </script>
   </body>
 </html>

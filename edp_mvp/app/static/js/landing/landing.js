@@ -209,13 +209,17 @@
       link.addEventListener('click', (e) => {
         e.preventDefault();
         const targetId = link.getAttribute('href');
-        const targetElement = document.querySelector(targetId);
         
-        if (targetElement) {
-          targetElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
+        // Validate that targetId is a valid selector (not just "#")
+        if (targetId && targetId !== '#' && targetId.length > 1) {
+          const targetElement = document.querySelector(targetId);
+          
+          if (targetElement) {
+            targetElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
         }
       });
     });
@@ -289,6 +293,208 @@
     window.addEventListener('resize', resizeCanvas);
     animateParticles();
   }
+
+  // ==========================================================================
+  // MODAL DE SOLICITUD DE ACCESO
+  // ==========================================================================
+
+  // Modal state
+  let isModalOpen = false;
+
+  // Open access modal
+  window.openAccessModal = function() {
+    const modal = document.getElementById('accessModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      isModalOpen = true;
+      
+      // Focus on first input
+      const firstInput = modal.querySelector('input');
+      if (firstInput) {
+        setTimeout(() => firstInput.focus(), 100);
+      }
+      
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  // Close access modal
+  window.closeAccessModal = function() {
+    const modal = document.getElementById('accessModal');
+    if (modal) {
+      modal.style.display = 'none';
+      isModalOpen = false;
+      
+      // Restore body scroll
+      document.body.style.overflow = '';
+      
+      // Reset form
+      const form = document.getElementById('accessForm');
+      if (form) {
+        form.reset();
+      }
+    }
+  };
+
+  // Submit access request
+  window.submitAccessRequest = function(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const formData = new FormData(form);
+    
+    // Add loading state
+    form.classList.add('form-loading');
+    submitBtn.textContent = 'Enviando...';
+    
+    // Prepare data
+    const data = {
+      nombre: formData.get('nombre'),
+      email: formData.get('email'),
+      empresa: formData.get('empresa'),
+      cargo: formData.get('cargo'),
+      telefono: formData.get('telefono'),
+      motivo: formData.get('motivo'),
+      tipo: 'access-request',
+      timestamp: new Date().toISOString()
+    };
+    
+    // Send request
+    submitFormData(data, form, submitBtn, 'Enviar Solicitud', closeAccessModal);
+  };
+
+  // Submit contact form
+  window.submitContactForm = function(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const formData = new FormData(form);
+    
+    // Add loading state
+    form.classList.add('form-loading');
+    submitBtn.textContent = 'Enviando...';
+    submitBtn.disabled = true;
+    
+    // Prepare data
+    const data = {
+      nombre: formData.get('nombre'),
+      email: formData.get('email'),
+      empresa: formData.get('empresa'),
+      telefono: formData.get('telefono'),
+      mensaje: formData.get('mensaje'),
+      tipo: 'contact-form',
+      timestamp: new Date().toISOString()
+    };
+    
+    // Send request
+    submitFormData(data, form, submitBtn, 'ENVIAR SOLICITUD', function() {
+      // Reset form on success
+      form.reset();
+    });
+  };
+
+  // Generic form submission function
+  function submitFormData(data, form, submitBtn, defaultBtnText, onSuccess) {
+    // Send request
+    fetch('/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+      // Remove loading state
+      form.classList.remove('form-loading');
+      submitBtn.textContent = defaultBtnText;
+      submitBtn.disabled = false;
+      
+      if (result.success) {
+        // Show success message
+        const successMessage = data.tipo === 'access-request' 
+          ? 'Solicitud de acceso enviada exitosamente. Nos pondremos en contacto contigo pronto.'
+          : 'Mensaje enviado exitosamente. Nos pondremos en contacto contigo pronto.';
+        
+        showNotification(successMessage, 'success');
+        
+        if (onSuccess) {
+          onSuccess();
+        }
+      } else {
+        // Show error message
+        showNotification(result.message || 'Error al enviar la solicitud. Inténtalo de nuevo.', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      
+      // Remove loading state
+      form.classList.remove('form-loading');
+      submitBtn.textContent = defaultBtnText;
+      submitBtn.disabled = false;
+      
+      // Show error message
+      showNotification('Error de conexión. Inténtalo de nuevo.', 'error');
+    });
+  }
+
+  // Show notification
+  function showNotification(message, type = 'info') {
+    // Remove existing notification
+    const existingNotification = document.getElementById('notification');
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+    
+    const notificationHTML = `
+      <div id="notification" class="notification ${type}" style="z-index: 999999;">
+        <div class="notification-content">
+          <span class="notification-message">${message}</span>
+          <button class="notification-close" onclick="closeNotification()">&times;</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', notificationHTML);
+    
+    const notification = document.getElementById('notification');
+    if (notification) {
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.remove();
+        }
+      }, 5000);
+    }
+  }
+
+  // Close notification
+  window.closeNotification = function() {
+    const notification = document.getElementById('notification');
+    if (notification) {
+      notification.remove();
+    }
+  };
+
+  // Close modal when clicking outside
+  document.addEventListener('click', function(event) {
+    const modal = document.getElementById('accessModal');
+    if (modal && event.target === modal) {
+      closeAccessModal();
+    }
+  });
+
+  // Close modal with Escape key
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && isModalOpen) {
+      closeAccessModal();
+    }
+  });
 
   // ==========================================================================
   // INITIALIZATION

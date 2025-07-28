@@ -1,0 +1,37 @@
+SISTEMA DE GESTIÓN PAGORA - INFORMACIÓN
+=====================================
+
+NOTIFICACIÓN DE SEGUIMIENTO
+
+INFORMACIÓN DEL DOCUMENTO
+-------------------------
+Número EDP: {{ n_edp or 'N/A' }}
+Cliente: {{ cliente or 'N/A' }}
+Proyecto: {{ proyecto or 'Sin especificar' }}
+Monto: ${{ "{:,.0f}".format((monto_aprobado or monto_propuesto or 0)) }}
+Estado Actual: {{ (estado or estado_edp or 'N/A')|title }}
+Días sin Movimiento: {{ dias_sin_movimiento or dso_actual or 0 }} días
+Responsable: {{ jefe_proyecto or 'Sin asignar' }}
+
+ACCIONES RECOMENDADAS
+--------------------
+• Revisar el progreso del documento con el cliente
+• Verificar si se requiere información adicional
+• Programar seguimiento en una semana
+• Mantener comunicación regular con el cliente
+
+{% if id %}
+Para acceder al sistema: {{ app_url }}/dashboard/id/{{ id }}
+{% else %}
+Este es un documento de prueba del sistema - No disponible en producción
+{% endif %}
+
+=====================================
+Sistema de Gestión Pagora
+Este es un mensaje automático generado por el sistema de alertas progresivas.
+Por favor, no responda directamente a este correo electrónico.
+
+Sistema: Pagora EDP Management v2.0
+Tipo: Alerta Automática - Información
+Prioridad: BAJA - Seguimiento Regular
+Generado: {{ datetime.now().strftime('%d/%m/%Y %H:%M') if datetime else 'Sistema' }}

@@ -139,6 +139,7 @@ def create_app():
     from .routes.analytics import analytics_bp
     from .routes.edp_upload import edp_upload_bp
     from .routes.email_notifications import email_bp
+    from .routes.alert_routes import alert_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(edp_bp, url_prefix="/edp")
@@ -156,6 +157,7 @@ def create_app():
     app.register_blueprint(analytics_bp)  # ✨ Analytics and insights
     app.register_blueprint(edp_upload_bp)  # 📋 Sistema de carga de EDPs
     app.register_blueprint(email_bp)  # 📧 Sistema de notificaciones por email
+    app.register_blueprint(alert_bp)  # 🚨 Sistema de alertas progresivas
 
     # Old monolithic controllers (comment out when fully migrated)
     # app.register_blueprint(controller_bp)

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>URGENTE - EDP {{ n_edp }}</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .header {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        padding: 25px;
+        border-radius: 8px 8px 0 0;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 26px;
+      }
+      .header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+        font-size: 16px;
+      }
+      .content {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        padding: 30px;
+        border-radius: 0 0 8px 8px;
+      }
+      .alert-box {
+        background: #fef2f2;
+        border-left: 4px solid #dc2626;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+      }
+      .critical-banner {
+        background: #dc2626;
+        color: white;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 6px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+      }
+      .details-table th,
+      .details-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .details-table th {
+        background: #fef2f2;
+        font-weight: 600;
+      }
+      .btn {
+        display: inline-block;
+        background: #dc2626;
+        color: white;
+        padding: 15px 30px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 20px 0;
+        font-size: 16px;
+      }
+      .btn:hover {
+        background: #b91c1c;
+      }
+      .footer {
+        color: #6b7280;
+        font-size: 14px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .status-urgent {
+        background: #fef2f2;
+        color: #dc2626;
+      }
+      .countdown {
+        background: #dc2626;
+        color: white;
+        padding: 20px;
+        border-radius: 6px;
+        text-align: center;
+        margin: 20px 0;
+      }
+      .countdown-number {
+        font-size: 48px;
+        font-weight: bold;
+        margin: 10px 0;
+      }
+      .blink {
+        animation: blink 2s infinite;
+      }
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0.3;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 class="blink">🚨 ALERTA URGENTE</h1>
+        <p>{{ alert_message }}</p>
+      </div>
+
+      <div class="content">
+        <div class="critical-banner blink">
+          ⚠️ ACCIÓN INMEDIATA REQUERIDA ⚠️
+        </div>
+
+        <div class="countdown">
+          <div style="font-size: 18px">DÍAS RESTANTES PARA CRÍTICO</div>
+          <div class="countdown-number">{{ dias_restantes_critico }}</div>
+          <div style="font-size: 14px">DÍAS</div>
+        </div>
+
+        <div class="alert-box">
+          <h3 style="margin: 0 0 15px 0; color: #dc2626">
+            🔥 Situación Crítica
+          </h3>
+          <p style="margin: 0; font-size: 18px; font-weight: 600">
+            El EDP <strong>{{ n_edp }}</strong> del cliente
+            <strong>{{ cliente }}</strong> lleva
+            <strong style="color: #dc2626"
+              >{{ dias_sin_movimiento }} días</strong
+            >
+            sin movimiento.
+          </p>
+          <p style="margin: 15px 0 0 0; color: #dc2626; font-size: 16px">
+            <strong
+              >¡Quedan solo {{ dias_restantes_critico }} días para que se vuelva
+              CRÍTICO!</strong
+            >
+          </p>
+        </div>
+
+        <table class="details-table">
+          <tr>
+            <th>N° EDP</th>
+            <td><strong style="color: #dc2626">{{ n_edp }}</strong></td>
+          </tr>
+          <tr>
+            <th>Cliente</th>
+            <td>{{ cliente }}</td>
+          </tr>
+          <tr>
+            <th>Jefe de Proyecto</th>
+            <td><strong>{{ jefe_proyecto }}</strong></td>
+          </tr>
+          <tr>
+            <th>Monto</th>
+            <td><strong>${{ "{:,.0f}".format(monto_propuesto) }}</strong></td>
+          </tr>
+          <tr>
+            <th>Estado Actual</th>
+            <td>
+              <span class="status-badge status-urgent">{{ estado_edp }}</span>
+            </td>
+          </tr>
+          <tr>
+            <th>Días sin movimiento</th>
+            <td>
+              <strong style="color: #dc2626; font-size: 18px"
+                >{{ dias_sin_movimiento }} días</strong
+              >
+            </td>
+          </tr>
+          <tr>
+            <th>Días restantes para crítico</th>
+            <td>
+              <strong style="color: #dc2626; font-size: 18px"
+                >{{ dias_restantes_critico }} días</strong
+              >
+            </td>
+          </tr>
+        </table>
+
+        <div
+          style="
+            background: #dc2626;
+            color: white;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+          ">
+          <h4 style="margin: 0 0 15px 0">🎯 ACCIONES INMEDIATAS REQUERIDAS:</h4>
+          <ul style="margin: 0; font-size: 16px">
+            <li><strong>Contactar al cliente HOY</strong></li>
+            <li><strong>Verificar toda documentación pendiente</strong></li>
+            <li><strong>Actualizar estado inmediatamente</strong></li>
+            <li><strong>Escalar a gerencia si hay bloqueos</strong></li>
+            <li><strong>Programar seguimiento diario</strong></li>
+          </ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0">
+          <a href="{{ app_url }}/controller/kanban" class="btn blink">
+            🚨 ACTUALIZAR AHORA
+          </a>
+        </div>
+
+        <div
+          style="
+            background: #fef2f2;
+            border: 2px solid #dc2626;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+          ">
+          <h4 style="margin: 0 0 10px 0; color: #dc2626">
+            📞 Contactos de Escalamiento:
+          </h4>
+          <p style="margin: 5px 0; color: #7f1d1d">
+            <strong>Jefe de Proyecto:</strong> {{ jefe_proyecto }}<br />
+            <strong>Controller:</strong> Contactar inmediatamente<br />
+            <strong>Gerencia:</strong> Escalar si no hay respuesta en 2 horas
+          </p>
+        </div>
+
+        <div class="footer">
+          <p>
+            <strong>🚨 CRÍTICO:</strong> Este EDP está muy cerca del límite de
+            30 días. Acción inmediata requerida.
+          </p>
+          <p>
+            Esta alerta se envía diariamente para EDPs urgentes con 21+ días sin
+            movimiento.
+          </p>
+          <p>
+            <strong
+              >Si no se toma acción en las próximas 24 horas, se escalará
+              automáticamente a gerencia.</strong
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

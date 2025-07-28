@@ -7,7 +7,7 @@
 
 class ExecutiveLogin {
     constructor() {
-        this.currentTheme = this.getStoredTheme() || 'light';
+        this.currentTheme = this.getStoredTheme() || 'dark';
         this.passwordVisible = false;
         this.loginAttempts = 0;
         this.maxAttempts = 5;
@@ -503,11 +503,11 @@ class ExecutiveLogin {
     }
 
     getStoredTheme() {
-        return localStorage.getItem('executiveTheme');
+        return localStorage.getItem('managerTheme');
     }
 
     storeTheme() {
-        localStorage.setItem('executiveTheme', this.currentTheme);
+        localStorage.setItem('managerTheme', this.currentTheme);
     }
 }
 

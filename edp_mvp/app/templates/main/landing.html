@@ -60,9 +60,8 @@
 
         <!-- Navigation Menu -->
         <div style="display: flex; align-items: center; gap: var(--space-xl)">
-          <a href="#soluciones" class="nav-link">SOLUCIONES</a>
-          <a href="#funcionalidades" class="nav-link">FUNCIONALIDADES</a>
-          <a href="#dashboard" class="nav-link">DASHBOARD</a>
+          <a href="#funcionalidades" class="nav-link">CARACTERÍSTICAS</a>
+          <a href="#pricing" class="nav-link">PLANES</a>
           <a href="#contacto" class="nav-link">CONTACTO</a>
         </div>
 
@@ -78,11 +77,15 @@
           {% if user and user.is_authenticated %}
           <a
             href="{{ url_for('control_panel.vista_kanban') }}"
-            class="btn btn-primary">
+            class="btn btn-primary"
+            style="text-decoration: none">
             CENTRO DE CONTROL
           </a>
           {% else %}
-          <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+          <a
+            href="{{ url_for('auth.login') }}"
+            class="btn btn-primary"
+            style="text-decoration: none">
             ACCEDER AL SISTEMA
           </a>
           {% endif %}
@@ -117,7 +120,7 @@
                 <h1
                   class="title-large gradient-text"
                   style="font-size: 3.5rem; margin-bottom: var(--space-lg)">
-                  PLATAFORMA DE DECISIÓN EMPRESARIAL
+                  GESTIÓN EMPRESARIAL EDP
                 </h1>
                 <p
                   style="
@@ -126,9 +129,9 @@
                     line-height: 1.6;
                     margin-bottom: var(--space-xl);
                   ">
-                  Sistema centralizado de comando y control para la gestión
-                  empresarial de procesos EDP. Monitoreo en tiempo real,
-                  análisis predictivo e inteligencia ejecutiva para la toma de
+                  Plataforma centralizada para la gestión de procesos
+                  empresariales. Automatización inteligente, monitoreo en tiempo
+                  real y análisis predictivo para optimizar la toma de
                   decisiones estratégicas.
                 </p>
               </div>
@@ -136,23 +139,29 @@
               <!-- Métricas Clave -->
               <div class="metrics-row">
                 <div class="executive-metric terminal-glow">
-                  <div class="card-label">VELOCIDAD DE PROCESAMIENTO</div>
+                  <div class="card-label">EFICIENCIA DEL SISTEMA</div>
                   <div class="metric-value-large" id="processing-speed">
-                    80%
+                    95%
                   </div>
-                  <div class="metric-change change-positive">↑ MÁS RÁPIDO</div>
+                  <div class="metric-change change-positive">↑ OPTIMIZADO</div>
                 </div>
 
                 <div class="executive-metric terminal-glow">
-                  <div class="card-label">TIEMPO ACTIVO DEL SISTEMA</div>
-                  <div class="metric-value-large" id="uptime-value">99.9%</div>
-                  <div class="metric-change change-positive">↑ CONFIABLE</div>
+                  <div class="card-label">PROCESOS ACTIVOS</div>
+                  <div class="metric-value-large" id="uptime-value">
+                    {{ stats.total_edps if stats else '847' }}
+                  </div>
+                  <div class="metric-change change-positive">
+                    ↑ EN TIEMPO REAL
+                  </div>
                 </div>
 
                 <div class="executive-metric terminal-glow">
-                  <div class="card-label">REDUCCIÓN DE ERRORES</div>
-                  <div class="metric-value-large" id="error-reduction">95%</div>
-                  <div class="metric-change change-positive">↑ PRECISO</div>
+                  <div class="card-label">AHORRO DE TIEMPO</div>
+                  <div class="metric-value-large" id="error-reduction">80%</div>
+                  <div class="metric-change change-positive">
+                    ↑ AUTOMATIZACIÓN
+                  </div>
                 </div>
               </div>
 
@@ -167,23 +176,30 @@
                 {% if user and user.is_authenticated %}
                 <a
                   href="{{ url_for('control_panel.vista_kanban') }}"
-                  class="cta-button-enhanced">
-                  ACCEDER AL CENTRO DE COMANDO
+                  class="cta-button-enhanced"
+                  style="text-decoration: none">
+                  ACCEDER AL SISTEMA
                 </a>
                 <a
                   href="{{ url_for('dashboard.dashboard_controller') }}"
-                  class="btn btn-secondary">
-                  VER DASHBOARD EJECUTIVO
+                  class="btn btn-secondary"
+                  style="text-decoration: none">
+                  VER DASHBOARD
                 </a>
                 {% else %}
                 <a
-                  href="{{ url_for('auth.login') }}"
-                  class="cta-button-enhanced">
-                  SOLICITAR ACCESO AL SISTEMA
+                  href="#"
+                  onclick="openAccessModal()"
+                  class="cta-button-enhanced"
+                  style="text-decoration: none">
+                  SOLICITAR ACCESO
                 </a>
-                <a href="#dashboard" class="btn btn-secondary"
-                  >VER DEMOSTRACIÓN</a
-                >
+                <a
+                  href="#pricing"
+                  class="btn btn-secondary"
+                  style="text-decoration: none">
+                  VER PLANES
+                </a>
                 {% endif %}
               </div>
             </div>
@@ -195,39 +211,26 @@
             <div class="terminal-section">
               <div class="terminal-header">ESTADO DEL SISTEMA</div>
               <div class="terminal-line">
-                <span class="terminal-value">SISTEMAS CENTRALES</span>: EN LÍNEA
+                <span class="terminal-value">PLATAFORMA</span>: OPERACIONAL
               </div>
               <div class="terminal-line">
-                <span class="terminal-value">SINCRONIZACIÓN</span>: ACTIVA
+                <span class="terminal-value">BASE DE DATOS</span>: SINCRONIZADA
               </div>
               <div class="terminal-line">
-                <span class="terminal-value">ANALÍTICA</span>: PROCESANDO
+                <span class="terminal-value">ANALÍTICA</span>: ACTIVA
               </div>
               <div class="terminal-line">
-                <span class="terminal-value">SEGURIDAD</span>: ASEGURADA
-              </div>
-              <div class="terminal-line">
-                <span class="terminal-value">IA PREDICTIVA</span>: HABILITADA
+                <span class="terminal-value">SEGURIDAD</span>: HABILITADA
               </div>
             </div>
             <!-- Métricas en Vivo -->
             <div class="terminal-section">
-              <div class="terminal-header">MÉTRICAS EN TIEMPO REAL</div>
-              <div class="terminal-line">
-                <span class="terminal-value">USUARIOS ACTIVOS</span>:
-                <span id="systems-count"
-                  >{{ stats.active_users if stats else '847' }}</span
-                >
-              </div>
+              <div class="terminal-header">MÉTRICAS CLAVE</div>
               <div class="terminal-line">
                 <span class="terminal-value">PROCESOS</span>:
                 <span id="processing-count"
-                  >{{ stats.total_edps if stats else '2847' }}</span
+                  >{{ stats.total_edps if stats else '847' }}</span
                 >
-              </div>
-              <div class="terminal-line">
-                <span class="terminal-value">RENDIMIENTO</span>: {{
-                stats.throughput if stats else '1.2K' }}/h
               </div>
               <div class="terminal-line">
                 <span class="terminal-value">EFICIENCIA</span>:
@@ -235,167 +238,23 @@
                   >{{ stats.tasa_aprobacion if stats else '94.3' }}</span
                 >%
               </div>
+              <div class="terminal-line">
+                <span class="terminal-value">INGRESOS</span>: ${{
+                stats.monto_total_formatted if stats else '2.4M' }}
+              </div>
             </div>
 
             <!-- Alertas Operacionales -->
             <div class="terminal-section">
-              <div class="terminal-header">ALERTAS OPERACIONALES</div>
+              <div class="terminal-header">ESTADO OPERACIONAL</div>
               <div class="terminal-line">
                 <span class="terminal-value">CRÍTICAS</span>: 0
               </div>
               <div class="terminal-line">
-                <span class="terminal-warning">ADVERTENCIAS</span>: 2
+                <span class="terminal-warning">ADVERTENCIAS</span>: 1
               </div>
               <div class="terminal-line">
-                <span class="terminal-value">INFORMACIÓN</span>: 5
-              </div>
-              <div class="terminal-line">
-                <span class="terminal-value">RESUELTAS</span>: 47
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Vista Previa del Dashboard Empresarial -->
-    <section
-      id="dashboard"
-      style="
-        padding: var(--space-2xl) var(--space-xl);
-        background: var(--bg-secondary);
-      ">
-      <div class="main-grid">
-        <div class="primary-section">
-          <!-- Encabezado del Dashboard -->
-          <div class="dashboard-preview-enhanced">
-            <div class="dashboard-header-enhanced">
-              <div class="dashboard-title-enhanced">
-                CENTRO DE INTELIGENCIA EMPRESARIAL
-              </div>
-              <div class="data-pill-enhanced">TIEMPO REAL</div>
-            </div>
-
-            <h2
-              class="title-large gradient-text"
-              style="margin-bottom: var(--space-lg)">
-              Interfaz de Comando Ejecutivo
-            </h2>
-
-            <!-- Métricas del Dashboard en Vivo -->
-            <div class="metrics-row">
-              <div class="feature-card-executive">
-                <div class="card-header">
-                  <div class="card-label">PROCESAMIENTO DE INGRESOS</div>
-                  <div class="status-indicator-enhanced status-success">
-                    ÓPTIMO
-                  </div>
-                </div>
-                <div class="revenue-value-large">
-                  ${{ stats.monto_total_formatted if stats else '2.4M' }}
-                </div>
-                <div class="metric-change change-positive">
-                  ↑ +12.5% EN EL MES
-                </div>
-              </div>
-
-              <div class="feature-card-executive">
-                <div class="card-header">
-                  <div class="card-label">PROCESOS ACTIVOS</div>
-                  <div class="data-pill-enhanced">SEGUIMIENTO</div>
-                </div>
-                <div class="metric-value-large">
-                  {{ stats.total_edps if stats else '847' }}
-                </div>
-                <div class="metric-change change-positive">↑ +23 HOY</div>
-              </div>
-
-              <div class="feature-card-executive">
-                <div class="card-header">
-                  <div class="card-label">EFICIENCIA DEL SISTEMA</div>
-                  <div class="status-indicator-enhanced status-success">
-                    ÓPTIMO
-                  </div>
-                </div>
-                <div class="metric-value-large">
-                  {{ stats.tasa_aprobacion if stats else '94.2' }}%
-                </div>
-                <div class="metric-change change-positive">↑ +2.1% SEMANAL</div>
-              </div>
-
-              <div class="feature-card-executive">
-                <div class="card-header">
-                  <div class="card-label">TIEMPO DE PROCESAMIENTO</div>
-                  <div class="status-indicator-enhanced status-success">
-                    MEJORADO
-                  </div>
-                </div>
-                <div class="metric-value-large">2.4</div>
-                <div style="color: var(--text-secondary); font-size: 0.875rem">
-                  HRS PROMEDIO
-                </div>
-                <div class="metric-change change-positive">
-                  ↓ -80% vs MANUAL
-                </div>
-              </div>
-            </div>
-
-            <!-- Dashboard Simulado -->
-            <div class="dashboard-mock" style="margin-top: var(--space-xl)">
-              <div class="dashboard-header-enhanced">
-                <div class="dashboard-title-enhanced">
-                  PANEL DE CONTROL EJECUTIVO
-                </div>
-                <div class="data-pill-enhanced">EN VIVO</div>
-              </div>
-              <div class="dashboard-grid">
-                <div class="dashboard-cell">Ventas</div>
-                <div class="dashboard-cell">Operaciones</div>
-                <div class="dashboard-cell">Finanzas</div>
-                <div class="dashboard-cell">RRHH</div>
-                <div class="dashboard-cell">Proyectos</div>
-                <div class="dashboard-cell">KPIs</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Panel Lateral -->
-        <div class="sidebar">
-          <!-- Análisis de Antigüedad de Procesos -->
-          <div class="aging-section">
-            <div class="aging-header">
-              <div class="aging-title">ANÁLISIS DE ANTIGÜEDAD</div>
-              <div class="aging-total">
-                Total: {{ stats.total_edps if stats else '847' }} procesos
-              </div>
-            </div>
-
-            <div class="aging-bars">
-              <div class="aging-bar">
-                <div class="aging-label">0-30 DÍAS</div>
-                <div class="aging-progress">
-                  <div class="aging-fill fill-healthy" style="width: 65%"></div>
-                </div>
-                <div class="aging-percentage">65%</div>
-              </div>
-
-              <div class="aging-bar">
-                <div class="aging-label">31-60 DÍAS</div>
-                <div class="aging-progress">
-                  <div class="aging-fill fill-caution" style="width: 25%"></div>
-                </div>
-                <div class="aging-percentage">25%</div>
-              </div>
-
-              <div class="aging-bar">
-                <div class="aging-label">61+ DÍAS</div>
-                <div class="aging-progress">
-                  <div
-                    class="aging-fill fill-critical"
-                    style="width: 10%"></div>
-                </div>
-                <div class="aging-percentage">10%</div>
+                <span class="terminal-value">PROCESADAS HOY</span>: 47
               </div>
             </div>
           </div>
@@ -407,29 +266,29 @@
     <section
       id="funcionalidades"
       style="padding: var(--space-2xl) var(--space-xl)">
-      <div style="max-width: 1600px; margin: 0 auto">
+      <div style="max-width: 1400px; margin: 0 auto">
         <!-- Encabezado de Sección -->
         <div
           class="card animate-in"
           style="margin-bottom: var(--space-2xl); text-align: center">
           <div class="card-header" style="justify-content: center">
-            <div class="card-label">CAPACIDADES EMPRESARIALES</div>
+            <div class="card-label">CARACTERÍSTICAS PRINCIPALES</div>
           </div>
           <h2
             class="title-large gradient-text"
             style="margin-bottom: var(--space-lg)">
-            Funcionalidades de Nivel Ejecutivo
+            Gestión Empresarial Simplificada
           </h2>
           <p
             style="
               color: var(--text-secondary);
               font-size: 1.125rem;
-              max-width: 700px;
+              max-width: 600px;
               margin: 0 auto;
               line-height: 1.6;
             ">
-            Herramientas de misión crítica diseñadas para operaciones a escala
-            empresarial y toma de decisiones ejecutivas estratégicas.
+            Herramientas esenciales para optimizar procesos empresariales y
+            mejorar la eficiencia operacional.
           </p>
         </div>
 
@@ -437,15 +296,15 @@
         <div
           style="
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: var(--space-xl);
           ">
-          <!-- Funcionalidad 1: Comando Centralizado -->
+          <!-- Funcionalidad 1: Control Centralizado -->
           <div
             class="feature-card-executive feature-hover animate-in animate-delayed-1">
             <div class="feature-icon-executive"></div>
             <div class="card-header">
-              <div class="card-label">COMANDO CENTRALIZADO</div>
+              <div class="card-label">CONTROL CENTRALIZADO</div>
               <div class="status-indicator-enhanced status-success">ACTIVO</div>
             </div>
             <h3
@@ -455,7 +314,7 @@
                 margin-bottom: var(--space-md);
                 color: var(--text-primary);
               ">
-              Centro de Control Unificado
+              Panel de Control Unificado
             </h3>
             <p
               style="
@@ -463,96 +322,21 @@
                 line-height: 1.6;
                 margin-bottom: var(--space-lg);
               ">
-              Panel único para todos los procesos empresariales EDP. Monitoreo
-              centralizado, control y gestión con visibilidad en tiempo real de
-              todas las operaciones críticas de la organización.
+              Gestiona todos los procesos EDP desde una interfaz central.
+              Monitoreo en tiempo real y control completo de operaciones.
             </p>
             <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm)">
-              <span class="data-pill-enhanced">Monitoreo en Tiempo Real</span>
-              <span class="data-pill-enhanced">Orquestación de Procesos</span>
-              <span class="data-pill-enhanced">Reportes Ejecutivos</span>
+              <span class="data-pill-enhanced">Vista Unificada</span>
+              <span class="data-pill-enhanced">Tiempo Real</span>
             </div>
           </div>
 
-          <!-- Funcionalidad 2: Analítica Predictiva -->
+          <!-- Funcionalidad 2: Automatización -->
           <div
             class="feature-card-executive feature-hover animate-in animate-delayed-2">
             <div class="feature-icon-executive"></div>
             <div class="card-header">
-              <div class="card-label">ANALÍTICA PREDICTIVA</div>
-              <div class="status-indicator-enhanced status-success">
-                IA AVANZADA
-              </div>
-            </div>
-            <h3
-              style="
-                font-size: 1.5rem;
-                font-weight: 600;
-                margin-bottom: var(--space-md);
-                color: var(--text-primary);
-              ">
-              Motor de Inteligencia Empresarial
-            </h3>
-            <p
-              style="
-                color: var(--text-secondary);
-                line-height: 1.6;
-                margin-bottom: var(--space-lg);
-              ">
-              Analítica avanzada e inteligencia artificial para insights
-              predictivos, evaluación de riesgos y sistemas de soporte
-              automatizado para la toma de decisiones estratégicas de alto
-              nivel.
-            </p>
-            <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm)">
-              <span class="data-pill-enhanced">Análisis de Riesgo</span>
-              <span class="data-pill-enhanced">Predicción de Tendencias</span>
-              <span class="data-pill-enhanced">Detección de Anomalías</span>
-            </div>
-          </div>
-
-          <!-- Funcionalidad 3: Seguridad Empresarial -->
-          <div
-            class="feature-card-executive feature-hover animate-in animate-delayed-3">
-            <div class="feature-icon-executive"></div>
-            <div class="card-header">
-              <div class="card-label">SEGURIDAD EMPRESARIAL</div>
-              <div class="status-indicator-enhanced status-success">
-                ASEGURADO
-              </div>
-            </div>
-            <h3
-              style="
-                font-size: 1.5rem;
-                font-weight: 600;
-                margin-bottom: var(--space-md);
-                color: var(--text-primary);
-              ">
-              Marco de Seguridad Ejecutivo
-            </h3>
-            <p
-              style="
-                color: var(--text-secondary);
-                line-height: 1.6;
-                margin-bottom: var(--space-lg);
-              ">
-              Seguridad de grado empresarial con cifrado end-to-end, pistas de
-              auditoría, monitoreo de cumplimiento y control de acceso basado en
-              roles para proteger información crítica del negocio.
-            </p>
-            <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm)">
-              <span class="data-pill-enhanced">Cifrado Extremo a Extremo</span>
-              <span class="data-pill-enhanced">Pistas de Auditoría</span>
-              <span class="data-pill-enhanced">Cumplimiento Normativo</span>
-            </div>
-          </div>
-
-          <!-- Funcionalidad 4: Automatización Inteligente -->
-          <div
-            class="feature-card-executive feature-hover animate-in animate-delayed-4">
-            <div class="feature-icon-executive"></div>
-            <div class="card-header">
-              <div class="card-label">AUTOMATIZACIÓN INTELIGENTE</div>
+              <div class="card-label">AUTOMATIZACIÓN</div>
               <div class="status-indicator-enhanced status-success">
                 HABILITADO
               </div>
@@ -564,7 +348,7 @@
                 margin-bottom: var(--space-md);
                 color: var(--text-primary);
               ">
-              Orquestación de Procesos
+              Procesos Inteligentes
             </h3>
             <p
               style="
@@ -572,165 +356,604 @@
                 line-height: 1.6;
                 margin-bottom: var(--space-lg);
               ">
-              Automatización avanzada de flujos de trabajo empresariales con
-              orquestación inteligente, reducción de intervención manual y
-              optimización continua de procesos críticos.
+              Reduce tareas manuales con flujos automatizados. Optimización
+              continua y reducción de errores.
             </p>
             <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm)">
-              <span class="data-pill-enhanced">Flujos Inteligentes</span>
-              <span class="data-pill-enhanced">Reducción Manual</span>
-              <span class="data-pill-enhanced">Optimización Continua</span>
+              <span class="data-pill-enhanced">Flujos Automatizados</span>
+              <span class="data-pill-enhanced">80% Menos Tiempo</span>
+            </div>
+          </div>
+
+          <!-- Funcionalidad 3: Reportes y Analytics -->
+          <div
+            class="feature-card-executive feature-hover animate-in animate-delayed-3">
+            <div class="feature-icon-executive"></div>
+            <div class="card-header">
+              <div class="card-label">ANALYTICS</div>
+              <div class="status-indicator-enhanced status-success">
+                INTELIGENTE
+              </div>
+            </div>
+            <h3
+              style="
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: var(--space-md);
+                color: var(--text-primary);
+              ">
+              Análisis y Reportes
+            </h3>
+            <p
+              style="
+                color: var(--text-secondary);
+                line-height: 1.6;
+                margin-bottom: var(--space-lg);
+              ">
+              Insights en tiempo real y reportes automatizados. Toma de
+              decisiones basada en datos precisos.
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm)">
+              <span class="data-pill-enhanced">Reportes Automáticos</span>
+              <span class="data-pill-enhanced">Análisis Predictivo</span>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Soluciones por Industria -->
+    <!-- Sección de Planes y Precios -->
     <section
-      id="soluciones"
+      id="pricing"
       style="
         padding: var(--space-2xl) var(--space-xl);
         background: var(--bg-secondary);
       ">
-      <div style="max-width: 1600px; margin: 0 auto">
+      <div style="max-width: 1400px; margin: 0 auto">
         <!-- Encabezado de Sección -->
         <div
           class="card animate-in"
           style="margin-bottom: var(--space-2xl); text-align: center">
           <div class="card-header" style="justify-content: center">
-            <div class="card-label">SOLUCIONES EMPRESARIALES</div>
+            <div class="card-label">PLANES EMPRESARIALES</div>
           </div>
           <h2
             class="title-large gradient-text"
             style="margin-bottom: var(--space-lg)">
-            Inteligencia Sectorial Especializada
+            Soluciones Escalables para su Empresa
           </h2>
           <p
             style="
               color: var(--text-secondary);
               font-size: 1.125rem;
-              max-width: 800px;
+              max-width: 700px;
               margin: 0 auto;
               line-height: 1.6;
             ">
-            Módulos de comando especializados adaptados para requerimientos
-            operacionales específicos de la industria y estándares de
-            cumplimiento normativo.
+            Planes diseñados para empresas de todos los tamaños. Comience con lo
+            esencial y escale según sus necesidades.
           </p>
         </div>
 
-        <!-- Grid de Industrias -->
+        <!-- Grid de Planes -->
         <div
           style="
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: var(--space-lg);
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: var(--space-xl);
+            margin-bottom: var(--space-2xl);
           ">
-          <!-- Construcción -->
+          <!-- Plan Starter -->
           <div
             class="feature-card-executive feature-hover animate-in animate-delayed-1">
-            <div class="feature-icon-executive"></div>
-            <div class="client-header">
-              <div class="client-name">OPERACIONES DE CONSTRUCCIÓN</div>
-              <div class="tier-vip">ENTERPRISE</div>
+            <div class="card-header">
+              <div class="card-label">STARTER</div>
+              <div class="data-pill-enhanced">IDEAL PARA PYMES</div>
             </div>
-            <div class="client-amount">Comando de Proyectos</div>
-            <p
-              style="
-                color: var(--text-secondary);
-                font-size: 0.875rem;
-                margin-bottom: var(--space-md);
-                line-height: 1.5;
-              ">
-              Gestión de subcontratistas, seguimiento de hitos, control de
-              retenciones, y monitoreo de cumplimiento normativo para proyectos
-              de construcción.
-            </p>
-            <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap">
-              <span class="data-pill-enhanced">Control Subcontratos</span>
-              <span class="data-pill-enhanced">Seguimiento Hitos</span>
-              <span class="data-pill-enhanced">Gestión Retenciones</span>
+
+            <div style="margin-bottom: var(--space-xl)">
+              <div
+                style="
+                  display: flex;
+                  align-items: baseline;
+                  gap: var(--space-sm);
+                  margin-bottom: var(--space-md);
+                ">
+                <span
+                  style="
+                    font-size: 3rem;
+                    font-weight: 700;
+                    color: var(--text-primary);
+                  "
+                  >USD $149</span
+                >
+                <span style="color: var(--text-secondary); font-size: 1rem"
+                  >/mes</span
+                >
+              </div>
+              <div style="margin-bottom: var(--space-md)">
+                <span
+                  style="
+                    color: var(--text-secondary);
+                    font-size: 1.25rem;
+                    font-weight: 500;
+                  ">
+                  CLP $149.000 /mes
+                </span>
+              </div>
+              <p style="color: var(--text-secondary); font-size: 0.875rem">
+                Hasta 100 procesos EDP mensuales
+              </p>
             </div>
+
+            <div style="margin-bottom: var(--space-xl)">
+              <h3
+                style="
+                  font-size: 1.25rem;
+                  font-weight: 600;
+                  margin-bottom: var(--space-md);
+                  color: var(--text-primary);
+                ">
+                Características incluidas:
+              </h3>
+              <ul
+                style="
+                  list-style: none;
+                  padding: 0;
+                  margin: 0;
+                  display: flex;
+                  flex-direction: column;
+                  gap: var(--space-sm);
+                ">
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Panel de control centralizado</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Automatización básica</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Reportes estándar</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Soporte por email</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >2 usuarios incluidos</span
+                  >
+                </li>
+              </ul>
+            </div>
+
+            <a
+              href="#"
+              onclick="openAccessModal()"
+              class="btn btn-secondary"
+              style="width: 100%; text-align: center; text-decoration: none">
+              COMENZAR AHORA
+            </a>
           </div>
 
-          <!-- Manufactura -->
+          <!-- Plan Professional (Destacado) -->
           <div
-            class="feature-card-executive feature-hover animate-in animate-delayed-2">
-            <div class="feature-icon-executive"></div>
-            <div class="client-header">
-              <div class="client-name">CONTROL MANUFACTURERO</div>
-              <div class="tier-vip">ENTERPRISE</div>
-            </div>
-            <div class="client-amount">Comando Cadena Suministro</div>
-            <p
+            class="feature-card-executive feature-hover animate-in animate-delayed-2"
+            style="position: relative; border: 2px solid var(--accent-primary)">
+            <!-- Badge Destacado -->
+            <div
               style="
-                color: var(--text-secondary);
-                font-size: 0.875rem;
-                margin-bottom: var(--space-md);
-                line-height: 1.5;
+                position: absolute;
+                top: -6px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--accent-primary);
+                color: #000;
+                padding: 6px 18px;
+                border-radius: var(--radius-sm);
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+                z-index: 10;
               ">
-              Gestión de proveedores, control de calidad, optimización de
-              inventarios, y planificación de producción para operaciones
-              manufactureras.
-            </p>
-            <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap">
-              <span class="data-pill-enhanced">Control Proveedores</span>
-              <span class="data-pill-enhanced">Gestión Calidad</span>
-              <span class="data-pill-enhanced">Optimización Inventarios</span>
+              MÁS POPULAR
             </div>
+
+            <div class="card-header">
+              <div class="card-label">PROFESSIONAL</div>
+              <div class="status-indicator-enhanced status-success">
+                RECOMENDADO
+              </div>
+            </div>
+
+            <div style="margin-bottom: var(--space-xl)">
+              <div
+                style="
+                  display: flex;
+                  align-items: baseline;
+                  gap: var(--space-sm);
+                  margin-bottom: var(--space-md);
+                ">
+                <span
+                  style="
+                    font-size: 3rem;
+                    font-weight: 700;
+                    color: var(--accent-primary);
+                  "
+                  >USD $399</span
+                >
+                <span style="color: var(--text-secondary); font-size: 1rem"
+                  >/mes</span
+                >
+              </div>
+              <div style="margin-bottom: var(--space-md)">
+                <span
+                  style="
+                    color: var(--text-secondary);
+                    font-size: 1.25rem;
+                    font-weight: 500;
+                  ">
+                  CLP $399.000 /mes
+                </span>
+              </div>
+              <p style="color: var(--text-secondary); font-size: 0.875rem">
+                Hasta 500 procesos EDP mensuales
+              </p>
+            </div>
+
+            <div style="margin-bottom: var(--space-xl)">
+              <h3
+                style="
+                  font-size: 1.25rem;
+                  font-weight: 600;
+                  margin-bottom: var(--space-md);
+                  color: var(--text-primary);
+                ">
+                Todo lo de Starter, más:
+              </h3>
+              <ul
+                style="
+                  list-style: none;
+                  padding: 0;
+                  margin: 0;
+                  display: flex;
+                  flex-direction: column;
+                  gap: var(--space-sm);
+                ">
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Automatización avanzada</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Analytics y reportes personalizados</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Integraciones API</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Soporte prioritario</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >10 usuarios incluidos</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Backup automático</span
+                  >
+                </li>
+              </ul>
+            </div>
+
+            <a
+              href="#"
+              onclick="openAccessModal()"
+              class="cta-button-enhanced"
+              style="width: 100%; text-align: center; text-decoration: none">
+              SOLICITAR DEMO
+            </a>
           </div>
 
-          <!-- Tecnología -->
+          <!-- Plan Enterprise -->
           <div
             class="feature-card-executive feature-hover animate-in animate-delayed-3">
-            <div class="feature-icon-executive"></div>
-            <div class="client-header">
-              <div class="client-name">SERVICIOS TECNOLÓGICOS</div>
-              <div class="tier-vip">ENTERPRISE</div>
+            <div class="card-header">
+              <div class="card-label">ENTERPRISE</div>
+              <div class="data-pill-enhanced">ESCALABILIDAD TOTAL</div>
             </div>
-            <div class="client-amount">Comando Digital</div>
+
+            <div style="margin-bottom: var(--space-xl)">
+              <div
+                style="
+                  display: flex;
+                  align-items: baseline;
+                  gap: var(--space-sm);
+                  margin-bottom: var(--space-md);
+                ">
+                <span
+                  style="
+                    font-size: 2.5rem;
+                    font-weight: 700;
+                    color: var(--text-primary);
+                  "
+                  >USD $999+</span
+                >
+                <span style="color: var(--text-secondary); font-size: 1rem"
+                  >/mes</span
+                >
+              </div>
+              <div style="margin-bottom: var(--space-md)">
+                <span
+                  style="
+                    color: var(--text-secondary);
+                    font-size: 1.25rem;
+                    font-weight: 500;
+                  ">
+                  CLP $999.000+ /mes
+                </span>
+              </div>
+              <p style="color: var(--text-secondary); font-size: 0.875rem">
+                Procesos ilimitados
+              </p>
+            </div>
+
+            <div style="margin-bottom: var(--space-xl)">
+              <h3
+                style="
+                  font-size: 1.25rem;
+                  font-weight: 600;
+                  margin-bottom: var(--space-md);
+                  color: var(--text-primary);
+                ">
+                Todo lo de Professional, más:
+              </h3>
+              <ul
+                style="
+                  list-style: none;
+                  padding: 0;
+                  margin: 0;
+                  display: flex;
+                  flex-direction: column;
+                  gap: var(--space-sm);
+                ">
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Implementación personalizada</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Integración con sistemas existentes</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Soporte 24/7 dedicado</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Account Manager asignado</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >Usuarios ilimitados</span
+                  >
+                </li>
+                <li
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-sm);
+                  ">
+                  <span style="color: var(--accent-primary); font-weight: bold"
+                    >✓</span
+                  >
+                  <span style="color: var(--text-secondary)"
+                    >SLA garantizado</span
+                  >
+                </li>
+              </ul>
+            </div>
+
+            <a
+              href="mailto:contacto@pagora.cl"
+              class="btn btn-secondary"
+              style="width: 100%; text-align: center; text-decoration: none">
+              CONTACTAR VENTAS
+            </a>
+          </div>
+        </div>
+
+        <!-- Información Adicional -->
+        <div
+          class="card animate-in animate-delayed-4"
+          style="text-align: center; background: var(--bg-primary)">
+          <div style="margin-bottom: var(--space-lg)">
+            <h3
+              style="
+                color: var(--text-primary);
+                margin-bottom: var(--space-md);
+                font-size: 1.5rem;
+              ">
+              ¿Necesita más información?
+            </h3>
             <p
               style="
                 color: var(--text-secondary);
-                font-size: 0.875rem;
-                margin-bottom: var(--space-md);
-                line-height: 1.5;
+                font-size: 1rem;
+                max-width: 600px;
+                margin: 0 auto;
+                line-height: 1.6;
               ">
-              Gestión de proyectos de desarrollo, control de recursos técnicos,
-              seguimiento de entregas y optimización de equipos de desarrollo.
+              Todos los planes incluyen prueba gratuita de 30 días, migración
+              asistida sin costo adicional y garantía de satisfacción del 100%.
             </p>
-            <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap">
-              <span class="data-pill-enhanced">Gestión Proyectos</span>
-              <span class="data-pill-enhanced">Control Recursos</span>
-              <span class="data-pill-enhanced">Seguimiento Entregas</span>
-            </div>
           </div>
 
-          <!-- Servicios Financieros -->
           <div
-            class="feature-card-executive feature-hover animate-in animate-delayed-4">
-            <div class="feature-icon-executive"></div>
-            <div class="client-header">
-              <div class="client-name">SERVICIOS FINANCIEROS</div>
-              <div class="tier-vip">ENTERPRISE</div>
-            </div>
-            <div class="client-amount">Comando Financiero</div>
-            <p
-              style="
-                color: var(--text-secondary);
-                font-size: 0.875rem;
-                margin-bottom: var(--space-md);
-                line-height: 1.5;
-              ">
-              Control de riesgos, cumplimiento regulatorio, gestión de carteras
-              y monitoreo de operaciones financieras en tiempo real.
-            </p>
-            <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap">
-              <span class="data-pill-enhanced">Control Riesgos</span>
-              <span class="data-pill-enhanced">Cumplimiento</span>
-              <span class="data-pill-enhanced">Gestión Carteras</span>
-            </div>
+            style="
+              display: flex;
+              justify-content: center;
+              gap: var(--space-md);
+              flex-wrap: wrap;
+            ">
+            <a
+              href="mailto:contacto@pagora.cl"
+              class="cta-button-enhanced"
+              style="text-decoration: none">
+              SOLICITAR COTIZACIÓN PERSONALIZADA
+            </a>
+            <a
+              href="tel:+56223456789"
+              class="btn btn-secondary"
+              style="text-decoration: none">
+              LLAMAR AHORA
+            </a>
           </div>
         </div>
       </div>
@@ -741,7 +964,7 @@
       id="contacto"
       style="
         padding: var(--space-2xl) var(--space-xl);
-        background: var(--bg-primary);
+        background: var(--bg-secondary);
       ">
       <div style="max-width: 1200px; margin: 0 auto">
         <div
@@ -750,16 +973,16 @@
           <!-- Información de Contacto -->
           <div class="feature-card-executive animate-in">
             <div class="card-header">
-              <div class="card-label">CONTACTO EMPRESARIAL</div>
+              <div class="card-label">CONTACTO</div>
               <div class="status-indicator-enhanced status-success">
-                DISPONIBLE 24/7
+                DISPONIBLE
               </div>
             </div>
 
             <h2
               class="title-large gradient-text"
               style="margin-bottom: var(--space-lg); font-size: 2.5rem">
-              Solicite una Demostración Ejecutiva
+              Solicite una Demostración
             </h2>
 
             <p
@@ -769,9 +992,8 @@
                 line-height: 1.6;
                 margin-bottom: var(--space-xl);
               ">
-              Converse con nuestro equipo ejecutivo sobre cómo PAGORA puede
-              transformar las operaciones de su empresa. Demostraciones
-              personalizadas para C-Suite.
+              Converse con nuestro equipo sobre cómo PAGORA puede optimizar los
+              procesos de su empresa. Demostración personalizada.
             </p>
 
             <div
@@ -783,31 +1005,31 @@
               <div class="terminal-section">
                 <div class="terminal-header">INFORMACIÓN DE CONTACTO</div>
                 <div class="terminal-line">
-                  <span class="terminal-value">EMAIL EJECUTIVO</span>:
-                  executives@pagora.com
+                  <span class="terminal-value">EMAIL</span>: contacto@pagora.cl
                 </div>
                 <div class="terminal-line">
-                  <span class="terminal-value">LÍNEA DIRECTA</span>: +1 (555)
-                  000-EXEC
+                  <span class="terminal-value">TELÉFONO</span>: +56 2 2345 6789
                 </div>
                 <div class="terminal-line">
-                  <span class="terminal-value">SOPORTE 24/7</span>:
-                  support@pagora.com
+                  <span class="terminal-value">SOPORTE</span>: soporte@pagora.cl
                 </div>
                 <div class="terminal-line">
-                  <span class="terminal-value">SEDE CENTRAL</span>: Silicon
-                  Valley, CA
+                  <span class="terminal-value">UBICACIÓN</span>: Santiago, Chile
                 </div>
               </div>
 
               <div style="display: flex; gap: var(--space-md); flex-wrap: wrap">
                 <a
-                  href="mailto:executives@pagora.com"
-                  class="cta-button-enhanced">
-                  SOLICITAR DEMOSTRACIÓN
+                  href="mailto:contacto@pagora.cl"
+                  class="cta-button-enhanced"
+                  style="text-decoration: none">
+                  SOLICITAR DEMO
                 </a>
-                <a href="tel:+15550000EXEC" class="btn btn-secondary">
-                  CONTACTAR AHORA
+                <a
+                  href="tel:+56223456789"
+                  class="btn btn-secondary"
+                  style="text-decoration: none">
+                  LLAMAR AHORA
                 </a>
               </div>
             </div>
@@ -816,8 +1038,8 @@
           <!-- Formulario de Contacto -->
           <div class="feature-card-executive animate-in animate-delayed-1">
             <div class="card-header">
-              <div class="card-label">FORMULARIO EJECUTIVO</div>
-              <div class="data-pill-enhanced">CONFIDENCIAL</div>
+              <div class="card-label">FORMULARIO DE CONTACTO</div>
+              <div class="data-pill-enhanced">RÁPIDO</div>
             </div>
 
             <h3
@@ -826,10 +1048,12 @@
                 margin-bottom: var(--space-lg);
                 font-size: 1.5rem;
               ">
-              Acceso Prioritario al Sistema
+              Solicitar Información
             </h3>
 
             <form
+              id="contactForm"
+              onsubmit="submitContactForm(event)"
               style="
                 display: flex;
                 flex-direction: column;
@@ -847,8 +1071,9 @@
                 </label>
                 <input
                   type="text"
+                  name="nombre"
                   class="form-control"
-                  placeholder="Ej: John Smith, CEO"
+                  placeholder="Su nombre completo"
                   required />
               </div>
 
@@ -860,12 +1085,13 @@
                     margin-bottom: var(--space-xs);
                     display: block;
                   ">
-                  EMAIL CORPORATIVO *
+                  EMAIL *
                 </label>
                 <input
                   type="email"
+                  name="email"
                   class="form-control"
-                  placeholder="ceo@empresa.com"
+                  placeholder="email@empresa.com"
                   required />
               </div>
 
@@ -877,13 +1103,13 @@
                     margin-bottom: var(--space-xs);
                     display: block;
                   ">
-                  EMPRESA / ORGANIZACIÓN *
+                  EMPRESA
                 </label>
                 <input
                   type="text"
+                  name="empresa"
                   class="form-control"
-                  placeholder="Nombre de la empresa"
-                  required />
+                  placeholder="Nombre de la empresa" />
               </div>
 
               <div>
@@ -894,18 +1120,13 @@
                     margin-bottom: var(--space-xs);
                     display: block;
                   ">
-                  CARGO / POSICIÓN *
+                  TELÉFONO
                 </label>
-                <select class="form-control" required>
-                  <option value="">Seleccione su cargo</option>
-                  <option value="ceo">CEO / Director General</option>
-                  <option value="cto">CTO / Director Tecnológico</option>
-                  <option value="coo">COO / Director Operaciones</option>
-                  <option value="cfo">CFO / Director Financiero</option>
-                  <option value="vp">VP / Vicepresidente</option>
-                  <option value="director">Director / Gerente General</option>
-                  <option value="other">Otro Ejecutivo</option>
-                </select>
+                <input
+                  type="tel"
+                  name="telefono"
+                  class="form-control"
+                  placeholder="+56 9 XXXX XXXX" />
               </div>
 
               <div>
@@ -916,41 +1137,21 @@
                     margin-bottom: var(--space-xs);
                     display: block;
                   ">
-                  TAMAÑO DE EMPRESA
-                </label>
-                <select class="form-control">
-                  <option value="">Seleccione tamaño</option>
-                  <option value="startup">Startup (1-50 empleados)</option>
-                  <option value="small">Pequeña (51-200 empleados)</option>
-                  <option value="medium">Mediana (201-1000 empleados)</option>
-                  <option value="large">Grande (1001-5000 empleados)</option>
-                  <option value="enterprise">
-                    Enterprise (5000+ empleados)
-                  </option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  style="
-                    color: var(--text-secondary);
-                    font-size: 0.875rem;
-                    margin-bottom: var(--space-xs);
-                    display: block;
-                  ">
-                  REQUERIMIENTOS ESPECÍFICOS
+                  MENSAJE
                 </label>
                 <textarea
+                  name="mensaje"
                   class="form-control"
                   rows="3"
-                  placeholder="Describa sus necesidades empresariales específicas..."></textarea>
+                  placeholder="Cuéntenos sobre sus necesidades..."
+                  required></textarea>
               </div>
 
               <button
                 type="submit"
                 class="cta-button-enhanced"
-                style="margin-top: var(--space-md)">
-                ENVIAR SOLICITUD EJECUTIVA
+                style="margin-top: var(--space-md); text-decoration: none">
+                ENVIAR SOLICITUD
               </button>
             </form>
           </div>
@@ -958,14 +1159,14 @@
       </div>
     </section>
 
-    <!-- Footer Ejecutivo -->
+    <!-- Footer -->
     <footer
       style="
         background: var(--bg-tertiary);
         padding: var(--space-2xl) var(--space-xl);
         border-top: 1px solid var(--border-primary);
       ">
-      <div style="max-width: 1600px; margin: 0 auto">
+      <div style="max-width: 1400px; margin: 0 auto">
         <div
           style="
             display: grid;
@@ -990,22 +1191,12 @@
                 line-height: 1.6;
                 margin-bottom: var(--space-lg);
               ">
-              Plataforma líder en comando y control empresarial. Transformando
-              la toma de decisiones ejecutivas a través de inteligencia de datos
-              en tiempo real.
+              Plataforma empresarial para la gestión optimizada de procesos EDP.
+              Automatización inteligente y análisis en tiempo real.
             </p>
-            <div class="terminal-section">
-              <div class="terminal-header">ESTADO DEL SISTEMA GLOBAL</div>
-              <div class="terminal-line">
-                <span class="terminal-value">DISPONIBILIDAD</span>: 99.97%
-              </div>
-              <div class="terminal-line">
-                <span class="terminal-value">ÚLTIMA ACTUALIZACIÓN</span>: 2 MIN
-              </div>
-            </div>
           </div>
 
-          <!-- Enlaces Ejecutivos -->
+          <!-- Enlaces -->
           <div>
             <h4
               style="
@@ -1015,7 +1206,7 @@
                 text-transform: uppercase;
                 letter-spacing: 0.1em;
               ">
-              RECURSOS EJECUTIVOS
+              NAVEGACIÓN
             </h4>
             <div
               style="
@@ -1027,30 +1218,24 @@
                 href="#dashboard"
                 class="nav-link"
                 style="padding: var(--space-xs) 0"
-                >Centro de Comando</a
+                >Dashboard</a
               >
               <a
                 href="#funcionalidades"
                 class="nav-link"
                 style="padding: var(--space-xs) 0"
-                >Funcionalidades</a
-              >
-              <a
-                href="#soluciones"
-                class="nav-link"
-                style="padding: var(--space-xs) 0"
-                >Soluciones</a
+                >Características</a
               >
               <a
                 href="#contacto"
                 class="nav-link"
                 style="padding: var(--space-xs) 0"
-                >Contacto Ejecutivo</a
+                >Contacto</a
               >
             </div>
           </div>
 
-          <!-- Soporte -->
+          <!-- Contacto -->
           <div>
             <h4
               style="
@@ -1060,7 +1245,7 @@
                 text-transform: uppercase;
                 letter-spacing: 0.1em;
               ">
-              SOPORTE EMPRESARIAL
+              CONTACTO
             </h4>
             <div
               style="
@@ -1069,55 +1254,24 @@
                 gap: var(--space-sm);
               ">
               <a
-                href="mailto:support@pagora.com"
+                href="mailto:contacto@pagora.cl"
                 class="nav-link"
                 style="padding: var(--space-xs) 0"
-                >Soporte Técnico 24/7</a
+                >contacto@pagora.cl</a
               >
               <a
-                href="mailto:executives@pagora.com"
+                href="tel:+56223456789"
                 class="nav-link"
                 style="padding: var(--space-xs) 0"
-                >Línea Ejecutiva</a
+                >+56 2 2345 6789</a
               >
-              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
-                >Documentación</a
-              >
-              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
-                >Centro de Ayuda</a
-              >
-            </div>
-          </div>
-
-          <!-- Información Legal -->
-          <div>
-            <h4
-              style="
-                color: var(--text-primary);
-                margin-bottom: var(--space-lg);
-                font-size: 0.875rem;
-                text-transform: uppercase;
-                letter-spacing: 0.1em;
-              ">
-              INFORMACIÓN LEGAL
-            </h4>
-            <div
-              style="
-                display: flex;
-                flex-direction: column;
-                gap: var(--space-sm);
-              ">
-              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
-                >Términos de Servicio</a
-              >
-              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
-                >Política de Privacidad</a
-              >
-              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
-                >Cumplimiento GDPR</a
-              >
-              <a href="#" class="nav-link" style="padding: var(--space-xs) 0"
-                >Certificaciones</a
+              <span
+                style="
+                  color: var(--text-secondary);
+                  font-size: 0.875rem;
+                  padding: var(--space-xs) 0;
+                "
+                >Santiago, Chile</span
               >
             </div>
           </div>
@@ -1137,22 +1291,114 @@
           ">
           <p
             style="color: var(--text-tertiary); font-size: 0.875rem; margin: 0">
-            © 2025 PAGORA Enterprise Solutions. Todos los derechos reservados.
+            © 2025 PAGORA. Todos los derechos reservados.
           </p>
           <div style="display: flex; align-items: center; gap: var(--space-md)">
-            <div class="status-indicator">
-              <div class="status-dot pulse-dot"></div>
-              <span style="font-size: 0.75rem">SISTEMA OPERACIONAL</span>
-            </div>
             <div class="timestamp mono-font" style="font-size: 0.75rem">
-              V2.4.1 BUILD 2025.06.21
+              V1.0.0
             </div>
           </div>
         </div>
       </div>
     </footer>
 
+    <!-- Modal de Solicitud de Acceso -->
+    <div id="accessModal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Solicitar Acceso al Sistema</h3>
+          <button onclick="closeAccessModal()" class="modal-close">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="accessForm" onsubmit="submitAccessRequest(event)">
+            <div class="form-group">
+              <label for="nombre">Nombre Completo *</label>
+              <input type="text" id="nombre" name="nombre" required />
+            </div>
+            <div class="form-group">
+              <label for="email">Correo Electrónico *</label>
+              <input type="email" id="email" name="email" required />
+            </div>
+            <div class="form-group">
+              <label for="empresa">Empresa</label>
+              <input type="text" id="empresa" name="empresa" />
+            </div>
+            <div class="form-group">
+              <label for="cargo">Cargo</label>
+              <input type="text" id="cargo" name="cargo" />
+            </div>
+            <div class="form-group">
+              <label for="telefono">Teléfono</label>
+              <input type="tel" id="telefono" name="telefono" />
+            </div>
+            <div class="form-group">
+              <label for="motivo">Motivo de la Solicitud *</label>
+              <textarea
+                id="motivo"
+                name="motivo"
+                rows="3"
+                required
+                placeholder="Describa brevemente el motivo de su solicitud de acceso..."></textarea>
+            </div>
+            <div class="form-actions">
+              <button
+                type="button"
+                onclick="closeAccessModal()"
+                class="btn btn-secondary">
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Enviar Solicitud
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Landing Page JavaScript -->
     <script src="{{ url_for('static', filename='js/landing/landing.js') }}"></script>
+
+    <!-- Auto-check authentication status -->
+    <script>
+      // Verificar estado de autenticación y actualizar enlaces dinámicamente
+      document.addEventListener("DOMContentLoaded", function () {
+        fetch('{{ url_for("auth.check_auth") }}')
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.authenticated) {
+              // Actualizar todos los enlaces de login para que vayan al dashboard correspondiente
+              const loginLinks = document.querySelectorAll(
+                'a[href*="auth.login"]'
+              );
+              loginLinks.forEach((link) => {
+                link.href = data.redirect_url;
+                link.textContent = link.textContent.includes("ACCEDER")
+                  ? "CENTRO DE CONTROL"
+                  : link.textContent;
+              });
+
+              // Actualizar botones de acción en la sección hero
+              const actionButtons = document.querySelectorAll(
+                ".cta-button-enhanced, .btn-primary"
+              );
+              actionButtons.forEach((button) => {
+                if (
+                  button.textContent.includes("SOLICITAR ACCESO") ||
+                  button.textContent.includes("ACCEDER AL SISTEMA")
+                ) {
+                  button.href = data.redirect_url;
+                  button.textContent = "ACCEDER AL CENTRO DE CONTROL";
+                }
+              });
+            }
+          })
+          .catch((error) => {
+            console.log("Error verificando autenticación en landing:", error);
+          });
+      });
+    </script>
   </body>
 </html>

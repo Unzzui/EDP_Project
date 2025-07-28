@@ -11,7 +11,7 @@ socketio = SocketIO(
     engineio_logger=True
 )
 login_manager = LoginManager()
-login_manager.login_view = "auth.login"
+login_manager.login_view = "landing.index"
 login_manager.login_message = "Inicia sesión para acceder a esta página."
 
 db = SQLAlchemy()

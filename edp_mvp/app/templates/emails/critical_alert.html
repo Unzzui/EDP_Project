@@ -1,41 +1,153 @@
-{% extends "emails/base.html" %} {% block theme_styles %} .header { background:
-linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); } .section-title {
-border-bottom: 2px solid #fecaca; } .edp-info { background-color: #fef2f2;
-border-color: #fecaca; border-left-color: #dc2626; } .button { background:
-linear-gradient(135deg, #0066cc 0%, #0052a3 100%); box-shadow: 0 2px 4px rgba(0,
-102, 204, 0.2); } .button:hover { box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
-} {% endblock %} {% block title %}🚨 ALERTA CRÍTICA{% endblock %} {% block
-subtitle %}EDP Requiere Atención Inmediata{% endblock %} {% block content %}
-<h2 class="section-title">Detalles del EDP Crítico</h2>
-<div class="edp-info">
-  <p><strong>Número EDP:</strong> {{ edp_data.n_edp }}</p>
-  <p><strong>Cliente:</strong> {{ edp_data.cliente }}</p>
-  <p><strong>Proyecto:</strong> {{ edp_data.proyecto }}</p>
+{% extends "emails/base.html" %} {% block theme_styles %} /* Executive Suite
+Design System - Critical Alert */ .header { background: linear-gradient(135deg,
+#dc2626 0%, #b91c1c 100%); color: #ffffff; font-family: 'Inter', 'Segoe UI',
+sans-serif; font-weight: 600; text-align: center; padding: 32px 28px;
+border-radius: 8px 8px 0 0; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2); }
+.header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing:
+-0.02em; text-transform: uppercase; } .subtitle { margin: 12px 0 0 0; font-size:
+16px; font-weight: 500; opacity: 0.95; letter-spacing: -0.01em; } .content {
+background: #ffffff; border: 1px solid #e5e7eb; border-top: none; padding: 32px
+28px; border-radius: 0 0 8px 8px; font-family: 'Inter', 'Segoe UI', sans-serif;
+line-height: 1.6; color: #1a1a1a; } .section-title { font-size: 18px;
+font-weight: 600; color: #1a1a1a; margin: 0 0 24px 0; padding-bottom: 12px;
+border-bottom: 2px solid #fecaca; letter-spacing: -0.01em; }
+.critical-alert-banner { background: linear-gradient(135deg, #fef2f2 0%, #fee2e2
+100%); border: 2px solid #fecaca; border-left: 6px solid #dc2626; padding: 20px
+24px; margin: 0 0 32px 0; border-radius: 8px; text-align: center; }
+.critical-alert-banner h3 { margin: 0 0 8px 0; color: #dc2626; font-size: 16px;
+font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.critical-alert-banner p { margin: 0; color: #991b1b; font-size: 14px;
+font-weight: 500; } .edp-info { background-color: #fafafa; border: 1px solid
+#e5e7eb; border-left: 4px solid #dc2626; padding: 24px; margin: 24px 0;
+border-radius: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); } .edp-info p {
+margin: 0 0 12px 0; font-size: 14px; line-height: 1.5; } .edp-info p:last-child
+{ margin-bottom: 0; } .edp-info strong { font-weight: 600; color: #1a1a1a;
+min-width: 140px; display: inline-block; } .status-critical { color: #dc2626;
+font-weight: 700; background-color: #fef2f2; padding: 4px 10px; border-radius:
+4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border:
+1px solid #fecaca; } .days-critical { color: #dc2626; font-weight: 700;
+font-family: 'JetBrains Mono', monospace; font-size: 16px; background-color:
+#fef2f2; padding: 4px 8px; border-radius: 4px; border: 1px solid #fecaca; }
+.amount-value { color: #059669; font-weight: 600; font-family: 'JetBrains Mono',
+monospace; font-size: 14px; } .actions-section { margin: 32px 0; padding: 24px;
+background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius:
+8px; border: 1px solid #fed7aa; border-left: 4px solid #f97316; }
+.actions-section h3 { font-size: 16px; font-weight: 700; color: #ea580c; margin:
+0 0 16px 0; letter-spacing: -0.01em; text-transform: uppercase; }
+.actions-section ul { margin: 0; padding-left: 20px; list-style-type: none; }
+.actions-section li { font-size: 14px; color: #9a3412; margin-bottom: 10px;
+line-height: 1.5; font-weight: 500; position: relative; } .actions-section
+li:before { content: "▶"; color: #f97316; font-weight: bold; position: absolute;
+left: -20px; } .actions-section li:last-child { margin-bottom: 0; }
+.urgency-note { background: #fef2f2; border: 2px solid #fecaca; border-radius:
+8px; padding: 20px; margin: 24px 0; text-align: center; } .urgency-note p {
+margin: 0; color: #991b1b; font-weight: 600; font-size: 15px; line-height: 1.4;
+} .button { display: inline-block; background: linear-gradient(135deg, #dc2626
+0%, #b91c1c 100%); color: #ffffff; text-decoration: none; padding: 14px 28px;
+border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center;
+margin: 24px 0 0 0; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3); transition:
+all 0.2s cubic-bezier(0.4, 0, 0.2, 1); letter-spacing: -0.01em; text-transform:
+uppercase; } .button:hover { box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+transform: translateY(-1px); } .test-notice { font-style: italic; color:
+#6b7280; font-size: 13px; text-align: center; margin: 20px 0 0 0; padding: 12px;
+background-color: #f0f0f0; border-radius: 4px; } .footer { background-color:
+#fafafa; border-top: 1px solid #e5e7eb; padding: 24px 28px; font-size: 12px;
+color: #6b7280; text-align: center; line-height: 1.5; font-family: 'Inter',
+'Segoe UI', sans-serif; } .footer p { margin: 0 0 8px 0; } .footer p:last-child
+{ margin-bottom: 0; } .system-info { color: #9ca3af; font-size: 11px;
+margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; } {%
+endblock %} {% block title %}ALERTA CRÍTICA{% endblock %} {% block subtitle
+%}Intervención Inmediata Requerida{% endblock %} {% block content %}
+<div class="critical-alert-banner">
+  <h3>Estado Crítico Detectado</h3>
   <p>
-    <strong>Monto:</strong> ${{ "{:,.0f}".format(edp_data.monto_aprobado or 0)
-    }}
+    Este documento requiere atención prioritaria según las políticas
+    establecidas
   </p>
-  <p>
-    <strong>Estado:</strong> <span class="critical">{{ edp_data.estado }}</span>
-  </p>
-  <p>
-    <strong>Días sin movimiento:</strong>
-    <span class="critical">{{ edp_data.dso_actual or 0 }} días</span>
-  </p>
-  <p><strong>Jefe de Proyecto:</strong> {{ edp_data.jefe_proyecto }}</p>
 </div>
 
-<div class="actions-list">
-  <h3>Acciones Recomendadas</h3>
+<h2 class="section-title">Información del Documento Crítico</h2>
+
+<div class="edp-info">
+  <p><strong>Número EDP:</strong> {{ edp_data.n_edp or n_edp or 'N/A' }}</p>
+  <p><strong>Cliente:</strong> {{ edp_data.cliente or cliente or 'N/A' }}</p>
+  <p>
+    <strong>Proyecto:</strong> {{ edp_data.proyecto or proyecto or 'Sin
+    especificar' }}
+  </p>
+  <p>
+    <strong>Monto:</strong>
+    <span class="amount-value"
+      >${{ "{:,.0f}".format((edp_data.monto_aprobado or edp_data.monto_propuesto
+      or monto_aprobado or monto_propuesto or 0)) }}</span
+    >
+  </p>
+  <p>
+    <strong>Estado Actual:</strong>
+    <span class="status-critical"
+      >{{ (edp_data.estado or edp_data.estado_edp or estado or estado_edp or
+      'N/A')|title }}</span
+    >
+  </p>
+  <p>
+    <strong>Días sin Movimiento:</strong>
+    <span class="days-critical"
+      >{{ edp_data.dias_sin_movimiento or dias_sin_movimiento or
+      edp_data.dso_actual or dso_actual or 0 }} días</span
+    >
+  </p>
+  <p>
+    <strong>Responsable:</strong> {{ edp_data.jefe_proyecto or jefe_proyecto or
+    'Sin asignar' }}
+  </p>
+</div>
+
+<div class="urgency-note">
+  <p>
+    NOTA: Este documento ha superado el umbral crítico de 30 días sin
+    movimiento. Se requiere acción inmediata para evitar impacto en indicadores
+    financieros.
+  </p>
+</div>
+
+<div class="actions-section">
+  <h3>Plan de Acción Inmediata</h3>
   <ul>
-    <li>Contactar inmediatamente al cliente</li>
-    <li>Revisar documentación pendiente</li>
-    <li>Actualizar estado del EDP</li>
-    <li>Escalar si es necesario</li>
+    <li>Contactar al cliente dentro de las próximas 4 horas</li>
+    <li>Revisar y validar toda la documentación pendiente</li>
+    <li>Actualizar el estado del documento en el sistema</li>
+    <li>Escalar a supervisión si no hay respuesta del cliente</li>
+    <li>Documentar todas las acciones realizadas</li>
+    <li>Coordinar con el departamento legal si es necesario</li>
   </ul>
 </div>
 
-<a href="{{ app_url }}/edp/{{ edp_data.id }}" class="button"
-  >Ver EDP en Sistema</a
+{% if edp_data.id or id %}
+<a href="{{ app_url }}/dashboard/id/{{ edp_data.id or id }}" class="button"
+  >Acceder al Sistema</a
 >
+{% else %}
+<div class="test-notice">
+  Este es un documento de prueba del sistema - No disponible en producción
+</div>
+{% endif %}
+
+<div class="footer">
+  <p><strong>Sistema de Gestión Pagora</strong></p>
+  <p>
+    Este es un mensaje automático generado por el sistema de alertas
+    progresivas.
+  </p>
+  <p>Por favor, no responda directamente a este correo electrónico.</p>
+
+  <div class="system-info">
+    <p>Sistema: Pagora EDP Management v2.0</p>
+    <p>Tipo: Alerta Automática - Estado Crítico</p>
+    <p>Prioridad: ALTA - Intervención Inmediata</p>
+    <p>
+      Generado: {{ datetime.now().strftime('%d/%m/%Y %H:%M') if datetime else
+      'Sistema' }}
+    </p>
+  </div>
+</div>
 {% endblock %}

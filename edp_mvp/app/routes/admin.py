@@ -86,6 +86,7 @@ def nuevo_usuario():
         # Get form data
         nombre_completo = request.form.get('nombre_completo', '').strip()
         username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()  # Nuevo campo email
         password = request.form.get('password', '').strip()
         rol = request.form.get('rol', '').strip()
         jefe_asignado = request.form.get('jefe_asignado', '').strip()
@@ -109,8 +110,8 @@ def nuevo_usuario():
             jefes_proyecto = User.get_jefes_proyecto()
             return render_template('admin/usuarios/nuevo.html', jefes_proyecto=jefes_proyecto)
         
-        # Create user
-        user, message = User.create_user(nombre_completo, username, password, rol, jefe_asignado if jefe_asignado else None)
+        # Create user with email
+        user, message = User.create_user(nombre_completo, username, password, rol, email if email else None, jefe_asignado if jefe_asignado else None)
         
         if user:
             flash(message, 'success')
@@ -143,6 +144,7 @@ def editar_usuario(user_id):
         # Get form data
         nombre_completo = request.form.get('nombre_completo', '').strip()
         username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()  # Nuevo campo email
         rol = request.form.get('rol', '').strip()
         jefe_asignado = request.form.get('jefe_asignado', '').strip()
         new_password = request.form.get('new_password', '').strip()
@@ -166,8 +168,8 @@ def editar_usuario(user_id):
             jefes_proyecto = User.get_jefes_proyecto()
             return render_template('admin/usuarios/editar.html', user=user, jefes_proyecto=jefes_proyecto)
         
-        # Update user information
-        success, message = user.update_user_info(nombre_completo, username, rol, jefe_asignado if jefe_asignado else None)
+        # Update user information with email
+        success, message = user.update_user_info(nombre_completo, username, email if email else None, rol, jefe_asignado if jefe_asignado else None)
         
         if not success:
             flash(message, 'error')

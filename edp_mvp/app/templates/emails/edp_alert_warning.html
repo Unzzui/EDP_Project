@@ -1,0 +1,529 @@
+{% extends "emails/base.html" %}
+
+{% block theme_styles %}
+/* Executive Suite Design System - Warning Alert */
+.header {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-weight: 600;
+  text-align: center;
+  padding: 32px 28px;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  margin: 12px 0 0 0;
+  font-size: 16px;
+  font-weight: 400;
+  opacity: 0.9;
+  letter-spacing: -0.01em;
+}
+
+.content {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  padding: 32px 28px;
+  border-radius: 0 0 8px 8px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  color: #1a1a1a;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 24px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #fef3c7;
+  letter-spacing: -0.01em;
+}
+
+.warning-alert-banner {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #fde68a;
+  border-left: 6px solid #f59e0b;
+  padding: 20px 24px;
+  margin: 0 0 32px 0;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.warning-alert-banner h3 {
+  margin: 0 0 8px 0;
+  color: #d97706;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.warning-alert-banner p {
+  margin: 0;
+  color: #92400e;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.edp-info {
+  background-color: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #f59e0b;
+  padding: 24px;
+  margin: 24px 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.edp-info p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.edp-info p:last-child {
+  margin-bottom: 0;
+}
+
+.edp-info strong {
+  font-weight: 600;
+  color: #1a1a1a;
+  min-width: 140px;
+  display: inline-block;
+}
+
+.status-warning {
+  color: #d97706;
+  font-weight: 600;
+  background-color: #fffbeb;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid #fde68a;
+}
+
+.days-warning {
+  color: #d97706;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  background-color: #fffbeb;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #fde68a;
+}
+
+.amount-value {
+  color: #059669;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+}
+
+.actions-section {
+  margin: 32px 0;
+  padding: 24px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  border-left: 4px solid #0ea5e9;
+}
+
+.actions-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0369a1;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.actions-section ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: none;
+}
+
+.actions-section li {
+  font-size: 14px;
+  color: #075985;
+  margin-bottom: 10px;
+  line-height: 1.5;
+  font-weight: 500;
+  position: relative;
+}
+
+.actions-section li:before {
+  content: "•";
+  color: #0ea5e9;
+  font-weight: bold;
+  position: absolute;
+  left: -20px;
+}
+
+.actions-section li:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-info {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 24px 0;
+  text-align: center;
+}
+
+.timeline-info p {
+  margin: 0;
+  color: #92400e;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.timeline-info .days-remaining {
+  color: #d97706;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+}
+
+.button {
+  display: inline-block;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  text-decoration: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  text-align: center;
+  margin: 24px 0 0 0;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: -0.01em;
+}
+
+.button:hover {
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  transform: translateY(-1px);
+}
+
+.test-notice {
+  font-style: italic;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+  margin: 20px 0 0 0;
+  padding: 12px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.footer {
+  background-color: #fafafa;
+  border-top: 1px solid #e5e7eb;
+  padding: 24px 28px;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.5;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.footer p {
+  margin: 0 0 8px 0;
+}
+
+.footer p:last-child {
+  margin-bottom: 0;
+}
+
+.system-info {
+  color: #9ca3af;
+  font-size: 11px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+{% endblock %}
+
+{% block title %}ALERTA DE SEGUIMIENTO{% endblock %}
+
+{% block subtitle %}Atención Requerida en Documento{% endblock %}
+
+{% block content %}
+<div class="warning-alert-banner">
+  <h3>Seguimiento Requerido</h3>
+  <p>Este documento requiere atención según el cronograma establecido</p>
+</div>
+
+<h2 class="section-title">Información del Documento</h2>
+
+<div class="edp-info">
+  <p><strong>Número EDP:</strong> {{ n_edp or 'N/A' }}</p>
+  <p><strong>Cliente:</strong> {{ cliente or 'N/A' }}</p>
+  <p><strong>Proyecto:</strong> {{ proyecto or 'Sin especificar' }}</p>
+  <p><strong>Monto:</strong> <span class="amount-value">${{ "{:,.0f}".format((monto_aprobado or monto_propuesto or 0)) }}</span></p>
+  <p><strong>Estado Actual:</strong> <span class="status-warning">{{ (estado or estado_edp or 'N/A')|title }}</span></p>
+  <p><strong>Días sin Movimiento:</strong> <span class="days-warning">{{ dias_sin_movimiento or dso_actual or 0 }} días</span></p>
+  <p><strong>Responsable:</strong> {{ jefe_proyecto or 'Sin asignar' }}</p>
+</div>
+
+<div class="timeline-info">
+  <p>Tiempo restante antes de alcanzar estado crítico:</p>
+  <p><span class="days-remaining">{{ dias_restantes_critico or 'N/A' }} días</span></p>
+</div>
+
+<div class="actions-section">
+  <h3>Acciones Recomendadas</h3>
+  <ul>
+    <li>Revisar el estado actual del documento con el cliente</li>
+    <li>Verificar si se requiere documentación adicional</li>
+    <li>Actualizar el estado en el sistema</li>
+    <li>Programar seguimiento en 2-3 días hábiles</li>
+    <li>Coordinar con el equipo de soporte si es necesario</li>
+  </ul>
+</div>
+
+{% if id %}
+<a href="{{ app_url }}/dashboard/id/{{ id }}" class="button">Acceder al Sistema</a>
+{% else %}
+<div class="test-notice">
+  Este es un documento de prueba del sistema - No disponible en producción
+</div>
+{% endif %}
+
+<div class="footer">
+  <p><strong>Sistema de Gestión Pagora</strong></p>
+  <p>Este es un mensaje automático generado por el sistema de alertas progresivas.</p>
+  <p>Por favor, no responda directamente a este correo electrónico.</p>
+  
+  <div class="system-info">
+    <p>Sistema: Pagora EDP Management v2.0</p>
+    <p>Tipo: Alerta Automática - Seguimiento</p>
+    <p>Prioridad: MEDIA - Atención Requerida</p>
+    <p>Generado: {{ datetime.now().strftime('%d/%m/%Y %H:%M') if datetime else 'Sistema' }}</p>
+  </div>
+</div>
+{% endblock %}
+      }
+      .content {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        padding: 30px;
+        border-radius: 0 0 8px 8px;
+      }
+      .alert-box {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+      }
+      .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+      }
+      .details-table th,
+      .details-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .details-table th {
+        background: #fffbeb;
+        font-weight: 600;
+      }
+      .btn {
+        display: inline-block;
+        background: #f59e0b;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        margin: 20px 0;
+      }
+      .btn:hover {
+        background: #d97706;
+      }
+      .footer {
+        color: #6b7280;
+        font-size: 14px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .status-warning {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .progress-bar {
+        background: #f3f4f6;
+        height: 8px;
+        border-radius: 4px;
+        margin: 10px 0;
+        overflow: hidden;
+      }
+      .progress-fill {
+        background: #f59e0b;
+        height: 100%;
+        transition: width 0.3s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>⚠️ Alerta de Advertencia</h1>
+        <p>{{ alert_message }}</p>
+      </div>
+
+      <div class="content">
+        <div class="alert-box">
+          <h3 style="margin: 0 0 15px 0; color: #92400e">
+            ⚠️ Atención Requerida
+          </h3>
+          <p style="margin: 0; font-size: 16px">
+            El EDP <strong>{{ n_edp }}</strong> del cliente
+            <strong>{{ cliente }}</strong> lleva
+            <strong>{{ dias_sin_movimiento }} días</strong> sin movimiento.
+          </p>
+          <p style="margin: 10px 0 0 0; color: #92400e">
+            <strong
+              >Quedan {{ dias_restantes_critico }} días para que se vuelva
+              crítico.</strong
+            >
+          </p>
+
+          <!-- Barra de progreso -->
+          <div style="margin: 15px 0">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                margin-bottom: 5px;
+              ">
+              <span>Progreso hacia crítico</span>
+              <span>{{ (30 - dias_restantes_critico) * 100 // 30 }}%</span>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                style="width: {{ (30 - dias_restantes_critico) * 100 // 30 }}%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <table class="details-table">
+          <tr>
+            <th>N° EDP</th>
+            <td><strong>{{ n_edp }}</strong></td>
+          </tr>
+          <tr>
+            <th>Cliente</th>
+            <td>{{ cliente }}</td>
+          </tr>
+          <tr>
+            <th>Jefe de Proyecto</th>
+            <td>{{ jefe_proyecto }}</td>
+          </tr>
+          <tr>
+            <th>Monto</th>
+            <td>${{ "{:,.0f}".format(monto_propuesto) }}</td>
+          </tr>
+          <tr>
+            <th>Estado Actual</th>
+            <td>
+              <span class="status-badge status-warning">{{ estado_edp }}</span>
+            </td>
+          </tr>
+          <tr>
+            <th>Días sin movimiento</th>
+            <td>
+              <strong style="color: #f59e0b"
+                >{{ dias_sin_movimiento }} días</strong
+              >
+            </td>
+          </tr>
+          <tr>
+            <th>Días restantes para crítico</th>
+            <td>
+              <strong style="color: #dc2626"
+                >{{ dias_restantes_critico }} días</strong
+              >
+            </td>
+          </tr>
+        </table>
+
+        <div
+          style="
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+          ">
+          <h4 style="margin: 0 0 10px 0; color: #dc2626">
+            🎯 Acciones Recomendadas:
+          </h4>
+          <ul style="margin: 0; color: #7f1d1d">
+            <li>Contactar al cliente para verificar el estado</li>
+            <li>Revisar documentación pendiente</li>
+            <li>Actualizar el estado en el sistema</li>
+            <li>Coordinar con el equipo de proyecto</li>
+          </ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0">
+          <a href="{{ app_url }}/controller/kanban" class="btn">
+            🎛️ Actualizar EDP
+          </a>
+        </div>
+
+        <div class="footer">
+          <p>
+            <strong>⚠️ Importante:</strong> Este EDP se acerca al límite crítico
+            de 30 días. Toma acción pronto.
+          </p>
+          <p>
+            Esta alerta se envía automáticamente cada 3 días para EDPs con 14+
+            días sin movimiento.
+          </p>
+          <p>
+            <em
+              >Para dejar de recibir estas alertas, actualiza el estado del
+              EDP.</em
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

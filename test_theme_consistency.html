@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Theme Consistency</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .dark {
+            background-color: #0a0a0a;
+            color: #ffffff;
+        }
+        
+        .light {
+            background-color: #ffffff;
+            color: #1a1a1a;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test de Consistencia de Tema</h1>
+    
+    <div class="test-section">
+        <h2>Estado Actual</h2>
+        <p>Tema actual: <span id="current-theme">Detectando...</span></p>
+        <p>Valor en localStorage: <span id="localStorage-value">Detectando...</span></p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Controles de Tema</h2>
+        <button onclick="toggleTheme()" class="btn-primary">Cambiar Tema</button>
+        <button onclick="setTheme('dark')" class="btn-secondary">Forzar Dark</button>
+        <button onclick="setTheme('light')" class="btn-secondary">Forzar Light</button>
+        <button onclick="clearTheme()" class="btn-secondary">Limpiar localStorage</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Simulación de Navegación</h2>
+        <p>Simula el flujo de navegación entre páginas:</p>
+        <button onclick="simulateLandingPage()" class="btn-primary">Simular Landing Page</button>
+        <button onclick="simulateLoginPage()" class="btn-primary">Simular Login Page</button>
+        <button onclick="simulateMainApp()" class="btn-primary">Simular Main App</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Log de Eventos</h2>
+        <div id="log" style="height: 200px; overflow-y: auto; background: #f5f5f5; padding: 10px; border-radius: 4px;"></div>
+    </div>
+
+    <script>
+        // Theme management functions
+        function getCurrentTheme() {
+            return document.documentElement.getAttribute('data-theme') || 'dark';
+        }
+        
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('managerTheme', theme);
+            updateDisplay();
+            log(`Tema cambiado a: ${theme}`);
+        }
+        
+        function toggleTheme() {
+            const current = getCurrentTheme();
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        }
+        
+        function clearTheme() {
+            localStorage.removeItem('managerTheme');
+            updateDisplay();
+            log('localStorage limpiado');
+        }
+        
+        function updateDisplay() {
+            const currentTheme = getCurrentTheme();
+            const localStorageValue = localStorage.getItem('managerTheme');
+            
+            document.getElementById('current-theme').textContent = currentTheme;
+            document.getElementById('localStorage-value').textContent = localStorageValue || 'null';
+            
+            // Apply theme to body
+            document.body.className = currentTheme;
+        }
+        
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // Simulation functions
+        function simulateLandingPage() {
+            log('=== Simulando Landing Page ===');
+            log('1. Usuario cambia tema a light en landing page');
+            setTheme('light');
+            
+            setTimeout(() => {
+                log('2. Usuario hace click en "ACCEDER AL SISTEMA"');
+                log('3. Redirigiendo a login page...');
+                
+                setTimeout(() => {
+                    log('4. En login page - tema debería ser: light');
+                    log(`   Tema actual: ${getCurrentTheme()}`);
+                    log(`   localStorage: ${localStorage.getItem('managerTheme')}`);
+                }, 1000);
+            }, 1000);
+        }
+        
+        function simulateLoginPage() {
+            log('=== Simulando Login Page ===');
+            log('1. Usuario cambia tema a dark en login page');
+            setTheme('dark');
+            
+            setTimeout(() => {
+                log('2. Usuario hace login exitoso');
+                log('3. Redirigiendo a main app...');
+                
+                setTimeout(() => {
+                    log('4. En main app - tema debería ser: dark');
+                    log(`   Tema actual: ${getCurrentTheme()}`);
+                    log(`   localStorage: ${localStorage.getItem('managerTheme')}`);
+                }, 1000);
+            }, 1000);
+        }
+        
+        function simulateMainApp() {
+            log('=== Simulando Main App ===');
+            log('1. Usuario cambia tema a light en main app');
+            setTheme('light');
+            
+            setTimeout(() => {
+                log('2. Usuario navega de vuelta a landing page');
+                log('3. Redirigiendo a landing page...');
+                
+                setTimeout(() => {
+                    log('4. En landing page - tema debería ser: light');
+                    log(`   Tema actual: ${getCurrentTheme()}`);
+                    log(`   localStorage: ${localStorage.getItem('managerTheme')}`);
+                }, 1000);
+            }, 1000);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Apply theme from localStorage
+            const savedTheme = localStorage.getItem('managerTheme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+            
+            updateDisplay();
+            log('Página cargada - Test de consistencia iniciado');
+            
+            // Listen for localStorage changes
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'managerTheme') {
+                    log(`localStorage cambiado: ${e.oldValue} → ${e.newValue}`);
+                    updateDisplay();
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

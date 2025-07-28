@@ -1,0 +1,44 @@
+SISTEMA DE GESTIÓN PAGORA - ALERTA URGENTE
+=========================================
+
+ACCIÓN REQUERIDA INMEDIATAMENTE
+
+SITUACIÓN URGENTE DETECTADA
+Este documento requiere atención inmediata según las políticas establecidas.
+
+INFORMACIÓN DEL DOCUMENTO URGENTE
+---------------------------------
+Número EDP: {{ n_edp or 'N/A' }}
+Cliente: {{ cliente or 'N/A' }}
+Proyecto: {{ proyecto or 'Sin especificar' }}
+Monto: ${{ "{:,.0f}".format((monto_aprobado or monto_propuesto or 0)) }}
+Estado Actual: {{ (estado or estado_edp or 'N/A')|title }}
+Días sin Movimiento: {{ dias_sin_movimiento or dso_actual or 0 }} días
+Responsable: {{ jefe_proyecto or 'Sin asignar' }}
+
+Tiempo restante antes de alcanzar estado crítico: {{ dias_restantes_critico or 'N/A' }} días
+
+PLAN DE ACCIÓN REQUERIDO
+-----------------------
+• Contactar al cliente dentro de las próximas 24 horas
+• Revisar y validar la documentación pendiente
+• Actualizar el estado del documento inmediatamente
+• Escalar si no se obtiene respuesta en 48 horas
+• Coordinar con supervisión para seguimiento
+• Documentar todas las acciones tomadas
+
+{% if id %}
+Para acceder al sistema: {{ app_url }}/dashboard/id/{{ id }}
+{% else %}
+Este es un documento de prueba del sistema - No disponible en producción
+{% endif %}
+
+=========================================
+Sistema de Gestión Pagora
+Este es un mensaje automático generado por el sistema de alertas progresivas.
+Por favor, no responda directamente a este correo electrónico.
+
+Sistema: Pagora EDP Management v2.0
+Tipo: Alerta Automática - Urgente
+Prioridad: ALTA - Acción Requerida
+Generado: {{ datetime.now().strftime('%d/%m/%Y %H:%M') if datetime else 'Sistema' }}

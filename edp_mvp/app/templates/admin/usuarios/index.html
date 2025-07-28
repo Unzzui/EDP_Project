@@ -316,7 +316,12 @@ block content %}
             <th
               scope="col"
               class="px-6 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">
-              Información del Usuario
+              Usuario
+            </th>
+            <th
+              scope="col"
+              class="px-6 py-3 text-left text-xs font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">
+              Email
             </th>
             <th
               scope="col"
@@ -382,6 +387,11 @@ block content %}
                     @{{ user.username }}
                   </div>
                 </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-[color:var(--text-secondary)]">
+                {{ user.email }}
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">

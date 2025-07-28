@@ -1,0 +1,38 @@
+🚨🚨🚨 ALERTA URGENTE - EDP {{ n_edp }} 🚨🚨🚨
+
+{{ alert_message }}
+
+⚠️ ACCIÓN INMEDIATA REQUERIDA ⚠️
+
+SITUACIÓN CRÍTICA:
+El EDP {{ n_edp }} del cliente {{ cliente }} lleva {{ dias_sin_movimiento }} días sin movimiento.
+¡QUEDAN SOLO {{ dias_restantes_critico }} DÍAS PARA QUE SE VUELVA CRÍTICO!
+
+DETALLES:
+---------
+N° EDP: {{ n_edp }}
+Cliente: {{ cliente }}
+Jefe de Proyecto: {{ jefe_proyecto }}
+Monto: ${{ "{:,.0f}".format(monto_propuesto) }}
+Estado: {{ estado_edp }}
+Días sin movimiento: {{ dias_sin_movimiento }} días
+Días restantes para crítico: {{ dias_restantes_critico }} días
+
+🎯 ACCIONES INMEDIATAS REQUERIDAS:
+- CONTACTAR AL CLIENTE HOY
+- VERIFICAR TODA DOCUMENTACIÓN PENDIENTE
+- ACTUALIZAR ESTADO INMEDIATAMENTE
+- ESCALAR A GERENCIA SI HAY BLOQUEOS
+- PROGRAMAR SEGUIMIENTO DIARIO
+
+Acceder al sistema AHORA: {{ app_url }}/controller/kanban
+
+📞 CONTACTOS DE ESCALAMIENTO:
+Jefe de Proyecto: {{ jefe_proyecto }}
+Controller: Contactar inmediatamente
+Gerencia: Escalar si no hay respuesta en 2 horas
+
+🚨 CRÍTICO: Este EDP está muy cerca del límite de 30 días. Acción inmediata requerida.
+Esta alerta se envía diariamente para EDPs urgentes con 21+ días sin movimiento.
+
+**Si no se toma acción en las próximas 24 horas, se escalará automáticamente a gerencia.**

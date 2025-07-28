@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Navigation Flow</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .expected {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .actual {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test de Flujo de Navegación</h1>
+    
+    <div class="test-section">
+        <h2>Escenarios de Prueba</h2>
+        
+        <div class="test-case">
+            <h3>1. Usuario NO autenticado visita /</h3>
+            <p><strong>Esperado:</strong> <span class="expected">Landing page se muestra</span></p>
+            <p><strong>Actual:</strong> <span id="test1-result" class="actual">Pendiente</span></p>
+            <button onclick="testCase1()">Probar</button>
+        </div>
+        
+        <div class="test-case">
+            <h3>2. Usuario NO autenticado visita ruta protegida</h3>
+            <p><strong>Esperado:</strong> <span class="expected">Redirigido a landing page</span></p>
+            <p><strong>Actual:</strong> <span id="test2-result" class="actual">Pendiente</span></p>
+            <button onclick="testCase2()">Probar</button>
+        </div>
+        
+        <div class="test-case">
+            <h3>3. Usuario autenticado visita /login</h3>
+            <p><strong>Esperado:</strong> <span class="expected">Redirigido a dashboard correspondiente</span></p>
+            <p><strong>Actual:</strong> <span id="test3-result" class="actual">Pendiente</span></p>
+            <button onclick="testCase3()">Probar</button>
+        </div>
+        
+        <div class="test-case">
+            <h3>4. Usuario autenticado navega hacia atrás</h3>
+            <p><strong>Esperado:</strong> <span class="expected">No vuelve a login, va a dashboard</span></p>
+            <p><strong>Actual:</strong> <span id="test4-result" class="actual">Pendiente</span></p>
+            <button onclick="testCase4()">Probar</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Estado Actual del Sistema</h2>
+        <div id="system-status">
+            <p>Cargando estado del sistema...</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Log de Eventos</h2>
+        <div id="log" style="height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px;"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#007bff';
+            logElement.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function updateResult(testId, result, success) {
+            const element = document.getElementById(testId);
+            element.textContent = result;
+            element.className = success ? 'expected' : 'actual';
+        }
+        
+        function checkAuthStatus() {
+            fetch('/auth/check-auth')
+                .then(response => response.json())
+                .then(data => {
+                    const statusElement = document.getElementById('system-status');
+                    if (data.authenticated) {
+                        statusElement.innerHTML = `
+                            <div class="status success">✅ Usuario Autenticado</div>
+                            <p><strong>Rol:</strong> ${data.user_role}</p>
+                            <p><strong>Nombre:</strong> ${data.user_name}</p>
+                            <p><strong>Dashboard:</strong> ${data.redirect_url}</p>
+                        `;
+                    } else {
+                        statusElement.innerHTML = `
+                            <div class="status error">❌ Usuario NO Autenticado</div>
+                            <p>Debe iniciar sesión para acceder al sistema</p>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    log(`Error verificando estado: ${error}`, 'error');
+                });
+        }
+        
+        function testCase1() {
+            log('Probando: Usuario NO autenticado visita /');
+            fetch('/')
+                .then(response => {
+                    if (response.ok) {
+                        updateResult('test1-result', '✅ Landing page se muestra correctamente', true);
+                        log('✅ Test 1 exitoso: Landing page accesible', 'success');
+                    } else {
+                        updateResult('test1-result', '❌ Error al acceder a landing page', false);
+                        log('❌ Test 1 falló: Error en landing page', 'error');
+                    }
+                })
+                .catch(error => {
+                    updateResult('test1-result', '❌ Error de conexión', false);
+                    log(`❌ Test 1 error: ${error}`, 'error');
+                });
+        }
+        
+        function testCase2() {
+            log('Probando: Usuario NO autenticado visita ruta protegida');
+            fetch('/dashboard')
+                .then(response => {
+                    if (response.redirected) {
+                        updateResult('test2-result', '✅ Redirigido correctamente a landing', true);
+                        log('✅ Test 2 exitoso: Redirección funcionando', 'success');
+                    } else {
+                        updateResult('test2-result', '❌ No se redirigió correctamente', false);
+                        log('❌ Test 2 falló: No hay redirección', 'error');
+                    }
+                })
+                .catch(error => {
+                    updateResult('test2-result', '❌ Error de conexión', false);
+                    log(`❌ Test 2 error: ${error}`, 'error');
+                });
+        }
+        
+        function testCase3() {
+            log('Probando: Usuario autenticado visita /login');
+            fetch('/auth/check-auth')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.authenticated) {
+                        fetch('/auth/login')
+                            .then(response => {
+                                if (response.redirected) {
+                                    updateResult('test3-result', '✅ Redirigido a dashboard', true);
+                                    log('✅ Test 3 exitoso: Login redirige correctamente', 'success');
+                                } else {
+                                    updateResult('test3-result', '❌ No se redirigió desde login', false);
+                                    log('❌ Test 3 falló: Login no redirige', 'error');
+                                }
+                            });
+                    } else {
+                        updateResult('test3-result', '⚠️ Usuario no autenticado', false);
+                        log('⚠️ Test 3: Usuario no autenticado para probar', 'info');
+                    }
+                });
+        }
+        
+        function testCase4() {
+            log('Probando: Simulación de navegación hacia atrás');
+            fetch('/auth/check-auth')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.authenticated) {
+                        // Simular navegación hacia atrás
+                        fetch('/auth/login')
+                            .then(response => response.json())
+                            .then(loginData => {
+                                if (loginData.authenticated) {
+                                    updateResult('test4-result', '✅ Auto-redirect funcionando', true);
+                                    log('✅ Test 4 exitoso: Auto-redirect en login', 'success');
+                                } else {
+                                    updateResult('test4-result', '❌ No hay auto-redirect', false);
+                                    log('❌ Test 4 falló: No hay auto-redirect', 'error');
+                                }
+                            });
+                    } else {
+                        updateResult('test4-result', '⚠️ Usuario no autenticado', false);
+                        log('⚠️ Test 4: Usuario no autenticado para probar', 'info');
+                    }
+                });
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Iniciando tests de navegación...');
+            checkAuthStatus();
+            
+            // Verificar estado cada 5 segundos
+            setInterval(checkAuthStatus, 5000);
+        });
+    </script>
+</body>
+</html> 

@@ -18,7 +18,7 @@ def login():
     # Si el usuario ya está autenticado, redirigir al dashboard
     if current_user.is_authenticated:
         # Redirect based on user role using our centralized function
-        user_role = session.get('user_role', 'controller')
+        user_role = session.get('user_role', getattr(current_user, 'rol', 'controller'))
         return redirect(get_redirect_for_role(user_role))
 
     # Crear el formulario
@@ -55,6 +55,25 @@ def login():
     
     # Renderizar la plantilla con el formulario
     return render_template("login.html", form=form)
+
+
+
+@auth_bp.route("/check-auth")
+def check_auth():
+    """Endpoint para verificar el estado de autenticación del usuario."""
+    if current_user.is_authenticated:
+        user_role = session.get('user_role', getattr(current_user, 'rol', 'controller'))
+        return {
+            'authenticated': True,
+            'user_role': user_role,
+            'user_name': session.get('user_name', getattr(current_user, 'nombre_completo', 'Usuario')),
+            'redirect_url': get_redirect_for_role(user_role)
+        }
+    else:
+        return {
+            'authenticated': False,
+            'redirect_url': url_for('auth.login')
+        }
 
 @auth_bp.route("/logout")
 @login_required

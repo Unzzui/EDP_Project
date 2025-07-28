@@ -349,6 +349,68 @@ class EmailService:
         )
         
         return self.send_email(subject, recipients, html_body, text_body)
+
+    def send_progressive_alert(self, edp_data: Dict[str, Any], alert_rule: Dict[str, Any], 
+                              recipients: List[str]) -> bool:
+        """
+        Send progressive alert email based on alert rule.
+        
+        Args:
+            edp_data: EDP data dictionary
+            alert_rule: Alert rule configuration (dictionary)
+            recipients: List of email addresses
+        
+        Returns:
+            bool: True if email sent successfully
+        """
+        try:
+            # Formatear subject y mensaje - usando .get() para evitar KeyError
+            subject = alert_rule['subject_template'].format(
+                n_edp=edp_data.get('n_edp', 'N/A'),
+                dias=edp_data.get('dias_sin_movimiento', 0),
+                dias_restantes_critico=edp_data.get('dias_restantes_critico', 0)
+            )
+            
+            # Preparar contexto para el template
+            email_context = {
+                **edp_data,  # Variables directas para compatibilidad
+                'edp_data': edp_data,  # También como objeto para templates que lo esperan
+                'alert_level': alert_rule['alert_level'],
+                'alert_message': alert_rule['message_template'].format(
+                    n_edp=edp_data.get('n_edp', 'N/A'),
+                    dias=edp_data.get('dias_sin_movimiento', 0),
+                    dias_restantes_critico=edp_data.get('dias_restantes_critico', 0),
+                    cliente=edp_data.get('cliente', 'N/A')
+                ),
+                'app_url': current_app.config.get('APP_URL', 'http://localhost:5000')
+            }
+            
+            # Determinar template según nivel de alerta
+            template_map = {
+                'info': 'emails/edp_alert_info.html',
+                'warning': 'emails/edp_alert_warning.html',
+                'urgent': 'emails/edp_alert_urgent.html',
+                'critical': 'emails/critical_alert.html'
+            }
+            
+            template_name = template_map.get(alert_rule['alert_level'], 'emails/edp_alert_info.html')
+            
+            # Renderizar templates
+            html_body = self._render_template_safe(template_name, **email_context)
+            
+            # Generar nombre del template de texto correctamente
+            if template_name.startswith('emails/'):
+                text_template_name = template_name.replace('emails/', 'emails/text/').replace('.html', '.txt')
+            else:
+                text_template_name = f"emails/text/{template_name.replace('.html', '.txt')}"
+            
+            text_body = self._render_text_template_safe(text_template_name, **email_context)
+            
+            return self.send_email(subject, recipients, html_body, text_body)
+            
+        except Exception as e:
+            logger.error(f"Error enviando alerta progresiva: {e}")
+            return False
     
     def _process_kpis_data(self, kpis_data: Dict[str, Any]) -> Dict[str, Any]:
         """

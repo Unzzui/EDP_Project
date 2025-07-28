@@ -1,0 +1,28 @@
+⚠️ ALERTA DE ADVERTENCIA - EDP {{ n_edp }} ⚠️
+
+{{ alert_message }}
+
+ATENCIÓN REQUERIDA:
+El EDP {{ n_edp }} del cliente {{ cliente }} lleva {{ dias_sin_movimiento }} días sin movimiento.
+QUEDAN {{ dias_restantes_critico }} DÍAS PARA QUE SE VUELVA CRÍTICO.
+
+DETALLES:
+---------
+N° EDP: {{ n_edp }}
+Cliente: {{ cliente }}
+Jefe de Proyecto: {{ jefe_proyecto }}
+Monto: ${{ "{:,.0f}".format(monto_propuesto) }}
+Estado: {{ estado_edp }}
+Días sin movimiento: {{ dias_sin_movimiento }} días
+Días restantes para crítico: {{ dias_restantes_critico }} días
+
+ACCIONES RECOMENDADAS:
+- Contactar al cliente para verificar el estado
+- Revisar documentación pendiente
+- Actualizar el estado en el sistema
+- Coordinar con el equipo de proyecto
+
+Acceder al sistema: {{ app_url }}/controller/kanban
+
+IMPORTANTE: Este EDP se acerca al límite crítico de 30 días. Toma acción pronto.
+Esta alerta se envía automáticamente cada 3 días para EDPs con 14+ días sin movimiento.
