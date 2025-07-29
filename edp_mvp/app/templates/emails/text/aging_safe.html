@@ -1,0 +1,13 @@
+MONITOREO RUTINARIO - BAJO RIESGO Resumen de EDPs en Rango Seguro Se han
+identificado {{ total_edps }} EDPs en el rango de 0-15 días sin movimiento, lo
+cual está dentro de los parámetros normales de operación. Métricas: - EDPs: {{
+total_edps }} - Monto Total: ${{ "{:,.0f}".format(total_amount) }} - Rango: 0-15
+días Plan de Acción - Monitoreo Rutinario: - Continuar con el seguimiento
+semanal estándar - Verificar que la documentación esté completa - Mantener
+comunicación regular con los clientes - Actualizar estados en el sistema según
+corresponda {% if aging_edps %} EDPs en Rango Seguro: {% for edp in aging_edps
+%} - {{ edp.n_edp }} | {{ edp.cliente }} | {{ edp.proyecto }} | ${{
+"{:,.0f}".format(edp.monto_propuesto) }} | {{ edp.dias }} días | {{
+edp.jefe_proyecto }} {% endfor %} {% endif %} Nota: Estos EDPs están dentro de
+los parámetros normales de operación. No se requiere acción inmediata. Este es
+un monitoreo rutinario para mantener el control operacional.

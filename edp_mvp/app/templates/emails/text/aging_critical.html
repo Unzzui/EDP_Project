@@ -1,0 +1,17 @@
+ALERTA CRÍTICA - RIESGO EXTREMO Intervención Inmediata Requerida Se han
+identificado {{ total_edps }} EDPs en estado crítico con más de 90 días sin
+movimiento que requieren intervención inmediata. Métricas: - EDPs Críticos: {{
+total_edps }} - Monto en Riesgo: ${{ "{:,.0f}".format(total_amount) }} - Rango:
+90+ días Plan de Acción - Intervención Inmediata: - Contactar inmediatamente por
+teléfono a todos los clientes afectados - Enviar notificaciones urgentes con
+plazo de 48 horas - Programar reunión de emergencia con gerencia en las próximas
+24 horas - Desarrollar estrategia de cobro agresiva - Escalar a supervisión y
+departamento legal si es necesario - Documentar todas las acciones realizadas {%
+if aging_edps %} EDPs en Estado Crítico: {% for edp in aging_edps %} - {{
+edp.n_edp }} | {{ edp.cliente }} | {{ edp.proyecto }} | ${{
+"{:,.0f}".format(edp.monto_propuesto) }} | {{ edp.dias }} días | {{
+edp.jefe_proyecto }} | {{ edp.estado }} | {{ edp.email_cliente }} {% endfor %}
+{% endif %} NOTA CRÍTICA: Estos EDPs han superado el umbral crítico de 90 días
+sin movimiento. Se requiere acción inmediata para evitar impacto severo en
+indicadores financieros y flujo de caja. Este es un estado de emergencia que
+requiere intervención de alto nivel.

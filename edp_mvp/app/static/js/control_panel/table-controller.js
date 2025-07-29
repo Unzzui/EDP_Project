@@ -845,6 +845,17 @@
               return isNaN(numValue) ? defaultValue : numValue;
             }
 
+            // Helper function to extract numeric value from EDP format (e.g., "OT2226" -> 2226)
+            function getEdpNumericValue(row, index, defaultValue = 0) {
+              const content = getCellContent(row, index);
+              if (!content) return defaultValue;
+              
+              // Extract numeric part from EDP format (e.g., "OT2226" -> "2226")
+              const numericPart = content.replace(/[^0-9]/g, "");
+              const numValue = parseInt(numericPart);
+              return isNaN(numValue) ? defaultValue : numValue;
+            }
+
             // Detect table type and adjust column mappings
             const isRetrabajoTable = tableBody.closest('table')?.id === 'tablaRetrabajos';
             
@@ -854,8 +865,8 @@
               switch (sortBy) {
                 case "N° EDP":
                 case "edp":
-                  valueA = getCellContent(a, 1).toLowerCase();
-                  valueB = getCellContent(b, 1).toLowerCase();
+                  valueA = getEdpNumericValue(a, 1);
+                  valueB = getEdpNumericValue(b, 1);
                   break;
                 case "Proyecto":
                 case "proyecto":
@@ -876,16 +887,16 @@
                   valueB = getCellContent(b, 5).toLowerCase();
                   break;
                 default:
-                  valueA = getCellContent(a, 1).toLowerCase();
-                  valueB = getCellContent(b, 1).toLowerCase();
+                  valueA = getEdpNumericValue(a, 1);
+                  valueB = getEdpNumericValue(b, 1);
               }
                          } else {
                // Corrected column mapping for main control panel table:
                // 1: N° EDP, 2: Proyecto, 3: Encargado, 4: Cliente, 5: Estado, 6: Días, 7: M. Aprobado, 8: Acciones
                switch (sortBy) {
                  case "edp":
-                   valueA = getCellContent(a, 1);
-                   valueB = getCellContent(b, 1);
+                   valueA = getEdpNumericValue(a, 1);
+                   valueB = getEdpNumericValue(b, 1);
                    break;
 
                  case "proyecto":
@@ -919,8 +930,8 @@
                    break;
 
                  default:
-                   valueA = getCellContent(a, 1).toLowerCase();
-                   valueB = getCellContent(b, 1).toLowerCase();
+                   valueA = getEdpNumericValue(a, 1);
+                   valueB = getEdpNumericValue(b, 1);
                }
              }
 

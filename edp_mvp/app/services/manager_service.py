@@ -2611,6 +2611,10 @@ class ManagerService(BaseService):
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
+        # Ensure EDP number is treated as string
+        if "n_edp" in df.columns:
+            df["n_edp"] = df["n_edp"].astype(str)
+
         # Clean estado column
         if "estado" in df.columns:
             df["estado"] = df["estado"].str.strip().str.lower()
@@ -3113,6 +3117,12 @@ class ManagerService(BaseService):
             recursos_limitados = sum(1 for p in critical_projects if p["riesgo"] == "Medio")
             recursos_disponibles = total_projects - recursos_criticos - recursos_limitados
             
+            # Calculate average days for critical projects
+            critical_days_average = 0
+            if critical_projects:
+                total_days = sum(p["dias_pendiente"] for p in critical_projects)
+                critical_days_average = round(total_days / len(critical_projects), 1)
+            
             return {
                 "critical_projects_count": total_projects,
                 "critical_projects_amount": round(total_critical_amount / 1_000_000, 1),
@@ -3128,6 +3138,7 @@ class ManagerService(BaseService):
                 "high_risk_count": sum(1 for p in critical_projects if p["riesgo"] == "Alto"),
                 "medium_risk_count": sum(1 for p in critical_projects if p["riesgo"] == "Medio"),
                 "low_risk_count": sum(1 for p in critical_projects if p["riesgo"] == "Bajo"),
+                "critical_days_average": critical_days_average,
             }
             
         except Exception as e:
@@ -3144,6 +3155,7 @@ class ManagerService(BaseService):
                 "recursos_limitados": 0,
                 "recursos_disponibles": 0,
                 "avg_progress": 0.0,
+                "critical_days_average": 0.0,
                 "high_risk_count": 0,
                 "medium_risk_count": 0,
                 "low_risk_count": 0,
@@ -3650,6 +3662,42 @@ class ManagerService(BaseService):
             )
     
     
+    def _calculate_days_since_movement(self, row: pd.Series) -> int:
+        """Calculate days since last movement for an EDP."""
+        try:
+            from datetime import datetime
+            
+            # Get the last movement date
+            last_movement_date = self._calculate_last_movement_date(row)
+            
+            if last_movement_date == "Sin fecha":
+                return 0
+            
+            # Parse the date
+            try:
+                if isinstance(last_movement_date, str):
+                    # Try different date formats
+                    for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%Y-%m-%d %H:%M:%S']:
+                        try:
+                            date_obj = datetime.strptime(last_movement_date, fmt)
+                            break
+                        except ValueError:
+                            continue
+                    else:
+                        return 0
+                else:
+                    date_obj = last_movement_date
+                
+                # Calculate days difference
+                days_diff = (datetime.now() - date_obj).days
+                return max(0, days_diff)
+                
+            except Exception:
+                return 0
+                
+        except Exception:
+            return 0
+
     def _calculate_last_movement_date(self, row: pd.Series) -> str:
         """Calculate the last movement date for an EDP"""
         try:
@@ -3701,6 +3749,105 @@ class ManagerService(BaseService):
             return int(time_score + amount_score)
         except:
             return 50  # Default moderate urgency
+
+    def get_aging_edps_analysis(self, filters: Optional[Dict[str, Any]] = None) -> ServiceResponse:
+        """Get EDPs analysis for aging buckets (31-60 days)."""
+        try:
+            # Load EDP data
+            edps_response = self.edp_repo.find_all_dataframe()
+            
+            if isinstance(edps_response, dict) and not edps_response.get("success", False):
+                return ServiceResponse(
+                    success=False,
+                    message=f"Failed to load EDPs data: {edps_response.get('message', 'Unknown error')}",
+                    data=None,
+                )
+
+            df_edp = edps_response.get("data", pd.DataFrame())
+            if df_edp.empty:
+                return ServiceResponse(
+                    success=False, 
+                    message="No EDP data available", 
+                    data=None
+                )
+
+            # Apply filters if provided
+            df_filtered = self._apply_manager_filters(df_edp, filters or {})
+            df_prepared = self._prepare_kpi_data(df_filtered.copy())
+            
+            # Find EDPs in aging range (31-60 days)
+            aging_edps = []
+            
+            # Estados que consideramos para aging
+            aging_states = ["enviado", "revisión", "pendiente", "en_proceso"]
+            
+            # Filtrar EDPs en estados de aging
+            df_aging = df_prepared[
+                df_prepared["estado"].str.strip().str.lower().isin([s.lower() for s in aging_states])
+            ].copy()
+            
+            if not df_aging.empty:
+                # Calculate days since movement for each EDP
+                df_aging['dias_sin_movimiento'] = df_aging.apply(
+                    lambda row: self._calculate_days_since_movement(row), axis=1
+                )
+                
+                # Filter EDPs in aging range (31-60 days)
+                df_aging_filtered = df_aging[
+                    (df_aging['dias_sin_movimiento'] >= 31) & 
+                    (df_aging['dias_sin_movimiento'] <= 60)
+                ].copy()
+                
+                # Convert to list of dictionaries
+                for _, row in df_aging_filtered.iterrows():
+                    edp_data = {
+                        'id': row.get('id'),
+                        'n_edp': row.get('n_edp', 'N/A'),
+                        'cliente': row.get('cliente', 'N/A'),
+                        'proyecto': row.get('proyecto', 'N/A'),
+                        'monto_propuesto': float(row.get('monto_propuesto', 0)),
+                        'monto_formatted': f"${float(row.get('monto_propuesto', 0))/1000000:.1f}M CLP",
+                        'dias': int(row.get('dias_sin_movimiento', 0)),
+                        'jefe_proyecto': row.get('jefe_proyecto', 'Sin asignar'),
+                        'estado': row.get('estado', 'N/A'),
+                        'fecha_creacion': row.get('fecha_creacion', 'N/A'),
+                        'ultima_actualizacion': row.get('ultima_actualizacion', 'N/A'),
+                        'email_cliente': row.get('email_cliente', 'diegobravobe@gmail.com'),
+                        'telefono_cliente': row.get('telefono_cliente', '+56 9 xxxx xxxx'),
+                        'contacto_cliente': row.get('contacto_cliente', 'Contacto Cliente'),
+                        'risk_level': 'warning'
+                    }
+                    aging_edps.append(edp_data)
+            
+            # Calculate summary metrics
+            total_amount = sum(edp['monto_propuesto'] for edp in aging_edps)
+            average_days = sum(edp['dias'] for edp in aging_edps) / len(aging_edps) if aging_edps else 0
+            
+            aging_data = {
+                'aging_edps': aging_edps,
+                'summary': {
+                    'total_count': len(aging_edps),
+                    'total_amount': total_amount,
+                    'total_amount_formatted': f"${total_amount/1000000:.1f}M CLP",
+                    'average_days': round(average_days, 1),
+                    'max_days': max((edp['dias'] for edp in aging_edps), default=0),
+                    'min_days': min((edp['dias'] for edp in aging_edps), default=0)
+                }
+            }
+            
+            return ServiceResponse(
+                success=True,
+                message=f"Aging EDPs analysis completed: {len(aging_edps)} EDPs found",
+                data=aging_data,
+            )
+
+        except Exception as e:
+            logger.error(f"Error getting aging EDPs analysis: {str(e)}")
+            return ServiceResponse(
+                success=False,
+                message=f"Error getting aging EDPs analysis: {str(e)}",
+                data=None,
+            )
 
     def get_payment_reminder_data(self, filters: Optional[Dict[str, Any]] = None) -> ServiceResponse:
         """Get EDPs that need payment reminders."""
@@ -3856,3 +4003,129 @@ class ManagerService(BaseService):
                 message=f"Error getting weekly KPIs data: {str(e)}",
                 data=None,
             )
+
+    def get_edp_details(self, edp_identifier: str) -> Optional[Dict[str, Any]]:
+        """
+        Obtiene los detalles de un EDP específico para envío de correo
+        Busca tanto por n_edp como por id
+        """
+        try:
+            logger.info(f"📋 Obteniendo detalles para EDP identifier: '{edp_identifier}' (type: {type(edp_identifier)})")
+            
+            # Limpiar el identificador
+            clean_identifier = str(edp_identifier).strip()
+            if not clean_identifier or clean_identifier in ['N/A', 'null', 'undefined', 'None']:
+                logger.warning(f"EDP identifier inválido: '{edp_identifier}' -> '{clean_identifier}'")
+                return None
+            
+            # Obtener datos del EDP desde el repositorio
+            edps_response = self.edp_repo.get_all_edps()
+            if not edps_response.success or not edps_response.data:
+                logger.warning(f"No se pudieron obtener EDPs")
+                return None
+            
+            # Buscar el EDP específico
+            df = pd.DataFrame(edps_response.data)
+            logger.info(f"📋 DataFrame shape: {df.shape}, buscando: '{clean_identifier}'")
+            
+            # Buscar por id primero (más específico)
+            df['id'] = df['id'].astype(str)
+            edp_match = df[df['id'] == clean_identifier]
+            
+            # Si no se encuentra por id, buscar por n_edp
+            if edp_match.empty:
+                logger.info(f"📋 No encontrado por id, buscando por n_edp...")
+                df['n_edp'] = df['n_edp'].astype(str)
+                edp_match = df[df['n_edp'] == clean_identifier]
+            
+            # Logging adicional para debugging
+            if edp_match.empty:
+                logger.warning(f"📋 EDP '{clean_identifier}' no encontrado. Muestra de IDs y n_edp disponibles:")
+                if 'id' in df.columns:
+                    sample_ids = df['id'].head(5).tolist()
+                    logger.warning(f"📋 Sample ids: {sample_ids}")
+                if 'n_edp' in df.columns:
+                    sample_edps = df['n_edp'].head(5).tolist()
+                    logger.warning(f"📋 Sample n_edp: {sample_edps}")
+                return None
+            
+            edp_data = edp_match.iloc[0].to_dict()
+            logger.info(f"📋 EDP encontrado: {edp_data.get('n_edp', 'N/A')} (id: {edp_data.get('id', 'N/A')})")
+            
+            # Calcular DSO si no está presente
+            if 'dso' not in edp_data or pd.isna(edp_data.get('dso')):
+                fecha_propuesta = edp_data.get('fecha_propuesta')
+                if fecha_propuesta:
+                    if isinstance(fecha_propuesta, str):
+                        fecha_propuesta = pd.to_datetime(fecha_propuesta)
+                    days_diff = (datetime.now() - fecha_propuesta).days
+                    edp_data['dso'] = days_diff
+                else:
+                    edp_data['dso'] = 0
+            
+            logger.info(f"✅ Detalles obtenidos para EDP {clean_identifier}")
+            return edp_data
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo detalles del EDP {clean_identifier}: {e}")
+            return None
+
+    def get_manager_projects(self, manager_name: str) -> Dict[str, Any]:
+        """
+        Obtiene todos los proyectos de un manager específico
+        """
+        try:
+            logger.info(f"📋 Obteniendo proyectos para manager: {manager_name}")
+            
+            # Obtener datos de EDPs
+            edps_response = self.edp_repo.get_all_edps()
+            if not edps_response.success or not edps_response.data:
+                logger.warning(f"No se pudieron obtener EDPs")
+                return {"success": False, "manager_projects": []}
+            
+            df = pd.DataFrame(edps_response.data)
+            
+            # Filtrar por jefe de proyecto
+            if 'jefe_proyecto' in df.columns:
+                manager_projects_df = df[df['jefe_proyecto'].str.contains(manager_name, case=False, na=False)]
+            else:
+                logger.warning("Columna 'jefe_proyecto' no encontrada")
+                return {"success": False, "manager_projects": []}
+            
+            if manager_projects_df.empty:
+                logger.info(f"No se encontraron proyectos para {manager_name}")
+                return {"success": True, "manager_projects": []}
+            
+            # Convertir a lista de diccionarios
+            projects = []
+            for _, row in manager_projects_df.iterrows():
+                # Calcular DSO
+                fecha_propuesta = row.get('fecha_propuesta')
+                dso = 0
+                if pd.notna(fecha_propuesta):
+                    if isinstance(fecha_propuesta, str):
+                        fecha_propuesta = pd.to_datetime(fecha_propuesta)
+                    dso = (datetime.now() - fecha_propuesta).days
+                
+                # Obtener monto
+                monto = row.get('monto_propuesto', 0) or 0
+                if pd.isna(monto):
+                    monto = 0
+                
+                projects.append({
+                    "id": row.get("id", "N/A"),
+                    "n_edp": str(row.get("n_edp", "N/A")),
+                    "proyecto": row.get("proyecto", "Proyecto N/A"),
+                    "cliente": row.get("cliente", "Cliente N/A"),
+                    "monto_propuesto": monto,
+                    "dso": dso,
+                    "estado": row.get("estado", "pendiente"),
+                    "priority": "critical" if dso > 60 else "warning" if dso > 30 else "positive"
+                })
+            
+            logger.info(f"✅ {len(projects)} proyectos encontrados para {manager_name}")
+            return {"success": True, "manager_projects": projects}
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo proyectos del manager {manager_name}: {e}")
+            return {"success": False, "manager_projects": []}

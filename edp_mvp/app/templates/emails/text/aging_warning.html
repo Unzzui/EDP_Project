@@ -1,0 +1,14 @@
+ALERTA PREVENTIVA - RIESGO MODERADO EDPs Requieren Atención Preventiva Se han
+identificado {{ total_edps }} EDPs en el rango de 31-45 días sin movimiento que
+requieren atención preventiva para evitar escalamiento. Métricas: - EDPs: {{
+total_edps }} - Monto Total: ${{ "{:,.0f}".format(total_amount) }} - Rango:
+31-45 días Plan de Acción - Contacto Preventivo: - Enviar emails de recordatorio
+a todos los clientes afectados - Programar llamadas de seguimiento para la
+próxima semana - Revisar documentación pendiente y validar estados - Evaluar
+progreso en 7 días y escalar si es necesario {% if aging_edps %} EDPs Requieren
+Atención: {% for edp in aging_edps %} - {{ edp.n_edp }} | {{ edp.cliente }} | {{
+edp.proyecto }} | ${{ "{:,.0f}".format(edp.monto_propuesto) }} | {{ edp.dias }}
+días | {{ edp.jefe_proyecto }} | {{ edp.estado }} {% endfor %} {% endif %} Nota:
+Estos EDPs requieren atención preventiva para evitar que escalen a rangos
+críticos. Se recomienda contacto proactivo con los clientes para acelerar el
+proceso de aprobación.

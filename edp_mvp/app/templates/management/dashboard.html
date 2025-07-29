@@ -6,12 +6,19 @@ Manager{% endblock %} {% block content %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/management/email-buttons.css') }}" />
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/management/aging-modal.css') }}" />
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/management/critical-alerts-modal.css') }}" />
 
 <!-- Include Chart.js and dashboard JavaScript -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="{{ url_for('static', filename='js/management/dashboard-charts.js') }}"></script>
 <script src="{{ url_for('static', filename='js/management/dashboard-modals.js') }}"></script>
 <script src="{{ url_for('static', filename='js/management/dashboard-main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/management/critical-alerts-modal.js') }}"></script>
 
 <!-- Pass data to JavaScript -->
 <script>
@@ -129,7 +136,8 @@ Manager{% endblock %} {% block content %}
         <div class="analytics-header-metric" data-tooltip="forecast-tooltip">
           <div class="analytics-metric-value {{ 'positive' if kpis and kpis.forecast_7_dias and kpis.forecast_7_dias > 0 else 'neutral' }}">
             {% if kpis and kpis.forecast_7_dias and kpis.forecast_7_dias > 0 %}
-              {{ "{:.1f}M".format(kpis.forecast_7_dias) }}
+              {% set forecast_m = kpis.forecast_7_dias / 1000000 %}
+              {{ "{:.1f}M".format(forecast_m) }}
             {% else %}
               --
             {% endif %}
@@ -160,7 +168,8 @@ Manager{% endblock %} {% block content %}
                 <span class="tooltip-label">Período anterior:</span>
                 <span class="tooltip-value">
                   {% if kpis and kpis.forecast_7_dias_anterior and kpis.forecast_7_dias_anterior > 0 %}
-                    {{ "{:.1f}M".format(kpis.forecast_7_dias_anterior) }} CLP
+                    {% set forecast_anterior_m = kpis.forecast_7_dias_anterior / 1000000 %}
+                    {{ "{:.1f}M".format(forecast_anterior_m) }} CLP
                   {% else %}
                     Sin datos
                   {% endif %}
@@ -242,101 +251,132 @@ Manager{% endblock %} {% block content %}
     </div>
   </header>
 
-  <!-- KPI Cards Row -->
-  <section class="kpi-cards-row">
-    <div class="kpi-card critical-kpi" onclick="showCriticalKPIModal()">
-      <div class="kpi-impact critical"></div>
-      <div class="kpi-header">
-        <div class="kpi-title">EDPs Críticos</div>
-        <div class="kpi-trend {{ 'down' if kpis and kpis.critical_projects_change and kpis.critical_projects_change < 0 else 'up' if kpis and kpis.critical_projects_change and kpis.critical_projects_change > 0 else 'stable' }}">
-          {% if kpis and kpis.critical_projects_change and kpis.critical_projects_change != 0 %}
-            {{ "↓ {:.0f}%".format(-kpis.critical_projects_change) if kpis.critical_projects_change < 0 else "↑ {:.0f}%".format(kpis.critical_projects_change) }}
+  <!-- Executive KPIs Grid - Dashboard.tsx Style -->
+  <section class="executive-kpis-grid">
+    <!-- TOTAL RECEIVABLES -->
+    <div class="executive-kpi-card primary" onclick="showTotalReceivablesModal()">
+      <div class="kpi-header-executive">
+        <div class="kpi-icon-container">
+          <div class="kpi-icon primary">$</div>
+          <div class="kpi-label-executive">TOTAL RECEIVABLES</div>
+        </div>
+        <div class="kpi-trend-executive {{ 'positive' if kpis and kpis.receivables_change and kpis.receivables_change > 0 else 'negative' if kpis and kpis.receivables_change and kpis.receivables_change < 0 else 'stable' }}">
+          {% if kpis and kpis.receivables_change and kpis.receivables_change != 0 %}
+            {{ "+{:.1f}%".format(kpis.receivables_change) if kpis.receivables_change > 0 else "{:.1f}%".format(kpis.receivables_change) }}
           {% else %}
-            → --
+            +0.0%
           {% endif %}
         </div>
       </div>
-      <div class="kpi-value critical">
-        {{ kpis.critical_projects_count if kpis and kpis.critical_projects_count else 0 }}
+      <div class="kpi-main-value">
+        {% set total_receivables = 0 %}
+        {% if kpis and kpis.total_monto_propuesto %}
+          {% set total_receivables = kpis.total_monto_propuesto / 1000000 %}
+        {% endif %}
+        ${{ "{:.1f}M".format(total_receivables) if total_receivables > 0 else "0.0M" }}
       </div>
-      <div class="kpi-context">
-        EDPs >60 días • 
-        {% if kpis and kpis.critical_amount and kpis.critical_amount > 0 %}
-          {{ "{:.1f}M".format(kpis.critical_amount) }} CLP en riesgo
+      <div class="kpi-subtitle-executive">
+        {% if kpis and kpis.receivables_change and kpis.receivables_change != 0 %}
+          {{ "+{:.1f}%".format(kpis.receivables_change) if kpis.receivables_change > 0 else "{:.1f}%".format(kpis.receivables_change) }} vs LAST PERIOD
         {% else %}
-          Sin riesgo monetario
+          +0.0% vs LAST PERIOD
         {% endif %}
       </div>
     </div>
 
-    <div class="kpi-card warning-kpi" onclick="showAgingKPIModal()">
-      <div class="kpi-impact warning"></div>
-      <div class="kpi-header">
-        <div class="kpi-title">Aging 31-60</div>
-        <div class="kpi-trend {{ 'up' if kpis and kpis.aging_31_60_change and kpis.aging_31_60_change > 0 else 'down' if kpis and kpis.aging_31_60_change and kpis.aging_31_60_change < 0 else 'stable' }}">
-          {% if kpis and kpis.aging_31_60_change and kpis.aging_31_60_change != 0 %}
-            {{ "↑ {:.0f}%".format(kpis.aging_31_60_change) if kpis.aging_31_60_change > 0 else "↓ {:.0f}%".format(-kpis.aging_31_60_change) }}
+    <!-- CRITICAL (+90D) -->
+    <div class="executive-kpi-card critical" onclick="showCriticalReceivablesModal()">
+      <div class="kpi-header-executive">
+        <div class="kpi-icon-container">
+          <div class="kpi-icon critical">⚠</div>
+          <div class="kpi-label-executive">CRITICAL (+90D)</div>
+        </div>
+        <div class="kpi-trend-executive critical">
+          {% if kpis and kpis.critical_percentage and kpis.critical_percentage > 0 %}
+            {{ "{:.1f}%".format(kpis.critical_percentage) }}
           {% else %}
-            → --
+            0.0%
           {% endif %}
         </div>
       </div>
-      <div class="kpi-value warning">
-        {{ kpis.aging_31_60_count if kpis and kpis.aging_31_60_count else 0 }}
+      <div class="kpi-main-value critical">
+        {% set critical_amount = 0 %}
+        {% if kpis and kpis.critical_amount %}
+          {% set critical_amount = kpis.critical_amount / 1000000 %}
+        {% endif %}
+        ${{ "{:.1f}M".format(critical_amount) if critical_amount > 0 else "0.0M" }}
       </div>
-      <div class="kpi-context">
-        EDPs en zona warning • 
-        {% if kpis and kpis.aging_31_60_amount and kpis.aging_31_60_amount > 0 %}
-          {{ "{:.1f}M".format(kpis.aging_31_60_amount) }} CLP
+      <div class="kpi-subtitle-executive">
+        {% if kpis and kpis.critical_percentage and kpis.critical_percentage > 0 %}
+          {{ "{:.1f}%".format(kpis.critical_percentage) }} OF TOTAL
         {% else %}
-          Sin monto en riesgo
+          0.0% OF TOTAL
         {% endif %}
       </div>
     </div>
 
-    <div class="kpi-card positive-kpi" onclick="showFastCollectionModal()">
-      <div class="kpi-impact positive"></div>
-      <div class="kpi-header">
-        <div class="kpi-title">Cobro Rápido</div>
-        <div class="kpi-trend {{ 'up' if kpis and kpis.fast_collection_change and kpis.fast_collection_change > 0 else 'down' if kpis and kpis.fast_collection_change and kpis.fast_collection_change < 0 else 'stable' }}">
-          {% if kpis and kpis.fast_collection_change and kpis.fast_collection_change != 0 %}
-            {{ "↑ {:.0f}%".format(kpis.fast_collection_change) if kpis.fast_collection_change > 0 else "↓ {:.0f}%".format(-kpis.fast_collection_change) }}
-          {% else %}
-            → --
-          {% endif %}
+    <!-- ACTIVE ACCOUNTS -->
+    <div class="executive-kpi-card info" onclick="showActiveAccountsModal()">
+      <div class="kpi-header-executive">
+        <div class="kpi-icon-container">
+          <div class="kpi-icon info">◉</div>
+          <div class="kpi-label-executive">ACTIVE ACCOUNTS</div>
+        </div>
+        <div class="kpi-selector-executive">
+          <select id="accountTypeSelector" onchange="switchAccountView(this.value)" class="account-type-selector">
+            <option value="clientes">BY CLIENT</option>
+            <option value="jefes" selected>BY PM</option>
+            <option value="proyectos">BY PROJECT</option>
+          </select>
         </div>
       </div>
-      <div class="kpi-value positive">
-        {{ kpis.fast_collection_count if kpis and kpis.fast_collection_count else 0 }}
+      <div class="kpi-main-value info">
+        <span id="activeAccountsCount">
+          {% if equipo_operacional and equipo_operacional|length > 0 %}
+            {{ equipo_operacional|length }}
+          {% else %}
+            0
+          {% endif %}
+        </span>
       </div>
-      <div class="kpi-context">
-        EDPs <30 días • 
-        {% if kpis and kpis.fast_collection_amount and kpis.fast_collection_amount > 0 %}
-          {{ "{:.1f}M".format(kpis.fast_collection_amount) }} CLP saludable
-        {% else %}
-          Sin datos de monto
-        {% endif %}
+      <div class="kpi-subtitle-executive">
+        <span id="activeAccountsSubtitle">
+          {% set total_edps = 0 %}
+          {% if kpis and kpis.total_edps_activos %}
+            {% set total_edps = kpis.total_edps_activos %}
+          {% endif %}
+          {{ total_edps }} OPEN INVOICES
+        </span>
       </div>
     </div>
 
-    <div class="kpi-card revenue-kpi" onclick="showMetaGapModal()">
-      <div class="kpi-impact {{ 'warning' if kpis and kpis.meta_gap and kpis.meta_gap > 3 else 'positive' if kpis and kpis.meta_gap and kpis.meta_gap > 0 else 'neutral' }}"></div>
-      <div class="kpi-header">
-        <div class="kpi-title">Meta Gap</div>
-        <div class="kpi-trend stable">→ --</div>
+    <!-- AVG COLLECTION -->
+    <div class="executive-kpi-card {{ 'warning' if kpis and kpis.dso_actual and kpis.dso_actual > 30 else 'success' if kpis and kpis.dso_actual and kpis.dso_actual > 0 else 'neutral' }}" onclick="showCollectionPerformanceModal()">
+      <div class="kpi-header-executive">
+        <div class="kpi-icon-container">
+          <div class="kpi-icon {{ 'warning' if kpis and kpis.dso_actual and kpis.dso_actual > 30 else 'success' if kpis and kpis.dso_actual and kpis.dso_actual > 0 else 'neutral' }}">⏱</div>
+          <div class="kpi-label-executive">AVG COLLECTION</div>
+        </div>
+        <div class="kpi-trend-executive {{ 'negative' if kpis and kpis.dso_vs_target and kpis.dso_vs_target > 0 else 'positive' if kpis and kpis.dso_vs_target and kpis.dso_vs_target < 0 else 'stable' }}">
+          {% if kpis and kpis.dso_vs_target and kpis.dso_vs_target != 0 %}
+            {{ "+{:.0f}D".format(kpis.dso_vs_target) if kpis.dso_vs_target > 0 else "{:.0f}D".format(kpis.dso_vs_target) }}
+          {% else %}
+            +0D
+          {% endif %}
+        </div>
       </div>
-      <div class="kpi-value {{ 'warning' if kpis and kpis.meta_gap and kpis.meta_gap > 3 else 'positive' if kpis and kpis.meta_gap and kpis.meta_gap > 0 else 'neutral' }}">
-        {% if kpis and kpis.meta_gap and kpis.meta_gap > 0 %}
-          {{ "{:.1f}M".format(kpis.meta_gap) }}
+      <div class="kpi-main-value">
+        {% if kpis and kpis.dso_actual and kpis.dso_actual > 0 %}
+          {{ "{:.0f}D".format(kpis.dso_actual) }}
         {% else %}
-          --
+          --D
         {% endif %}
       </div>
-      <div class="kpi-context">
-        {% if kpis and kpis.meta_gap and kpis.meta_gap > 0 %}
-          CLP restantes • {{ kpis.days_remaining if kpis and kpis.days_remaining else 0 }} días disponibles
+      <div class="kpi-subtitle-executive">
+        {% if kpis and kpis.dso_vs_target and kpis.dso_vs_target != 0 %}
+          {{ "+{:.0f}D".format(kpis.dso_vs_target) if kpis.dso_vs_target > 0 else "{:.0f}D".format(kpis.dso_vs_target) }} vs TARGET
         {% else %}
-          Sin datos de meta
+          +0D vs TARGET
         {% endif %}
       </div>
     </div>
@@ -345,6 +385,10 @@ Manager{% endblock %} {% block content %}
   <section class="alerts-priority-banner">
     <div class="alerts-header-clean">
       <h3 class="alerts-title-clean">Alertas Operacionales</h3>
+      <button class="critical-alerts-manual-btn" onclick="showCriticalAlertsModal()" title="Ver Alertas Críticas">
+        <span class="btn-icon">ALERTAS</span>
+        <span class="btn-text">CRÍTICAS</span>
+      </button>
     </div>
     <div class="alerts-hierarchy">
       <!-- ALERTA 1: Solo si hay EDPs críticos reales -->
@@ -355,7 +399,8 @@ Manager{% endblock %} {% block content %}
           <div class="alert-title-primary">{{ kpis.critical_projects_count }} EDPs Vencidos</div>
           <div class="alert-subtitle">
             {% if kpis.critical_amount and kpis.critical_amount > 0 %}
-              ${{ "{:.1f}".format(kpis.critical_amount) }}M CLP en riesgo • >90 días
+              {% set critical_amount_m = kpis.critical_amount / 1000000 %}
+              ${{ "{:.1f}".format(critical_amount_m) }}M CLP en riesgo • >90 días
             {% else %}
               Más de 90 días pendientes
             {% endif %}
@@ -386,7 +431,12 @@ Manager{% endblock %} {% block content %}
         <div class="alert-content-primary">
           <div class="alert-title-primary">Flujo Proyectado Bajo</div>
           <div class="alert-subtitle">
-            {{ "{:.1f}M".format(kpis.forecast_7_dias) }} CLP próximos 7 días • Revisar pipeline
+            {% if kpis.forecast_7_dias and kpis.forecast_7_dias > 0 %}
+              {% set forecast_m = kpis.forecast_7_dias / 1000000 %}
+              {{ "{:.1f}M".format(forecast_m) }} CLP próximos 7 días • Revisar pipeline
+            {% else %}
+              0.0M CLP próximos 7 días • Revisar pipeline
+            {% endif %}
           </div>
         </div>
         <div class="alert-action-primary">PLANIFICAR</div>
@@ -408,6 +458,283 @@ Manager{% endblock %} {% block content %}
       {% endif %}
     </div>
   </section>
+
+  <!-- AGING DISTRIBUTION MATRIX - Dashboard.tsx Style -->
+  <section class="aging-distribution-matrix">
+    <div class="matrix-header">
+      <div class="matrix-title">
+        <h3>AGING DISTRIBUTION MATRIX</h3>
+        <div class="matrix-subtitle">Risk-based receivables breakdown by aging periods</div>
+      </div>
+      <div class="matrix-controls">
+        <button class="matrix-action primary" onclick="exportAgingReport()">EXPORT REPORT</button>
+        <button class="matrix-action secondary" onclick="refreshAgingData()">REFRESH</button>
+      </div>
+    </div>
+    
+    <div class="aging-matrix-grid">
+      <!-- 0-15 DAYS -->
+      <div class="aging-cell safe" onclick="showAgingDetail('0-15')">
+        <div class="aging-cell-header">
+          <div class="aging-range">0-15D</div>
+          <div class="aging-risk-badge safe">LOW RISK</div>
+        </div>
+        <div class="aging-cell-main">
+          <div class="aging-amount">
+            {% set aging_0_15_amount = 0 %}
+            {% if kpis and kpis.aging_0_15_amount %}
+              {% set aging_0_15_amount = kpis.aging_0_15_amount / 1000000 %}
+            {% endif %}
+            ${{ "{:.1f}M".format(aging_0_15_amount) if aging_0_15_amount > 0 else "0.0M" }}
+          </div>
+          <div class="aging-count">
+            {% if kpis and kpis.aging_0_15_count %}
+              {{ kpis.aging_0_15_count }} invoices
+            {% else %}
+              0 invoices
+            {% endif %}
+          </div>
+        </div>
+        <div class="aging-cell-footer">
+          <div class="aging-percentage">
+            {% if kpis and kpis.aging_0_15_percentage %}
+              {{ "{:.1f}%".format(kpis.aging_0_15_percentage) }}
+            {% else %}
+              0.0%
+            {% endif %}
+          </div>
+          <div class="aging-bar">
+            <div class="aging-fill safe" style="width: {{ kpis.aging_0_15_percentage if kpis and kpis.aging_0_15_percentage else 0 }}%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 16-30 DAYS -->
+      <div class="aging-cell good" onclick="showAgingDetail('16-30')">
+        <div class="aging-cell-header">
+          <div class="aging-range">16-30D</div>
+          <div class="aging-risk-badge good">NORMAL</div>
+        </div>
+        <div class="aging-cell-main">
+          <div class="aging-amount">
+            {% set aging_16_30_amount = 0 %}
+            {% if kpis and kpis.aging_16_30_amount %}
+              {% set aging_16_30_amount = kpis.aging_16_30_amount / 1000000 %}
+            {% endif %}
+            ${{ "{:.1f}M".format(aging_16_30_amount) if aging_16_30_amount > 0 else "0.0M" }}
+          </div>
+          <div class="aging-count">
+            {% if kpis and kpis.aging_16_30_count %}
+              {{ kpis.aging_16_30_count }} invoices
+            {% else %}
+              0 invoices
+            {% endif %}
+          </div>
+        </div>
+        <div class="aging-cell-footer">
+          <div class="aging-percentage">
+            {% if kpis and kpis.aging_16_30_percentage %}
+              {{ "{:.1f}%".format(kpis.aging_16_30_percentage) }}
+            {% else %}
+              0.0%
+            {% endif %}
+          </div>
+          <div class="aging-bar">
+            <div class="aging-fill good" style="width: {{ kpis.aging_16_30_percentage if kpis and kpis.aging_16_30_percentage else 0 }}%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 31-45 DAYS -->
+      <div class="aging-cell warning" onclick="showAgingDetail('31-45')">
+        <div class="aging-cell-header">
+          <div class="aging-range">31-45D</div>
+          <div class="aging-risk-badge warning">WATCH</div>
+        </div>
+        <div class="aging-cell-main">
+          <div class="aging-amount">
+            {% set aging_31_45_amount = 0 %}
+            {% if kpis and kpis.aging_31_45_amount %}
+              {% set aging_31_45_amount = kpis.aging_31_45_amount / 1000000 %}
+            {% endif %}
+            ${{ "{:.1f}M".format(aging_31_45_amount) if aging_31_45_amount > 0 else "0.0M" }}
+          </div>
+          <div class="aging-count">
+            {% if kpis and kpis.aging_31_45_count %}
+              {{ kpis.aging_31_45_count }} invoices
+            {% else %}
+              0 invoices
+            {% endif %}
+          </div>
+        </div>
+        <div class="aging-cell-footer">
+          <div class="aging-percentage">
+            {% if kpis and kpis.aging_31_45_percentage %}
+              {{ "{:.1f}%".format(kpis.aging_31_45_percentage) }}
+            {% else %}
+              0.0%
+            {% endif %}
+          </div>
+          <div class="aging-bar">
+            <div class="aging-fill warning" style="width: {{ kpis.aging_31_45_percentage if kpis and kpis.aging_31_45_percentage else 0 }}%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 46-60 DAYS -->
+      <div class="aging-cell alert" onclick="showAgingDetail('46-60')">
+        <div class="aging-cell-header">
+          <div class="aging-range">46-60D</div>
+          <div class="aging-risk-badge alert">ALERT</div>
+        </div>
+        <div class="aging-cell-main">
+          <div class="aging-amount">
+            {% set aging_46_60_amount = 0 %}
+            {% if kpis and kpis.aging_46_60_amount %}
+              {% set aging_46_60_amount = kpis.aging_46_60_amount / 1000000 %}
+            {% endif %}
+            ${{ "{:.1f}M".format(aging_46_60_amount) if aging_46_60_amount > 0 else "0.0M" }}
+          </div>
+          <div class="aging-count">
+            {% if kpis and kpis.aging_46_60_count %}
+              {{ kpis.aging_46_60_count }} invoices
+            {% else %}
+              0 invoices
+            {% endif %}
+          </div>
+        </div>
+        <div class="aging-cell-footer">
+          <div class="aging-percentage">
+            {% if kpis and kpis.aging_46_60_percentage %}
+              {{ "{:.1f}%".format(kpis.aging_46_60_percentage) }}
+            {% else %}
+              0.0%
+            {% endif %}
+          </div>
+          <div class="aging-bar">
+            <div class="aging-fill alert" style="width: {{ kpis.aging_46_60_percentage if kpis and kpis.aging_46_60_percentage else 0 }}%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 61-90 DAYS -->
+      <div class="aging-cell danger" onclick="showAgingDetail('61-90')">
+        <div class="aging-cell-header">
+          <div class="aging-range">61-90D</div>
+          <div class="aging-risk-badge danger">DANGER</div>
+        </div>
+        <div class="aging-cell-main">
+          <div class="aging-amount">
+            {% set aging_61_90_amount = 0 %}
+            {% if kpis and kpis.aging_61_90_amount %}
+              {% set aging_61_90_amount = kpis.aging_61_90_amount / 1000000 %}
+            {% endif %}
+            ${{ "{:.1f}M".format(aging_61_90_amount) if aging_61_90_amount > 0 else "0.0M" }}
+          </div>
+          <div class="aging-count">
+            {% if kpis and kpis.aging_61_90_count %}
+              {{ kpis.aging_61_90_count }} invoices
+            {% else %}
+              0 invoices
+            {% endif %}
+          </div>
+        </div>
+        <div class="aging-cell-footer">
+          <div class="aging-percentage">
+            {% if kpis and kpis.aging_61_90_percentage %}
+              {{ "{:.1f}%".format(kpis.aging_61_90_percentage) }}
+            {% else %}
+              0.0%
+            {% endif %}
+          </div>
+          <div class="aging-bar">
+            <div class="aging-fill danger" style="width: {{ kpis.aging_61_90_percentage if kpis and kpis.aging_61_90_percentage else 0 }}%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- +90 DAYS -->
+      <div class="aging-cell critical" onclick="showAgingDetail('90+')">
+        <div class="aging-cell-header">
+          <div class="aging-range">+90D</div>
+          <div class="aging-risk-badge critical">CRITICAL</div>
+        </div>
+        <div class="aging-cell-main">
+          <div class="aging-amount">
+            {% set aging_90_plus_amount = 0 %}
+            {% if kpis and kpis.aging_90_plus_amount %}
+              {% set aging_90_plus_amount = kpis.aging_90_plus_amount / 1000000 %}
+            {% endif %}
+            ${{ "{:.1f}M".format(aging_90_plus_amount) if aging_90_plus_amount > 0 else "0.0M" }}
+          </div>
+          <div class="aging-count">
+            {% if kpis and kpis.aging_90_plus_count %}
+              {{ kpis.aging_90_plus_count }} invoices
+            {% else %}
+              0 invoices
+            {% endif %}
+          </div>
+        </div>
+        <div class="aging-cell-footer">
+          <div class="aging-percentage">
+            {% if kpis and kpis.aging_90_plus_percentage %}
+              {{ "{:.1f}%".format(kpis.aging_90_plus_percentage) }}
+            {% else %}
+              0.0%
+            {% endif %}
+          </div>
+          <div class="aging-bar">
+            <div class="aging-fill critical" style="width: {{ kpis.aging_90_plus_percentage if kpis and kpis.aging_90_plus_percentage else 0 }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Matrix Summary -->
+    <div class="aging-matrix-summary">
+      <div class="summary-metric">
+        <div class="summary-label">TOTAL RECEIVABLES</div>
+        <div class="summary-value">
+          {% set total_receivables = 0 %}
+          {% if kpis and kpis.total_monto_propuesto %}
+            {% set total_receivables = kpis.total_monto_propuesto / 1000000 %}
+          {% endif %}
+          ${{ "{:.1f}M".format(total_receivables) if total_receivables > 0 else "0.0M" }}
+        </div>
+      </div>
+      <div class="summary-metric">
+        <div class="summary-label">WEIGHTED AVG DAYS</div>
+        <div class="summary-value">
+          {% if kpis and kpis.dso_actual and kpis.dso_actual > 0 %}
+            {{ "{:.0f}D".format(kpis.dso_actual) }}
+          {% else %}
+            --D
+          {% endif %}
+        </div>
+      </div>
+      <div class="summary-metric">
+        <div class="summary-label">AT RISK</div>
+        <div class="summary-value critical">
+          {% set at_risk = 0 %}
+          {% if kpis and kpis.aging_46_60_amount and kpis.aging_61_90_amount and kpis.aging_90_plus_amount %}
+            {% set at_risk = (kpis.aging_46_60_amount + kpis.aging_61_90_amount + kpis.aging_90_plus_amount) / 1000000 %}
+          {% endif %}
+          ${{ "{:.1f}M".format(at_risk) if at_risk > 0 else "0.0M" }}
+        </div>
+      </div>
+      <div class="summary-metric">
+        <div class="summary-label">COLLECTION EFFICIENCY</div>
+        <div class="summary-value {{ 'positive' if kpis and kpis.collection_efficiency and kpis.collection_efficiency > 85 else 'warning' if kpis and kpis.collection_efficiency and kpis.collection_efficiency > 70 else 'critical' }}">
+          {% if kpis and kpis.collection_efficiency and kpis.collection_efficiency > 0 %}
+            {{ "{:.0f}%".format(kpis.collection_efficiency) }}
+          {% else %}
+            --%
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Main Analytics Grid -->
   <section class="analytics-grid">
     <!-- DSO Heatmap by Project Manager -->
@@ -419,10 +746,20 @@ Manager{% endblock %} {% block content %}
       <div class="chart-container">
         <div class="dso-heatmap">
           {% if equipo_operacional and equipo_operacional|length > 0 %}
+            <!-- DEBUG: Show equipo_operacional data -->
+            <script>
+              console.log('🔍 Equipo Operacional Data:', {{ equipo_operacional | tojson }});
+            </script>
             {% for jefe in equipo_operacional %}
             <div class="dso-cell {{ 'critical' if (jefe.dso_days or 0) > 60 else 'warning' if (jefe.dso_days or 0) > 40 else 'good' if (jefe.dso_days or 0) > 0 else 'neutral' }}" 
-                 onclick="showManagerDetail('{{ jefe.nombre }}', '{{ jefe.dso_days or 0 }}d', '{{ "{:.1f}M".format((jefe.monto_gestionado or 0) / 1000000) }} CLP', '{{ jefe.proyectos_count or 0 }} proyectos')">
-              <div class="dso-manager">{{ jefe.nombre[:15] }}{{ "..." if jefe.nombre|length > 15 else "" }}</div>
+                 onclick="showManagerDetail('{{ jefe.nombre or "Sin Nombre" }}', '{{ jefe.dso_days or 0 }}d', '{{ "{:.1f}M".format((jefe.monto_gestionado or 0) / 1000000) }} CLP', '{{ jefe.proyectos_count or 0 }} proyectos')">
+              <div class="dso-manager">
+                {% if jefe.nombre and jefe.nombre.strip() %}
+                  {{ jefe.nombre[:25] }}{{ "..." if jefe.nombre|length > 25 else "" }}
+                {% else %}
+                  SIN NOMBRE
+                {% endif %}
+              </div>
               <div class="dso-days" style="color: {{ '#ff0066' if (jefe.dso_days or 0) > 60 else '#ffa500' if (jefe.dso_days or 0) > 40 else '#00ff88' if (jefe.dso_days or 0) > 0 else '#888888' }}">
                 {% if jefe.dso_days and jefe.dso_days > 0 %}
                   {{ jefe.dso_days }}d

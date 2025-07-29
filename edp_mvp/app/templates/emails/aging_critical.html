@@ -1,0 +1,100 @@
+{% extends "emails/base.html" %} {% block content %}
+<div class="email-container">
+  <div class="email-header critical">
+    <h1>ALERTA CRÍTICA</h1>
+    <div class="status-badge critical">RIESGO EXTREMO</div>
+  </div>
+
+  <div class="email-content">
+    <div class="summary-section">
+      <h2>Intervención Inmediata Requerida</h2>
+      <p>
+        Se han identificado <strong>{{ total_edps }} EDPs</strong> en estado
+        crítico con más de 90 días sin movimiento que requieren intervención
+        inmediata.
+      </p>
+
+      <div class="metrics-grid">
+        <div class="metric">
+          <div class="metric-value">{{ total_edps }}</div>
+          <div class="metric-label">EDPs Críticos</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">${{ "{:,.0f}".format(total_amount) }}</div>
+          <div class="metric-label">Monto en Riesgo</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">90+</div>
+          <div class="metric-label">Días</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-section">
+      <h3>Plan de Acción - Intervención Inmediata</h3>
+      <ul class="action-list">
+        <li>
+          Contactar inmediatamente por teléfono a todos los clientes afectados
+        </li>
+        <li>Enviar notificaciones urgentes con plazo de 48 horas</li>
+        <li>
+          Programar reunión de emergencia con gerencia en las próximas 24 horas
+        </li>
+        <li>Desarrollar estrategia de cobro agresiva</li>
+        <li>Escalar a supervisión y departamento legal si es necesario</li>
+        <li>Documentar todas las acciones realizadas</li>
+      </ul>
+    </div>
+
+    {% if aging_edps %}
+    <div class="edps-section">
+      <h3>EDPs en Estado Crítico</h3>
+      <div class="edps-table">
+        <table>
+          <thead>
+            <tr>
+              <th>EDP</th>
+              <th>Cliente</th>
+              <th>Proyecto</th>
+              <th>Monto</th>
+              <th>Días</th>
+              <th>Responsable</th>
+              <th>Estado</th>
+              <th>Contacto</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for edp in aging_edps %}
+            <tr>
+              <td>{{ edp.n_edp }}</td>
+              <td>{{ edp.cliente }}</td>
+              <td>{{ edp.proyecto }}</td>
+              <td>${{ "{:,.0f}".format(edp.monto_propuesto) }}</td>
+              <td>{{ edp.dias }} días</td>
+              <td>{{ edp.jefe_proyecto }}</td>
+              <td>{{ edp.estado }}</td>
+              <td>{{ edp.email_cliente }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="footer-section">
+      <p>
+        <strong>NOTA CRÍTICA:</strong> Estos EDPs han superado el umbral crítico
+        de 90 días sin movimiento.
+      </p>
+      <p>
+        Se requiere acción inmediata para evitar impacto severo en indicadores
+        financieros y flujo de caja.
+      </p>
+      <p>
+        Este es un estado de emergencia que requiere intervención de alto nivel.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

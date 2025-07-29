@@ -4,6 +4,15 @@
  */
 
 /**
+ * Format amount to millions with proper formatting
+ */
+function formatAmount(amount) {
+    if (amount === null || amount === undefined || amount === '') return 'Sin monto';
+    const amountInMillions = amount / 1000000;
+    return `$${amountInMillions.toFixed(1)}M`;
+}
+
+/**
  * Muestra detalles de un jefe de proyecto
  */
 function showManagerDetail(nombre, dso, monto, proyectos) {
@@ -95,7 +104,7 @@ function showManagerDetail(nombre, dso, monto, proyectos) {
                                 <th>Monto</th>
                                 <th>DSO</th>
                                 <th>Estado</th>
-                                <th>Último Contacto</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -157,6 +166,9 @@ function showManagerDetail(nombre, dso, monto, proyectos) {
                     </button>
                     <button class="kpi-action-btn positive" onclick="scheduleManagerMeeting('${nombre}')">
                         Programar Reunión
+                    </button>
+                    <button class="kpi-action-btn primary" onclick="sendManagerCompleteEmail('${nombre}')">
+                        📧 Enviar Reporte Completo
                     </button>
                     <button class="kpi-action-btn neutral" onclick="assignManagerSupport('${nombre}')">
                         Asignar Apoyo
@@ -782,7 +794,7 @@ function processBulkAlerts() {
  * Muestra modal de EDPs críticos
  */
 function showCriticalEDPsModal() {
-    const criticalCount = window.kpisData?.critical_projects_count || 0;
+    const criticalCount = window.kpisData?.total_critical_edps || window.kpisData?.critical_projects_count || 0;
     const criticalAmount = window.kpisData?.critical_amount || 0;
     
     createModal({
@@ -796,7 +808,7 @@ function showCriticalEDPsModal() {
                     </div>
                     <div class="summary-metric">
                         <span class="metric-label">Monto en Riesgo:</span>
-                        <span class="metric-value critical">$${(criticalAmount).toFixed(0)}M CLP</span>
+                        <span class="metric-value critical">${formatAmount(criticalAmount)} CLP</span>
                     </div>
                     <div class="summary-metric">
                         <span class="metric-label">Días Promedio:</span>
@@ -1241,7 +1253,7 @@ function showCriticalKPIModal() {
                 <div class="kpi-section-title">Acciones Recomendadas</div>
                 <div class="kpi-actions-grid">
                     <button class="kpi-action-btn critical" onclick="sendCriticalEmails()" id="send-critical-emails">
-                        📧 Enviar Email a Todos los Críticos
+                        Enviar Email a Todos los Críticos
                     </button>
                     <button class="kpi-action-btn warning" onclick="generateCriticalReport()">
                         Generar Reporte Detallado
@@ -1331,7 +1343,7 @@ function showAgingKPIModal() {
             <div class="kpi-actions-section">
                 <div class="kpi-actions-grid">
                     <button class="kpi-action-btn warning" onclick="sendAgingEmails()">
-                        📧 Enviar Emails Preventivos
+                        Enviar Emails Preventivos
                     </button>
                     <button class="kpi-action-btn info" onclick="scheduleAgingCalls()">
                         Programar Llamadas
@@ -1606,7 +1618,7 @@ function loadCriticalEDPsData(tableId) {
                     <td class="edp-id-cell text-center" title="Número EDP">${edp.n_edp || edp.id || 'N/A'}</td>
                     <td class="cliente-cell" title="${edp.cliente}" style="cursor: pointer;" onclick="showEDPDetailModal('${edp.n_edp}')">${edp.cliente}</td>
                     <td class="proyecto-cell font-medium" title="${edp.proyecto}" style="cursor: pointer;" onclick="showEDPDetailModal('${edp.n_edp}')">${edp.proyecto}</td>
-                    <td class="monto-cell text-right" style="cursor: pointer;" onclick="showEDPDetailModal('${edp.n_edp}')">${edp.monto_formatted}</td>
+                    <td class="monto-cell text-right" style="cursor: pointer;" onclick="showEDPDetailModal('${edp.n_edp}')">${formatAmount(edp.monto_propuesto)}</td>
                     <td class="dias-cell text-center" style="cursor: pointer;" onclick="showEDPDetailModal('${edp.n_edp}')">
                         <span class="dias-badge ${edp.urgencia}">${edp.dias}d</span>
                     </td>
@@ -1616,9 +1628,9 @@ function loadCriticalEDPsData(tableId) {
                     </td>
                     <td class="email-cell text-center">
                         <button 
-                            class="email-btn" 
-                            onclick="event.stopPropagation(); sendEDPEmail('${edp.id || edp.n_edp}')" 
-                            title="Enviar email (diegobravobe@gmail.com)">
+                            class="kpi-action-btn warning email-btn" 
+                            onclick="event.stopPropagation(); sendEDPEmail('${edp.id || edp.n_edp}', 'critical', this)" 
+                            title="Enviar email crítico (diegobravobe@gmail.com)">
                             <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
                                 <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
@@ -1640,7 +1652,7 @@ function loadCriticalEDPsData(tableId) {
                                 <strong>${data.summary.total_count}</strong> EDPs críticos
                             </span>
                             <span class="stat-item">
-                                <strong>${formatCurrency(data.summary.total_amount)}</strong> en riesgo
+                                <strong>${formatAmount(data.summary.total_amount)}</strong> en riesgo
                             </span>
                             <span class="stat-item">
                                 <strong>${data.summary.avg_days}</strong> días promedio
@@ -1743,7 +1755,7 @@ function loadAgingEDPsData(tableId) {
                     <td class="edp-id-cell text-center" title="Número EDP">${edp.n_edp || edp.id || 'N/A'}</td>
                     <td class="cliente-cell" title="${edp.cliente}">${edp.cliente}</td>
                     <td class="proyecto-cell font-medium" title="${edp.proyecto}">${edp.proyecto}</td>
-                    <td class="monto-cell text-right">${edp.monto_formatted}</td>
+                    <td class="monto-cell text-right">${formatAmount(edp.monto_propuesto)}</td>
                     <td class="dias-cell text-center">
                         <span class="dias-badge warning">${edp.dias}d</span>
                     </td>
@@ -1753,8 +1765,8 @@ function loadAgingEDPsData(tableId) {
                     </td>
                     <td class="email-cell text-center">
                         <button 
-                            class="email-btn" 
-                            onclick="event.stopPropagation(); sendEDPEmail('${edp.id || edp.n_edp}')" 
+                            class="kpi-action-btn warning email-btn" 
+                            onclick="event.stopPropagation(); sendEDPEmail('${edp.id || edp.n_edp}', 'aging', this)" 
                             title="Enviar email preventivo (diegobravobe@gmail.com)">
                             <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
@@ -1777,7 +1789,7 @@ function loadAgingEDPsData(tableId) {
                                 <strong>${data.summary.total_count}</strong> EDPs en aging
                             </span>
                             <span class="stat-item">
-                                <strong>${formatCurrency(data.summary.total_amount)}</strong> en gestión
+                                <strong>${formatAmount(data.summary.total_amount)}</strong> en gestión
                             </span>
                             <span class="stat-item">
                                 <strong>${data.summary.avg_days}</strong> días promedio
@@ -1880,7 +1892,7 @@ function loadFastCollectionData(tableId) {
                     <td class="edp-id-cell text-center" title="Número EDP">${edp.n_edp || edp.id || 'N/A'}</td>
                     <td class="cliente-cell" title="${edp.cliente}">${edp.cliente}</td>
                     <td class="proyecto-cell font-medium" title="${edp.proyecto}">${edp.proyecto}</td>
-                    <td class="monto-cell text-right">${edp.monto_formatted}</td>
+                    <td class="monto-cell text-right">${formatAmount(edp.monto_propuesto)}</td>
                     <td class="dias-cell text-center">
                         <span class="dias-badge success">${edp.dias}d</span>
                     </td>
@@ -1890,8 +1902,8 @@ function loadFastCollectionData(tableId) {
                     </td>
                     <td class="email-cell text-center">
                         <button 
-                            class="email-btn" 
-                            onclick="event.stopPropagation(); sendEDPEmail('${edp.id || edp.n_edp}')" 
+                            class="kpi-action-btn warning email-btn" 
+                            onclick="event.stopPropagation(); sendEDPEmail('${edp.id || edp.n_edp}', 'fast-collection', this)" 
                             title="Enviar email de confirmación (diegobravobe@gmail.com)">
                             <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
@@ -1914,7 +1926,7 @@ function loadFastCollectionData(tableId) {
                                 <strong>${data.summary.total_count}</strong> EDPs de cobro rápido
                             </span>
                             <span class="stat-item">
-                                <strong>${formatCurrency(data.summary.total_amount)}</strong> saludable
+                                <strong>${formatAmount(data.summary.total_amount)}</strong> saludable
                             </span>
                             <span class="stat-item">
                                 <strong>${data.summary.avg_days}</strong> días promedio
@@ -2128,6 +2140,15 @@ function loadManagerProjectsData(tableId, managerName) {
             
             // Create rows for each project
             data.manager_projects.forEach((project, index) => {
+                console.log(`🔍 [DEBUG] Project ${index}:`, {
+                    id: project.id,
+                    n_edp: project.n_edp,
+                    proyecto: project.proyecto,
+                    cliente: project.cliente,
+                    monto: project.monto,
+                    raw_project: project
+                });
+                
                 const row = document.createElement('tr');
                 row.className = `manager-project-row ${project.priority} ${index % 2 === 0 ? 'even' : 'odd'}`;
                 
@@ -2154,7 +2175,7 @@ function loadManagerProjectsData(tableId, managerName) {
                         <div class="font-medium">${project.cliente}</div>
                     </td>
                     <td class="monto-cell text-right">
-                        <span class="font-mono">${project.monto_formatted}</span>
+                        <span class="font-mono">${formatAmount(project.monto_propuesto || 0)}</span>
                     </td>
                     <td class="text-center">
                         <span class="dso-badge ${dsoClass}">${project.dso}d</span>
@@ -2162,8 +2183,16 @@ function loadManagerProjectsData(tableId, managerName) {
                     <td class="text-center">
                         <span class="status-badge ${project.priority}">${project.estado}</span>
                     </td>
-                    <td class="text-center text-sm">
-                        ${project.last_contact}
+                    <td class="text-center">
+                        <button 
+                            class="kpi-action-btn warning email-btn" 
+                            onclick="event.stopPropagation(); sendEDPEmail('${project.id}', 'individual', this)" 
+                            title="Enviar correo EDP individual (diegobravobe@gmail.com)">
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                            </svg>
+                        </button>
                     </td>
                 `;
                 
@@ -2191,7 +2220,7 @@ function loadManagerProjectsData(tableId, managerName) {
                                 </div>
                                                                  <div class="summary-item">
                                      <span class="summary-label">Monto Total:</span>
-                                     <span class="summary-value">${formatCurrency(data.summary.total_amount || 0)}</span>
+                                     <span class="summary-value">${formatAmount(data.summary.total_amount || 0)}</span>
                                  </div>
                                 <div class="summary-item">
                                     <span class="summary-label">DSO Promedio:</span>
@@ -3045,3 +3074,239 @@ function testNotification() {
 
 // Add test button to window for debugging
 window.testNotification = testNotification;
+
+/**
+ * Envía correo para un EDP individual con Optimistic UI
+ */
+function sendEDPEmail(edpId, emailType = 'individual', buttonElement = null) {
+    console.log(`📧 [DEBUG] Iniciando sendEDPEmail con parámetros:`, { 
+        edpId, 
+        emailType, 
+        buttonElement,
+        typeof_edpId: typeof edpId,
+        edpId_string: String(edpId),
+        edpId_trimmed: String(edpId).trim()
+    });
+    
+    // Convertir a string y limpiar
+    const cleanEdpId = String(edpId || '').trim();
+    console.log(`📧 [DEBUG] EDP ID limpio:`, cleanEdpId);
+    
+    // Validar que el EDP ID esté presente y no sea un valor vacío o inválido
+    if (!cleanEdpId || cleanEdpId === 'N/A' || cleanEdpId === 'undefined' || cleanEdpId === 'null') {
+        console.error('📢 ERROR: ID del EDP es requerido o inválido. Valor original:', edpId, 'Valor limpio:', cleanEdpId);
+        showNotification('❌ Error: ID del EDP es requerido', 'error');
+        return;
+    }
+    
+    // Get button element
+    const btn = buttonElement || event?.target;
+    if (!btn) {
+        console.warn('⚠️ Button not found, proceeding without visual feedback');
+    }
+    
+    // OPTIMISTIC UI - Cambios inmediatos
+    let originalContent = `<svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+    </svg>`;
+    let originalState = {};
+    
+    if (btn) {
+        originalContent = btn.innerHTML;
+        originalState = {
+            disabled: btn.disabled,
+            backgroundColor: btn.style.backgroundColor,
+            opacity: btn.style.opacity
+        };
+        
+        // Cambio optimista: mostrar loading
+        btn.innerHTML = '⏳';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        
+        // Agregar clase de loading si no existe
+        btn.classList.add('sending');
+    }
+    
+    // Mostrar notificación optimista inmediata
+    const emailTypeText = emailType === 'critical' ? 'crítico' : 
+                         emailType === 'aging' ? 'preventivo' : 
+                         emailType === 'fast' ? 'de confirmación' : 'individual';
+    
+    showNotification(`📧 Enviando email ${emailTypeText} para EDP ${cleanEdpId}...`, 'info');
+    
+    // Prepare request data
+    const requestData = {
+        edp_id: cleanEdpId,
+        email_type: emailType
+    };
+    
+    console.log(`📧 [DEBUG] Enviando request con datos:`, requestData);
+    
+    fetch('/management/api/send_edp_email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        console.log(`📧 [DEBUG] Response status:`, response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log(`📧 [DEBUG] Response data:`, data);
+        
+        if (data.success) {
+            // SUCCESS - Optimistic UI confirmed
+            if (btn) {
+                btn.innerHTML = '✅';
+                btn.style.backgroundColor = '#22c55e';
+                btn.style.opacity = '1';
+                btn.classList.remove('sending');
+                btn.classList.add('success');
+                
+                // Restaurar después de mostrar éxito
+                setTimeout(() => {
+                    btn.innerHTML = originalContent;
+                    btn.disabled = originalState.disabled;
+                    btn.style.backgroundColor = originalState.backgroundColor;
+                    btn.style.opacity = originalState.opacity;
+                    btn.classList.remove('success');
+                }, 2500);
+            }
+            
+            // Notificación de éxito
+            showNotification(`✅ Email ${emailTypeText} enviado exitosamente para EDP ${cleanEdpId}`, 'success');
+            
+        } else {
+            throw new Error(data.message || 'Error al enviar correo');
+        }
+    })
+    .catch(error => {
+        console.error('📢 ERROR: Error al enviar correo:', error.message);
+        
+        // ERROR - Revertir Optimistic UI
+        if (btn) {
+            btn.innerHTML = '❌';
+            btn.style.backgroundColor = '#ef4444';
+            btn.style.opacity = '1';
+            btn.classList.remove('sending');
+            btn.classList.add('error');
+            
+            // Restaurar después de mostrar error
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                btn.disabled = originalState.disabled;
+                btn.style.backgroundColor = originalState.backgroundColor;
+                btn.style.opacity = originalState.opacity;
+                btn.classList.remove('error');
+            }, 3000);
+        }
+        
+        // Notificación de error
+        showNotification(`❌ Error al enviar email: ${error.message}`, 'error');
+    });
+}
+
+/**
+ * Envía correo completo con todos los EDPs del manager
+ */
+function sendManagerCompleteEmail(managerName) {
+    console.log(`📧 Enviando reporte completo para manager: ${managerName}`);
+    
+    // Show loading modal
+    const loadingModal = createModal({
+        title: 'Enviando Reporte Completo',
+        content: `
+            <div class="email-sending-progress">
+                <div class="progress-animation">
+                    <div class="spinner-large"></div>
+                    <div class="progress-text">Preparando reporte para ${managerName}...</div>
+                </div>
+                <div class="progress-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">📊</span>
+                        <span>Recopilando datos de EDPs</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">📧</span>
+                        <span>Generando reporte personalizado</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">📤</span>
+                        <span>Enviando por correo electrónico</span>
+                    </div>
+                </div>
+            </div>
+        `,
+        actions: [],
+        size: 'medium'
+    });
+    
+    fetch('/management/api/send_manager_complete_email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            manager_name: managerName
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Close loading modal
+        if (loadingModal && loadingModal.close) {
+            loadingModal.close();
+        }
+        
+        if (data.success) {
+            showNotification(`Reporte completo enviado a ${managerName}`, 'success');
+            
+            // Show success modal with details
+            createModal({
+                title: '✅ Reporte Enviado Exitosamente',
+                content: `
+                    <div class="email-success-details">
+                        <div class="success-header">
+                            <div class="success-icon">📧</div>
+                            <div class="success-text">
+                                <h4>Reporte enviado a ${managerName}</h4>
+                                <p>El reporte completo de EDPs ha sido enviado exitosamente</p>
+                            </div>
+                        </div>
+                        <div class="email-details">
+                            <div class="detail-row">
+                                <span class="detail-label">EDPs incluidos:</span>
+                                <span class="detail-value">${data.edps_count || 'N/A'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Monto total:</span>
+                                <span class="detail-value">${data.total_amount || 'N/A'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Enviado a:</span>
+                                <span class="detail-value">${data.email_address || managerName.toLowerCase().replace(' ', '.') + '@company.com'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                actions: [
+                    { text: 'Cerrar', action: 'close', class: 'primary' }
+                ],
+                size: 'medium'
+            });
+        } else {
+            throw new Error(data.message || 'Error al enviar reporte completo');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Close loading modal
+        if (loadingModal && loadingModal.close) {
+            loadingModal.close();
+        }
+        showNotification('Error al enviar reporte: ' + error.message, 'error');
+    });
+}

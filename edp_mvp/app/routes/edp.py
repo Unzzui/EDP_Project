@@ -1023,6 +1023,100 @@ def bulk_upload():
             'success': False,
             'message': f'Error procesando archivo: {str(e)}'
         }), 500
+
+def process_bulk_upload(df: pd.DataFrame, user: str) -> Dict[str, Any]:
+    """Procesar carga masiva de EDPs con optimización de rendimiento."""
+    success_count = 0
+    error_count = 0
+    errors = []
+    batch_size = 100  # Aumentar tamaño de lote para mejor rendimiento
+    
+    try:
+        # Preparar datos para inserción masiva
+        valid_edps = []
+        
+        for idx, row in df.iterrows():
+            try:
+                # Preparar datos de la fila
+                row_data = row.to_dict()
+                row_data['registrado_por'] = user
+                row_data['fecha_registro'] = datetime.now()
+                
+                # Validar fila individual
+                validation = validate_edp_data(row_data)
+                if not validation['valid']:
+                    error_count += 1
+                    errors.append({
+                        'row': idx + 2,
+                        'errors': validation['errors']
+                    })
+                    continue
+                
+                # Preparar datos y crear modelo
+                edp_data = prepare_edp_data(row_data)
+                edp = EDP.from_dict(edp_data)
+                valid_edps.append(edp)
+                
+            except Exception as e:
+                error_count += 1
+                errors.append({
+                    'row': idx + 2,
+                    'error': str(e)
+                })
+        
+        # Inserción masiva optimizada por lotes
+        for i in range(0, len(valid_edps), batch_size):
+            batch = valid_edps[i:i + batch_size]
+            try:
+                # Usar inserción masiva optimizada
+                result = edp_repository.create_bulk(batch)
+                if result['success']:
+                    success_count += len(batch)
+                else:
+                    error_count += len(batch)
+                    errors.append({
+                        'batch': f'{i+1}-{i+len(batch)}',
+                        'error': result['message']
+                    })
+            except Exception as e:
+                error_count += len(batch)
+                errors.append({
+                    'batch': f'{i+1}-{i+len(batch)}',
+                    'error': str(e)
+                })
+        
+        # Limpiar caché de EDPs después del procesamiento masivo
+        if success_count > 0:
+            global _GLOBAL_EDP_CACHE
+            _GLOBAL_EDP_CACHE['data'] = {}
+            _GLOBAL_EDP_CACHE['last_update'] = 0
+            print(f"🔄 Caché de EDPs limpiado después de crear {success_count} EDPs")
+        
+        return {
+            'success': success_count > 0,
+            'message': f'Procesamiento completado: {success_count} exitosos, {error_count} errores',
+            'stats': {
+                'total_rows': len(df),
+                'success_count': success_count,
+                'error_count': error_count,
+                'success_rate': (success_count / len(df)) * 100 if len(df) > 0 else 0
+            },
+            'errors': errors[:10]  # Limitar errores mostrados
+        }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'Error en procesamiento masivo: {str(e)}',
+            'stats': {
+                'total_rows': len(df),
+                'success_count': success_count,
+                'error_count': error_count
+            },
+            'errors': errors
+        } 
+        
+       
 @edp_management_bp.route('/upload/template')
 @login_required
 def download_template():

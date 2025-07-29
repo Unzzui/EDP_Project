@@ -520,4 +520,146 @@ class EmailService:
                 'monto_cobrado_semana': '0',
                 'proyectos_activos': '0',
                 'proyectos_por_jefe': []
-            } 
+            }
+    
+    def send_bulk_aging_alerts(self, aging_edps: List[Dict[str, Any]], 
+                               recipients: List[str], aging_range: str = "31-60") -> bool:
+        """
+        Send bulk aging alerts with specific templates for each aging range.
+        
+        Args:
+            aging_edps: List of EDPs in the aging range
+            recipients: List of email addresses
+            aging_range: The aging range (e.g., "0-15", "16-30", "31-45", etc.)
+        
+        Returns:
+            bool: True if email sent successfully, False otherwise
+        """
+        try:
+            if not self.is_enabled():
+                logger.warning("Email service not configured")
+                return False
+            
+            if not aging_edps:
+                logger.warning("No aging EDPs to send alerts for")
+                return False
+            
+            # Determine the appropriate template based on aging range
+            template_name = self._get_aging_template_name(aging_range)
+            
+            # Prepare email content
+            subject = self._get_aging_subject(aging_range, len(aging_edps))
+            
+            # Render HTML template
+            html_body = self._render_template_safe(
+                template_name,
+                aging_edps=aging_edps,
+                aging_range=aging_range,
+                total_edps=len(aging_edps),
+                total_amount=sum(edp.get('monto_propuesto', 0) for edp in aging_edps),
+                risk_level=self._get_risk_level(aging_range)
+            )
+            
+            # Render text template
+            text_body = self._render_text_template_safe(
+                f"text/{template_name.split('/')[-1]}",
+                aging_edps=aging_edps,
+                aging_range=aging_range,
+                total_edps=len(aging_edps),
+                total_amount=sum(edp.get('monto_propuesto', 0) for edp in aging_edps),
+                risk_level=self._get_risk_level(aging_range)
+            )
+            
+            # Send email
+            return self.send_email(subject, recipients, html_body, text_body)
+            
+        except Exception as e:
+            logger.error(f"Error sending bulk aging alerts: {e}")
+            return False
+    
+    def _get_aging_template_name(self, aging_range: str) -> str:
+        """Get the appropriate template name based on aging range."""
+        aging_templates = {
+            "0-15": "emails/aging_safe.html",
+            "16-30": "emails/aging_good.html", 
+            "31-45": "emails/aging_warning.html",
+            "46-60": "emails/aging_alert.html",
+            "61-90": "emails/aging_danger.html",
+            "90+": "emails/aging_critical.html"
+        }
+        return aging_templates.get(aging_range, "emails/aging_warning.html")
+    
+    def _get_aging_subject(self, aging_range: str, edp_count: int) -> str:
+        """Get the appropriate subject line based on aging range."""
+        subjects = {
+            "0-15": f"Monitoreo Rutinario - {edp_count} EDPs en Rango Seguro (0-15 días)",
+            "16-30": f"Seguimiento Normal - {edp_count} EDPs en Rango Normal (16-30 días)",
+            "31-45": f"Alerta Preventiva - {edp_count} EDPs Requieren Atención (31-45 días)",
+            "46-60": f"Alerta Importante - {edp_count} EDPs Requieren Acción (46-60 días)",
+            "61-90": f"Alerta Urgente - {edp_count} EDPs en Estado Crítico (61-90 días)",
+            "90+": f"ALERTA CRÍTICA - {edp_count} EDPs Requieren Intervención Inmediata (+90 días)"
+        }
+        return subjects.get(aging_range, f"Alerta Aging - {edp_count} EDPs ({aging_range} días)")
+    
+    def _get_risk_level(self, aging_range: str) -> str:
+        """Get the risk level description for the aging range."""
+        risk_levels = {
+            "0-15": "BAJO RIESGO",
+            "16-30": "RIESGO NORMAL", 
+            "31-45": "RIESGO MODERADO",
+            "46-60": "RIESGO ALTO",
+            "61-90": "RIESGO CRÍTICO",
+            "90+": "RIESGO EXTREMO"
+        }
+        return risk_levels.get(aging_range, "RIESGO DESCONOCIDO")
+    
+    def send_critical_alert_email(self, edp_data: Dict[str, Any]) -> bool:
+        """
+        Send critical alert email for a specific EDP.
+        
+        Args:
+            edp_data: Dictionary containing EDP information
+        
+        Returns:
+            bool: True if email sent successfully, False otherwise
+        """
+        try:
+            if not self.is_enabled():
+                logger.warning("Email service not configured")
+                return False
+            
+            # Get recipients from configuration
+            recipients = [self.email_config.mail_default_sender]
+            
+            # Determine subject based on days
+            dias = edp_data.get('dias', 0)
+            if dias > 90:
+                subject = f"ALERTA CRÍTICA - EDP {edp_data.get('n_edp', 'N/A')} - {dias} días sin movimiento"
+            elif dias > 60:
+                subject = f"ALERTA ALTA - EDP {edp_data.get('n_edp', 'N/A')} - {dias} días sin movimiento"
+            else:
+                subject = f"ALERTA - EDP {edp_data.get('n_edp', 'N/A')} - {dias} días sin movimiento"
+            
+            # Prepare context for template
+            context = {
+                'edp': edp_data,
+                'dias': dias,
+                'monto': edp_data.get('monto', 0),
+                'cliente': edp_data.get('cliente', 'N/A'),
+                'proyecto': edp_data.get('proyecto', 'N/A'),
+                'jefe_proyecto': edp_data.get('jefe_proyecto', 'Sin asignar'),
+                'estado': edp_data.get('estado', 'pendiente'),
+                'fecha_emision': edp_data.get('fecha_emision', 'Sin fecha'),
+                'urgencia': 'CRÍTICA' if dias > 90 else 'ALTA' if dias > 60 else 'MEDIA'
+            }
+            
+            # Render templates
+            html_content = self._render_template_safe('emails/critical_alert.html', **context)
+            text_content = self._render_template_safe('emails/text/critical_alert.txt', **context)
+            
+            # Send email
+            return self.send_email(subject, recipients, html_content, text_content)
+            
+        except Exception as e:
+            logger.error(f"Error sending critical alert email: {e}")
+            return False

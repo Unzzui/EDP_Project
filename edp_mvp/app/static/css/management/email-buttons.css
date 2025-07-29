@@ -16,6 +16,26 @@
     height: 28px;
 }
 
+/* When email-btn is combined with kpi-action-btn, use email-btn specific styles */
+.kpi-action-btn.email-btn {
+    padding: 6px 10px !important;
+    min-width: 36px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    font-weight: normal !important;
+    border: none !important;
+}
+
+/* Ensure SVG icons are properly styled */
+.kpi-action-btn.email-btn svg {
+    width: 14px !important;
+    height: 14px !important;
+    fill: currentColor !important;
+    display: block !important;
+}
+
 .email-btn:hover {
     background: var(--accent-orange-dark);
     transform: translateY(-1px);
@@ -137,11 +157,6 @@
 .kpi-action-btn[onclick*="send"] {
     position: relative;
     overflow: hidden;
-}
-
-.kpi-action-btn[onclick*="send"]::before {
-    content: '📧';
-    margin-right: 4px;
 }
 
 /* Success notification for email sent */

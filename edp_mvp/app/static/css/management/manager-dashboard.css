@@ -3,6 +3,7 @@
 @import url('./manager-dashboard/kpi-cards.css');
 @import url('./manager-dashboard/dso-heat-map.css');
 @import url('./manager-dashboard/cashflow-bar.css');
+@import url('./manager-dashboard/dashboard-tsx-style.css');
 /* ==========================================================================
    Manager Dashboard - Operations Visual Intelligence
    Design System: Command Center (Dark) / Executive Suite (Light)
@@ -2608,8 +2609,8 @@
 }
 
 .modal-container.medium {
-  width: 90%;
-  max-width: 600px;
+  width: 100%;
+  max-width: 1200px;
   padding: 32px;
 }
 
@@ -4679,4 +4680,702 @@
   color: var(--text-secondary);
   text-align: center;
   font-style: italic;
+}
+
+/* ==========================================================================
+   CLIENT RISK ANALYSIS TABLE - Dashboard.tsx Style
+   ========================================================================== */
+
+.client-analysis-table-container {
+  margin-top: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-header {
+  padding: 24px 32px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333333;
+}
+
+.table-header h4 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.table-legend {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-color.critical {
+  background: #ff0066;
+}
+
+.legend-color.danger {
+  background: #ff4444;
+}
+
+.legend-color.warning {
+  background: #ffa500;
+}
+
+.legend-color.safe {
+  background: #00ff88;
+}
+
+.legend-item span {
+  font-size: 12px;
+  color: #888888;
+  font-weight: 500;
+}
+
+.client-table-wrapper {
+  overflow-x: auto;
+}
+
+.client-risk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+}
+
+.table-header-row {
+  background: #111111;
+  border-bottom: 1px solid #333333;
+}
+
+.table-header-row th {
+  padding: 16px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: #888888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-right: 1px solid #222222;
+}
+
+.table-header-row th:last-child {
+  border-right: none;
+}
+
+.total-column,
+.current-column,
+.days-30-column,
+.days-60-column,
+.days-90-column,
+.days-plus-column {
+  text-align: right;
+}
+
+.risk-column,
+.trend-column,
+.inv-column {
+  text-align: center;
+}
+
+.client-row {
+  border-bottom: 1px solid #333333;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.client-row:hover {
+  background: #111111;
+}
+
+.client-row.critical {
+  border-left: 4px solid #ff0066;
+}
+
+.client-row.danger {
+  border-left: 4px solid #ff4444;
+}
+
+.client-row.warning {
+  border-left: 4px solid #ffa500;
+}
+
+.client-row.safe {
+  border-left: 4px solid #00ff88;
+}
+
+.client-info-cell {
+  padding: 24px 32px;
+}
+
+.client-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.client-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.025em;
+}
+
+.client-contact {
+  font-size: 14px;
+  color: #888888;
+  font-family: var(--font-mono);
+}
+
+.client-email {
+  font-size: 12px;
+  color: #444444;
+  font-family: var(--font-mono);
+}
+
+.amount-cell {
+  padding: 24px 12px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  border-right: 1px solid #222222;
+}
+
+.amount-cell:last-child {
+  border-right: none;
+}
+
+.total-cell {
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.current-cell {
+  color: #00ff88;
+}
+
+.days-30-cell {
+  color: #ffffff;
+}
+
+.days-60-cell {
+  color: #0066ff;
+}
+
+.days-90-cell {
+  color: #ff0066;
+}
+
+.critical-cell {
+  color: #ff0066;
+  font-weight: 700;
+}
+
+.risk-badge-cell {
+  padding: 24px 12px;
+  text-align: center;
+}
+
+.risk-badge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.risk-badge.critical {
+  color: #ff0066;
+  border-color: #ff0066;
+}
+
+.risk-badge.high {
+  color: #ff4444;
+  border-color: #ff4444;
+}
+
+.risk-badge.medium {
+  color: #ffa500;
+  border-color: #ffa500;
+}
+
+.risk-badge.low {
+  color: #00ff88;
+  border-color: #00ff88;
+}
+
+.trend-cell {
+  padding: 24px 12px;
+  text-align: center;
+}
+
+.trend-arrow {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.trend-arrow.improving {
+  color: #00ff88;
+}
+
+.trend-arrow.declining {
+  color: #ff0066;
+}
+
+.trend-arrow.stable {
+  color: #888888;
+}
+
+.invoice-count-cell,
+.payment-date-cell {
+  padding: 24px 12px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: #888888;
+}
+
+.invoice-count-cell {
+  text-align: center;
+}
+
+.payment-date-cell {
+  text-align: left;
+}
+
+/* System Totals Row */
+.system-totals-container {
+  border-top: 2px solid #00ff88;
+  background: #111111;
+}
+
+.system-totals-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.system-totals-row {
+  background: transparent;
+}
+
+.system-totals-row td {
+  padding: 16px 12px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  border-right: 1px solid #222222;
+}
+
+.system-totals-row td:last-child {
+  border-right: none;
+}
+
+.totals-label {
+  color: #00ff88;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  padding-left: 32px !important;
+}
+
+.totals-amount {
+  text-align: right;
+  font-size: 16px;
+}
+
+.totals-amount.total {
+  color: #00ff88;
+  font-size: 20px;
+}
+
+.totals-amount.current {
+  color: #00ff88;
+}
+
+.totals-amount.days-30 {
+  color: #ffffff;
+}
+
+.totals-amount.days-60 {
+  color: #0066ff;
+}
+
+.totals-amount.days-90 {
+  color: #ff0066;
+}
+
+.totals-amount.critical {
+  color: #ff0066;
+}
+
+.totals-spacer {
+  text-align: center;
+  color: #888888;
+}
+
+.totals-invoices {
+  text-align: center;
+  color: #00ff88;
+  font-weight: 700;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .client-analysis-table-container {
+  background: rgba(0, 0, 0, 0.4);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .table-header {
+  border-bottom-color: var(--border-primary);
+}
+
+[data-theme="dark"] .client-name {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .client-contact {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .total-cell {
+  color: var(--text-primary);
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .client-risk-table {
+    min-width: 1000px;
+  }
+  
+  .table-header {
+    padding: 16px 24px;
+  }
+  
+  .client-info-cell {
+    padding: 16px 24px;
+  }
+  
+  .totals-label {
+    padding-left: 24px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-legend {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .legend-item span {
+    font-size: 11px;
+  }
+}
+
+/* Estilos para botones de correo en modal DSO */
+.email-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  min-width: 40px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.email-btn:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+.email-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Estilos para modal de progreso de envío */
+.email-sending-progress {
+  text-align: center;
+  padding: 20px;
+}
+
+.progress-animation {
+  margin-bottom: 20px;
+}
+
+.spinner-large {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.progress-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.progress-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.detail-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+/* Estilos para modal de éxito */
+.email-success-details {
+  padding: 20px;
+}
+
+.success-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.success-icon {
+  font-size: 32px;
+  color: #28a745;
+}
+
+.success-text h4 {
+  margin: 0 0 5px 0;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.success-text p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.email-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-tertiary);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   Email Functionality Styles
+   ========================================================================== */
+
+/* Email buttons for individual EDPs */
+.email-btn {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  min-width: 28px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.email-btn:hover {
+  background: var(--accent-primary-hover);
+  transform: scale(1.05);
+}
+
+.email-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.email-btn.individual {
+  background: #3b82f6;
+}
+
+.email-btn.individual:hover {
+  background: #2563eb;
+}
+
+/* Email sending progress modal styles */
+.email-sending-progress {
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+.progress-animation {
+  margin-bottom: var(--space-lg);
+}
+
+.spinner-large {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border-secondary);
+  border-top: 4px solid var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto var(--space-md);
+}
+
+.progress-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-lg);
+}
+
+.progress-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.detail-icon {
+  font-size: 16px;
+  min-width: 20px;
+}
+
+/* Email success modal styles */
+.email-success-details {
+  padding: var(--space-lg);
+}
+
+.success-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.success-icon {
+  font-size: 32px;
+  color: var(--status-success);
+}
+
+.success-text h4 {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.success-text p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.email-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.detail-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

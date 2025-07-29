@@ -1,0 +1,89 @@
+{% extends "emails/base.html" %} {% block content %}
+<div class="email-container">
+  <div class="email-header warning">
+    <h1>Alerta Preventiva</h1>
+    <div class="status-badge warning">RIESGO MODERADO</div>
+  </div>
+
+  <div class="email-content">
+    <div class="summary-section">
+      <h2>EDPs Requieren Atención Preventiva</h2>
+      <p>
+        Se han identificado <strong>{{ total_edps }} EDPs</strong> en el rango
+        de 31-45 días sin movimiento que requieren atención preventiva para
+        evitar escalamiento.
+      </p>
+
+      <div class="metrics-grid">
+        <div class="metric">
+          <div class="metric-value">{{ total_edps }}</div>
+          <div class="metric-label">EDPs</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">${{ "{:,.0f}".format(total_amount) }}</div>
+          <div class="metric-label">Monto Total</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">31-45</div>
+          <div class="metric-label">Días</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-section">
+      <h3>Plan de Acción - Contacto Preventivo</h3>
+      <ul class="action-list">
+        <li>Enviar emails de recordatorio a todos los clientes afectados</li>
+        <li>Programar llamadas de seguimiento para la próxima semana</li>
+        <li>Revisar documentación pendiente y validar estados</li>
+        <li>Evaluar progreso en 7 días y escalar si es necesario</li>
+      </ul>
+    </div>
+
+    {% if aging_edps %}
+    <div class="edps-section">
+      <h3>EDPs Requieren Atención</h3>
+      <div class="edps-table">
+        <table>
+          <thead>
+            <tr>
+              <th>EDP</th>
+              <th>Cliente</th>
+              <th>Proyecto</th>
+              <th>Monto</th>
+              <th>Días</th>
+              <th>Responsable</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for edp in aging_edps %}
+            <tr>
+              <td>{{ edp.n_edp }}</td>
+              <td>{{ edp.cliente }}</td>
+              <td>{{ edp.proyecto }}</td>
+              <td>${{ "{:,.0f}".format(edp.monto_propuesto) }}</td>
+              <td>{{ edp.dias }} días</td>
+              <td>{{ edp.jefe_proyecto }}</td>
+              <td>{{ edp.estado }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="footer-section">
+      <p>
+        <strong>Nota:</strong> Estos EDPs requieren atención preventiva para
+        evitar que escalen a rangos críticos.
+      </p>
+      <p>
+        Se recomienda contacto proactivo con los clientes para acelerar el
+        proceso de aprobación.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

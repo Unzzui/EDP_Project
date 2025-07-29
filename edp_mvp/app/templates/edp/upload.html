@@ -6,10 +6,10 @@
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold text-[color:var(--text-primary)] mb-2">
-          📋 Carga de EDPs
+          EDP Upload Center
         </h1>
-        <p class="text-[color:var(--text-secondary)]">
-          Cargue EDPs de forma individual o masiva usando archivos Excel/CSV
+        <p class="text-[color:var(--text-secondary)] font-mono text-sm">
+          Deploy EDPs via individual form or batch file processing
         </p>
       </div>
       <div class="flex gap-3">
@@ -28,15 +28,15 @@
               stroke-width="2"
               d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Volver al Kanban
+          Return to Kanban
         </a>
       </div>
     </div>
   </div>
 
-  <!-- Opciones de Carga -->
+  <!-- Upload Options -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-    <!-- Carga Individual -->
+    <!-- Individual Upload -->
     <div
       class="bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-highlight)] rounded-2xl p-6 border border-[color:var(--border-color)] shadow-lg hover:shadow-xl transition-all duration-300">
       <div class="text-center mb-6">
@@ -56,10 +56,10 @@
           </svg>
         </div>
         <h3 class="text-xl font-bold text-[color:var(--text-primary)] mb-2">
-          Carga Individual
+          Individual Upload
         </h3>
         <p class="text-[color:var(--text-secondary)]">
-          Ingrese un EDP manualmente usando el formulario
+          Create a single EDP entry manually using the form interface
         </p>
       </div>
 
@@ -78,7 +78,7 @@
               stroke-width="2"
               d="M5 13l4 4L19 7" />
           </svg>
-          Control total sobre cada campo
+          Complete control over each data field
         </div>
         <div
           class="flex items-center text-sm text-[color:var(--text-secondary)]">
@@ -94,7 +94,7 @@
               stroke-width="2"
               d="M5 13l4 4L19 7" />
           </svg>
-          Validación en tiempo real
+          Real-time validation and feedback
         </div>
         <div
           class="flex items-center text-sm text-[color:var(--text-secondary)]">
@@ -110,18 +110,18 @@
               stroke-width="2"
               d="M5 13l4 4L19 7" />
           </svg>
-          Ideal para pocos registros
+          Optimal for single record creation
         </div>
       </div>
 
       <button
         onclick="openManualUpload()"
         class="w-full mt-6 bg-gradient-to-r from-[color:var(--accent-blue)] to-[color:var(--accent-purple)] text-white font-semibold py-3 px-6 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-        Crear EDP Individual
+        Create Individual EDP
       </button>
     </div>
 
-    <!-- Carga Masiva -->
+    <!-- Bulk Upload -->
     <div
       class="bg-gradient-to-br from-[color:var(--bg-card)] to-[color:var(--bg-highlight)] rounded-2xl p-6 border border-[color:var(--border-color)] shadow-lg hover:shadow-xl transition-all duration-300">
       <div class="text-center mb-6">
@@ -141,10 +141,10 @@
           </svg>
         </div>
         <h3 class="text-xl font-bold text-[color:var(--text-primary)] mb-2">
-          Carga Masiva
+          Bulk Upload
         </h3>
         <p class="text-[color:var(--text-secondary)]">
-          Suba múltiples EDPs usando Excel o CSV
+          Upload multiple EDPs using Excel or CSV files
         </p>
       </div>
 
@@ -163,7 +163,7 @@
               stroke-width="2"
               d="M5 13l4 4L19 7" />
           </svg>
-          Procesamiento en lotes optimizado
+          Optimized batch processing
         </div>
         <div
           class="flex items-center text-sm text-[color:var(--text-secondary)]">
@@ -179,7 +179,7 @@
               stroke-width="2"
               d="M5 13l4 4L19 7" />
           </svg>
-          Validación previa del archivo
+          Pre-upload file validation
         </div>
         <div
           class="flex items-center text-sm text-[color:var(--text-secondary)]">
@@ -195,7 +195,7 @@
               stroke-width="2"
               d="M5 13l4 4L19 7" />
           </svg>
-          Reporte detallado de resultados
+          Detailed processing report
         </div>
       </div>
 
@@ -203,22 +203,47 @@
         <a
           href="{{ url_for('edp_upload.download_template') }}"
           class="w-full block text-center bg-[color:var(--bg-secondary)] text-[color:var(--text-primary)] font-medium py-2 px-4 rounded-lg border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-colors">
-          📥 Descargar Plantilla
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 inline mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Download Template
         </a>
         <button
           onclick="openBulkUpload()"
           class="w-full bg-gradient-to-r from-[color:var(--accent-green)] to-[color:var(--accent-blue)] text-white font-semibold py-3 px-6 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 btn-upload">
-          Subir Archivo Excel/CSV
+          Upload Excel/CSV File
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Estadísticas de Carga Reciente -->
+  <!-- Recent Upload Statistics -->
   <div
     class="bg-gradient-to-r from-[color:var(--bg-card)] to-[color:var(--bg-highlight)] rounded-2xl p-6 border border-[color:var(--border-color)] shadow-lg">
-    <h3 class="text-lg font-bold text-[color:var(--text-primary)] mb-4">
-      📊 Estadísticas de Carga
+    <h3
+      class="text-lg font-bold text-[color:var(--text-primary)] mb-4 flex items-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 mr-2 text-[color:var(--accent-blue)]"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      Upload Statistics
     </h3>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div class="text-center">
@@ -228,7 +253,7 @@
           0
         </div>
         <div class="text-sm text-[color:var(--text-secondary)]">
-          Total Subidos
+          Total Uploaded
         </div>
       </div>
       <div class="text-center">
@@ -237,7 +262,7 @@
           id="successful-uploads">
           0
         </div>
-        <div class="text-sm text-[color:var(--text-secondary)]">Exitosos</div>
+        <div class="text-sm text-[color:var(--text-secondary)]">Successful</div>
       </div>
       <div class="text-center">
         <div
@@ -245,7 +270,7 @@
           id="failed-uploads">
           0
         </div>
-        <div class="text-sm text-[color:var(--text-secondary)]">Errores</div>
+        <div class="text-sm text-[color:var(--text-secondary)]">Errors</div>
       </div>
       <div class="text-center">
         <div

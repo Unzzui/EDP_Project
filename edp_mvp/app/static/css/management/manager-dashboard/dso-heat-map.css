@@ -23,20 +23,14 @@
   align-items: center;
   cursor: pointer;
   transition: all var(--transition-smooth);
-  min-height: 110px;
-  max-height: 110px;
+  min-height: 145px;
+  max-height: 160px;
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-card);
 }
 
-/* Enhanced hover effects */
-.dso-cell:hover {
-  background: var(--bg-quaternary);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: var(--shadow-elevated);
-  border-color: var(--accent-primary);
-}
+
 
 /* Status-based styling with enhanced visual feedback */
 .dso-cell.critical {
@@ -117,24 +111,36 @@
 
 /* Enhanced typography and layout - Compact but readable */
 .dso-manager {
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: var(--space-xs);
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: var(--space-sm);
   color: var(--text-primary);
   text-align: center;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   font-family: var(--font-primary);
-  overflow: hidden;
+  overflow: visible;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
   width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 [data-theme="dark"] .dso-manager {
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .dso-days {
@@ -227,7 +233,7 @@
   }
 
   .dso-cell {
-    min-height: 120px;
+    min-height: 140px;
     padding: var(--space-lg);
   }
 

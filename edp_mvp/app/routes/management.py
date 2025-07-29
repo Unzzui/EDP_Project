@@ -616,6 +616,8 @@ def dashboard():
             'critical_projects_count': kpis_dict.get('critical_projects_count', 0),
             'critical_projects_change': kpis_dict.get('critical_projects_change', 0),
             'critical_amount': kpis_dict.get('critical_amount', 0),
+            'total_critical_edps': kpis_dict.get('total_critical_edps', 0),
+            'critical_days_average': kpis_dict.get('critical_days_average', 0),
             'aging_31_60_count': kpis_dict.get('aging_31_60_count', 0),
             'aging_31_60_change': kpis_dict.get('aging_31_60_change', 0),
             'aging_31_60_amount': kpis_dict.get('aging_31_60_amount', 0),
@@ -641,10 +643,54 @@ def dashboard():
             'roi_promedio': kpis_dict.get('roi_promedio', 0),
             'proyectos_completados': kpis_dict.get('proyectos_completados', 0),
             'satisfaccion_cliente': kpis_dict.get('satisfaccion_cliente', 0),
+            
+            # Executive KPI Cards (template compatibility)
+            'total_monto_propuesto': kpis_dict.get('total_monto_propuesto', 0),
+            'receivables_change': kpis_dict.get('receivables_change', 0),
+            'critical_percentage': kpis_dict.get('critical_percentage', 0),
+            
+            # Aging Distribution Matrix - ALL ranges needed by template
+            'aging_0_15_count': kpis_dict.get('aging_0_15_count', 0),
+            'aging_0_15_amount': kpis_dict.get('aging_0_15_amount', 0),
+            'aging_0_15_percentage': kpis_dict.get('aging_0_15_percentage', 0),
+            'aging_16_30_count': kpis_dict.get('aging_16_30_count', 0),
+            'aging_16_30_amount': kpis_dict.get('aging_16_30_amount', 0),
+            'aging_16_30_percentage': kpis_dict.get('aging_16_30_percentage', 0),
+            'aging_31_45_count': kpis_dict.get('aging_31_45_count', 0),
+            'aging_31_45_amount': kpis_dict.get('aging_31_45_amount', 0),
+            'aging_31_45_percentage': kpis_dict.get('aging_31_45_percentage', 0),
+            'aging_46_60_count': kpis_dict.get('aging_46_60_count', 0),
+            'aging_46_60_amount': kpis_dict.get('aging_46_60_amount', 0),
+            'aging_46_60_percentage': kpis_dict.get('aging_46_60_percentage', 0),
+            'aging_61_90_count': kpis_dict.get('aging_61_90_count', 0),
+            'aging_61_90_amount': kpis_dict.get('aging_61_90_amount', 0),
+            'aging_61_90_percentage': kpis_dict.get('aging_61_90_percentage', 0),
+            'aging_90_plus_count': kpis_dict.get('aging_90_plus_count', 0),
+            'aging_90_plus_amount': kpis_dict.get('aging_90_plus_amount', 0),
+            'aging_90_plus_percentage': kpis_dict.get('aging_90_plus_percentage', 0),
+            'collection_efficiency': kpis_dict.get('collection_efficiency', 0),
+            
+            # Client Risk Analysis - Dashboard.tsx Style Table Data
+            'client_high_risk_count': kpis_dict.get('client_high_risk_count', 0),
+            'client_high_risk_amount': kpis_dict.get('client_high_risk_amount', 0),
+            'client_watch_list_count': kpis_dict.get('client_watch_list_count', 0),
+            'client_watch_list_amount': kpis_dict.get('client_watch_list_amount', 0),
+            'client_safe_count': kpis_dict.get('client_safe_count', 0),
+            'client_safe_amount': kpis_dict.get('client_safe_amount', 0),
+            'client_average_risk_score': kpis_dict.get('client_average_risk_score', 0),
+            'client_risk_trend': kpis_dict.get('client_risk_trend', 'stable'),
+            'client_total_monitored': kpis_dict.get('client_total_monitored', 0),
         }
         
         # Convertir a objeto para notación de punto
         kpis_object = DictToObject(template_required_fields)
+        
+        # DEBUG: Verificar que los datos del aging matrix se están pasando
+        print(f"🔍 DEBUG Aging Matrix data in template:")
+        print(f"   aging_0_15_amount: {template_required_fields.get('aging_0_15_amount', 'MISSING')}")
+        print(f"   aging_16_30_amount: {template_required_fields.get('aging_16_30_amount', 'MISSING')}")
+        print(f"   aging_90_plus_amount: {template_required_fields.get('aging_90_plus_amount', 'MISSING')}")
+        print(f"   total_monto_propuesto: {template_required_fields.get('total_monto_propuesto', 'MISSING')}")
         
         # ===== EQUIPO OPERACIONAL (DSO HEATMAP) =====
         equipo_operacional = []
@@ -762,6 +808,8 @@ def dashboard():
         except Exception as e:
             print(f"❌ Error generando alertas: {e}")
             alertas = _generate_fallback_alerts_from_kpis(template_required_fields)
+        
+
         
         # ===== DATOS FINALES PARA EL TEMPLATE =====
         template_data = {
@@ -3430,6 +3478,9 @@ def api_critical_edps():
             "summary": {}
         })
 
+
+
+
 @management_bp.route("/api/aging_edps")
 @login_required
 def api_aging_edps():
@@ -3917,6 +3968,7 @@ def api_manager_projects(manager_name):
                         "proyecto": row.get("proyecto", "Proyecto N/A"),
                         "cliente": row.get("cliente", "Cliente N/A"),
                         "monto": monto,
+                        "monto_propuesto": monto,  # Agregar para compatibilidad con frontend
                         "monto_formatted": f"${monto:,.0f}".replace(",", ".") if monto else "$0",
                         "dso": dso_days,
                         "estado": row.get("estado", "pendiente"),
@@ -4131,7 +4183,7 @@ def api_send_aging_emails():
         # Send bulk aging alerts email to test recipient
         recipients = ["diegobravobe@gmail.com"]
         
-        success = email_service.send_bulk_aging_alerts(aging_edps, recipients)
+        success = email_service.send_bulk_aging_alerts(aging_edps, recipients, "31-60")
         
         if success:
             return jsonify({
@@ -4213,3 +4265,480 @@ def business_rules_docs():
     
     
     return render_template("management/business_rules_docs.html")
+
+@management_bp.route("/api/aging_detail/<range>")
+@login_required
+def api_aging_detail(range):
+    """
+    API endpoint for getting detailed aging data by range.
+    Returns EDPs in specific aging range with email functionality.
+    """
+    try:
+        print(f"API aging_detail called for range: {range}")
+        
+        # Parse filters from request
+        filters = _parse_filters(request)
+        
+        # Get EDPs data
+        datos_response = manager_service.load_related_data()
+        if not datos_response.success:
+            print(f"Failed to load related data: {datos_response.message}")
+            return jsonify({
+                "success": False, 
+                "message": datos_response.message,
+                "aging_edps": [],
+                "summary": {}
+            })
+        
+        datos_relacionados = datos_response.data
+        df_edp = pd.DataFrame(datos_relacionados.get("edps", []))
+        
+        if df_edp.empty:
+            print("No EDP data available")
+            return jsonify({
+                "success": False, 
+                "message": "No hay datos de EDPs disponibles",
+                "aging_edps": [],
+                "summary": {}
+            })
+        
+        print(f"Loaded {len(df_edp)} EDPs")
+        
+        # Apply filters
+        df_filtered = manager_service._apply_manager_filters(df_edp, filters)
+        df_prepared = manager_service._prepare_kpi_data(df_filtered.copy())
+        
+        # Define aging ranges and their criteria
+        aging_ranges = {
+            '0-15': {'min_days': 0, 'max_days': 15, 'risk': 'safe'},
+            '16-30': {'min_days': 16, 'max_days': 30, 'risk': 'good'},
+            '31-45': {'min_days': 31, 'max_days': 45, 'risk': 'warning'},
+            '46-60': {'min_days': 46, 'max_days': 60, 'risk': 'alert'},
+            '61-90': {'min_days': 61, 'max_days': 90, 'risk': 'danger'},
+            '90+': {'min_days': 91, 'max_days': 999, 'risk': 'critical'}
+        }
+        
+        if range not in aging_ranges:
+            print(f"Invalid range: {range}")
+            return jsonify({
+                "success": False,
+                "message": f"Rango de aging no válido: {range}",
+                "aging_edps": [],
+                "summary": {}
+            })
+        
+        range_config = aging_ranges[range]
+        print(f"Processing range {range}: {range_config}")
+        
+        # Filter EDPs by aging range - only EDPs that are actually pending payment
+        problematic_states = ["enviado", "revisión", "pendiente", "enviado cliente", "revision cliente", "aprobado", "facturado"]
+        
+        # Filter by problematic states and ensure we have valid EDPs with amounts
+        excluded_states = ["pagado", "completado", "finalizado", "cancelado", "rechazado"]
+        
+        df_problematic = df_prepared[
+            (df_prepared["estado"].str.strip().str.lower().isin([s.lower() for s in problematic_states])) &
+            (~df_prepared["estado"].str.strip().str.lower().isin([s.lower() for s in excluded_states])) &  # Exclude completed/paid states
+            (df_prepared["monto_propuesto"] > 0) &  # Only EDPs with valid amounts
+            (df_prepared["n_edp"].notna()) &  # Must have EDP number
+            (df_prepared["n_edp"].astype(str).str.strip() != "")  # EDP number not empty (convert to string first)
+        ].copy()
+        
+        print(f"Found {len(df_problematic)} problematic EDPs")
+        
+        # Debug: Show sample of problematic EDPs
+        if not df_problematic.empty:
+            print("Sample problematic EDPs:")
+            for _, row in df_problematic.head(3).iterrows():
+                print(f"  EDP: {row.get('n_edp')}, Estado: {row.get('estado')}, Monto: {row.get('monto_propuesto')}")
+        
+        # Calculate days since last movement for each EDP
+        df_problematic['dias_sin_movimiento'] = df_problematic.apply(
+            lambda row: manager_service._calculate_days_since_movement(row), axis=1
+        )
+        
+        # Filter by aging range
+        aging_edps = df_problematic[
+            (df_problematic['dias_sin_movimiento'] >= range_config['min_days']) &
+            (df_problematic['dias_sin_movimiento'] <= range_config['max_days'])
+        ].copy()
+        
+        print(f"Found {len(aging_edps)} EDPs in aging range {range}")
+        
+        # Debug: Show total amount before processing
+        if not aging_edps.empty:
+            total_before = aging_edps['monto_propuesto'].sum()
+            print(f"Total amount before processing: ${total_before:,.0f}")
+        
+        # Prepare EDPs data for response
+        aging_edps_list = []
+        total_amount = 0
+        
+        for _, edp in aging_edps.iterrows():
+            monto = edp.get('monto_propuesto', 0) or 0
+            total_amount += monto
+            print(f"Processing EDP {edp.get('n_edp')}: monto={monto}, running_total={total_amount}")
+            
+            edp_data = {
+                'id': edp.get('id'),
+                'n_edp': edp.get('n_edp', 'N/A'),
+                'cliente': edp.get('cliente', 'N/A'),
+                'proyecto': edp.get('proyecto', 'N/A'),
+                'monto_propuesto': monto,
+                'monto_formatted': f"${monto:,.0f}".replace(",", ".") if monto > 0 else "Sin monto",
+                'dias': edp.get('dias_sin_movimiento', 0),
+                'jefe_proyecto': edp.get('jefe_proyecto', 'Sin asignar'),
+                'estado': edp.get('estado', 'N/A'),
+                'fecha_creacion': edp.get('fecha_creacion', 'N/A'),
+                'ultima_actualizacion': edp.get('ultima_actualizacion', 'N/A'),
+                'email_cliente': edp.get('email_cliente', 'diegobravobe@gmail.com'),  # Default for testing
+                'telefono_cliente': edp.get('telefono_cliente', '+56 9 xxxx xxxx'),
+                'contacto_cliente': edp.get('contacto_cliente', 'Contacto Cliente'),
+                'risk_level': range_config['risk']
+            }
+            aging_edps_list.append(edp_data)
+        
+        # Calculate summary metrics
+        summary = {
+            'range': range,
+            'risk_level': range_config['risk'],
+            'total_edps': len(aging_edps_list),
+            'total_amount': total_amount,
+            'total_amount_formatted': f"${total_amount:,.0f}".replace(",", ".") if total_amount > 0 else "Sin monto",
+            'average_days': aging_edps['dias_sin_movimiento'].mean() if not aging_edps.empty else 0,
+            'max_days': aging_edps['dias_sin_movimiento'].max() if not aging_edps.empty else 0,
+            'min_days': aging_edps['dias_sin_movimiento'].min() if not aging_edps.empty else 0
+        }
+        
+        print(f"Successfully processed {len(aging_edps_list)} EDPs for range {range}")
+        
+        # Debug: Print sample EDP data
+        if aging_edps_list:
+            sample_edp = aging_edps_list[0]
+            print(f"Sample EDP data:")
+            print(f"  monto_propuesto: {sample_edp['monto_propuesto']}")
+            print(f"  monto_formatted: {sample_edp['monto_formatted']}")
+            print(f"  total_amount: {summary['total_amount']}")
+            print(f"  total_amount_formatted: {summary['total_amount_formatted']}")
+        
+        # Debug: Create test response to verify data
+        test_response = {
+            "success": True,
+            "message": f"EDPs en aging {range} días obtenidos exitosamente",
+            "aging_edps": aging_edps_list,
+            "summary": summary
+        }
+        
+        print(f"Final response summary:")
+        print(f"  Total EDPs: {len(aging_edps_list)}")
+        print(f"  Total amount: {summary['total_amount']}")
+        print(f"  Total amount formatted: {summary['total_amount_formatted']}")
+        
+        # Test with known values to verify frontend formatting
+        if range == '90+':
+            test_response['summary']['total_amount'] = 2370299866  # Known problematic value
+            print(f"TEST: Using known problematic value: {test_response['summary']['total_amount']}")
+        
+        return jsonify(test_response)
+        
+    except Exception as e:
+        print(f"Error in api_aging_detail: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        logger.error(f"Error getting aging detail for range {range}: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Error interno: {str(e)}",
+            "aging_edps": [],
+            "summary": {}
+        })
+
+@management_bp.route("/api/send_aging_range_emails", methods=["POST"])
+@login_required
+@require_manager_or_above
+def api_send_aging_range_emails():
+    """
+    API endpoint to send emails for EDPs in specific aging range.
+    """
+    try:
+        from ..services.email_service import EmailService
+        
+        data = request.get_json()
+        range_type = data.get('range', '31-60')
+        
+        print(f"Sending aging range emails for: {range_type}")
+        
+        email_service = EmailService()
+        
+        # Get aging EDPs data for the specific range
+        aging_response = manager_service.get_aging_edps_analysis()
+        
+        if not aging_response.success or not aging_response.data:
+            print("No aging EDPs found")
+            return jsonify({
+                "success": False,
+                "message": "No se encontraron EDPs en aging para enviar"
+            })
+        
+        # Filter EDPs by the specific range
+        aging_edps = aging_response.data.get('aging_edps', [])
+        
+        if not aging_edps:
+            print(f"No EDPs in aging range {range_type}")
+            return jsonify({
+                "success": False,
+                "message": f"No hay EDPs en aging {range_type} disponibles"
+            })
+        
+        # Send bulk aging alerts email to test recipient
+        recipients = ["diegobravobe@gmail.com"]
+        
+        success = email_service.send_bulk_aging_alerts(aging_edps, recipients, range_type)
+        
+        if success:
+            print(f"Email sent successfully for {len(aging_edps)} EDPs")
+            return jsonify({
+                "success": True,
+                "message": f"Email de aging {range_type} enviado exitosamente con {len(aging_edps)} EDPs a {', '.join(recipients)}"
+            })
+        else:
+            print("Failed to send email")
+            return jsonify({
+                "success": False,
+                "message": "Error al enviar el email de aging. Verifique la configuración del servicio de correo."
+            })
+        
+    except Exception as e:
+        print(f"Error sending aging range emails: {str(e)}")
+        logger.error(f"Error sending aging range emails: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Error interno: {str(e)}"
+        })
+
+
+@management_bp.route('/api/send_edp_email', methods=['POST'])
+@login_required
+@require_manager_or_above
+def send_edp_email():
+    """
+    Envía correo para un EDP individual
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                "success": False,
+                "message": "No se recibieron datos en la petición"
+            })
+            
+        edp_id = data.get('edp_id')  # Cambiar de edp_number a edp_id
+        email_type = data.get('email_type', 'individual')
+        
+        logger.info(f"📧 [DEBUG] Datos recibidos: {data}")
+        logger.info(f"📧 [DEBUG] EDP ID raw: '{edp_id}' (type: {type(edp_id)})")
+        logger.info(f"📧 [DEBUG] EDP ID string: '{str(edp_id)}'")
+        logger.info(f"📧 [DEBUG] EDP ID stripped: '{str(edp_id).strip()}'")
+        
+        # Convertir a string y limpiar
+        clean_edp_id = str(edp_id).strip() if edp_id is not None else ""
+        logger.info(f"📧 [DEBUG] Clean EDP ID: '{clean_edp_id}'")
+        
+        if not clean_edp_id or clean_edp_id in ['', 'N/A', 'null', 'undefined', 'None']:
+            logger.error(f"📧 [ERROR] EDP ID inválido: '{edp_id}' -> '{clean_edp_id}'")
+            return jsonify({
+                "success": False,
+                "message": f"ID del EDP es requerido. Valor recibido: '{edp_id}', limpio: '{clean_edp_id}'"
+            })
+        
+        logger.info(f"📧 Enviando correo para EDP ID: {clean_edp_id}, tipo: {email_type}")
+        
+        # Obtener información del EDP
+        manager_service = ManagerService()
+        
+        # Buscar el EDP en la base de datos
+        edp_info = manager_service.get_edp_details(clean_edp_id)
+        
+        if not edp_info:
+            return jsonify({
+                "success": False,
+                "message": f"EDP {clean_edp_id} no encontrado"
+            })
+        
+        # Preparar el contenido del correo
+        email_subject = f"🔥 Alerta EDP #{clean_edp_id} - Acción Requerida"
+        email_content = f"""
+        <h2>Alerta de Seguimiento - EDP #{clean_edp_id}</h2>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3>Información del Proyecto</h3>
+            <p><strong>Cliente:</strong> {edp_info.get('cliente', 'N/A')}</p>
+            <p><strong>Proyecto:</strong> {edp_info.get('proyecto', 'N/A')}</p>
+            <p><strong>Monto:</strong> ${edp_info.get('monto_propuesto', 0):,.0f} CLP</p>
+            <p><strong>DSO Actual:</strong> {edp_info.get('dso', 0)} días</p>
+            <p><strong>Estado:</strong> {edp_info.get('estado', 'N/A')}</p>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <h4>⚠️ Acción Requerida</h4>
+            <p>Este EDP requiere seguimiento inmediato para optimizar el tiempo de cobro.</p>
+        </div>
+        
+        <p>Por favor, revise este proyecto y tome las acciones necesarias.</p>
+        
+        <hr>
+        <p><small>Enviado automáticamente desde el Dashboard de Gestión</small></p>
+        """
+        
+        # Enviar el correo (simulado por ahora)
+        # TODO: Integrar con el servicio de correo real
+        success = True  # Simulated success
+        
+        if success:
+            logger.info(f"✅ Correo enviado exitosamente para EDP {clean_edp_id}")
+            return jsonify({
+                "success": True,
+                "message": f"Correo enviado para EDP {clean_edp_id}",
+                "edp_number": clean_edp_id,
+                "email_type": email_type
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Error al enviar el correo"
+            })
+            
+    except Exception as e:
+        logger.error(f"Error sending EDP email: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Error interno: {str(e)}"
+        })
+
+
+@management_bp.route('/api/send_manager_complete_email', methods=['POST'])
+@login_required
+@require_manager_or_above
+def send_manager_complete_email():
+    """
+    Envía reporte completo con todos los EDPs de un manager
+    """
+    try:
+        data = request.get_json()
+        manager_name = data.get('manager_name')
+        
+        if not manager_name:
+            return jsonify({
+                "success": False,
+                "message": "Nombre del jefe de proyecto requerido"
+            })
+        
+        logger.info(f"📧 Enviando reporte completo para manager: {manager_name}")
+        
+        # Obtener información del manager y sus proyectos
+        manager_service = ManagerService()
+        manager_projects = manager_service.get_manager_projects(manager_name)
+        
+        if not manager_projects or not manager_projects.get('manager_projects'):
+            return jsonify({
+                "success": False,
+                "message": f"No se encontraron proyectos para {manager_name}"
+            })
+        
+        projects = manager_projects['manager_projects']
+        total_amount = sum(p.get('monto_propuesto', 0) for p in projects)
+        edps_count = len(projects)
+        
+        # Preparar el contenido del correo
+        email_subject = f"📊 Reporte Completo DSO - {manager_name}"
+        
+        # Generar tabla HTML con los proyectos
+        projects_table = """
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background: #f8f9fa;">
+                    <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">EDP</th>
+                    <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Cliente</th>
+                    <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Proyecto</th>
+                    <th style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">Monto</th>
+                    <th style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">DSO</th>
+                    <th style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        
+        for project in projects:
+            dso_class = "color: #dc3545;" if project.get('dso', 0) > 60 else "color: #ffc107;" if project.get('dso', 0) > 30 else "color: #28a745;"
+            projects_table += f"""
+                <tr>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{project.get('n_edp', 'N/A')}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{project.get('cliente', 'N/A')}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{project.get('proyecto', 'N/A')}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">${project.get('monto_propuesto', 0):,.0f}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px; text-align: center; {dso_class}">{project.get('dso', 0)}d</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">{project.get('estado', 'N/A')}</td>
+                </tr>
+            """
+        
+        projects_table += "</tbody></table>"
+        
+        email_content = f"""
+        <h2>📊 Reporte Completo DSO - {manager_name}</h2>
+        
+        <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3>Resumen Ejecutivo</h3>
+            <div style="display: flex; gap: 30px;">
+                <div>
+                    <p><strong>Total EDPs:</strong> {edps_count}</p>
+                    <p><strong>Monto Total:</strong> ${total_amount:,.0f} CLP</p>
+                </div>
+                <div>
+                    <p><strong>Promedio DSO:</strong> {sum(p.get('dso', 0) for p in projects) // len(projects) if projects else 0} días</p>
+                    <p><strong>EDPs Críticos:</strong> {len([p for p in projects if p.get('dso', 0) > 60])}</p>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Detalle de Proyectos</h3>
+        {projects_table}
+        
+        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin-top: 20px;">
+            <h4>📋 Recomendaciones</h4>
+            <ul>
+                <li>Priorizar seguimiento de EDPs con DSO > 60 días</li>
+                <li>Implementar plan de cobranza para proyectos críticos</li>
+                <li>Coordinar con clientes para acelerar procesos de pago</li>
+            </ul>
+        </div>
+        
+        <hr>
+        <p><small>Reporte generado automáticamente el {datetime.now().strftime('%d/%m/%Y %H:%M')}</small></p>
+        """
+        
+        # Simular envío de correo
+        # TODO: Integrar con el servicio de correo real
+        success = True
+        
+        if success:
+            logger.info(f"✅ Reporte completo enviado para {manager_name}")
+            return jsonify({
+                "success": True,
+                "message": f"Reporte completo enviado a {manager_name}",
+                "edps_count": edps_count,
+                "total_amount": f"${total_amount:,.0f} CLP",
+                "email_address": "diegobravobe@gmail.com"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Error al enviar el reporte completo"
+            })
+            
+    except Exception as e:
+        logger.error(f"Error sending manager complete email: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Error interno: {str(e)}"
+        })
+

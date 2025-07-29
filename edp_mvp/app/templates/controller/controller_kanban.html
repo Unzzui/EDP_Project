@@ -19,6 +19,8 @@ block head %} {{ super() }}
 <script src="{{ url_for('static', filename='js/control_panel/controller_kanban_metrics.js') }}"></script>
 <!-- Filtros y UI del Kanban -->
 <script src="{{ url_for('static', filename='js/control_panel/kanban-filters.js') }}"></script>
+<!-- Vista completa del Kanban y Tabla -->
+<script src="{{ url_for('static', filename='js/control_panel/fullscreen_kanban.js') }}"></script>
 
 <!-- Configuración de variables globales y datos para JavaScript -->
 <script>
@@ -414,7 +416,7 @@ block head %} {{ super() }}
     setInterval(syncAllMetrics, 5000);
     
     // Función formatMonto ya definida globalmente arriba
-    
+
     // Observar cambios en el DOM para mantener formato
     const observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
@@ -626,6 +628,319 @@ block head %} {{ super() }}
 
 </script>
 
+<style>
+/* Estilos para vista completa del Kanban y Tabla */
+.kanban-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9999 !important;
+  background-color: var(--bg-primary) !important;
+  padding: 20px !important;
+  overflow-y: auto !important; /* Permitir scroll vertical en todo el contenedor */
+  animation: fullscreenFadeIn 0.3s ease-out;
+}
+
+.kanban-fullscreen-content {
+  min-height: 100vh; /* Asegurar altura mínima para scroll */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Estilos específicos para Kanban en vista completa */
+.kanban-fullscreen #kanban-board {
+  flex: 1;
+  min-height: 0; /* Permite que el contenedor se ajuste */
+  width: 100%;
+  overflow: visible; /* Permitir que el contenido sea visible */
+}
+
+.kanban-fullscreen.with-filters #kanban-board {
+  min-height: 0;
+}
+
+.kanban-fullscreen .kanban-column {
+  min-height: 500px; /* Altura mínima más razonable */
+  height: auto !important;
+}
+
+.kanban-fullscreen .kanban-list {
+  max-height: 70vh !important; /* Altura máxima para permitir scroll interno */
+  min-height: 400px; /* Altura mínima para comodidad */
+  overflow-y: auto !important; /* Scroll interno en cada columna */
+  padding-right: 8px; /* Espacio para scrollbar */
+}
+
+/* Estilos específicos para Tabla en vista completa */
+.kanban-fullscreen #tabla-view {
+  flex: 1;
+  min-height: 0; /* Permite que el contenedor se ajuste */
+  width: 100%;
+  overflow: visible !important;
+  padding-bottom: 20px;
+}
+
+.kanban-fullscreen.with-filters #tabla-view {
+  min-height: 0;
+}
+
+.kanban-fullscreen #tabla-view .container {
+  max-width: none !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+.kanban-fullscreen #tabla-view .table-responsive {
+  max-height: none !important; /* Quitar límite de altura */
+  overflow: visible !important; /* Permitir scroll natural */
+}
+
+.kanban-fullscreen #tabla-view table {
+  font-size: 0.875rem !important;
+}
+
+.kanban-fullscreen #tabla-view th,
+.kanban-fullscreen #tabla-view td {
+  padding: 12px 8px !important;
+  white-space: nowrap;
+}
+
+/* Hacer la tabla más compacta en vista completa */
+.kanban-fullscreen #tabla-view .section-title-modern {
+  margin-bottom: 1rem !important;
+}
+
+.kanban-fullscreen #tabla-view .section-title-modern h2 {
+  font-size: 1.25rem !important;
+}
+
+/* Estilos para filtros en vista completa */
+.kanban-fullscreen .fullscreen-filters {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-primary) !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  margin-bottom: 20px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.kanban-fullscreen .fullscreen-filters h3 {
+  font-size: 1rem !important;
+  margin-bottom: 12px !important;
+}
+
+.kanban-fullscreen .fullscreen-filters .grid {
+  gap: 12px !important;
+}
+
+.kanban-fullscreen .fullscreen-filters select,
+.kanban-fullscreen .fullscreen-filters input {
+  font-size: 0.875rem !important;
+  padding: 8px 12px !important;
+}
+
+.kanban-fullscreen .fullscreen-filters button {
+  font-size: 0.875rem !important;
+  padding: 8px 16px !important;
+}
+
+/* Header compacto en vista completa */
+.kanban-fullscreen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.kanban-fullscreen-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kanban-fullscreen-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Estilos para toggle de vista en fullscreen */
+.kanban-fullscreen .view-toggle {
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.kanban-fullscreen .view-toggle:hover {
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+.kanban-fullscreen .view-toggle.active {
+  color: var(--accent-blue);
+  background: var(--bg-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Animaciones */
+@keyframes fullscreenFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fullscreenFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.kanban-fullscreen-exit {
+  animation: fullscreenFadeOut 0.3s ease-in;
+}
+
+/* Botón de cerrar vista completa */
+.fullscreen-exit-btn {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.fullscreen-exit-btn:hover {
+  background: var(--bg-card-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Ocultar elementos innecesarios en vista completa */
+.kanban-fullscreen #kanban-main-container > *:not(#kanban-board):not(#tabla-view) {
+  display: none !important;
+}
+
+/* Mejorar scrollbar en vista completa */
+.kanban-fullscreen .kanban-list::-webkit-scrollbar,
+.kanban-fullscreen .table-responsive::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.kanban-fullscreen .kanban-list::-webkit-scrollbar-track,
+.kanban-fullscreen .table-responsive::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+.kanban-fullscreen .kanban-list::-webkit-scrollbar-thumb,
+.kanban-fullscreen .table-responsive::-webkit-scrollbar-thumb {
+  background: var(--accent-blue);
+  border-radius: 4px;
+}
+
+.kanban-fullscreen .kanban-list::-webkit-scrollbar-thumb:hover,
+.kanban-fullscreen .table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blue-hover);
+}
+
+/* Scrollbar para el contenedor principal de fullscreen */
+.kanban-fullscreen::-webkit-scrollbar {
+  width: 12px;
+}
+
+.kanban-fullscreen::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+.kanban-fullscreen::-webkit-scrollbar-thumb {
+  background: var(--accent-blue);
+  border-radius: 6px;
+}
+
+.kanban-fullscreen::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blue-hover);
+}
+
+/* Responsive para vista completa */
+@media (max-width: 1024px) {
+  .kanban-fullscreen .kanban-board {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  }
+  
+  .kanban-fullscreen #tabla-view table {
+    font-size: 0.75rem !important;
+  }
+  
+  .kanban-fullscreen #tabla-view th,
+  .kanban-fullscreen #tabla-view td {
+    padding: 8px 4px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .kanban-fullscreen {
+    padding: 10px !important;
+  }
+  
+  .kanban-fullscreen-header {
+    padding: 10px 15px;
+    margin-bottom: 15px;
+  }
+  
+  .kanban-fullscreen-title {
+    font-size: 1.25rem;
+  }
+  
+  .kanban-fullscreen .kanban-column {
+    min-height: 400px;
+  }
+  
+  .kanban-fullscreen .kanban-list {
+    min-height: 350px;
+    max-height: 60vh !important; /* Ajustar altura máxima en móvil */
+  }
+  
+  .kanban-fullscreen .fullscreen-filters {
+    padding: 12px !important;
+  }
+  
+  .kanban-fullscreen .fullscreen-filters .grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+}
+</style>
+
 {% endblock %}
 <!-- Modal para acciones rápidas -->
 
@@ -813,6 +1128,27 @@ block head %} {{ super() }}
             d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         <span class="hidden sm:inline">Exportar</span>
+      </button>
+
+      <!-- Botón de vista completa -->
+      <button
+        id="fullscreen-toggle-btn"
+        class="flex items-center px-4 py-2.5 text-sm bg-[color:var(--bg-card)] text-[color:var(--text-primary)] rounded-xl border border-[color:var(--border-color)] hover:bg-[color:var(--bg-card-hover)] transition-all duration-200 shadow-lg hover:shadow-xl group"
+        title="Alternar vista completa del Kanban">
+        <svg
+          id="fullscreen-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+        </svg>
+        <span class="hidden sm:inline" id="fullscreen-text">Vista Completa</span>
       </button>
     </div>
   </div>
@@ -1751,6 +2087,17 @@ block head %} {{ super() }}
         >Alt+L</kbd
       >
       <span class="text-[10px]">Lista</span>
+      <span class="mx-2 text-[color:var(--text-secondary)]">•</span>
+      <kbd
+        class="px-1 py-0.5 bg-[color:var(--bg-highlight)] rounded text-[10px]"
+        >F11</kbd
+      >
+      <span class="text-[10px]">Vista Completa</span>
+      <kbd
+        class="px-1 py-0.5 bg-[color:var(--bg-highlight)] rounded text-[10px]"
+        >ESC</kbd
+      >
+      <span class="text-[10px]">Salir</span>
     </div>
   </div>
 </div>
